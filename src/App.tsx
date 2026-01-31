@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
-import { getEvents, EventListDto } from "./api/events";
+import { getEvents } from "./api/events";
+import { EventListDto } from "./types/events";
+import { EventPage } from "./EventPage";
 
 export default function App() {
   const [events, setEvents] = useState<EventListDto | null>(null);
@@ -10,14 +12,7 @@ export default function App() {
   }, []);
 
   if (selectedEventId) {
-    return (
-      <div>
-        <button onClick={() => setSelectedEventId(null)}>⬅ Назад</button>
-        <h2>Экран мероприятия</h2>
-        <p>Здесь скоро будет явка и состав</p>
-        <p>ID события: {selectedEventId}</p>
-      </div>
-    );
+    return <EventPage eventId={selectedEventId} onBack={() => setSelectedEventId(null)} />;
   }
 
   return (
