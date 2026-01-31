@@ -1,26 +1,47 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import { useEffect, useState } from "react";
+import { getEvents, EventListDto } from "./api/events";
 
-function App() {
+export default function App() {
+  const [events, setEvents] = useState<EventListDto | null>(null);
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+
+  useEffect(() => {
+    getEvents().then(setEvents).catch(console.error);
+  }, []);
+
+  if (selectedEventId) {
+    return (
+      <div>
+        <button onClick={() => setSelectedEventId(null)}>⬅ Назад</button>
+        <h2>Экран мероприятия</h2>
+        <p>Здесь скоро будет явка и состав</p>
+        <p>ID события: {selectedEventId}</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
+    <div>
+      <h1>Список мероприятий</h1>
+      {events?.events?.map((e) => (
+        <div
+          key={e.id}
+          style={{
+            padding: "10px",
+            margin: "10px",
+            border: "1px solid #ccc",
+            borderRadius: "5px",
+            cursor: "pointer",
+          }}
+          onClick={() => setSelectedEventId(e.id)}
         >
-          Learn React
-        </a>
-      </header>
+          <h3>{e.title ?? "Без названия"}</h3>
+          <p>
+            {new Date(e.startTime).toLocaleString()} —{" "}
+            {new Date(e.endTime).toLocaleString()}
+          </p>
+        </div>
+      ))}
     </div>
   );
 }
-
-export default App;
