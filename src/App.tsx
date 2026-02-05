@@ -1,23 +1,26 @@
 import { useEffect, useState } from "react";
+import { BrowserRouter, Routes, Route, useNavigate, useParams } from "react-router-dom";
 import { getEvents } from "./api/events";
 import { EventListDto } from "./types/events";
 import { EventPage } from "./EventPage";
+import { CreateEventPage } from "./CreateEventPage";
 
-export default function App() {
+function EventsListPage() {
   const [events, setEvents] = useState<EventListDto | null>(null);
-  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     getEvents().then(setEvents).catch(console.error);
   }, []);
 
-  if (selectedEventId) {
-    return <EventPage eventId={selectedEventId} onBack={() => setSelectedEventId(null)} />;
-  }
-
   return (
     <div>
       <h1>Список мероприятий</h1>
+
+      <button onClick={() => navigate("/events/create")}>
+        ➕ Добавить событие
+      </button>
+
       {events?.events?.map((e) => (
         <div
           key={e.id}
@@ -28,7 +31,7 @@ export default function App() {
             borderRadius: "5px",
             cursor: "pointer",
           }}
-          onClick={() => setSelectedEventId(e.id)}
+          onClick={() => navigate(`/events/${e.id}`)}
         >
           <h3>{e.title ?? "Без названия"}</h3>
           <p>
@@ -38,5 +41,37 @@ export default function App() {
         </div>
       ))}
     </div>
+  );
+}
+
+function EventPageWrapper() {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+
+  if (!id) return <div>Некорректный ID события</div>;
+
+  return <EventPage eventId={id} onBack={() => navigate("/")} />;
+}
+
+function CreateEventWrapper() {
+  const navigate = useNavigate();
+
+  return (
+    <CreateEventPage
+      onBack={() => navigate("/")}
+      onCreated={(id) => navigate(`/events/${id}`)}
+    />
+  );
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<EventsListPage />} />
+        <Route path="/events/create" element={<CreateEventWrapper />} />
+        <Route path="/events/:id" element={<EventPageWrapper />} />
+      </Routes>
+    </BrowserRouter>
   );
 }

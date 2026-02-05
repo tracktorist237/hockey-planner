@@ -1,3 +1,9 @@
+export enum EventType {
+  Practice = 1,
+  Game = 2,
+  Meeting = 3,
+}
+
 export interface EventLookUpDto {
   id: string;
   title?: string;
@@ -61,4 +67,19 @@ export interface EventDto {
   isPast?: boolean;
   isUpcoming?: boolean;
   isOngoing?: boolean;
+}
+
+
+export interface CreateEventDto {
+  title?: string | null;
+  description?: string | null;
+  type: EventType;
+  startTime: string | null;     // ISO
+  endTime?: string | null;        // ISO
+  locationName?: string | null;
+  locationAddress?: string | null;
+  iceRinkNumber?: string | null;
+  homeTeamName?: string | null;
+  awayTeamName?: string | null;
+  leagueName?: string | null;
 }
