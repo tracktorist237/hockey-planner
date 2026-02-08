@@ -30,6 +30,7 @@ export interface LineDto {
 
 export interface PlayerLookUpDto {
   userId: string;
+  playerId: string;
   jerseyNumber?: number;
   firstName?: string;
   lastName?: string;
