@@ -15,7 +15,12 @@ export async function getEvent(id: string): Promise<EventDto> {
 }
 
 export async function createEvent(data: CreateEventDto): Promise<string> {
-  const res = await fetch(`${API_BASE}/api/events`, {
+    const currentUser = (() => {
+    const saved = localStorage.getItem("currentUser");
+    return saved ? JSON.parse(saved) : null;
+  })();
+  
+  const res = await fetch(`${API_BASE}/api/events?currentUserId=${currentUser.id}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     credentials: "include",
@@ -29,14 +34,6 @@ export async function createEvent(data: CreateEventDto): Promise<string> {
 
   // По сваггеру сервер возвращает UUID (string)
   return res.json();
-}
-
-export async function deleteEvent(id: string): Promise<void> {
-  const res = await fetch(`${API_BASE}/api/events/${id}`, {
-    method: "DELETE",
-    credentials: "include",
-  });
-  if (!res.ok) throw new Error(`DELETE /api/events/${id} failed: ${res.status}`);
 }
 
 export async function updateAttendance(

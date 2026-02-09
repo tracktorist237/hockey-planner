@@ -6,24 +6,22 @@ import {
   PlayerLookUpDto,
 } from "./types/events";
 import { getEvent, updateAttendance } from "./api/events";
-import { getUsers } from "./api/users";
 import {
   CreateUpdateRosterRequest,
   PlayerRole,
 } from "./types/lines";
 import { updateLineRoster } from "./api/lines"; // <-- ТВОЯ ФУНКЦИЯ
+import { CurrentPlayerHeader } from "./CurrentPlayerHeader";
 
 interface EventPageProps {
   eventId: string;
   onBack: () => void;
-}
-
-interface User {
-  id: string;
-  firstName?: string | null;
-  lastName?: string | null;
-  jerseyNumber?: number | null;
-  fullName?: string | null;
+  currentUser?: {
+    id: string;
+    firstName?: string | null;
+    lastName?: string | null;
+    jerseyNumber?: number | null;
+  } | null;
 }
 
 type Slot = "LW" | "C" | "RW" | "LD" | "RD";
@@ -50,9 +48,13 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  const [users, setUsers] = useState<User[]>([]);
-  const [userSearch, setUserSearch] = useState("");
-  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  // Выбираем игрока ОДИН РАЗ из пропсов
+  const storedUser = localStorage.getItem("currentUser");
+  const currentUser = storedUser ? JSON.parse(storedUser) : null;
+
+  const [selectedUserId] = useState<string | null>(
+    currentUser?.id ?? null
+  );
 
   // ==== СОСТАВ ====
   const [creatingLine, setCreatingLine] = useState(false);
@@ -81,27 +83,8 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
       .finally(() => setLoading(false));
   }, [eventId]);
 
-  // Загружаем пользователей
-  useEffect(() => {
-    getUsers().then(setUsers).catch(console.error);
-  }, []);
-
-  // ===== ПОИСК (ТВОЙ, НЕ ТРОГАЛ) =====
-  const filteredUsers = users.filter((u) => {
-    const search = userSearch.toLowerCase();
-
-    const matchesName =
-      (u.firstName?.toLowerCase().includes(search) ?? false) ||
-      (u.lastName?.toLowerCase().includes(search) ?? false);
-
-    const matchesNumber =
-      u.jerseyNumber?.toString().includes(search) ?? false;
-
-    return matchesName || matchesNumber;
-  });
-
   const myAttendance = event?.attendances?.find(
-    (a) => a.userId === selectedUserId && a.status !== 1
+    (a) => a.userId === selectedUserId
   );
 
   // ===== УБИРАЕМ ИГРОКОВ, КОТОРЫЕ УЖЕ В ЗВЕНАХ =====
@@ -126,7 +109,7 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
     if (!event) return;
 
     if (!selectedUserId) {
-      setError("Сначала выбери пользователя");
+      setError("Нет текущего пользователя");
       return;
     }
 
@@ -590,51 +573,29 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
 
   return (
     <div style={{ padding: 16 }}>
-      <button onClick={onBack}>⬅ Назад</button>
+      <CurrentPlayerHeader
+        onBack={onBack}
+        attendance={myAttendance ?? null}
+      />
+
+      <button
+        onClick={() => {
+          window.location.href = `/events/${event.id}/delete`;
+        }}
+        style={{
+          background: "#ffebee",
+          marginBottom: 12,
+        }}
+      >
+        🗑 Удалить мероприятие
+      </button>
 
       <h2>{event.title}</h2>
       <p>{event.description}</p>
 
-      <h3>Выбор пользователя</h3>
-
-      <input
-        placeholder="Поиск по фамилии или номеру..."
-        value={userSearch}
-        onChange={(e) => setUserSearch(e.target.value)}
-        style={{ width: "100%", marginBottom: 8 }}
-      />
-
-      <div
-        style={{
-          border: "1px solid #ccc",
-          maxHeight: 150,
-          overflowY: "auto",
-          marginBottom: 16,
-        }}
-      >
-        {filteredUsers.map((u) => (
-          <div
-            key={u.id}
-            onClick={() => setSelectedUserId(u.id)}
-            style={{
-              padding: 8,
-              cursor: "pointer",
-              background:
-                selectedUserId === u.id ? "#e6f0ff" : "transparent",
-            }}
-          >
-            #{u.jerseyNumber ?? "-"} — {u.firstName} {u.lastName}
-          </div>
-        ))}
-
-        {filteredUsers.length === 0 && (
-          <div style={{ padding: 8 }}>Не найдено</div>
-        )}
-      </div>
-
       <h3>Твой ответ</h3>
 
-      {!myAttendance && (
+      {(!myAttendance || myAttendance.status === 1) && (
         <div style={{ display: "flex", gap: 8 }}>
           <button disabled={submitting} onClick={() => handleVote(2)}>
             ✅ Смогу
@@ -645,7 +606,7 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
         </div>
       )}
 
-      {myAttendance && (
+      {myAttendance && myAttendance.status !== 1 && (
         <div>
           <p>
             Ты ответил: <strong>{statusIcon(myAttendance.status)}</strong>
