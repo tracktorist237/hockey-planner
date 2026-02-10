@@ -13,6 +13,7 @@ import { EventPage } from "./EventPage";
 import { CreateEventPage } from "./CreateEventPage";
 import { DeleteEventPage } from "./DeleteEventPage";
 import { CreatePlayerFormPage } from "./CreatePlayerFormPage";
+import { ContactInfo } from './ContactInfo';
 
 interface User {
   id: string;
@@ -84,6 +85,7 @@ function StartSearchPage({
           ➕ Анкета игрока
         </button>
       </div>
+      <ContactInfo/>
     </div>
   );
 }
@@ -117,25 +119,50 @@ function EventsListPage({
         ➕ Добавить событие
       </button>
 
-      {events?.events?.map((e) => (
-        <div
-          key={e.id}
-          style={{
-            padding: "10px",
-            margin: "10px",
-            border: "1px solid #ccc",
-            borderRadius: "5px",
-            cursor: "pointer",
-          }}
-          onClick={() => navigate(`/events/${e.id}`)}
-        >
-          <h3>{e.title ?? "Без названия"}</h3>
-          <p>
-            {new Date(e.startTime).toLocaleString()} —{" "}
-            {new Date(e.endTime).toLocaleString()}
+{events?.events?.map((e) => {
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const eventDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const diffDays = Math.round((eventDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    
+    const timeStr = date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+    
+    if (diffDays === 0) return `Сегодня, ${timeStr}`;
+    if (diffDays === 1) return `Завтра, ${timeStr}`;
+    if (diffDays === -1) return `Вчера, ${timeStr}`;
+    if (diffDays > 1 && diffDays < 7) {
+      const days = ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб'];
+      return `${days[date.getDay()]}, ${timeStr}`;
+    }
+    return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }) + `, ${timeStr}`;
+  };
+
+  return (
+    <div
+      key={e.id}
+      style={{
+        padding: "10px",
+        margin: "8px 0",
+        border: "1px solid #e0e0e0",
+        borderRadius: "6px",
+        cursor: "pointer",
+      }}
+      onClick={() => navigate(`/events/${e.id}`)}
+    >
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div>
+          <h4 style={{ margin: "0 0 4px 0" }}>{e.title ?? "Без названия"}</h4>
+          <p style={{ margin: 0, fontSize: "14px", color: "#666" }}>
+            {formatDate(e.startTime)}
           </p>
         </div>
-      ))}
+        <div style={{ fontSize: "20px", opacity: 0.7 }}>→</div>
+      </div>
+    </div>
+  );
+})}
     </div>
   );
 }

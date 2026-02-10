@@ -10,7 +10,7 @@ import {
   CreateUpdateRosterRequest,
   PlayerRole,
 } from "./types/lines";
-import { updateLineRoster } from "./api/lines"; // <-- ТВОЯ ФУНКЦИЯ
+import { updateLineRoster } from "./api/lines";
 import { CurrentPlayerHeader } from "./CurrentPlayerHeader";
 
 interface EventPageProps {
@@ -65,6 +65,10 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
     null
   );
 
+  // 👉 НОВОЕ: состояние для переименования
+  const [renamingLineId, setRenamingLineId] = useState<string | null>(null);
+  const [newLineName, setNewLineName] = useState("");
+
   const emptySlots: Record<Slot, AttendanceLookUpDto | null> = {
     LW: null,
     C: null,
@@ -82,6 +86,9 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, [eventId]);
+
+  // 👉 Сортируем звенья по order
+  const sortedRoster = event?.roster?.sort((a, b) => (a.order || 0) - (b.order || 0)) || [];
 
   const myAttendance = event?.attendances?.find(
     (a) => a.userId === selectedUserId
@@ -146,7 +153,7 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
   };
 
   // ===============================
-  // 👉 СОЗДАНИЕ НОВОГО ЗВЕНА (ТВОЁ)
+  // 👉 СОЗДАНИЕ НОВОГО ЗВЕНА (ИСПРАВЛЕНО)
   // ===============================
   const saveLine = async () => {
     if (!event) return;
@@ -158,12 +165,17 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
         role: slotToRole[slot as Slot],
       }));
 
+    // Используем sortedRoster для определения следующего order
+    const nextOrder = sortedRoster.length > 0 
+      ? Math.max(...sortedRoster.map(l => l.order || 0)) + 1
+      : 1;
+
     const body: CreateUpdateRosterRequest = {
       eventId: event.id,
       lines: [
         {
-          name: `Звено ${((event.roster?.length ?? 0) + 1)}`,
-          order: (event.roster?.length ?? 0) + 1,
+          name: `Звено ${nextOrder}`,
+          order: nextOrder,
           players,
         },
       ],
@@ -189,7 +201,10 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
   const deleteLine = async (lineId: string) => {
     if (!event?.roster) return;
 
-    const newLines = event.roster
+    // Сортируем текущий ростер
+    const currentSorted = [...event.roster].sort((a, b) => (a.order || 0) - (b.order || 0));
+    
+    const newLines = currentSorted
       .filter((l) => l.id !== lineId)
       .map((line, index) => ({
         name: line.name,
@@ -220,14 +235,13 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
     }
   };
 
-
   // ===============================
   // 👉 НАЧАТЬ РЕДАКТИРОВАНИЕ ЗВЕНА
   // ===============================
   const startEditLine = (index: number) => {
-    if (!event?.roster) return;
+    if (!sortedRoster || index < 0 || index >= sortedRoster.length) return;
 
-    const line = event.roster[index];
+    const line = sortedRoster[index];
 
     const slots: Record<Slot, AttendanceLookUpDto | null> = {
       LW: null,
@@ -238,8 +252,8 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
     };
 
     line.members?.forEach((p) => {
-      const role = p.role as PlayerRole;      // 👈 ВАЖНО
-      const slot = roleToSlot[role];          // теперь TS доволен
+      const role = p.role as PlayerRole;
+      const slot = roleToSlot[role];
 
       if (slot) {
         slots[slot] = {
@@ -271,8 +285,8 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
         role: slotToRole[slot as Slot],
       }));
 
-    // Собираем ПОЛНЫЙ ростер для PUT
-    const linesForPut = event.roster?.map((line, idx) => {
+    // Собираем ПОЛНЫЙ сортированный ростер для PUT
+    const linesForPut = sortedRoster.map((line, idx) => {
       if (idx === editingLineIndex) {
         return {
           name: line.name,
@@ -294,7 +308,7 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
 
     const body: CreateUpdateRosterRequest = {
       eventId: event.id,
-      lines: linesForPut ?? [],
+      lines: linesForPut,
     };
 
     try {
@@ -311,7 +325,142 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
     }
   };
 
-  // ======== КРУЖКИ ДЛЯ ЗВЕНА (ТВОИ, НЕ ТРОГАЛ) ========
+  // ===============================
+  // 👉 ПЕРЕИМЕНОВАТЬ ЗВЕНО (ИСПРАВЛЕНО - добавлена проверка на event)
+  // ===============================
+  const startRenameLine = (lineId: string, currentName: string) => {
+    setRenamingLineId(lineId);
+    setNewLineName(currentName);
+  };
+
+  const saveRenamedLine = async () => {
+    if (!event || !renamingLineId) return; // ✅ Добавлена проверка на event
+
+    const linesForPut = sortedRoster.map((line) => {
+      if (line.id === renamingLineId) {
+        return {
+          name: newLineName || line.name,
+          order: line.order,
+          players:
+            line.members?.map((p) => ({
+              userId: p.userId,
+              role: p.role,
+            })) ?? [],
+        };
+      }
+
+      return {
+        name: line.name,
+        order: line.order,
+        players:
+          line.members?.map((p) => ({
+            userId: p.userId,
+            role: p.role,
+          })) ?? [],
+      };
+    });
+
+    const body: CreateUpdateRosterRequest = {
+      eventId: event.id, // ✅ Теперь event гарантированно не null
+      lines: linesForPut,
+    };
+
+    try {
+      await fetch("/api/lines", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+      const updated = await getEvent(eventId);
+      setEvent(updated);
+      setRenamingLineId(null);
+      setNewLineName("");
+    } catch (e: any) {
+      setError(e.message);
+    }
+  };
+
+  // ===============================
+  // 👉 ИЗМЕНИТЬ ПОРЯДОК ЗВЕНА (ИСПРАВЛЕНО - добавлена проверка на event)
+  // ===============================
+  const moveLineUp = async (index: number) => {
+    if (!event || !sortedRoster || index <= 0) return; // ✅ Добавлена проверка на event
+
+    const newRoster = [...sortedRoster];
+    const temp = newRoster[index];
+    newRoster[index] = newRoster[index - 1];
+    newRoster[index - 1] = temp;
+
+    // Обновляем порядок
+    const linesForPut = newRoster.map((line, idx) => ({
+      name: line.name,
+      order: idx + 1,
+      players:
+        line.members?.map((p) => ({
+          userId: p.userId,
+          role: p.role,
+        })) ?? [],
+    }));
+
+    const body: CreateUpdateRosterRequest = {
+      eventId: event.id, // ✅ Теперь event гарантированно не null
+      lines: linesForPut,
+    };
+
+    try {
+      await fetch("/api/lines", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+      const updated = await getEvent(eventId);
+      setEvent(updated);
+    } catch (e: any) {
+      setError(e.message);
+    }
+  };
+
+  const moveLineDown = async (index: number) => {
+    if (!event || !sortedRoster || index >= sortedRoster.length - 1) return; // ✅ Добавлена проверка на event
+
+    const newRoster = [...sortedRoster];
+    const temp = newRoster[index];
+    newRoster[index] = newRoster[index + 1];
+    newRoster[index + 1] = temp;
+
+    // Обновляем порядок
+    const linesForPut = newRoster.map((line, idx) => ({
+      name: line.name,
+      order: idx + 1,
+      players:
+        line.members?.map((p) => ({
+          userId: p.userId,
+          role: p.role,
+        })) ?? [],
+    }));
+
+    const body: CreateUpdateRosterRequest = {
+      eventId: event.id, // ✅ Теперь event гарантированно не null
+      lines: linesForPut,
+    };
+
+    try {
+      await fetch("/api/lines", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+      const updated = await getEvent(eventId);
+      setEvent(updated);
+    } catch (e: any) {
+      setError(e.message);
+    }
+  };
+
+  // ======== КРУЖКИ ДЛЯ ЗВЕНА ========
   const LineCircles = ({
     members,
   }: {
@@ -432,7 +581,6 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
             ❌ Отменить редактирование
           </button>
 
-          {/* ===== ДВЕ СТРОКИ КРУЖКОВ (3 + 2) ===== */}
           <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
             {(["LW", "C", "RW"] as Slot[]).map((slot) => (
               <div key={slot} style={{ textAlign: "center" }}>
@@ -532,7 +680,8 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
         </div>
       )}
 
-      {event.roster?.map((line: LineDto, idx) => (
+      {/* 👉 ИСПОЛЬЗУЕМ sortedRoster вместо event.roster */}
+      {sortedRoster.map((line: LineDto, idx) => (
         <div
           key={line.id}
           style={{
@@ -542,24 +691,75 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
             position: "relative",
           }}
         >
-          <strong>{line.name ?? `Линия ${line.order}`}</strong>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+            {renamingLineId === line.id ? (
+              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                <input
+                  type="text"
+                  value={newLineName}
+                  onChange={(e) => setNewLineName(e.target.value)}
+                  style={{ padding: 4 }}
+                  placeholder="Название звена"
+                />
+                <button onClick={saveRenamedLine} style={{ padding: "4px 8px" }}>
+                  💾
+                </button>
+                <button onClick={() => setRenamingLineId(null)} style={{ padding: "4px 8px" }}>
+                  ❌
+                </button>
+              </div>
+            ) : (
+              <>
+                <strong>{line.name ?? `Звено ${line.order}`}</strong>
+                <button
+                  onClick={() => startRenameLine(line.id, line.name || `Звено ${line.order}`)}
+                  style={{ padding: "2px 6px", fontSize: "0.8em" }}
+                  title="Переименовать"
+                >
+                  📝
+                </button>
+              </>
+            )}
+          </div>
 
-          <button
-            style={{ marginLeft: 8 }}
-            onClick={() => startEditLine(idx)}
-          >
-            ✏ Редактировать
-          </button>
+          <div style={{ display: "flex", gap: 8, marginBottom: 8, flexWrap: "wrap" }}>
+            <button
+              onClick={() => startEditLine(idx)}
+              style={{ padding: "4px 8px", fontSize: "0.9em" }}
+            >
+              ✏ Состав
+            </button>
 
-          <button
-            onClick={() => deleteLine(line.id)}
-            style={{
-              marginLeft: 8,
-              background: "#ffebee",
-            }}
-          >
-            🗑 Удалить звено
-          </button>
+            <button
+              onClick={() => deleteLine(line.id)}
+              style={{
+                padding: "4px 8px",
+                fontSize: "0.9em",
+                background: "#ffebee",
+              }}
+            >
+              🗑 Удалить
+            </button>
+
+            <div style={{ marginLeft: "auto", display: "flex", gap: 4 }}>
+              <button
+                onClick={() => moveLineUp(idx)}
+                disabled={idx === 0}
+                style={{ padding: "4px", fontSize: "0.8em" }}
+                title="Поднять выше"
+              >
+                ⬆
+              </button>
+              <button
+                onClick={() => moveLineDown(idx)}
+                disabled={idx === sortedRoster.length - 1}
+                style={{ padding: "4px", fontSize: "0.8em" }}
+                title="Опустить ниже"
+              >
+                ⬇
+              </button>
+            </div>
+          </div>
 
           <LineCircles members={line.members} />
         </div>
