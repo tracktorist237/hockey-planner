@@ -14,6 +14,7 @@ import { CreateEventPage } from "./CreateEventPage";
 import { DeleteEventPage } from "./DeleteEventPage";
 import { CreatePlayerFormPage } from "./CreatePlayerFormPage";
 import { ContactInfo } from './ContactInfo';
+import { text } from "stream/consumers";
 
 interface User {
   id: string;
@@ -72,7 +73,7 @@ function StartSearchPage({
           color: "#1a237e",
           lineHeight: "1.2"
         }}>
-          🏒 Хоккейная команда
+          🏒 ХК Северная Столица
         </h1>
         <p style={{
           margin: "0",
@@ -281,7 +282,9 @@ function StartSearchPage({
               e.currentTarget.style.transform = "translateY(0)";
             }}
           >
-            <span>➕</span>
+            <span style={{
+              fontSize: 20
+             }}>+</span>
             <span>Заполнить анкету игрока</span>
           </button>
           <p style={{
@@ -478,7 +481,9 @@ function EventsListPage({
               e.currentTarget.style.transform = "translateY(0)";
             }}
           >
-            <span>➕</span>
+             <span style={{
+              fontSize: 25
+              }}>+</span>
             <span>Добавить</span>
           </button>
         </div>
