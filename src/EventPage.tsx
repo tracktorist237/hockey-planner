@@ -25,6 +25,22 @@ interface EventPageProps {
   } | null;
 }
 
+interface PlayerDetails {
+  id: string;
+  firstName: string;
+  lastName: string;
+  jerseyNumber?: number | null;
+  primaryPosition?: number | null;
+  secondaryPosition?: number | null;
+  handedness?: number | null;
+  height?: number | null;
+  weight?: number | null;
+  birthDate?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  photoUrl?: string | null;
+}
+
 type Slot = "LW" | "C" | "RW" | "LD" | "RD";
 
 const slotToRole: Record<Slot, PlayerRole> = {
@@ -92,11 +108,93 @@ const formatDate = (dateString: string) => {
   }).replace('.', '') + `, ${timeStr}`;
 };
 
+const getPositionName = (position: number): string => {
+  switch (position) {
+    case 1:
+      return 'Вратарь';
+    case 2:
+      return 'Защитник';
+    case 3:
+      return 'Нападающий';
+    default:
+      return 'Не указано';
+  }
+};
+
+const getPositionIcon = (position: number): string => {
+  switch (position) {
+    case 1:
+      return '🥅';
+    case 2:
+      return '🛡️';
+    case 3:
+      return '⚡';
+    default:
+      return '🏒';
+  }
+};
+
+const getHandednessName = (handedness: number): string => {
+  switch (handedness) {
+    case 1:
+      return 'Левый хват';
+    case 2:
+      return 'Правый хват';
+    default:
+      return 'Не указано';
+  }
+};
+
+const calculateAge = (birthDate: string): number | null => {
+  if (!birthDate) return null;
+  const today = new Date();
+  const birth = new Date(birthDate);
+  let age = today.getFullYear() - birth.getFullYear();
+  const monthDiff = today.getMonth() - birth.getMonth();
+  
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+    age--;
+  }
+  return age;
+};
+
+// Функция для получения цвета дивизиона
+const getLeagueColor = (leagueName: string): string => {
+  const colors = [
+    "#d32f2f", // Красный
+    "#1976d2", // Синий
+    "#388e3c", // Зеленый
+    "#f57c00", // Оранжевый
+    "#7b1fa2", // Фиолетовый
+    "#c2185b", // Розовый
+    "#00796b", // Бирюзовый
+    "#5d4037", // Коричневый
+  ];
+  
+  let hash = 0;
+  for (let i = 0; i < leagueName.length; i++) {
+    hash = ((hash << 5) - hash) + leagueName.charCodeAt(i);
+    hash |= 0;
+  }
+  
+  return colors[Math.abs(hash) % colors.length];
+};
+
 export function EventPage({ eventId, onBack }: EventPageProps) {
   const [event, setEvent] = useState<EventDto | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  
+  // Состояние для комментария
+  const [attendanceNote, setAttendanceNote] = useState("");
+  const [showNoteInput, setShowNoteInput] = useState(false);
+  const [isEditingNote, setIsEditingNote] = useState(false);
+
+  // Состояние для модального окна игрока
+  const [selectedPlayer, setSelectedPlayer] = useState<PlayerDetails | null>(null);
+  const [isPlayerModalOpen, setIsPlayerModalOpen] = useState(false);
+  const [loadingPlayer, setLoadingPlayer] = useState(false);
 
   // Выбираем игрока ОДИН РАЗ из пропсов
   const storedUser = localStorage.getItem("currentUser");
@@ -144,6 +242,13 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
     (a) => a.userId === selectedUserId
   );
 
+  // Устанавливаем текущий комментарий при загрузке
+  useEffect(() => {
+    if (myAttendance?.notes) {
+      setAttendanceNote(myAttendance.notes);
+    }
+  }, [myAttendance]);
+
   // ===== УБИРАЕМ ИГРОКОВ, КОТОРЫЕ УЖЕ В ЗВЕНАХ =====
   const usedUserIds = new Set<string>();
 
@@ -162,7 +267,7 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
     event?.attendances
       ?.filter((a) => a.status === 2 && !usedUserIds.has(a.userId)) ?? [];
 
-  const handleVote = async (status: number) => {
+  const handleVote = async (status: number, notes?: string | null) => {
     if (!event) return;
 
     if (!selectedUserId) {
@@ -174,13 +279,39 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
     setError(null);
 
     try {
-      await updateAttendance(event.id, selectedUserId, status);
+      await updateAttendance(event.id, selectedUserId, status, notes);
       const updated = await getEvent(eventId);
       setEvent(updated);
+      setShowNoteInput(false);
+      setIsEditingNote(false);
     } catch (e: any) {
       setError(e.message);
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleAddNote = async () => {
+    if (!event || !myAttendance) return;
+    
+    await handleVote(myAttendance.status, attendanceNote);
+  };
+
+  // Функция для открытия информации об игроке
+  const handleOpenPlayerInfo = async (userId: string) => {
+    setLoadingPlayer(true);
+    try {
+      const response = await fetch(`/api/users/${userId}`);
+      if (!response.ok) {
+        throw new Error('Не удалось загрузить информацию об игроке');
+      }
+      const playerData = await response.json();
+      setSelectedPlayer(playerData);
+      setIsPlayerModalOpen(true);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoadingPlayer(false);
     }
   };
 
@@ -203,7 +334,7 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
   };
 
   // ===============================
-  // 👉 СОЗДАНИЕ НОВОГО ЗВЕНА (ИСПРАВЛЕНО)
+  // 👉 СОЗДАНИЕ НОВОГО ЗВЕНА
   // ===============================
   const saveLine = async () => {
     if (!event) return;
@@ -311,6 +442,8 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
           jerseyNumber: p.jerseyNumber,
           firstName: p.firstName,
           lastName: p.lastName,
+          primaryPosition: 0,
+          handedness: 0,
           status: 2,
           respondedAt: new Date().toISOString(),
         } as AttendanceLookUpDto;
@@ -323,7 +456,7 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
   };
 
   // ===============================
-  // 👉 СОХРАНИТЬ РЕДАКТИРОВАННОЕ ЗВЕНО (PUT)
+  // 👉 СОХРАНИТЬ РЕДАКТИРОВАННОЕ ЗВЕНО
   // ===============================
   const saveEditedLine = async () => {
     if (!event || editingLineIndex === null) return;
@@ -533,6 +666,12 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
     const renderCircle = (slot: Slot) => (
       <div key={slot} style={{ textAlign: "center", width: "70px" }}>
         <div
+          onClick={() => {
+            const player = slots[slot];
+            if (player) {
+              handleOpenPlayerInfo(player.userId);
+            }
+          }}
           style={{
             width: "56px",
             height: "56px",
@@ -545,7 +684,21 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
             margin: "0 auto 4px auto",
             fontSize: "20px",
             fontWeight: "600",
-            color: "#1a237e"
+            color: "#1a237e",
+            cursor: slots[slot] ? "pointer" : "default",
+            transition: "all 0.2s ease"
+          }}
+          onMouseEnter={(e) => {
+            if (slots[slot]) {
+              e.currentTarget.style.backgroundColor = "#bbdefb";
+              e.currentTarget.style.transform = "scale(1.05)";
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (slots[slot]) {
+              e.currentTarget.style.backgroundColor = "#e3f2fd";
+              e.currentTarget.style.transform = "scale(1)";
+            }
           }}
         >
           {slots[slot] ? (
@@ -575,8 +728,20 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
             textOverflow: "ellipsis",
             display: "-webkit-box",
             WebkitLineClamp: 2,
-            WebkitBoxOrient: "vertical"
-          }}>
+            WebkitBoxOrient: "vertical",
+            cursor: "pointer",
+            transition: "color 0.2s ease"
+          }}
+          onClick={() => handleOpenPlayerInfo(slots[slot]!.userId)}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.color = "#1976d2";
+            e.currentTarget.style.textDecoration = "underline";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.color = "#333";
+            e.currentTarget.style.textDecoration = "none";
+          }}
+          >
             {slots[slot]!.lastName}
           </div>
         )}
@@ -664,7 +829,7 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
       </div>
 
       <div style={{ 
-        maxHeight: "200px", 
+        maxHeight: "400px", 
         overflowY: "auto",
         border: "1px solid #e0e0e0",
         borderRadius: "10px",
@@ -677,42 +842,95 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
               padding: "12px",
               borderBottom: "1px solid #f0f0f0",
               display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between"
+              flexDirection: "column",
+              gap: "4px",
+              cursor: "pointer",
+              transition: "background-color 0.2s ease"
+            }}
+            onClick={() => handleOpenPlayerInfo(a.userId)}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = "#f5f5f5";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "transparent";
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-              <div style={{
-                width: "32px",
-                height: "32px",
-                backgroundColor: a.status === 2 ? "#e8f5e9" : 
-                               a.status === 3 ? "#ffebee" : "#fff3e0",
-                color: a.status === 2 ? "#2e7d32" : 
-                       a.status === 3 ? "#c62828" : "#ef6c00",
-                borderRadius: "8px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontWeight: "600",
-                fontSize: "14px",
-                flexShrink: 0
-              }}>
-                #{a.jerseyNumber || "?"}
-              </div>
-              <div>
-                <div style={{ fontWeight: "500", fontSize: "15px" }}>
-                  {a.firstName} {a.lastName}
+            <div style={{ 
+              display: "flex", 
+              alignItems: "center", 
+              justifyContent: "space-between" 
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                <div style={{
+                  width: "32px",
+                  height: "32px",
+                  backgroundColor: a.status === 2 ? "#e8f5e9" : 
+                                 a.status === 3 ? "#ffebee" : "#fff3e0",
+                  color: a.status === 2 ? "#2e7d32" : 
+                         a.status === 3 ? "#c62828" : "#ef6c00",
+                  borderRadius: "8px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontWeight: "600",
+                  fontSize: "14px",
+                  flexShrink: 0
+                }}>
+                  #{a.jerseyNumber || "?"}
+                </div>
+                <div>
+                  <div style={{ 
+                    fontWeight: "500", 
+                    fontSize: "15px",
+                    color: "#1a237e",
+                    transition: "color 0.2s ease"
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.color = "#1976d2";
+                    e.currentTarget.style.textDecoration = "underline";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.color = "#1a237e";
+                    e.currentTarget.style.textDecoration = "none";
+                  }}
+                  >
+                    {a.firstName} {a.lastName}
+                  </div>
                 </div>
               </div>
+              <div style={{ 
+                fontSize: "13px",
+                color: a.status === 2 ? "#2e7d32" : 
+                       a.status === 3 ? "#c62828" : "#ff9800",
+                fontWeight: "500",
+                display: "flex",
+                alignItems: "center",
+                gap: "4px"
+              }}>
+                {a.status === 2 ? "✅" : a.status === 3 ? "❌" : "⏳"}
+              </div>
             </div>
-            <div style={{ 
-              fontSize: "13px",
-              color: a.status === 2 ? "#2e7d32" : 
-                     a.status === 3 ? "#c62828" : "#ff9800",
-              fontWeight: "500"
-            }}>
-              {a.status === 2 ? "✅" : a.status === 3 ? "❌" : "⏳"}
-            </div>
+            
+            {/* Отображение комментария */}
+            {a.notes && (
+              <div style={{
+                marginLeft: "44px",
+                padding: "8px 12px",
+                backgroundColor: "#f8f9fa",
+                borderRadius: "8px",
+                border: "1px solid #e0e0e0",
+                fontSize: "13px",
+                color: "#555",
+                display: "flex",
+                alignItems: "flex-start",
+                gap: "6px"
+              }}>
+                <span style={{ fontSize: "14px", color: "#666" }}>💬</span>
+                <span style={{ fontStyle: "italic", lineHeight: "1.4" }}>
+                  {a.notes}
+                </span>
+              </div>
+            )}
           </div>
         )) || <div style={{ padding: "16px", textAlign: "center", color: "#666" }}>Нет данных о явке</div>}
       </div>
@@ -1228,6 +1446,297 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
     </div>
   );
 
+  // Модальное окно с информацией об игроке
+  const PlayerInfoModal = () => {
+    if (!isPlayerModalOpen || !selectedPlayer) return null;
+
+    return (
+      <div style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: "rgba(0,0,0,0.5)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 1000,
+        padding: "16px"
+      }}
+      onClick={() => setIsPlayerModalOpen(false)}
+      >
+        <div style={{
+          backgroundColor: "white",
+          borderRadius: "20px",
+          maxWidth: "500px",
+          width: "100%",
+          maxHeight: "90vh",
+          overflowY: "auto",
+          position: "relative",
+          boxShadow: "0 10px 30px rgba(0,0,0,0.2)"
+        }}
+        onClick={(e) => e.stopPropagation()}
+        >
+          {/* Заголовок модального окна */}
+          <div style={{
+            padding: "20px",
+            borderBottom: "1px solid #e0e0e0",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            background: "linear-gradient(135deg, #1a237e 0%, #283593 100%)",
+            borderRadius: "20px 20px 0 0",
+            color: "white"
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <div style={{
+                width: "48px",
+                height: "48px",
+                backgroundColor: "white",
+                color: "#1a237e",
+                borderRadius: "12px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontWeight: "700",
+                fontSize: "22px"
+              }}>
+                #{selectedPlayer.jerseyNumber || "?"}
+              </div>
+              <div>
+                <h2 style={{ margin: 0, fontSize: "20px", fontWeight: "600" }}>
+                  {selectedPlayer.lastName} {selectedPlayer.firstName}
+                </h2>
+              </div>
+            </div>
+            <button
+              onClick={() => setIsPlayerModalOpen(false)}
+              style={{
+                width: "40px",
+                height: "40px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                background: "rgba(255,255,255,0.2)",
+                border: "none",
+                borderRadius: "10px",
+                color: "white",
+                fontSize: "20px",
+                cursor: "pointer",
+                transition: "all 0.2s ease"
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.3)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.2)";
+              }}
+            >
+              ✕
+            </button>
+          </div>
+
+          {/* Информация об игроке */}
+          <div style={{ padding: "20px" }}>
+            {/* Основная информация */}
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: "16px",
+              marginBottom: "24px"
+            }}>
+              <div style={{
+                padding: "16px",
+                backgroundColor: "#f8f9fa",
+                borderRadius: "12px",
+                border: "1px solid #e0e0e0"
+              }}>
+                <div style={{ fontSize: "13px", color: "#666", marginBottom: "4px" }}>
+                  Основная позиция
+                </div>
+                <div style={{ 
+                  fontSize: "18px", 
+                  fontWeight: "600", 
+                  color: "#1a237e",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px"
+                }}>
+                  <span>{getPositionIcon(selectedPlayer.primaryPosition || 0)}</span>
+                  <span>{getPositionName(selectedPlayer.primaryPosition || 0)}</span>
+                </div>
+              </div>
+
+              <div style={{
+                padding: "16px",
+                backgroundColor: "#f8f9fa",
+                borderRadius: "12px",
+                border: "1px solid #e0e0e0"
+              }}>
+                <div style={{ fontSize: "13px", color: "#666", marginBottom: "4px" }}>
+                  Хват клюшки
+                </div>
+                <div style={{ 
+                  fontSize: "18px", 
+                  fontWeight: "600", 
+                  color: "#1a237e" 
+                }}>
+                  {getHandednessName(selectedPlayer.handedness || 0)}
+                </div>
+              </div>
+            </div>
+
+            {/* Физические параметры */}
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr 1fr",
+              gap: "12px",
+              marginBottom: "24px"
+            }}>
+              <div style={{
+                padding: "12px",
+                backgroundColor: "#e3f2fd",
+                borderRadius: "10px",
+                textAlign: "center"
+              }}>
+                <div style={{ fontSize: "20px", marginBottom: "4px" }}>📏</div>
+                <div style={{ fontSize: "13px", color: "#666", marginBottom: "2px" }}>
+                  Рост
+                </div>
+                <div style={{ fontSize: "16px", fontWeight: "600", color: "#1976d2" }}>
+                  {selectedPlayer.height ? `${selectedPlayer.height} см` : '—'}
+                </div>
+              </div>
+
+              <div style={{
+                padding: "12px",
+                backgroundColor: "#e8f5e9",
+                borderRadius: "10px",
+                textAlign: "center"
+              }}>
+                <div style={{ fontSize: "20px", marginBottom: "4px" }}>⚖️</div>
+                <div style={{ fontSize: "13px", color: "#666", marginBottom: "2px" }}>
+                  Вес
+                </div>
+                <div style={{ fontSize: "16px", fontWeight: "600", color: "#2e7d32" }}>
+                  {selectedPlayer.weight ? `${selectedPlayer.weight} кг` : '—'}
+                </div>
+              </div>
+
+              <div style={{
+                padding: "12px",
+                backgroundColor: "#fff3e0",
+                borderRadius: "10px",
+                textAlign: "center"
+              }}>
+                <div style={{ fontSize: "20px", marginBottom: "4px" }}>🎂</div>
+                <div style={{ fontSize: "13px", color: "#666", marginBottom: "2px" }}>
+                  Возраст
+                </div>
+                <div style={{ fontSize: "16px", fontWeight: "600", color: "#ef6c00" }}>
+                  {selectedPlayer.birthDate ? `${calculateAge(selectedPlayer.birthDate)} лет` : '—'}
+                </div>
+              </div>
+            </div>
+
+            {/* Детальная информация */}
+            <div style={{
+              backgroundColor: "#f8f9fa",
+              borderRadius: "12px",
+              padding: "16px"
+            }}>
+              <h4 style={{
+                margin: "0 0 16px 0",
+                fontSize: "16px",
+                fontWeight: "600",
+                color: "#333",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px"
+              }}>
+                <span>📋</span>
+                <span>Детальная информация</span>
+              </h4>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span style={{ color: "#666" }}>ID игрока:</span>
+                  <span style={{ fontWeight: "500", color: "#333" }}>{selectedPlayer.id.slice(0, 8)}...</span>
+                </div>
+
+                {selectedPlayer.email && (
+                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <span style={{ color: "#666" }}>Email:</span>
+                    <span style={{ fontWeight: "500", color: "#1976d2" }}>{selectedPlayer.email}</span>
+                  </div>
+                )}
+
+                {selectedPlayer.phone && (
+                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <span style={{ color: "#666" }}>Телефон:</span>
+                    <span style={{ fontWeight: "500", color: "#333" }}>{selectedPlayer.phone}</span>
+                  </div>
+                )}
+
+                {selectedPlayer.birthDate && (
+                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <span style={{ color: "#666" }}>Дата рождения:</span>
+                    <span style={{ fontWeight: "500", color: "#333" }}>
+                      {new Date(selectedPlayer.birthDate).toLocaleDateString('ru-RU')}
+                    </span>
+                  </div>
+                )}
+
+                {selectedPlayer.secondaryPosition && selectedPlayer.secondaryPosition !== 0 && (
+                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <span style={{ color: "#666" }}>Вторая позиция:</span>
+                    <span style={{ fontWeight: "500", color: "#333" }}>
+                      {getPositionName(selectedPlayer.secondaryPosition)}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Кнопка закрытия */}
+          <div style={{
+            padding: "20px",
+            borderTop: "1px solid #e0e0e0",
+            display: "flex",
+            justifyContent: "flex-end"
+          }}>
+            <button
+              onClick={() => setIsPlayerModalOpen(false)}
+              style={{
+                padding: "12px 24px",
+                backgroundColor: "#1976d2",
+                color: "white",
+                border: "none",
+                borderRadius: "10px",
+                fontSize: "15px",
+                fontWeight: "500",
+                cursor: "pointer",
+                transition: "all 0.2s ease"
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "#1565c0";
+                e.currentTarget.style.transform = "translateY(-1px)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "#1976d2";
+                e.currentTarget.style.transform = "translateY(0)";
+              }}
+            >
+              Закрыть
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   if (loading) return (
     <div style={{
       padding: "16px",
@@ -1385,73 +1894,136 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
             ←
           </button>
           <div style={{ flex: 1 }}>
-            <h1 style={{ 
-              margin: "0 0 4px 0", 
-              fontSize: "18px",
-              fontWeight: "600",
-              color: "#1a237e",
-              lineHeight: "1.2"
-            }}>
-              {event.title}
-            </h1>
-            <div style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              flexWrap: "wrap"
-            }}>
-              <span style={{
-                fontSize: "12px",
-                color: "#fff",
-                backgroundColor: getEventTypeColor(event.type as EventType),
-                padding: "2px 8px",
-                borderRadius: "10px",
-                fontWeight: "500"
-              }}>
-                {getEventTypeName(event.type as EventType)}
-              </span>
-              <span style={{
-                fontSize: "13px",
-                color: "#666"
-              }}>
-                {formatDate(event.startTime)}
-              </span>
-            </div>
+            <CurrentPlayerHeader/>
           </div>
-          <button
-            onClick={() => {
-              window.location.href = `/events/${event.id}/delete`;
-            }}
-            style={{
-              padding: "8px 12px",
-              backgroundColor: "#ffebee",
-              color: "#d32f2f",
-              border: "1px solid #ffcdd2",
-              borderRadius: "8px",
-              fontSize: "13px",
-              cursor: "pointer",
-              fontWeight: "500",
-              flexShrink: 0,
-              transition: "all 0.2s ease"
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = "#ffcdd2";
-              e.currentTarget.style.transform = "translateY(-1px)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = "#ffebee";
-              e.currentTarget.style.transform = "translateY(0)";
-            }}
-          >
-            🗑 Удалить
-          </button>
         </div>
-
-        <CurrentPlayerHeader/>
       </div>
 
       {/* Основной контент */}
       <div style={{ padding: "16px", paddingBottom: "100px" }}>
+        {/* Карточка с информацией о событии */}
+        <div style={{
+          backgroundColor: "white",
+          borderRadius: "16px",
+          padding: "20px",
+          marginBottom: "20px",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.08)"
+        }}>
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "12px",
+            flexWrap: "wrap",
+            marginBottom: "8px"
+          }}>
+            <span style={{
+              fontSize: "14px",
+              color: "#fff",
+              backgroundColor: getEventTypeColor(event.type as EventType),
+              padding: "4px 12px",
+              borderRadius: "20px",
+              fontWeight: "600"
+            }}>
+              {getEventTypeName(event.type as EventType)}
+            </span>
+            <span style={{
+              fontSize: "15px",
+              color: "#666",
+              display: "flex",
+              alignItems: "center",
+              gap: "4px"
+            }}>
+              🕒 {formatDate(event.startTime)}
+            </span>
+
+            {/* Плашка дивизиона только для матчей */}
+            {event.type === EventType.Game && event.leagueName && (
+              <div style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                backgroundColor: getLeagueColor(event.leagueName),
+                padding: "4px 12px",
+                borderRadius: "20px",
+                fontSize: "13px",
+                fontWeight: "500",
+                color: "white",
+                border: "1px solid rgba(255,255,255,0.3)"
+              }}>
+                <span style={{ fontSize: "14px" }}>🏆</span>
+                <span>{event.leagueName}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Для матчей показываем команды */}
+          {event.type === EventType.Game && event.homeTeamName && event.awayTeamName && (
+            <div style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "12px",
+              marginTop: "16px",
+              padding: "12px 16px",
+              backgroundColor: "#f8f9fa",
+              borderRadius: "12px",
+              border: "1px solid #e0e0e0"
+            }}>
+              <span style={{ fontSize: "16px", fontWeight: "700", color: "#1a237e", textAlign: "center" }}>
+                {event.homeTeamName}
+              </span>
+              <span style={{ 
+                fontSize: "14px", 
+                color: "#666",
+                backgroundColor: "white",
+                padding: "4px 12px",
+                borderRadius: "16px",
+                border: "1px solid #e0e0e0",
+                fontWeight: "600"
+              }}>
+                VS
+              </span>
+              <span style={{ fontSize: "16px", fontWeight: "700", color: "#1a237e", textAlign: "center" }}>
+                {event.awayTeamName}
+              </span>
+            </div>
+          )}
+          <div style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "12px"
+          }}>
+            <button
+              onClick={() => {
+                window.location.href = `/events/${event.id}/delete`;
+              }}
+              style={{
+                padding: "8px 12px",
+                backgroundColor: "#ffebee",
+                color: "#d32f2f",
+                border: "1px solid #ffcdd2",
+                borderRadius: "8px",
+                fontSize: "13px",
+                cursor: "pointer",
+                fontWeight: "500",
+                flexShrink: 0,
+                marginLeft: "12px",
+                transition: "all 0.2s ease"
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "#ffcdd2";
+                e.currentTarget.style.transform = "translateY(-1px)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "#ffebee";
+                e.currentTarget.style.transform = "translateY(0)";
+              }}
+            >
+              🗑 Удалить
+            </button>
+          </div>
+        </div>
+
         {/* Описание */}
         {event.description && (
           <div style={{
@@ -1568,82 +2140,198 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
           </h3>
 
           {(!myAttendance || myAttendance.status === 1) ? (
-            <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
-              <button 
-                disabled={submitting} 
-                onClick={() => handleVote(2)}
-                style={{
-                  flex: 1,
-                  minWidth: "140px",
-                  padding: "14px 16px",
-                  backgroundColor: "#4caf50",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "10px",
-                  fontSize: "16px",
-                  fontWeight: "600",
-                  cursor: submitting ? "not-allowed" : "pointer",
-                  opacity: submitting ? 0.7 : 1,
-                  transition: "all 0.2s ease",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "8px"
-                }}
-                onMouseEnter={(e) => {
-                  if (!submitting) {
-                    e.currentTarget.style.backgroundColor = "#388e3c";
-                    e.currentTarget.style.transform = "translateY(-1px)";
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!submitting) {
-                    e.currentTarget.style.backgroundColor = "#4caf50";
-                    e.currentTarget.style.transform = "translateY(0)";
-                  }
-                }}
-              >
-                <span>✅</span>
-                <span>Смогу</span>
-              </button>
-              <button 
-                disabled={submitting} 
-                onClick={() => handleVote(3)}
-                style={{
-                  flex: 1,
-                  minWidth: "140px",
-                  padding: "14px 16px",
-                  backgroundColor: "#f44336",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "10px",
-                  fontSize: "16px",
-                  fontWeight: "600",
-                  cursor: submitting ? "not-allowed" : "pointer",
-                  opacity: submitting ? 0.7 : 1,
-                  transition: "all 0.2s ease",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "8px"
-                }}
-                onMouseEnter={(e) => {
-                  if (!submitting) {
-                    e.currentTarget.style.backgroundColor = "#d32f2f";
-                    e.currentTarget.style.transform = "translateY(-1px)";
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!submitting) {
-                    e.currentTarget.style.backgroundColor = "#f44336";
-                    e.currentTarget.style.transform = "translateY(0)";
-                  }
-                }}
-              >
-                <span>❌</span>
-                <span>Не смогу</span>
-              </button>
-            </div>
+            <>
+              <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", marginBottom: "12px" }}>
+                <button 
+                  disabled={submitting} 
+                  onClick={() => handleVote(2, attendanceNote || null)}
+                  style={{
+                    flex: 1,
+                    minWidth: "140px",
+                    padding: "14px 16px",
+                    backgroundColor: "#4caf50",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "10px",
+                    fontSize: "16px",
+                    fontWeight: "600",
+                    cursor: submitting ? "not-allowed" : "pointer",
+                    opacity: submitting ? 0.7 : 1,
+                    transition: "all 0.2s ease",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "8px"
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!submitting) {
+                      e.currentTarget.style.backgroundColor = "#388e3c";
+                      e.currentTarget.style.transform = "translateY(-1px)";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!submitting) {
+                      e.currentTarget.style.backgroundColor = "#4caf50";
+                      e.currentTarget.style.transform = "translateY(0)";
+                    }
+                  }}
+                >
+                  <span>✅</span>
+                  <span>Смогу</span>
+                </button>
+                <button 
+                  disabled={submitting} 
+                  onClick={() => handleVote(3, attendanceNote || null)}
+                  style={{
+                    flex: 1,
+                    minWidth: "140px",
+                    padding: "14px 16px",
+                    backgroundColor: "#f44336",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "10px",
+                    fontSize: "16px",
+                    fontWeight: "600",
+                    cursor: submitting ? "not-allowed" : "pointer",
+                    opacity: submitting ? 0.7 : 1,
+                    transition: "all 0.2s ease",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "8px"
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!submitting) {
+                      e.currentTarget.style.backgroundColor = "#d32f2f";
+                      e.currentTarget.style.transform = "translateY(-1px)";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!submitting) {
+                      e.currentTarget.style.backgroundColor = "#f44336";
+                      e.currentTarget.style.transform = "translateY(0)";
+                    }
+                  }}
+                >
+                  <span>❌</span>
+                  <span>Не смогу</span>
+                </button>
+              </div>
+
+              {/* Кнопка добавить комментарий */}
+              {!showNoteInput ? (
+                <button
+                  onClick={() => setShowNoteInput(true)}
+                  style={{
+                    width: "100%",
+                    padding: "12px 16px",
+                    backgroundColor: "#f5f5f5",
+                    color: "#666",
+                    border: "1px solid #e0e0e0",
+                    borderRadius: "10px",
+                    fontSize: "15px",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "8px",
+                    transition: "all 0.2s ease"
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = "#e0e0e0";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = "#f5f5f5";
+                  }}
+                >
+                  <span>💬</span>
+                  <span>Добавить комментарий</span>
+                </button>
+              ) : (
+                <div style={{
+                  marginTop: "12px",
+                  padding: "16px",
+                  backgroundColor: "#f8f9fa",
+                  borderRadius: "12px",
+                  border: "1px solid #e0e0e0"
+                }}>
+                  <div style={{
+                    display: "flex",
+                    gap: "8px",
+                    marginBottom: "12px"
+                  }}>
+                    <button
+                      onClick={() => setAttendanceNote("Принесу пиво")}
+                      style={{
+                        padding: "8px 12px",
+                        backgroundColor: "#fff3e0",
+                        color: "#ef6c00",
+                        border: "1px solid #ffe0b2",
+                        borderRadius: "8px",
+                        fontSize: "14px",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "4px",
+                        flex: 1
+                      }}
+                    >
+                      <span>🍺</span>
+                      <span>Принесу пиво</span>
+                    </button>
+                    <button
+                      onClick={() => setAttendanceNote("После травмы")}
+                      style={{
+                        padding: "8px 12px",
+                        backgroundColor: "#e8eaf6",
+                        color: "#3949ab",
+                        border: "1px solid #c5cae9",
+                        borderRadius: "8px",
+                        fontSize: "14px",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "4px",
+                        flex: 1
+                      }}
+                    >
+                      <span>🩹</span>
+                      <span>После травмы</span>
+                    </button>
+                  </div>
+                  
+                  <div style={{ display: "flex", gap: "8px" }}>
+                    <input
+                      type="text"
+                      value={attendanceNote}
+                      onChange={(e) => setAttendanceNote(e.target.value)}
+                      placeholder="Введите комментарий..."
+                      style={{
+                        flex: 1,
+                        padding: "12px",
+                        border: "1px solid #e0e0e0",
+                        borderRadius: "8px",
+                        fontSize: "15px",
+                        backgroundColor: "white"
+                      }}
+                    />
+                    <button
+                      onClick={() => setShowNoteInput(false)}
+                      style={{
+                        padding: "12px 16px",
+                        backgroundColor: "#f5f5f5",
+                        border: "1px solid #e0e0e0",
+                        borderRadius: "8px",
+                        fontSize: "14px",
+                        cursor: "pointer"
+                      }}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
           ) : (
             <div>
               <div style={{ 
@@ -1652,20 +2340,184 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
                 color: myAttendance.status === 2 ? "#2e7d32" : "#c62828",
                 borderRadius: "10px",
                 marginBottom: "16px",
-                border: `1px solid ${myAttendance.status === 2 ? "#c8e6c9" : "#ffcdd2"}`,
-                textAlign: "center"
+                border: `1px solid ${myAttendance.status === 2 ? "#c8e6c9" : "#ffcdd2"}`
               }}>
                 <div style={{ 
-                  fontSize: "18px", 
-                  fontWeight: "600",
-                  marginBottom: "4px"
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  marginBottom: myAttendance.notes ? "12px" : "0"
                 }}>
-                  {myAttendance.status === 2 ? "✅ Сможет" : "❌ Не сможет"}
+                  <div>
+                    <div style={{ 
+                      fontSize: "18px", 
+                      fontWeight: "600",
+                      marginBottom: "4px"
+                    }}>
+                      {myAttendance.status === 2 ? "✅ Сможет" : "❌ Не сможет"}
+                    </div>
+                    <div style={{ fontSize: "14px", opacity: 0.8 }}>
+                      Ваш ответ записан
+                    </div>
+                  </div>
+                  
+                  {/* Кнопка редактирования комментария */}
+                  {!isEditingNote ? (
+                    <button
+                      onClick={() => {
+                        setAttendanceNote(myAttendance.notes || "");
+                        setIsEditingNote(true);
+                      }}
+                      style={{
+                        padding: "8px 12px",
+                        backgroundColor: "rgba(255,255,255,0.5)",
+                        border: "1px solid rgba(0,0,0,0.1)",
+                        borderRadius: "8px",
+                        fontSize: "13px",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "4px"
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.8)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.5)";
+                      }}
+                    >
+                      <span>💬</span>
+                      <span>{myAttendance.notes ? "Изменить" : "Добавить"}</span>
+                    </button>
+                  ) : (
+                    <button
+                      onClick={handleAddNote}
+                      disabled={submitting}
+                      style={{
+                        padding: "8px 12px",
+                        backgroundColor: "#4caf50",
+                        color: "white",
+                        border: "none",
+                        borderRadius: "8px",
+                        fontSize: "13px",
+                        cursor: submitting ? "not-allowed" : "pointer",
+                        opacity: submitting ? 0.7 : 1,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "4px"
+                      }}
+                    >
+                      <span>💾</span>
+                      <span>Сохранить</span>
+                    </button>
+                  )}
                 </div>
-                <div style={{ fontSize: "14px", opacity: 0.8 }}>
-                  Ваш ответ записан
-                </div>
+
+                {/* Отображение текущего комментария */}
+                {myAttendance.notes && !isEditingNote && (
+                  <div style={{
+                    padding: "8px 12px",
+                    backgroundColor: "rgba(255,255,255,0.5)",
+                    borderRadius: "8px",
+                    fontSize: "14px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    textAlign: "left"
+                  }}>
+                    <span>💬</span>
+                    <span style={{ fontStyle: "italic" }}>{myAttendance.notes}</span>
+                  </div>
+                )}
+
+                {/* Редактирование комментария */}
+                {isEditingNote && (
+                  <div style={{
+                    marginTop: "12px",
+                    padding: "12px",
+                    backgroundColor: "rgba(255,255,255,0.5)",
+                    borderRadius: "8px",
+                  }}>
+                    <div style={{
+                      display: "flex",
+                      gap: "8px",
+                      marginBottom: "8px"
+                    }}>
+                      <button
+                        onClick={() => setAttendanceNote("Принесу пиво")}
+                        style={{
+                          padding: "6px 10px",
+                          backgroundColor: "#fff3e0",
+                          color: "#ef6c00",
+                          border: "1px solid #ffe0b2",
+                          borderRadius: "6px",
+                          fontSize: "13px",
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "4px",
+                          flex: 1
+                        }}
+                      >
+                        <span>🍺</span>
+                        <span>Принесу пиво</span>
+                      </button>
+                      <button
+                        onClick={() => setAttendanceNote("После травмы")}
+                        style={{
+                          padding: "6px 10px",
+                          backgroundColor: "#e8eaf6",
+                          color: "#3949ab",
+                          border: "1px solid #c5cae9",
+                          borderRadius: "6px",
+                          fontSize: "13px",
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "4px",
+                          flex: 1
+                        }}
+                      >
+                        <span>🩹</span>
+                        <span>После травмы</span>
+                      </button>
+                    </div>
+                    <div style={{ display: "flex", gap: "8px" }}>
+                      <input
+                        type="text"
+                        value={attendanceNote}
+                        onChange={(e) => setAttendanceNote(e.target.value)}
+                        placeholder="Введите комментарий..."
+                        style={{
+                          flex: 1,
+                          padding: "10px",
+                          border: "1px solid #e0e0e0",
+                          borderRadius: "6px",
+                          fontSize: "14px",
+                          backgroundColor: "white"
+                        }}
+                      />
+                      <button
+                        onClick={() => {
+                          setIsEditingNote(false);
+                          setAttendanceNote(myAttendance.notes || "");
+                        }}
+                        style={{
+                          padding: "10px 14px",
+                          backgroundColor: "#f5f5f5",
+                          border: "1px solid #e0e0e0",
+                          borderRadius: "6px",
+                          fontSize: "13px",
+                          cursor: "pointer"
+                        }}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
+
               <button 
                 disabled={submitting} 
                 onClick={() => handleVote(1)}
@@ -1727,6 +2579,9 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
         {renderRoster(event)}
       </div>
 
+      {/* Модальное окно с информацией об игроке */}
+      <PlayerInfoModal />
+
       <style>
         {`
           @keyframes spin {
@@ -1737,6 +2592,25 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
           button:focus, input:focus {
             outline: none;
             box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.2);
+          }
+          
+          /* Стили для скроллбара в модальном окне */
+          div[style*="overflowY: auto"]::-webkit-scrollbar {
+            width: 8px;
+          }
+          
+          div[style*="overflowY: auto"]::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+          }
+          
+          div[style*="overflowY: auto"]::-webkit-scrollbar-thumb {
+            background: #1976d2;
+            border-radius: 4px;
+          }
+          
+          div[style*="overflowY: auto"]::-webkit-scrollbar-thumb:hover {
+            background: #1565c0;
           }
           
           /* Для очень маленьких экранов */

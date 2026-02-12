@@ -14,6 +14,7 @@ export interface EventLookUpDto {
   locationName?: string;
   locationAddress?: string;
   iceRinkNumber?: string;
+  leagueName?: string | null;
 }
 
 export interface EventListDto {
@@ -62,10 +63,9 @@ export interface EventDto {
   attendances?: AttendanceLookUpDto[];
   createdAt: string;
   updatedAt?: string;
-  locationFull?: string;
-  isPast?: boolean;
-  isUpcoming?: boolean;
-  isOngoing?: boolean;
+  homeTeamName?: string | null;
+  awayTeamName?: string | null;
+  leagueName?: string | null;
 }
 
 

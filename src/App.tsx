@@ -8,13 +8,13 @@ import {
 } from "react-router-dom";
 import { getEvents } from "./api/events";
 import { getUsers } from "./api/users";
-import { EventListDto, EventType } from "./types/events"; // Импортируем EventType
+import { EventListDto, EventType } from "./types/events";
 import { EventPage } from "./EventPage";
 import { CreateEventPage } from "./CreateEventPage";
 import { DeleteEventPage } from "./DeleteEventPage";
 import { CreatePlayerFormPage } from "./CreatePlayerFormPage";
 import { ContactInfo } from './ContactInfo';
-import { text } from "stream/consumers";
+import { CurrentPlayerHeader } from './CurrentPlayerHeader';
 
 interface User {
   id: string;
@@ -417,14 +417,37 @@ function EventsListPage({
   const getEventTypeColor = (type: EventType): string => {
     switch (type) {
       case EventType.Practice:
-        return "#4caf50"; // Зеленый
+        return "#4caf50";
       case EventType.Game:
-        return "#2196f3"; // Синий
+        return "#2196f3";
       case EventType.Meeting:
-        return "#9c27b0"; // Фиолетовый
+        return "#9c27b0";
       default:
-        return "#757575"; // Серый
+        return "#757575";
     }
+  };
+
+  // Функция для получения цвета дивизиона
+  const getLeagueColor = (leagueName: string): string => {
+    // Генерируем консистентный цвет на основе названия лиги
+    const colors = [
+      "#d32f2f", // Красный
+      "#1976d2", // Синий
+      "#388e3c", // Зеленый
+      "#f57c00", // Оранжевый
+      "#7b1fa2", // Фиолетовый
+      "#c2185b", // Розовый
+      "#00796b", // Бирюзовый
+      "#5d4037", // Коричневый
+    ];
+    
+    let hash = 0;
+    for (let i = 0; i < leagueName.length; i++) {
+      hash = ((hash << 5) - hash) + leagueName.charCodeAt(i);
+      hash |= 0;
+    }
+    
+    return colors[Math.abs(hash) % colors.length];
   };
 
   return (
@@ -435,7 +458,7 @@ function EventsListPage({
       boxSizing: "border-box",
       fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
     }}>
-      {/* Хедер с пользователем */}
+      {/* Хедер с пользователем - используем CurrentPlayerHeader */}
       <div style={{
         backgroundColor: "white",
         padding: "16px",
@@ -488,77 +511,8 @@ function EventsListPage({
           </button>
         </div>
 
-        {currentUser && (
-          <div style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "12px",
-            padding: "12px",
-            backgroundColor: "#e3f2fd",
-            borderRadius: "10px",
-            border: "1px solid #bbdefb"
-          }}>
-            <div style={{
-              width: "40px",
-              height: "40px",
-              backgroundColor: "#1976d2",
-              color: "white",
-              borderRadius: "8px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontWeight: "600",
-              fontSize: "16px",
-              flexShrink: 0
-            }}>
-              #{currentUser.jerseyNumber || "?"}
-            </div>
-            <div style={{ flex: 1 }}>
-              <div style={{
-                fontWeight: "600",
-                fontSize: "16px",
-                marginBottom: "2px"
-              }}>
-                {currentUser.firstName} {currentUser.lastName}
-              </div>
-              <div style={{
-                fontSize: "13px",
-                color: "#1a237e",
-                opacity: 0.8
-              }}>
-                Вы вошли как игрок
-              </div>
-            </div>
-            <button
-              onClick={() => {
-                localStorage.removeItem("currentUser");
-                window.location.reload();
-              }}
-              style={{
-                padding: "8px 12px",
-                border: "1px solid #e0e0e0",
-                background: "white",
-                borderRadius: "8px",
-                fontSize: "13px",
-                cursor: "pointer",
-                color: "#666",
-                transition: "all 0.2s ease"
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = "#f5f5f5";
-                e.currentTarget.style.borderColor = "#d32f2f";
-                e.currentTarget.style.color = "#d32f2f";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "white";
-                e.currentTarget.style.borderColor = "#e0e0e0";
-                e.currentTarget.style.color = "#666";
-              }}
-            >
-              Выйти
-            </button>
-          </div>
-        )}
+        {/* Внедряем CurrentPlayerHeader */}
+        <CurrentPlayerHeader />
       </div>
 
       {/* Контент */}
@@ -699,6 +653,25 @@ function EventsListPage({
                   }}>
                     {getEventTypeName(e.type as EventType)}
                   </span>
+
+                  {/* Плашка дивизиона только для матчей - полное название */}
+                  {e.type === EventType.Game && e.leagueName && (
+                    <div style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      backgroundColor: getLeagueColor(e.leagueName),
+                      padding: "2px 10px",
+                      borderRadius: "10px",
+                      fontSize: "12px",
+                      fontWeight: "500",
+                      color: "white",
+                      border: "1px solid rgba(255,255,255,0.3)"
+                    }}>
+                      <span style={{ fontSize: "12px" }}>🏆</span>
+                      <span>{e.leagueName}</span>
+                    </div>
+                  )}
                 </div>
                 
                 {e.locationName && (

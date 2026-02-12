@@ -453,12 +453,12 @@ export function CreateEventPage({ onBack, onCreated }: CreateEventPageProps) {
                     fontWeight: "500",
                     fontSize: "15px"
                   }}>
-                    Лига (необязательно)
+                    Лига (дивизион)
                   </label>
                   <input
                     value={leagueName}
                     onChange={(e) => setLeagueName(e.target.value)}
-                    placeholder="Например: Высшая лига"
+                    placeholder="Например: Д4"
                     style={{
                       width: "100%",
                       padding: "14px",
@@ -886,7 +886,7 @@ export function CreateEventPage({ onBack, onCreated }: CreateEventPageProps) {
               color: "white",
               borderRadius: "10px",
               cursor: loading ? "not-allowed" : "pointer",
-              fontSize: "16px",
+              fontSize: "13px",
               fontWeight: "600",
               flex: 2,
               minWidth: "180px",
