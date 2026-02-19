@@ -1,5 +1,6 @@
 // CurrentPlayerHeader.tsx
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 interface CurrentPlayerHeaderProps {
   onBack?: () => void; // Опциональный пропс для совместимости
@@ -10,11 +11,43 @@ interface User {
   firstName?: string | null;
   lastName?: string | null;
   jerseyNumber?: number | null;
+  role?: number; // 1: Coach, 2: Captain, 3: Player, 4: Manager
 }
+
+const getRoleName = (role?: number): string => {
+  switch (role) {
+    case 1:
+      return 'Тренер';
+    case 2:
+      return 'Капитан';
+    case 3:
+      return 'Игрок';
+    case 4:
+      return 'Менеджер';
+    default:
+      return 'Игрок';
+  }
+};
+
+const getRoleColor = (role?: number): string => {
+  switch (role) {
+    case 1: // Тренер
+      return '#9c27b0'; // Фиолетовый
+    case 2: // Капитан
+      return '#f57c00'; // Оранжевый
+    case 3: // Игрок
+      return '#1976d2'; // Синий
+    case 4: // Менеджер
+      return '#388e3c'; // Зеленый
+    default:
+      return '#1976d2';
+  }
+};
 
 export function CurrentPlayerHeader({
   onBack,
 }: CurrentPlayerHeaderProps) {
+  const navigate = useNavigate();
   const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   useEffect(() => {
@@ -30,27 +63,48 @@ export function CurrentPlayerHeader({
     }
   }, []);
 
+  const handleSelectPlayer = () => {
+    navigate("/");
+  };
+
   return (
     <div
       style={{
         display: "flex",
         alignItems: "center",
         justifyContent: "flex-start",
-        padding: "12px 0 16px 0",
-        marginBottom: "-8px",
-        borderBottom: "1px solid #e0e0e0"
+        padding: "8px 0 12px 0",
+        borderBottom: "1px solid #e0e0e0",
+        cursor: !currentUser ? "pointer" : "default",
+        transition: "background-color 0.2s ease",
+        borderRadius: "8px",
+        margin: !currentUser ? "4px -4px" : "0"
+      }}
+      onClick={!currentUser ? handleSelectPlayer : undefined}
+      onMouseEnter={(e) => {
+        if (!currentUser) {
+          e.currentTarget.style.backgroundColor = "#f5f5f5";
+          e.currentTarget.style.padding = "8px 4px 12px 4px";
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (!currentUser) {
+          e.currentTarget.style.backgroundColor = "transparent";
+          e.currentTarget.style.padding = "8px 0 12px 0";
+        }
       }}
     >
       {currentUser ? (
         <div style={{ 
           display: "flex", 
           alignItems: "center", 
-          gap: "12px"
+          gap: "12px",
+          width: "100%"
         }}>
           <div style={{
             width: "48px",
             height: "48px",
-            backgroundColor: "#1976d2",
+            backgroundColor: getRoleColor(currentUser.role),
             color: "white",
             borderRadius: "12px",
             display: "flex",
@@ -59,9 +113,13 @@ export function CurrentPlayerHeader({
             fontWeight: "700",
             fontSize: "20px",
             flexShrink: 0,
-            boxShadow: "0 3px 8px rgba(25, 118, 210, 0.3)"
+            boxShadow: `0 3px 8px ${getRoleColor(currentUser.role)}40`
           }}>
-            #{currentUser.jerseyNumber || "?"}
+            {currentUser.jerseyNumber ? (
+              `#${currentUser.jerseyNumber}`
+            ) : (
+              currentUser.firstName?.[0] || currentUser.lastName?.[0] || "?"
+            )}
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ 
@@ -84,16 +142,15 @@ export function CurrentPlayerHeader({
               gap: "6px"
             }}>
               <span style={{
-                backgroundColor: "#e3f2fd",
-                color: "#1976d2",
+                backgroundColor: `${getRoleColor(currentUser.role)}20`,
+                color: getRoleColor(currentUser.role),
                 padding: "2px 8px",
                 borderRadius: "10px",
                 fontSize: "12px",
-                fontWeight: "500"
+                fontWeight: "600"
               }}>
-                Игрок
+                {getRoleName(currentUser.role)}
               </span>
-              <span>ID: {currentUser.id.slice(0, 8)}...</span>
             </div>
           </div>
         </div>
@@ -101,7 +158,8 @@ export function CurrentPlayerHeader({
         <div style={{ 
           display: "flex", 
           alignItems: "center", 
-          gap: "12px"
+          gap: "12px",
+          width: "100%"
         }}>
           <div style={{
             width: "48px",
@@ -118,14 +176,14 @@ export function CurrentPlayerHeader({
           }}>
             👤
           </div>
-          <div>
+          <div style={{ flex: 1 }}>
             <div style={{ 
-              fontWeight: "500",
+              fontWeight: "600",
               fontSize: "16px",
-              color: "#999",
+              color: "#1a237e",
               marginBottom: "4px"
             }}>
-              Не авторизован
+              Гость
             </div>
             <div style={{ 
               fontSize: "14px",
@@ -142,9 +200,9 @@ export function CurrentPlayerHeader({
                 fontSize: "12px",
                 fontWeight: "500"
               }}>
-                Гость
+                Без роли
               </span>
-              <span>Войдите для участия</span>
+              <span>Нажмите чтобы выбрать</span>
             </div>
           </div>
         </div>

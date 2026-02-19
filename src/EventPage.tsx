@@ -11,7 +11,7 @@ import {
   CreateUpdateRosterRequest,
   PlayerRole,
 } from "./types/lines";
-import { updateLineRoster } from "./api/lines";
+import { createLineRoster, updateLineRoster } from "./api/lines";
 import { CurrentPlayerHeader } from "./CurrentPlayerHeader";
 
 interface EventPageProps {
@@ -92,9 +92,9 @@ const formatDate = (dateString: string) => {
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const eventDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
   const diffDays = Math.round((eventDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-  
+
   const timeStr = date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-  
+
   if (diffDays === 0) return `Сегодня, ${timeStr}`;
   if (diffDays === 1) return `Завтра, ${timeStr}`;
   if (diffDays === -1) return `Вчера, ${timeStr}`;
@@ -102,7 +102,7 @@ const formatDate = (dateString: string) => {
     const days = ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб'];
     return `${days[date.getDay()]}, ${timeStr}`;
   }
-  return date.toLocaleDateString('ru-RU', { 
+  return date.toLocaleDateString('ru-RU', {
     day: 'numeric',
     month: 'short'
   }).replace('.', '') + `, ${timeStr}`;
@@ -151,7 +151,7 @@ const calculateAge = (birthDate: string): number | null => {
   const birth = new Date(birthDate);
   let age = today.getFullYear() - birth.getFullYear();
   const monthDiff = today.getMonth() - birth.getMonth();
-  
+
   if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
     age--;
   }
@@ -170,13 +170,13 @@ const getLeagueColor = (leagueName: string): string => {
     "#00796b", // Бирюзовый
     "#5d4037", // Коричневый
   ];
-  
+
   let hash = 0;
   for (let i = 0; i < leagueName.length; i++) {
     hash = ((hash << 5) - hash) + leagueName.charCodeAt(i);
     hash |= 0;
   }
-  
+
   return colors[Math.abs(hash) % colors.length];
 };
 
@@ -185,7 +185,7 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  
+
   // Состояние для комментария
   const [attendanceNote, setAttendanceNote] = useState("");
   const [showNoteInput, setShowNoteInput] = useState(false);
@@ -216,6 +216,8 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
   // 👉 состояние для переименования
   const [renamingLineId, setRenamingLineId] = useState<string | null>(null);
   const [newLineName, setNewLineName] = useState("");
+
+  const [isActionsOpen, setIsActionsOpen] = useState(false);
 
   const emptySlots: Record<Slot, AttendanceLookUpDto | null> = {
     LW: null,
@@ -293,7 +295,7 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
 
   const handleAddNote = async () => {
     if (!event || !myAttendance) return;
-    
+
     await handleVote(myAttendance.status, attendanceNote);
   };
 
@@ -338,6 +340,10 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
   // ===============================
   const saveLine = async () => {
     if (!event) return;
+    if (!currentUser?.id) {
+      setError("Необходимо авторизоваться");
+      return;
+    }
 
     const players = Object.entries(lineSlots)
       .filter(([_, p]) => p !== null)
@@ -347,7 +353,7 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
       }));
 
     // Используем sortedRoster для определения следующего order
-    const nextOrder = sortedRoster.length > 0 
+    const nextOrder = sortedRoster.length > 0
       ? Math.max(...sortedRoster.map(l => l.order || 0)) + 1
       : 1;
 
@@ -363,12 +369,7 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
     };
 
     try {
-      await fetch("/api/lines", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-
+      await createLineRoster(body, currentUser.id);
       const updated = await getEvent(eventId);
       setEvent(updated);
       setCreatingLine(false);
@@ -381,10 +382,14 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
 
   const deleteLine = async (lineId: string) => {
     if (!event?.roster) return;
+    if (!currentUser?.id) {
+      setError("Необходимо авторизоваться");
+      return;
+    }
 
     // Сортируем текущий ростер
     const currentSorted = [...event.roster].sort((a, b) => (a.order || 0) - (b.order || 0));
-    
+
     const newLines = currentSorted
       .filter((l) => l.id !== lineId)
       .map((line, index) => ({
@@ -403,12 +408,7 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
     };
 
     try {
-      await fetch("/api/lines", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-
+      await updateLineRoster(body, currentUser.id);
       const updated = await getEvent(eventId);
       setEvent(updated);
     } catch (e: any) {
@@ -460,6 +460,10 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
   // ===============================
   const saveEditedLine = async () => {
     if (!event || editingLineIndex === null) return;
+    if (!currentUser?.id) {
+      setError("Необходимо авторизоваться");
+      return;
+    }
 
     const newPlayers = Object.entries(lineSlots)
       .filter(([_, p]) => p !== null)
@@ -495,8 +499,7 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
     };
 
     try {
-      await updateLineRoster(body);
-
+      await updateLineRoster(body, currentUser.id);
       const updated = await getEvent(eventId);
       setEvent(updated);
 
@@ -518,6 +521,10 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
 
   const saveRenamedLine = async () => {
     if (!event || !renamingLineId) return;
+    if (!currentUser?.id) {
+      setError("Необходимо авторизоваться");
+      return;
+    }
 
     const linesForPut = sortedRoster.map((line) => {
       if (line.id === renamingLineId) {
@@ -549,12 +556,7 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
     };
 
     try {
-      await fetch("/api/lines", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-
+      await updateLineRoster(body, currentUser.id);
       const updated = await getEvent(eventId);
       setEvent(updated);
       setRenamingLineId(null);
@@ -569,6 +571,10 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
   // ===============================
   const moveLineUp = async (index: number) => {
     if (!event || !sortedRoster || index <= 0) return;
+    if (!currentUser?.id) {
+      setError("Необходимо авторизоваться");
+      return;
+    }
 
     const newRoster = [...sortedRoster];
     const temp = newRoster[index];
@@ -592,12 +598,7 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
     };
 
     try {
-      await fetch("/api/lines", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-
+      await updateLineRoster(body, currentUser.id);
       const updated = await getEvent(eventId);
       setEvent(updated);
     } catch (e: any) {
@@ -607,6 +608,10 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
 
   const moveLineDown = async (index: number) => {
     if (!event || !sortedRoster || index >= sortedRoster.length - 1) return;
+    if (!currentUser?.id) {
+      setError("Необходимо авторизоваться");
+      return;
+    }
 
     const newRoster = [...sortedRoster];
     const temp = newRoster[index];
@@ -630,12 +635,7 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
     };
 
     try {
-      await fetch("/api/lines", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-
+      await updateLineRoster(body, currentUser.id);
       const updated = await getEvent(eventId);
       setEvent(updated);
     } catch (e: any) {
@@ -707,20 +707,20 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
             <span style={{ color: "#666", opacity: 0.5 }}>—</span>
           )}
         </div>
-        <div style={{ 
-          fontSize: "10px", 
+        <div style={{
+          fontSize: "10px",
           color: "#666",
           fontWeight: "500",
           marginBottom: "4px"
         }}>
-          {slot === "LW" ? "ЛН" : 
-           slot === "C" ? "ЦН" : 
-           slot === "RW" ? "ПН" : 
-           slot === "LD" ? "ЛЗ" : "ПЗ"}
+          {slot === "LW" ? "ЛН" :
+            slot === "C" ? "ЦН" :
+              slot === "RW" ? "ПН" :
+                slot === "LD" ? "ЛЗ" : "ПЗ"}
         </div>
         {slots[slot] && (
-          <div style={{ 
-            fontSize: "11px", 
+          <div style={{
+            fontSize: "11px",
             color: "#333",
             lineHeight: "1.2",
             height: "26px",
@@ -732,15 +732,15 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
             cursor: "pointer",
             transition: "color 0.2s ease"
           }}
-          onClick={() => handleOpenPlayerInfo(slots[slot]!.userId)}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.color = "#1976d2";
-            e.currentTarget.style.textDecoration = "underline";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.color = "#333";
-            e.currentTarget.style.textDecoration = "none";
-          }}
+            onClick={() => handleOpenPlayerInfo(slots[slot]!.userId)}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = "#1976d2";
+              e.currentTarget.style.textDecoration = "underline";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = "#333";
+              e.currentTarget.style.textDecoration = "none";
+            }}
           >
             {slots[slot]!.lastName}
           </div>
@@ -750,16 +750,16 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
 
     return (
       <div style={{ marginTop: "12px" }}>
-        <div style={{ 
-          display: "flex", 
-          justifyContent: "space-around", 
+        <div style={{
+          display: "flex",
+          justifyContent: "space-around",
           marginBottom: "8px",
           flexWrap: "wrap"
         }}>
           {(["LW", "C", "RW"] as Slot[]).map(renderCircle)}
         </div>
-        <div style={{ 
-          display: "flex", 
+        <div style={{
+          display: "flex",
           justifyContent: "space-around",
           flexWrap: "wrap"
         }}>
@@ -789,11 +789,11 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
         <span>👥</span>
         <span>Явка игроков ({event.attendances?.length || 0})</span>
       </h3>
-      
+
       <div style={{ marginBottom: "16px" }}>
-        <div style={{ 
-          display: "flex", 
-          justifyContent: "space-between", 
+        <div style={{
+          display: "flex",
+          justifyContent: "space-between",
           marginBottom: "8px",
           fontSize: "14px",
           color: "#666"
@@ -803,9 +803,9 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
             {event.attendances?.filter(a => a.status === 2).length || 0}
           </span>
         </div>
-        <div style={{ 
-          display: "flex", 
-          justifyContent: "space-between", 
+        <div style={{
+          display: "flex",
+          justifyContent: "space-between",
           marginBottom: "8px",
           fontSize: "14px",
           color: "#666"
@@ -815,8 +815,8 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
             {event.attendances?.filter(a => a.status === 3).length || 0}
           </span>
         </div>
-        <div style={{ 
-          display: "flex", 
+        <div style={{
+          display: "flex",
           justifyContent: "space-between",
           fontSize: "14px",
           color: "#666"
@@ -828,8 +828,8 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
         </div>
       </div>
 
-      <div style={{ 
-        maxHeight: "400px", 
+      <div style={{
+        maxHeight: "400px",
         overflowY: "auto",
         border: "1px solid #e0e0e0",
         borderRadius: "10px",
@@ -855,19 +855,19 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
               e.currentTarget.style.backgroundColor = "transparent";
             }}
           >
-            <div style={{ 
-              display: "flex", 
-              alignItems: "center", 
-              justifyContent: "space-between" 
+            <div style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between"
             }}>
               <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                 <div style={{
                   width: "32px",
                   height: "32px",
-                  backgroundColor: a.status === 2 ? "#e8f5e9" : 
-                                 a.status === 3 ? "#ffebee" : "#fff3e0",
-                  color: a.status === 2 ? "#2e7d32" : 
-                         a.status === 3 ? "#c62828" : "#ef6c00",
+                  backgroundColor: a.status === 2 ? "#e8f5e9" :
+                    a.status === 3 ? "#ffebee" : "#fff3e0",
+                  color: a.status === 2 ? "#2e7d32" :
+                    a.status === 3 ? "#c62828" : "#ef6c00",
                   borderRadius: "8px",
                   display: "flex",
                   alignItems: "center",
@@ -879,29 +879,29 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
                   #{a.jerseyNumber || "?"}
                 </div>
                 <div>
-                  <div style={{ 
-                    fontWeight: "500", 
+                  <div style={{
+                    fontWeight: "500",
                     fontSize: "15px",
                     color: "#1a237e",
                     transition: "color 0.2s ease"
                   }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.color = "#1976d2";
-                    e.currentTarget.style.textDecoration = "underline";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.color = "#1a237e";
-                    e.currentTarget.style.textDecoration = "none";
-                  }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.color = "#1976d2";
+                      e.currentTarget.style.textDecoration = "underline";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.color = "#1a237e";
+                      e.currentTarget.style.textDecoration = "none";
+                    }}
                   >
                     {a.firstName} {a.lastName}
                   </div>
                 </div>
               </div>
-              <div style={{ 
+              <div style={{
                 fontSize: "13px",
-                color: a.status === 2 ? "#2e7d32" : 
-                       a.status === 3 ? "#c62828" : "#ff9800",
+                color: a.status === 2 ? "#2e7d32" :
+                  a.status === 3 ? "#c62828" : "#ff9800",
                 fontWeight: "500",
                 display: "flex",
                 alignItems: "center",
@@ -910,7 +910,7 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
                 {a.status === 2 ? "✅" : a.status === 3 ? "❌" : "⏳"}
               </div>
             </div>
-            
+
             {/* Отображение комментария */}
             {a.notes && (
               <div style={{
@@ -945,9 +945,9 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
       marginBottom: "20px",
       boxShadow: "0 2px 8px rgba(0,0,0,0.08)"
     }}>
-      <div style={{ 
-        display: "flex", 
-        justifyContent: "space-between", 
+      <div style={{
+        display: "flex",
+        justifyContent: "space-between",
         alignItems: "center",
         marginBottom: "16px"
       }}>
@@ -994,16 +994,16 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
       </div>
 
       {creatingLine && (
-        <div style={{ 
-          marginTop: "16px", 
-          border: "1px solid #e0e0e0", 
+        <div style={{
+          marginTop: "16px",
+          border: "1px solid #e0e0e0",
           padding: "20px",
           borderRadius: "12px",
           backgroundColor: "#f8f9fa"
         }}>
-          <div style={{ 
-            display: "flex", 
-            justifyContent: "space-between", 
+          <div style={{
+            display: "flex",
+            justifyContent: "space-between",
             alignItems: "center",
             marginBottom: "16px"
           }}>
@@ -1047,9 +1047,9 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
             </button>
           </div>
 
-          <div style={{ 
-            display: "flex", 
-            gap: "12px", 
+          <div style={{
+            display: "flex",
+            gap: "12px",
             justifyContent: "center",
             marginBottom: "16px",
             flexWrap: "wrap"
@@ -1092,20 +1092,20 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
                   )}
                 </div>
 
-                <div style={{ 
-                  fontSize: "10px", 
+                <div style={{
+                  fontSize: "10px",
                   color: "#666",
                   fontWeight: "500",
                   marginBottom: "4px"
                 }}>
-                  {slot === "LW" ? "ЛН" : 
-                   slot === "C" ? "ЦН" : 
-                   slot === "RW" ? "ПН" : 
-                   slot === "LD" ? "ЛЗ" : "ПЗ"}
+                  {slot === "LW" ? "ЛН" :
+                    slot === "C" ? "ЦН" :
+                      slot === "RW" ? "ПН" :
+                        slot === "LD" ? "ЛЗ" : "ПЗ"}
                 </div>
 
                 {lineSlots[slot] && (
-                  <button 
+                  <button
                     onClick={(e) => {
                       e.stopPropagation();
                       clearSlot(slot);
@@ -1128,26 +1128,26 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
           </div>
 
           {activeSlot && (
-            <div style={{ 
+            <div style={{
               marginTop: "16px",
               borderTop: "1px solid #e0e0e0",
               paddingTop: "16px"
             }}>
-              <h4 style={{ 
-                margin: "0 0 12px 0", 
-                fontSize: "16px", 
+              <h4 style={{
+                margin: "0 0 12px 0",
+                fontSize: "16px",
                 fontWeight: "500",
                 color: "#333"
               }}>
                 Выберите игрока для позиции {
                   activeSlot === "LW" ? "Левый нападающий" :
-                  activeSlot === "C" ? "Центральный нападающий" :
-                  activeSlot === "RW" ? "Правый нападающий" :
-                  activeSlot === "LD" ? "Левый защитник" : "Правый защитник"
+                    activeSlot === "C" ? "Центральный нападающий" :
+                      activeSlot === "RW" ? "Правый нападающий" :
+                        activeSlot === "LD" ? "Левый защитник" : "Правый защитник"
                 }
               </h4>
-              <div style={{ 
-                maxHeight: "200px", 
+              <div style={{
+                maxHeight: "200px",
                 overflowY: "auto",
                 border: "1px solid #e0e0e0",
                 borderRadius: "8px"
@@ -1251,9 +1251,9 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
               backgroundColor: "#fff"
             }}
           >
-            <div style={{ 
-              display: "flex", 
-              alignItems: "center", 
+            <div style={{
+              display: "flex",
+              alignItems: "center",
               justifyContent: "space-between",
               marginBottom: "12px",
               flexWrap: "wrap",
@@ -1266,8 +1266,8 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
                       type="text"
                       value={newLineName}
                       onChange={(e) => setNewLineName(e.target.value)}
-                      style={{ 
-                        padding: "8px 12px", 
+                      style={{
+                        padding: "8px 12px",
                         border: "1px solid #1976d2",
                         borderRadius: "8px",
                         fontSize: "15px",
@@ -1280,10 +1280,10 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
                         if (e.key === 'Escape') setRenamingLineId(null);
                       }}
                     />
-                    <button 
+                    <button
                       onClick={saveRenamedLine}
-                      style={{ 
-                        padding: "8px", 
+                      style={{
+                        padding: "8px",
                         backgroundColor: "#4caf50",
                         color: "white",
                         border: "none",
@@ -1293,10 +1293,10 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
                     >
                       💾
                     </button>
-                    <button 
+                    <button
                       onClick={() => setRenamingLineId(null)}
-                      style={{ 
-                        padding: "8px", 
+                      style={{
+                        padding: "8px",
                         backgroundColor: "#f5f5f5",
                         border: "1px solid #e0e0e0",
                         borderRadius: "8px",
@@ -1313,8 +1313,8 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
                     </strong>
                     <button
                       onClick={() => startRenameLine(line.id, line.name || `Звено ${line.order}`)}
-                      style={{ 
-                        padding: "6px 8px", 
+                      style={{
+                        padding: "6px 8px",
                         backgroundColor: "#f5f5f5",
                         border: "1px solid #e0e0e0",
                         borderRadius: "6px",
@@ -1333,8 +1333,8 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
                 <button
                   onClick={() => moveLineUp(idx)}
                   disabled={idx === 0}
-                  style={{ 
-                    padding: "6px 8px", 
+                  style={{
+                    padding: "6px 8px",
                     backgroundColor: idx === 0 ? "#f5f5f5" : "#e3f2fd",
                     color: idx === 0 ? "#999" : "#1976d2",
                     border: "none",
@@ -1349,8 +1349,8 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
                 <button
                   onClick={() => moveLineDown(idx)}
                   disabled={idx === sortedRoster.length - 1}
-                  style={{ 
-                    padding: "6px 8px", 
+                  style={{
+                    padding: "6px 8px",
                     backgroundColor: idx === sortedRoster.length - 1 ? "#f5f5f5" : "#e3f2fd",
                     color: idx === sortedRoster.length - 1 ? "#999" : "#1976d2",
                     border: "none",
@@ -1365,16 +1365,16 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
               </div>
             </div>
 
-            <div style={{ 
-              display: "flex", 
-              gap: "8px", 
-              marginBottom: "12px", 
-              flexWrap: "wrap" 
+            <div style={{
+              display: "flex",
+              gap: "8px",
+              marginBottom: "12px",
+              flexWrap: "wrap"
             }}>
               <button
                 onClick={() => startEditLine(idx)}
-                style={{ 
-                  padding: "8px 12px", 
+                style={{
+                  padding: "8px 12px",
                   backgroundColor: "#1976d2",
                   color: "white",
                   border: "none",
@@ -1412,9 +1412,9 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
           </div>
         ))
       ) : (
-        <div style={{ 
-          padding: "32px 16px", 
-          textAlign: "center", 
+        <div style={{
+          padding: "32px 16px",
+          textAlign: "center",
           color: "#666",
           border: "1px dashed #e0e0e0",
           borderRadius: "12px",
@@ -1464,7 +1464,7 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
         zIndex: 1000,
         padding: "16px"
       }}
-      onClick={() => setIsPlayerModalOpen(false)}
+        onClick={() => setIsPlayerModalOpen(false)}
       >
         <div style={{
           backgroundColor: "white",
@@ -1476,7 +1476,7 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
           position: "relative",
           boxShadow: "0 10px 30px rgba(0,0,0,0.2)"
         }}
-        onClick={(e) => e.stopPropagation()}
+          onClick={(e) => e.stopPropagation()}
         >
           {/* Заголовок модального окна */}
           <div style={{
@@ -1555,9 +1555,9 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
                 <div style={{ fontSize: "13px", color: "#666", marginBottom: "4px" }}>
                   Основная позиция
                 </div>
-                <div style={{ 
-                  fontSize: "18px", 
-                  fontWeight: "600", 
+                <div style={{
+                  fontSize: "18px",
+                  fontWeight: "600",
                   color: "#1a237e",
                   display: "flex",
                   alignItems: "center",
@@ -1577,10 +1577,10 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
                 <div style={{ fontSize: "13px", color: "#666", marginBottom: "4px" }}>
                   Хват клюшки
                 </div>
-                <div style={{ 
-                  fontSize: "18px", 
-                  fontWeight: "600", 
-                  color: "#1a237e" 
+                <div style={{
+                  fontSize: "18px",
+                  fontWeight: "600",
+                  color: "#1a237e"
                 }}>
                   {getHandednessName(selectedPlayer.handedness || 0)}
                 </div>
@@ -1762,7 +1762,7 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
       </div>
     </div>
   );
-  
+
   if (error) return (
     <div style={{
       padding: "16px",
@@ -1803,7 +1803,7 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
       </div>
     </div>
   );
-  
+
   if (!event) return (
     <div style={{
       padding: "16px",
@@ -1843,7 +1843,7 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
   );
 
   return (
-    <div style={{ 
+    <div style={{
       padding: "0",
       minHeight: "100vh",
       backgroundColor: "#f5f5f5",
@@ -1894,7 +1894,7 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
             ←
           </button>
           <div style={{ flex: 1 }}>
-            <CurrentPlayerHeader/>
+            <CurrentPlayerHeader />
           </div>
         </div>
       </div>
@@ -1927,7 +1927,7 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
               {getEventTypeName(event.type as EventType)}
             </span>
             <span style={{
-              fontSize: "15px",
+              fontSize: "18px",
               color: "#666",
               display: "flex",
               alignItems: "center",
@@ -1971,8 +1971,8 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
               <span style={{ fontSize: "16px", fontWeight: "700", color: "#1a237e", textAlign: "center" }}>
                 {event.homeTeamName}
               </span>
-              <span style={{ 
-                fontSize: "14px", 
+              <span style={{
+                fontSize: "14px",
                 color: "#666",
                 backgroundColor: "white",
                 padding: "4px 12px",
@@ -1987,41 +1987,144 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
               </span>
             </div>
           )}
-          <div style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: "12px"
-          }}>
-            <button
-              onClick={() => {
-                window.location.href = `/events/${event.id}/delete`;
-              }}
-              style={{
-                padding: "8px 12px",
-                backgroundColor: "#ffebee",
-                color: "#d32f2f",
-                border: "1px solid #ffcdd2",
-                borderRadius: "8px",
+        </div>
+        <div style={{
+          marginBottom: "20px",
+        }}>
+          <button
+            onClick={() => setIsActionsOpen(!isActionsOpen)}
+            style={{
+              width: "100%",
+              padding: "14px 16px",
+              backgroundColor: "#f8f9fa",
+              color: "#1a237e",
+              border: "1px solid #e0e0e0",
+              borderRadius: "10px",
+              fontSize: "15px",
+              fontWeight: "600",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              transition: "all 0.2s ease"
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = "#e3f2fd";
+              e.currentTarget.style.borderColor = "#1976d2";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "#f8f9fa";
+              e.currentTarget.style.borderColor = "#e0e0e0";
+            }}
+          >
+            <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <span style={{ fontSize: "18px" }}>⚙️</span>
+              <span>Действия с мероприятием</span>
+            </span>
+            <span style={{
+              fontSize: "20px",
+              transform: isActionsOpen ? "rotate(180deg)" : "rotate(0deg)",
+              transition: "transform 0.3s ease"
+            }}>
+              ▼
+            </span>
+          </button>
+
+          {isActionsOpen && (
+            <div style={{
+              marginTop: "12px",
+              padding: "16px",
+              backgroundColor: "#f8f9fa",
+              borderRadius: "12px",
+              border: "1px solid #e0e0e0",
+              animation: "slideDown 0.3s ease"
+            }}>
+              <div style={{
+                display: "flex",
+                gap: "12px",
+                flexWrap: "wrap"
+              }}>
+                <button
+                  onClick={() => {
+                    window.location.href = `/events/${event.id}/edit`;
+                  }}
+                  style={{
+                    flex: 1,
+                    minWidth: "140px",
+                    padding: "14px 20px",
+                    backgroundColor: "#1976d2",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "10px",
+                    fontSize: "15px",
+                    fontWeight: "600",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "8px",
+                    transition: "all 0.2s ease"
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = "#1565c0";
+                    e.currentTarget.style.transform = "translateY(-1px)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = "#1976d2";
+                    e.currentTarget.style.transform = "translateY(0)";
+                  }}
+                >
+                  <span>✏️</span>
+                  <span>Редактировать</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    window.location.href = `/events/${event.id}/delete`;
+                  }}
+                  style={{
+                    flex: 1,
+                    minWidth: "140px",
+                    padding: "14px 20px",
+                    backgroundColor: "#ffebee",
+                    color: "#d32f2f",
+                    border: "1px solid #ffcdd2",
+                    borderRadius: "10px",
+                    fontSize: "15px",
+                    fontWeight: "600",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "8px",
+                    transition: "all 0.2s ease"
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = "#ffcdd2";
+                    e.currentTarget.style.transform = "translateY(-1px)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = "#ffebee";
+                    e.currentTarget.style.transform = "translateY(0)";
+                  }}
+                >
+                  <span>🗑️</span>
+                  <span>Удалить</span>
+                </button>
+              </div>
+
+              <p style={{
+                margin: "16px 0 0 0",
                 fontSize: "13px",
-                cursor: "pointer",
-                fontWeight: "500",
-                flexShrink: 0,
-                marginLeft: "12px",
-                transition: "all 0.2s ease"
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = "#ffcdd2";
-                e.currentTarget.style.transform = "translateY(-1px)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "#ffebee";
-                e.currentTarget.style.transform = "translateY(0)";
-              }}
-            >
-              🗑 Удалить
-            </button>
-          </div>
+                color: "#666",
+                textAlign: "center",
+                borderTop: "1px solid #e0e0e0",
+                paddingTop: "16px"
+              }}>
+                Редактирование доступно для организаторов мероприятия
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Описание */}
@@ -2045,9 +2148,9 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
               <span>📝</span>
               <span>Описание</span>
             </h3>
-            <p style={{ 
-              margin: 0, 
-              fontSize: "15px", 
+            <p style={{
+              margin: 0,
+              fontSize: "15px",
               color: "#555",
               lineHeight: "1.6"
             }}>
@@ -2078,9 +2181,9 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
               <span>Место проведения</span>
             </h3>
             {event.locationName && (
-              <div style={{ 
-                display: "flex", 
-                alignItems: "flex-start", 
+              <div style={{
+                display: "flex",
+                alignItems: "flex-start",
                 gap: "8px",
                 marginBottom: "12px"
               }}>
@@ -2091,9 +2194,9 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
               </div>
             )}
             {event.locationAddress && (
-              <div style={{ 
-                display: "flex", 
-                alignItems: "flex-start", 
+              <div style={{
+                display: "flex",
+                alignItems: "flex-start",
                 gap: "8px",
                 marginBottom: "12px"
               }}>
@@ -2104,9 +2207,9 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
               </div>
             )}
             {event.iceRinkNumber && (
-              <div style={{ 
-                display: "flex", 
-                alignItems: "flex-start", 
+              <div style={{
+                display: "flex",
+                alignItems: "flex-start",
                 gap: "8px"
               }}>
                 <span style={{ fontSize: "14px", color: "#666", flexShrink: 0 }}>🏒</span>
@@ -2142,8 +2245,8 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
           {(!myAttendance || myAttendance.status === 1) ? (
             <>
               <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", marginBottom: "12px" }}>
-                <button 
-                  disabled={submitting} 
+                <button
+                  disabled={submitting}
                   onClick={() => handleVote(2, attendanceNote || null)}
                   style={{
                     flex: 1,
@@ -2179,8 +2282,8 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
                   <span>✅</span>
                   <span>Смогу</span>
                 </button>
-                <button 
-                  disabled={submitting} 
+                <button
+                  disabled={submitting}
                   onClick={() => handleVote(3, attendanceNote || null)}
                   style={{
                     flex: 1,
@@ -2299,7 +2402,7 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
                       <span>После травмы</span>
                     </button>
                   </div>
-                  
+
                   <div style={{ display: "flex", gap: "8px" }}>
                     <input
                       type="text"
@@ -2334,7 +2437,7 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
             </>
           ) : (
             <div>
-              <div style={{ 
+              <div style={{
                 padding: "16px",
                 backgroundColor: myAttendance.status === 2 ? "#e8f5e9" : "#ffebee",
                 color: myAttendance.status === 2 ? "#2e7d32" : "#c62828",
@@ -2342,15 +2445,15 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
                 marginBottom: "16px",
                 border: `1px solid ${myAttendance.status === 2 ? "#c8e6c9" : "#ffcdd2"}`
               }}>
-                <div style={{ 
+                <div style={{
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
                   marginBottom: myAttendance.notes ? "12px" : "0"
                 }}>
                   <div>
-                    <div style={{ 
-                      fontSize: "18px", 
+                    <div style={{
+                      fontSize: "18px",
                       fontWeight: "600",
                       marginBottom: "4px"
                     }}>
@@ -2360,7 +2463,7 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
                       Ваш ответ записан
                     </div>
                   </div>
-                  
+
                   {/* Кнопка редактирования комментария */}
                   {!isEditingNote ? (
                     <button
@@ -2518,8 +2621,8 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
                 )}
               </div>
 
-              <button 
-                disabled={submitting} 
+              <button
+                disabled={submitting}
                 onClick={() => handleVote(1)}
                 style={{
                   width: "100%",
@@ -2550,10 +2653,10 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
               </button>
             </div>
           )}
-          
+
           {submitting && (
-            <div style={{ 
-              textAlign: "center", 
+            <div style={{
+              textAlign: "center",
               marginTop: "12px",
               color: "#666",
               fontSize: "14px",
@@ -2644,6 +2747,17 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
           @supports (padding: max(0px)) {
             div[style*="position: sticky"] {
               padding-top: max(16px, env(safe-area-inset-top, 16px));
+            }
+          }
+
+          @keyframes slideDown {
+            from {
+              opacity: 0;
+              transform: translateY(-10px);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0);
             }
           }
         `}

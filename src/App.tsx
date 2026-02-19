@@ -15,6 +15,8 @@ import { DeleteEventPage } from "./DeleteEventPage";
 import { CreatePlayerFormPage } from "./CreatePlayerFormPage";
 import { ContactInfo } from './ContactInfo';
 import { CurrentPlayerHeader } from './CurrentPlayerHeader';
+import { UpdateEventPage } from "./UpdateEventPage";
+import { CalendarPage } from "./CalendarPage";
 
 interface User {
   id: string;
@@ -101,7 +103,7 @@ function StartSearchPage({
         }}>
           Поиск игрока
         </h2>
-        
+
         <div style={{ position: "relative", marginBottom: "16px" }}>
           <input
             placeholder="Поиск по номеру, имени или фамилии..."
@@ -284,7 +286,7 @@ function StartSearchPage({
           >
             <span style={{
               fontSize: 20
-             }}>+</span>
+            }}>+</span>
             <span>Заполнить анкету игрока</span>
           </button>
           <p style={{
@@ -299,7 +301,7 @@ function StartSearchPage({
       </div>
 
       <ContactInfo />
-      
+
       <style>
         {`
           @keyframes spin {
@@ -355,6 +357,7 @@ function EventsListPage({
   const [events, setEvents] = useState<EventListDto | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showCalendar, setShowCalendar] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -366,40 +369,57 @@ function EventsListPage({
         setError("Не удалось загрузить мероприятия");
       })
       .finally(() => setLoading(false));
-    
-    // Обновлять список каждые 30 секунд
+
     const interval = setInterval(() => {
       getEvents()
         .then(setEvents)
         .catch(console.error);
     }, 30000);
-    
+
     return () => clearInterval(interval);
   }, []);
+
+  const isUpcomingEvent = (eventDate: Date): boolean => {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const eventDay = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate());
+    return eventDay.getTime() >= today.getTime();
+  };
+
+  const sortedAndFilteredEvents = events?.events
+    ?.filter(event => isUpcomingEvent(new Date(event.startTime)))
+    ?.sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime()) || [];
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
     const eventDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-    const diffDays = Math.round((eventDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-    
+
     const timeStr = date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-    
-    if (diffDays === 0) return `Сегодня, ${timeStr}`;
-    if (diffDays === 1) return `Завтра, ${timeStr}`;
-    if (diffDays === -1) return `Вчера, ${timeStr}`;
+
+    if (eventDate.getTime() === today.getTime()) {
+      return `Сегодня, ${timeStr}`;
+    }
+    if (eventDate.getTime() === tomorrow.getTime()) {
+      return `Завтра, ${timeStr}`;
+    }
+
+    const diffDays = Math.round((eventDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
     if (diffDays > 1 && diffDays < 7) {
       const days = ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб'];
       return `${days[date.getDay()]}, ${timeStr}`;
     }
-    return date.toLocaleDateString('ru-RU', { 
+
+    return date.toLocaleDateString('ru-RU', {
       day: 'numeric',
       month: 'short'
     }).replace('.', '') + `, ${timeStr}`;
   };
 
-  // Функция для получения названия типа события
   const getEventTypeName = (type: EventType): string => {
     switch (type) {
       case EventType.Practice:
@@ -413,7 +433,6 @@ function EventsListPage({
     }
   };
 
-  // Функция для получения цвета типа события
   const getEventTypeColor = (type: EventType): string => {
     switch (type) {
       case EventType.Practice:
@@ -427,26 +446,17 @@ function EventsListPage({
     }
   };
 
-  // Функция для получения цвета дивизиона
   const getLeagueColor = (leagueName: string): string => {
-    // Генерируем консистентный цвет на основе названия лиги
     const colors = [
-      "#d32f2f", // Красный
-      "#1976d2", // Синий
-      "#388e3c", // Зеленый
-      "#f57c00", // Оранжевый
-      "#7b1fa2", // Фиолетовый
-      "#c2185b", // Розовый
-      "#00796b", // Бирюзовый
-      "#5d4037", // Коричневый
+      "#d32f2f", "#1976d2", "#388e3c", "#f57c00",
+      "#7b1fa2", "#c2185b", "#00796b", "#5d4037",
     ];
-    
+
     let hash = 0;
     for (let i = 0; i < leagueName.length; i++) {
       hash = ((hash << 5) - hash) + leagueName.charCodeAt(i);
       hash |= 0;
     }
-    
     return colors[Math.abs(hash) % colors.length];
   };
 
@@ -458,7 +468,7 @@ function EventsListPage({
       boxSizing: "border-box",
       fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
     }}>
-      {/* Хедер с пользователем - используем CurrentPlayerHeader */}
+      {/* Хедер с пользователем */}
       <div style={{
         backgroundColor: "white",
         padding: "16px",
@@ -477,41 +487,40 @@ function EventsListPage({
             fontWeight: "600",
             color: "#1a237e"
           }}>
-            🗓️ Мероприятия
+            Мероприятия
           </h1>
-          <button
-            onClick={() => navigate("/events/create")}
-            style={{
-              padding: "10px 16px",
-              backgroundColor: "#1976d2",
-              color: "white",
-              border: "none",
-              borderRadius: "10px",
-              fontSize: "14px",
-              fontWeight: "500",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-              transition: "all 0.2s ease"
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = "#1565c0";
-              e.currentTarget.style.transform = "translateY(-1px)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = "#1976d2";
-              e.currentTarget.style.transform = "translateY(0)";
-            }}
-          >
-             <span style={{
-              fontSize: 25
-              }}>+</span>
-            <span>Добавить</span>
-          </button>
+          <div style={{ display: "flex", gap: "8px" }}>
+            <button
+              onClick={() => navigate("/events/create")}
+              style={{
+                padding: "10px 16px",
+                backgroundColor: "#1976d2",
+                color: "white",
+                border: "none",
+                borderRadius: "10px",
+                fontSize: "14px",
+                fontWeight: "500",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                transition: "all 0.2s ease"
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "#1565c0";
+                e.currentTarget.style.transform = "translateY(-1px)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "#1976d2";
+                e.currentTarget.style.transform = "translateY(0)";
+              }}
+            >
+              <span style={{ fontSize: "20px" }}>+</span>
+              <span>Добавить</span>
+            </button>
+          </div>
         </div>
 
-        {/* Внедряем CurrentPlayerHeader */}
         <CurrentPlayerHeader />
       </div>
 
@@ -548,7 +557,7 @@ function EventsListPage({
           }}>
             ⚠️ {error}
           </div>
-        ) : events?.events && events.events.length > 0 ? (
+        ) : sortedAndFilteredEvents.length > 0 ? (
           <div>
             <div style={{
               display: "flex",
@@ -571,130 +580,138 @@ function EventsListPage({
                 padding: "4px 10px",
                 borderRadius: "12px"
               }}>
-                {events.events.length}
+                {sortedAndFilteredEvents.length}
               </div>
             </div>
 
-            {events.events.map((e) => (
-              <div
-                key={e.id}
-                style={{
-                  backgroundColor: "white",
-                  padding: "16px",
-                  marginBottom: "12px",
-                  border: "1px solid #e0e0e0",
-                  borderRadius: "14px",
-                  cursor: "pointer",
-                  transition: "all 0.2s ease",
-                  boxShadow: "0 2px 4px rgba(0,0,0,0.04)"
-                }}
-                onClick={() => navigate(`/events/${e.id}`)}
-                onMouseEnter={(elem) => {
-                  elem.currentTarget.style.backgroundColor = "#f9f9f9";
-                  elem.currentTarget.style.transform = "translateY(-2px)";
-                  elem.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.08)";
-                }}
-                onMouseLeave={(elem) => {
-                  elem.currentTarget.style.backgroundColor = "white";
-                  elem.currentTarget.style.transform = "translateY(0)";
-                  elem.currentTarget.style.boxShadow = "0 2px 4px rgba(0,0,0,0.04)";
-                }}
-              >
-                <div style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "flex-start",
-                  marginBottom: "8px"
-                }}>
-                  <h4 style={{
-                    margin: "0",
-                    fontSize: "17px",
-                    fontWeight: "600",
-                    color: "#1a237e",
-                    lineHeight: "1.3",
-                    flex: 1
-                  }}>
-                    {e.title ?? "Без названия"}
-                  </h4>
+            {sortedAndFilteredEvents.map((e) => {
+              const eventDate = new Date(e.startTime);
+              const isToday = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate())
+                .getTime() === new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()).getTime();
+
+              return (
+                <div
+                  key={e.id}
+                  style={{
+                    backgroundColor: "white",
+                    padding: "16px",
+                    marginBottom: "12px",
+                    border: "1px solid #e0e0e0",
+                    borderRadius: "14px",
+                    cursor: "pointer",
+                    transition: "all 0.2s ease",
+                    boxShadow: "0 2px 4px rgba(0,0,0,0.04)",
+                    borderLeft: isToday ? "4px solid #1976d2" : "1px solid #e0e0e0"
+                  }}
+                  onClick={() => navigate(`/events/${e.id}`)}
+                  onMouseEnter={(elem) => {
+                    elem.currentTarget.style.backgroundColor = "#f9f9f9";
+                    elem.currentTarget.style.transform = "translateY(-2px)";
+                    elem.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.08)";
+                  }}
+                  onMouseLeave={(elem) => {
+                    elem.currentTarget.style.backgroundColor = "white";
+                    elem.currentTarget.style.transform = "translateY(0)";
+                    elem.currentTarget.style.boxShadow = "0 2px 4px rgba(0,0,0,0.04)";
+                  }}
+                >
                   <div style={{
-                    fontSize: "24px",
-                    color: "#1976d2",
-                    opacity: 0.7,
-                    marginLeft: "8px"
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "flex-start",
+                    marginBottom: "8px"
                   }}>
-                    →
+                    <h4 style={{
+                      margin: "0",
+                      fontSize: "17px",
+                      fontWeight: "600",
+                      color: "#1a237e",
+                      lineHeight: "1.3",
+                      flex: 1
+                    }}>
+                      {e.title ?? "Без названия"}
+                    </h4>
+                    <div style={{
+                      fontSize: "24px",
+                      color: "#1976d2",
+                      opacity: 0.7,
+                      marginLeft: "8px"
+                    }}>
+                      →
+                    </div>
                   </div>
-                </div>
-                
-                <div style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  marginBottom: "8px",
-                  flexWrap: "wrap"
-                }}>
-                  <span style={{
-                    fontSize: "14px",
-                    color: "#666",
+
+                  <div style={{
                     display: "flex",
                     alignItems: "center",
-                    gap: "4px"
+                    gap: "8px",
+                    marginBottom: "8px",
+                    flexWrap: "wrap"
                   }}>
-                    🕒 {formatDate(e.startTime)}
-                  </span>
-                  
-                  <span style={{
-                    fontSize: "12px",
-                    color: "#fff",
-                    backgroundColor: getEventTypeColor(e.type as EventType),
-                    padding: "2px 8px",
-                    borderRadius: "10px",
-                    fontWeight: "500"
-                  }}>
-                    {getEventTypeName(e.type as EventType)}
-                  </span>
+                    <span style={{
+                      fontSize: "14px",
+                      color: isToday ? "#1976d2" : "#666",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "4px",
+                      fontWeight: isToday ? "600" : "400"
+                    }}>
+                      🕒 {formatDate(e.startTime)}
+                    </span>
 
-                  {/* Плашка дивизиона только для матчей - полное название */}
-                  {e.type === EventType.Game && e.leagueName && (
+                    <span style={{
+                      fontSize: "12px",
+                      color: "#fff",
+                      backgroundColor: getEventTypeColor(e.type as EventType),
+                      padding: "2px 8px",
+                      borderRadius: "10px",
+                      fontWeight: "500"
+                    }}>
+                      {getEventTypeName(e.type as EventType)}
+                    </span>
+
+                    {/* Плашка дивизиона только для матчей */}
+                    {e.type === EventType.Game && e.leagueName && (
+                      <div style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        backgroundColor: getLeagueColor(e.leagueName),
+                        padding: "2px 10px",
+                        borderRadius: "10px",
+                        fontSize: "12px",
+                        fontWeight: "500",
+                        color: "white",
+                        border: "1px solid rgba(255,255,255,0.3)"
+                      }}>
+                        <span style={{ fontSize: "12px" }}>🏆</span>
+                        <span>{e.leagueName}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {e.locationName && (
                     <div style={{
+                      fontSize: "14px",
+                      color: "#666",
                       display: "flex",
                       alignItems: "center",
                       gap: "6px",
-                      backgroundColor: getLeagueColor(e.leagueName),
-                      padding: "2px 10px",
-                      borderRadius: "10px",
-                      fontSize: "12px",
-                      fontWeight: "500",
-                      color: "white",
-                      border: "1px solid rgba(255,255,255,0.3)"
+                      marginTop: "8px"
                     }}>
-                      <span style={{ fontSize: "12px" }}>🏆</span>
-                      <span>{e.leagueName}</span>
+                      <span>📍</span>
+                      <span style={{
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap"
+                      }}>
+                        {e.locationName}
+                      </span>
                     </div>
                   )}
                 </div>
-                
-                {e.locationName && (
-                  <div style={{
-                    fontSize: "14px",
-                    color: "#666",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "6px",
-                    marginTop: "8px"
-                  }}>
-                    <span>📍</span>
-                    <span style={{
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap"
-                    }}>
-                      {e.locationName}
-                    </span>
-                  </div>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <div style={{
@@ -718,7 +735,7 @@ function EventsListPage({
               fontWeight: "600",
               color: "#333"
             }}>
-              Нет мероприятий
+              Нет предстоящих мероприятий
             </h3>
             <p style={{
               margin: "0 0 24px 0",
@@ -795,12 +812,12 @@ function EventsListPage({
             e.currentTarget.style.color = "#666";
           }}
         >
-          <span style={{ fontSize: "20px" }}>👤</span>
-          <span>Игроки</span>
+          <span style={{ fontSize: "20px" }}>🏠</span>
+          <span>Главное</span>
         </button>
-        
+
         <button
-          onClick={() => navigate("/events")}
+          onClick={() => navigate("/calendar")}
           style={{
             padding: "12px 16px",
             border: "none",
@@ -819,13 +836,12 @@ function EventsListPage({
           }}
         >
           <span style={{ fontSize: "20px" }}>🗓️</span>
-          <span>Мероприятия</span>
+          <span>Режим календаря</span>
         </button>
       </div>
-      
+
       {/* Отступ для навигации */}
       <div style={{ height: "80px" }}></div>
-
       <style>
         {`
           @keyframes spin {
@@ -833,7 +849,6 @@ function EventsListPage({
             100% { transform: rotate(360deg); }
           }
           
-          /* Для очень маленьких экранов */
           @media (max-width: 360px) {
             div[style*="padding: 16px"] {
               padding: 12px !important;
@@ -845,7 +860,6 @@ function EventsListPage({
             }
           }
           
-          /* Для ПК */
           @media (min-width: 768px) {
             div[style*="minHeight: 100vh"] {
               max-width: 600px;
@@ -867,7 +881,6 @@ function EventsListPage({
             }
           }
           
-          /* Безопасные зоны для iPhone */
           @supports (padding: max(0px)) {
             div[style*="position: fixed"] {
               padding-bottom: max(12px, env(safe-area-inset-bottom, 12px));
@@ -957,6 +970,14 @@ function AppRoutes() {
       <Route
         path="/create-player"
         element={<CreatePlayerFormPage />}
+      />
+      <Route
+        path="/events/:id/edit"
+        element={<UpdateEventPage />}
+      />
+      <Route
+        path="/calendar"
+        element={<CalendarPage />}
       />
     </Routes>
   );

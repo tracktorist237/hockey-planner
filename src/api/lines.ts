@@ -1,37 +1,58 @@
 import { CreateUpdateRosterRequest } from "../types/lines";
+const API_BASE = "https://localhost:44390/api";
 
-const BASE_URL = "https://localhost:44390/api";
+export async function createLineRoster(
+  request: CreateUpdateRosterRequest,
+  currentUserId: string
+): Promise<void> {
+  const response = await fetch(
+    `${API_BASE}/api/lines?currentUserId=${currentUserId}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(request),
+    }
+  );
 
-export async function createLineRoster(dto: CreateUpdateRosterRequest) {
-  const res = await fetch(`${BASE_URL}/lines`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(dto),
-  });
-
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(text || "Ошибка при создании звена");
+  if (!response.ok) {
+    const error = await response.json().catch(() => null);
+    throw new Error(error?.message || "Ошибка при создании звена");
   }
-
-  return res.json();
 }
 
-export async function updateLineRoster(dto: CreateUpdateRosterRequest) {
-  const res = await fetch(`${BASE_URL}/lines`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(dto),
-  });
+export async function updateLineRoster(
+  request: CreateUpdateRosterRequest,
+  currentUserId: string
+): Promise<void> {
+  const response = await fetch(
+    `${API_BASE}/api/lines?currentUserId=${currentUserId}`,
+    {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(request),
+    }
+  );
 
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(text || "Ошибка при создании звена");
+  if (!response.ok) {
+    const error = await response.json().catch(() => null);
+    throw new Error(error?.message || "Ошибка при обновлении звена");
   }
+}
 
-  return res.json();
+export async function deleteLineRoster(
+  eventId: string,
+  currentUserId: string
+): Promise<void> {
+  const response = await fetch(
+    `${API_BASE}/api/lines?eventId=${eventId}&currentUserId=${currentUserId}`,
+    {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+    }
+  );
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => null);
+    throw new Error(error?.message || "Ошибка при удалении звена");
+  }
 }
