@@ -1,5 +1,5 @@
 import { CreateUpdateRosterRequest } from "../types/lines";
-const API_BASE = "https://localhost:44390/api";
+const API_BASE = process.env.REACT_APP_API_BASE || '';
 
 export async function createLineRoster(
   request: CreateUpdateRosterRequest,
