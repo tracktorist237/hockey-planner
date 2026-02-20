@@ -13,6 +13,7 @@ import {
 } from "./types/lines";
 import { createLineRoster, updateLineRoster } from "./api/lines";
 import { CurrentPlayerHeader } from "./CurrentPlayerHeader";
+import { getUserById } from "./api/users";
 
 interface EventPageProps {
   eventId: string;
@@ -303,11 +304,7 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
   const handleOpenPlayerInfo = async (userId: string) => {
     setLoadingPlayer(true);
     try {
-      const response = await fetch(`/api/users/${userId}`);
-      if (!response.ok) {
-        throw new Error('Не удалось загрузить информацию об игроке');
-      }
-      const playerData = await response.json();
+      const playerData = await getUserById(userId);
       setSelectedPlayer(playerData);
       setIsPlayerModalOpen(true);
     } catch (err: any) {

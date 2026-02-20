@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { createUser, CreateUserData } from "./api/users"; // 👈 импортируем
 
 interface UserFormData {
   firstName: string;
@@ -37,7 +38,7 @@ export function CreatePlayerFormPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Валидация полей
+  // Валидация полей (без изменений)
   const validateField = (name: string, value: any): string | undefined => {
     switch (name) {
       case "firstName":
@@ -192,23 +193,8 @@ export function CreatePlayerFormPage() {
     setError(null);
 
     try {
-      const response = await fetch("/api/users", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          ...formData,
-          role: 3, // По умолчанию UserRole = 3
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => null);
-        throw new Error(errorData?.message || `Ошибка создания пользователя: ${response.status}`);
-      }
-
-      const createdUser = await response.json();
+      // 👇 ИСПОЛЬЗУЕМ ФУНКЦИЮ ИЗ API
+      const createdUser = await createUser(formData);
       
       // Сохраняем созданного пользователя в localStorage
       localStorage.setItem("currentUser", JSON.stringify(createdUser));
@@ -244,6 +230,7 @@ export function CreatePlayerFormPage() {
     return "default";
   };
 
+  // Остальной JSX без изменений
   return (
     <div style={{ 
       padding: "16px",
@@ -252,7 +239,7 @@ export function CreatePlayerFormPage() {
       fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
       boxSizing: "border-box"
     }}>
-      {/* Хедер */}
+      {/* Хедер (без изменений) */}
       <div style={{
         backgroundColor: "white",
         borderRadius: "16px",

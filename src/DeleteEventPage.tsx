@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { deleteEvent } from "./api/events"; // 👈 импортируем
 
 export function DeleteEventPage() {
   const { id } = useParams<{ id: string }>();
@@ -83,17 +84,7 @@ export function DeleteEventPage() {
     setError(null);
 
     try {
-      const res = await fetch(
-        `/api/events?currentUserId=${currentUser.id}&eventId=${id}`,
-        { method: "DELETE" }
-      );
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.message || "Ошибка удаления");
-      }
-
+      const data = await deleteEvent(id);
       setMessage(data.message);
 
       // через 2 секунды — возврат к списку
@@ -110,6 +101,7 @@ export function DeleteEventPage() {
   const handleCancel = () => {
     navigate(-1);
   };
+
 
   return (
     <div style={{ 

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { getEvent } from "./api/events";
+import { updateEvent } from "./api/events"; // 👈 импортируем
 import { EventDto, EventType } from "./types/events";
 import { AddressSearchInput } from "./AddressSearchInput";
 import { CurrentPlayerHeader } from "./CurrentPlayerHeader";
@@ -30,11 +31,6 @@ export function UpdateEventPage() {
 
   const [cancelHover, setCancelHover] = useState(false);
   const [submitHover, setSubmitHover] = useState(false);
-
-  const currentUser = (() => {
-    const saved = localStorage.getItem("currentUser");
-    return saved ? JSON.parse(saved) : null;
-  })();
 
   // Загружаем данные события
   useEffect(() => {
@@ -75,11 +71,6 @@ export function UpdateEventPage() {
   };
 
   const handleSubmit = async () => {
-    if (!currentUser?.id) {
-      setError("Необходимо войти в систему");
-      return;
-    }
-
     if (!id) {
       setError("ID события не указан");
       return;
@@ -133,18 +124,7 @@ export function UpdateEventPage() {
     };
 
     try {
-      const response = await fetch(`/api/events?currentUserId=${currentUser.id}&eventId=${id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(dto),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => null);
-        throw new Error(errorData?.message || "Ошибка при обновлении события");
-      }
+      await updateEvent(id, dto); // 👈 используем функцию из API
 
       // Возвращаемся на страницу события
       navigate(`/events/${id}`);
@@ -158,7 +138,7 @@ export function UpdateEventPage() {
   const isGame = type === EventType.Game;
   const isMeeting = type === EventType.Meeting;
   const isPractice = type === EventType.Practice;
-
+  
   if (loading) {
     return (
       <div style={{
