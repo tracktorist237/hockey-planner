@@ -985,7 +985,7 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
             e.currentTarget.style.transform = "translateY(0)";
           }}
         >
-          <span>➕</span>
+          <span>+</span>
           <span>Добавить звено</span>
         </button>
       </div>
@@ -1044,6 +1044,7 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
             </button>
           </div>
 
+          {/* Кружки для нападающих (верхняя строка) */}
           <div style={{
             display: "flex",
             gap: "12px",
@@ -1051,7 +1052,7 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
             marginBottom: "16px",
             flexWrap: "wrap"
           }}>
-            {(["LW", "C", "RW", "LD", "RD"] as Slot[]).map((slot) => (
+            {(["LW", "C", "RW"] as Slot[]).map((slot) => (
               <div key={slot} style={{ textAlign: "center", width: "70px" }}>
                 <div
                   onClick={() => setActiveSlot(slot)}
@@ -1097,8 +1098,86 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
                 }}>
                   {slot === "LW" ? "ЛН" :
                     slot === "C" ? "ЦН" :
-                      slot === "RW" ? "ПН" :
-                        slot === "LD" ? "ЛЗ" : "ПЗ"}
+                      slot === "RW" ? "ПН" : ""}
+                </div>
+
+                {lineSlots[slot] && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      clearSlot(slot);
+                    }}
+                    style={{
+                      padding: "2px 8px",
+                      fontSize: "10px",
+                      backgroundColor: "#ffebee",
+                      color: "#d32f2f",
+                      border: "1px solid #ffcdd2",
+                      borderRadius: "4px",
+                      cursor: "pointer"
+                    }}
+                  >
+                    Убрать
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Кружки для защитников (нижняя строка) */}
+          <div style={{
+            display: "flex",
+            gap: "12px",
+            justifyContent: "center",
+            marginTop: "8px",
+            marginBottom: "16px",
+            flexWrap: "wrap"
+          }}>
+            {(["LD", "RD"] as Slot[]).map((slot) => (
+              <div key={slot} style={{ textAlign: "center", width: "70px" }}>
+                <div
+                  onClick={() => setActiveSlot(slot)}
+                  style={{
+                    width: "56px",
+                    height: "56px",
+                    borderRadius: "50%",
+                    border: `2px ${activeSlot === slot ? "solid #1976d2" : "dashed #666"}`,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    cursor: "pointer",
+                    backgroundColor: lineSlots[slot] ? "#e3f2fd" : "#fff",
+                    margin: "0 auto 4px auto",
+                    fontSize: "20px",
+                    fontWeight: lineSlots[slot] ? "600" : "400",
+                    color: lineSlots[slot] ? "#1a237e" : "#666",
+                    transition: "all 0.2s ease"
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!lineSlots[slot]) {
+                      e.currentTarget.style.backgroundColor = "#f5f5f5";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!lineSlots[slot]) {
+                      e.currentTarget.style.backgroundColor = "#fff";
+                    }
+                  }}
+                >
+                  {lineSlots[slot] ? (
+                    lineSlots[slot]!.jerseyNumber ?? "?"
+                  ) : (
+                    <span style={{ opacity: 0.7 }}>＋</span>
+                  )}
+                </div>
+
+                <div style={{
+                  fontSize: "10px",
+                  color: "#666",
+                  fontWeight: "500",
+                  marginBottom: "4px"
+                }}>
+                  {slot === "LD" ? "ЛЗ" : "ПЗ"}
                 </div>
 
                 {lineSlots[slot] && (
