@@ -1101,24 +1101,57 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
                       slot === "RW" ? "ПН" : ""}
                 </div>
 
+                {/* Фамилия игрока (как в обычном просмотре) */}
                 {lineSlots[slot] && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      clearSlot(slot);
+                  <>
+                    <div style={{
+                      fontSize: "11px",
+                      color: "#333",
+                      lineHeight: "1.2",
+                      height: "26px",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      display: "-webkit-box",
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: "vertical",
+                      marginBottom: "4px",
+                      cursor: "pointer",
+                      transition: "color 0.2s ease"
                     }}
-                    style={{
-                      padding: "2px 8px",
-                      fontSize: "10px",
-                      backgroundColor: "#ffebee",
-                      color: "#d32f2f",
-                      border: "1px solid #ffcdd2",
-                      borderRadius: "4px",
-                      cursor: "pointer"
-                    }}
-                  >
-                    Убрать
-                  </button>
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleOpenPlayerInfo(lineSlots[slot]!.userId);
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.color = "#1976d2";
+                        e.currentTarget.style.textDecoration = "underline";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.color = "#333";
+                        e.currentTarget.style.textDecoration = "none";
+                      }}
+                    >
+                      {lineSlots[slot]!.lastName}
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        clearSlot(slot);
+                      }}
+                      style={{
+                        padding: "2px 8px",
+                        fontSize: "10px",
+                        backgroundColor: "#ffebee",
+                        color: "#d32f2f",
+                        border: "1px solid #ffcdd2",
+                        borderRadius: "4px",
+                        cursor: "pointer",
+                        width: "100%"
+                      }}
+                    >
+                      Убрать
+                    </button>
+                  </>
                 )}
               </div>
             ))}
@@ -1180,24 +1213,57 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
                   {slot === "LD" ? "ЛЗ" : "ПЗ"}
                 </div>
 
+                {/* Фамилия игрока (как в обычном просмотре) */}
                 {lineSlots[slot] && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      clearSlot(slot);
+                  <>
+                    <div style={{
+                      fontSize: "11px",
+                      color: "#333",
+                      lineHeight: "1.2",
+                      height: "26px",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      display: "-webkit-box",
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: "vertical",
+                      marginBottom: "4px",
+                      cursor: "pointer",
+                      transition: "color 0.2s ease"
                     }}
-                    style={{
-                      padding: "2px 8px",
-                      fontSize: "10px",
-                      backgroundColor: "#ffebee",
-                      color: "#d32f2f",
-                      border: "1px solid #ffcdd2",
-                      borderRadius: "4px",
-                      cursor: "pointer"
-                    }}
-                  >
-                    Убрать
-                  </button>
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleOpenPlayerInfo(lineSlots[slot]!.userId);
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.color = "#1976d2";
+                        e.currentTarget.style.textDecoration = "underline";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.color = "#333";
+                        e.currentTarget.style.textDecoration = "none";
+                      }}
+                    >
+                      {lineSlots[slot]!.lastName}
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        clearSlot(slot);
+                      }}
+                      style={{
+                        padding: "2px 8px",
+                        fontSize: "10px",
+                        backgroundColor: "#ffebee",
+                        color: "#d32f2f",
+                        border: "1px solid #ffcdd2",
+                        borderRadius: "4px",
+                        cursor: "pointer",
+                        width: "100%"
+                      }}
+                    >
+                      Убрать
+                    </button>
+                  </>
                 )}
               </div>
             ))}
@@ -1313,7 +1379,6 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
           </button>
         </div>
       )}
-
       {/* 👉 ИСПОЛЬЗУЕМ sortedRoster вместо event.roster */}
       {sortedRoster.length > 0 ? (
         sortedRoster.map((line: LineDto, idx) => (
