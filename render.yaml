@@ -1,13 +1,9 @@
 services:
   - type: web
-    name: hockey-planner-frontend
+    name: hockey-planner
     runtime: static
-    buildCommand: npm install && npm run build
+    buildCommand: npm run build
     staticPublishPath: ./build
-    headers:
-      - path: /*
-        name: Cache-Control
-        value: no-cache
     routes:
       - type: rewrite
         source: /*

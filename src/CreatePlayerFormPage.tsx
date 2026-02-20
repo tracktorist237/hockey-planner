@@ -928,8 +928,7 @@ export function CreatePlayerFormPage() {
                 </>
               ) : (
                 <>
-                  <span>➕</span>
-                  <span>Создать анкету игрока</span>
+                  <span>Создать игрока</span>
                 </>
               )}
             </button>
