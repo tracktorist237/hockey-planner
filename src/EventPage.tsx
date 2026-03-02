@@ -186,6 +186,7 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [copySuccess, setCopySuccess] = useState(false);
 
   // Состояние для комментария
   const [attendanceNote, setAttendanceNote] = useState("");
@@ -237,6 +238,92 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, [eventId]);
+
+  // Функция для копирования ссылки
+  const copyEventLink = () => {
+    const url = `${window.location.origin}/events/${eventId}`;
+    navigator.clipboard.writeText(url).then(() => {
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 2000);
+    });
+  };
+
+  // Функция для получения заголовка для шаринга
+  const getShareTitle = (): string => {
+    if (!event) return "Мероприятие";
+    
+    const typeName = getEventTypeName(event.type as EventType);
+    const date = formatDate(event.startTime);
+    
+    if (event.type === EventType.Game && event.homeTeamName && event.awayTeamName) {
+      return `${event.homeTeamName} - ${event.awayTeamName} (${typeName})`;
+    }
+    
+    return `${event.title} - ${typeName} ${date}`;
+  };
+
+  // Функция для получения описания для шаринга
+  const getShareDescription = (): string => {
+    if (!event) return "";
+    
+    const parts = [];
+    
+    if (event.locationName) {
+      parts.push(`📍 ${event.locationName}`);
+    }
+    
+    if (event.leagueName) {
+      parts.push(`🏆 ${event.leagueName}`);
+    }
+    
+    if (event.description) {
+      parts.push(`📝 ${event.description}`);
+    }
+    
+    return parts.join("\n");
+  };
+
+  // Динамическое обновление мета-тегов для шаринга в соцсетях
+  useEffect(() => {
+    if (!event) return;
+    
+    // Обновляем title страницы
+    document.title = getShareTitle();
+    
+    // Обновляем мета-теги для Telegram, VK, Facebook
+    const metaTags = {
+      'og:title': getShareTitle(),
+      'og:description': getShareDescription() || `Мероприятие хоккейной команды`,
+      'og:url': `${window.location.origin}/events/${eventId}`,
+      'og:type': 'website',
+      'twitter:card': 'summary',
+      'twitter:title': getShareTitle(),
+      'twitter:description': getShareDescription() || `Мероприятие хоккейной команды`,
+    };
+    
+    // Создаем или обновляем мета-теги
+    Object.entries(metaTags).forEach(([property, content]) => {
+      let meta = document.querySelector(`meta[property='${property}']`) || 
+                 document.querySelector(`meta[name='${property}']`);
+      
+      if (!meta) {
+        meta = document.createElement('meta');
+        if (property.startsWith('og:')) {
+          meta.setAttribute('property', property);
+        } else {
+          meta.setAttribute('name', property);
+        }
+        document.head.appendChild(meta);
+      }
+      
+      meta.setAttribute('content', content);
+    });
+    
+    // Очистка при размонтировании
+    return () => {
+      document.title = 'Хоккейный планировщик';
+    };
+  }, [event, eventId]);
 
   // 👉 Сортируем звенья по order
   const sortedRoster = event?.roster?.sort((a, b) => (a.order || 0) - (b.order || 0)) || [];
@@ -2053,49 +2140,69 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
           <div style={{
             display: "flex",
             alignItems: "center",
-            gap: "12px",
+            justifyContent: "space-between",
+            marginBottom: "12px",
             flexWrap: "wrap",
-            marginBottom: "8px"
+            gap: "12px"
           }}>
-            <span style={{
-              fontSize: "14px",
-              color: "#fff",
-              backgroundColor: getEventTypeColor(event.type as EventType),
-              padding: "4px 12px",
-              borderRadius: "20px",
-              fontWeight: "600"
-            }}>
-              {getEventTypeName(event.type as EventType)}
-            </span>
-            <span style={{
-              fontSize: "18px",
-              color: "#666",
+            <div style={{
               display: "flex",
               alignItems: "center",
-              gap: "4px"
+              gap: "12px",
+              flexWrap: "wrap"
             }}>
-              🕒 {formatDate(event.startTime)}
-            </span>
-
-            {/* Плашка дивизиона только для матчей */}
-            {event.type === EventType.Game && event.leagueName && (
-              <div style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-                backgroundColor: getLeagueColor(event.leagueName),
+              <span style={{
+                fontSize: "14px",
+                color: "#fff",
+                backgroundColor: getEventTypeColor(event.type as EventType),
                 padding: "4px 12px",
                 borderRadius: "20px",
-                fontSize: "13px",
-                fontWeight: "500",
-                color: "white",
-                border: "1px solid rgba(255,255,255,0.3)"
+                fontWeight: "600"
               }}>
-                <span style={{ fontSize: "14px" }}>🏆</span>
-                <span>{event.leagueName}</span>
-              </div>
-            )}
+                {getEventTypeName(event.type as EventType)}
+              </span>
+              <span style={{
+                fontSize: "18px",
+                color: "#666",
+                display: "flex",
+                alignItems: "center",
+                gap: "4px"
+              }}>
+                🕒 {formatDate(event.startTime)}
+              </span>
+
+              {/* Плашка дивизиона только для матчей */}
+              {event.type === EventType.Game && event.leagueName && (
+                <div style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  backgroundColor: getLeagueColor(event.leagueName),
+                  padding: "4px 12px",
+                  borderRadius: "20px",
+                  fontSize: "13px",
+                  fontWeight: "500",
+                  color: "white",
+                  border: "1px solid rgba(255,255,255,0.3)"
+                }}>
+                  <span style={{ fontSize: "14px" }}>🏆</span>
+                  <span>{event.leagueName}</span>
+                </div>
+              )}
+            </div>
           </div>
+
+          {/* Название события (для матчей оно уже отображается через команды) */}
+          {event.type !== EventType.Game && (
+            <h1 style={{
+              margin: "0 0 12px 0",
+              fontSize: "22px",
+              fontWeight: "700",
+              color: "#1a237e"
+            }}>
+              {event.title}
+            </h1>
+          )}
 
           {/* Для матчей показываем команды */}
           {event.type === EventType.Game && event.homeTeamName && event.awayTeamName && (
@@ -2103,13 +2210,14 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
               display: "flex",
               alignItems: "center",
               gap: "12px",
-              marginTop: "16px",
+              marginTop: "8px",
+              marginBottom: "12px",
               padding: "12px 16px",
               backgroundColor: "#f8f9fa",
               borderRadius: "12px",
               border: "1px solid #e0e0e0"
             }}>
-              <span style={{ fontSize: "16px", fontWeight: "700", color: "#1a237e", textAlign: "center" }}>
+              <span style={{ fontSize: "18px", fontWeight: "700", color: "#1a237e", flex: 1, textAlign: "center" }}>
                 {event.homeTeamName}
               </span>
               <span style={{
@@ -2123,12 +2231,63 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
               }}>
                 VS
               </span>
-              <span style={{ fontSize: "16px", fontWeight: "700", color: "#1a237e", textAlign: "center" }}>
+              <span style={{ fontSize: "18px", fontWeight: "700", color: "#1a237e", flex: 1, textAlign: "center" }}>
                 {event.awayTeamName}
               </span>
             </div>
           )}
+
+                      {/* Кнопка копирования ссылки */}
+            <div style={{ position: "relative" }}>
+              <button
+                onClick={copyEventLink}
+                style={{
+                  width: "100%",
+                  padding: "8px 12px",
+                  backgroundColor: copySuccess ? "#4caf50" : "#f5f5f5",
+                  color: copySuccess ? "white" : "#666",
+                  border: "1px solid",
+                  borderColor: copySuccess ? "#4caf50" : "#e0e0e0",
+                  borderRadius: "8px",
+                  fontSize: "13px",
+                  cursor: "pointer",
+                  fontWeight: "500",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  transition: "all 0.2s ease"
+                }}
+                onMouseEnter={(e) => {
+                  if (!copySuccess) {
+                    e.currentTarget.style.backgroundColor = "#e3f2fd";
+                    e.currentTarget.style.borderColor = "#1976d2";
+                    e.currentTarget.style.color = "#1976d2";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!copySuccess) {
+                    e.currentTarget.style.backgroundColor = "#f5f5f5";
+                    e.currentTarget.style.borderColor = "#e0e0e0";
+                    e.currentTarget.style.color = "#666";
+                  }
+                }}
+              >
+                {copySuccess ? (
+                  <>
+                    <span>✓</span>
+                    <span>Скопировано!</span>
+                  </>
+                ) : (
+                  <>
+                    <span>🔗</span>
+                    <span>Копировать ссылку</span>
+                  </>
+                )}
+              </button>
+            </div>
         </div>
+
+        {/* Кнопка действий с мероприятием */}
         <div style={{
           marginBottom: "20px",
         }}>
@@ -2870,6 +3029,14 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
             button[style*="padding: 14px 16px"] {
               padding: 12px !important;
               font-size: 15px !important;
+            }
+            
+            .event-title {
+              font-size: 20px !important;
+            }
+            
+            .team-name {
+              font-size: 16px !important;
             }
           }
           

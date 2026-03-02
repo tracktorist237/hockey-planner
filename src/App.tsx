@@ -17,6 +17,7 @@ import { ContactInfo } from './ContactInfo';
 import { CurrentPlayerHeader } from './CurrentPlayerHeader';
 import { UpdateEventPage } from "./UpdateEventPage";
 import { CalendarPage } from "./CalendarPage";
+import { SettingsPage } from "./SettingsPage";
 
 interface User {
   id: string;
@@ -37,6 +38,12 @@ function StartSearchPage({
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
 
+  // Состояния для парольного модального окна
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordInput, setPasswordInput] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [selectedSpecialUser, setSelectedSpecialUser] = useState<User | null>(null);
+
   useEffect(() => {
     setLoading(true);
     getUsers()
@@ -44,6 +51,54 @@ function StartSearchPage({
       .catch(console.error)
       .finally(() => setLoading(false));
   }, []);
+
+  // Функция для получения текущего пароля на основе даты
+  const getCurrentPassword = (): string => {
+    const now = new Date();
+    const month = String(now.getMonth() + 1).padStart(2, '0'); // 01-12
+    const year = String(now.getFullYear()).slice(-2); // последние 2 цифры года
+    return `${month}${year}`;
+  };
+
+  // Проверка, является ли пользователь специальной ролью (не игрок)
+  const isSpecialRole = (user: any): boolean => {
+    // Роль 3 - это обычный игрок (Player)
+    return user.role && user.role !== 3;
+  };
+
+  // Обработчик выбора пользователя
+  const handleUserSelect = (user: User) => {
+    // Проверяем роль пользователя (нужно получить из API)
+    // Так как текущий интерфейс User не содержит role, нужно получить полные данные
+    const fullUser = users.find(u => u.id === user.id) as any;
+
+    if (isSpecialRole(fullUser)) {
+      // Это специальная роль - показываем модалку с паролем
+      setSelectedSpecialUser(user);
+      setShowPasswordModal(true);
+      setPasswordInput("");
+      setPasswordError("");
+    } else {
+      // Обычный игрок - пропускаем без пароля
+      onSelect(user);
+    }
+  };
+
+  // Обработчик подтверждения пароля
+  const handlePasswordSubmit = () => {
+    const correctPassword = getCurrentPassword();
+
+    if (passwordInput === correctPassword) {
+      // Пароль верный - выбираем пользователя
+      if (selectedSpecialUser) {
+        onSelect(selectedSpecialUser);
+      }
+      setShowPasswordModal(false);
+      setPasswordError("");
+    } else {
+      setPasswordError("Неверный пароль. Попробуйте снова.");
+    }
+  };
 
   const filtered = users.filter((u) => {
     const s = search.toLowerCase();
@@ -159,65 +214,87 @@ function StartSearchPage({
               Загрузка списка игроков...
             </div>
           ) : filtered.length > 0 ? (
-            filtered.map((u) => (
-              <div
-                key={u.id}
-                style={{
-                  padding: "16px",
-                  borderBottom: "1px solid #f0f0f0",
-                  cursor: "pointer",
-                  transition: "background-color 0.2s ease",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "12px"
-                }}
-                onClick={() => onSelect(u)}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = "#f5f5f5";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = "#fff";
-                }}
-              >
-                <div style={{
-                  width: "36px",
-                  height: "36px",
-                  backgroundColor: "#1976d2",
-                  color: "white",
-                  borderRadius: "8px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontWeight: "600",
-                  fontSize: "14px",
-                  flexShrink: 0
-                }}>
-                  #{u.jerseyNumber || "?"}
-                </div>
-                <div style={{ flex: 1 }}>
+            filtered.map((u) => {
+              const fullUser = users.find(user => user.id === u.id) as any;
+              const isSpecial = isSpecialRole(fullUser);
+
+              return (
+                <div
+                  key={u.id}
+                  style={{
+                    padding: "16px",
+                    borderBottom: "1px solid #f0f0f0",
+                    cursor: "pointer",
+                    transition: "background-color 0.2s ease",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "12px"
+                  }}
+                  onClick={() => handleUserSelect(u)}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = "#f5f5f5";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = "#fff";
+                  }}
+                >
                   <div style={{
+                    width: "36px",
+                    height: "36px",
+                    backgroundColor: isSpecial ? "#f57c00" : "#1976d2",
+                    color: "white",
+                    borderRadius: "8px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
                     fontWeight: "600",
-                    fontSize: "16px",
-                    marginBottom: "2px"
+                    fontSize: "14px",
+                    flexShrink: 0
                   }}>
-                    {u.firstName} {u.lastName}
+                    #{u.jerseyNumber || "?"}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{
+                      fontWeight: "600",
+                      fontSize: "16px",
+                      marginBottom: "2px",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px"
+                    }}>
+                      {u.firstName} {u.lastName}
+                      {isSpecial && (
+                        <span style={{
+                          fontSize: "11px",
+                          backgroundColor: "#fff3e0",
+                          color: "#f57c00",
+                          padding: "2px 8px",
+                          borderRadius: "12px",
+                          fontWeight: "500"
+                        }}>
+                          {fullUser?.role === 1 ? "Тренер" :
+                            fullUser?.role === 2 ? "Капитан" :
+                              fullUser?.role === 4 ? "Менеджер" : ""}
+                        </span>
+                      )}
+                    </div>
+                    <div style={{
+                      fontSize: "14px",
+                      color: "#666"
+                    }}>
+                      ID: {u.id.slice(0, 8)}...
+                    </div>
                   </div>
                   <div style={{
-                    fontSize: "14px",
-                    color: "#666"
+                    fontSize: "20px",
+                    color: "#666",
+                    opacity: 0.7
                   }}>
-                    ID: {u.id.slice(0, 8)}...
+                    {isSpecial ? "🔒" : "→"}
                   </div>
                 </div>
-                <div style={{
-                  fontSize: "20px",
-                  color: "#666",
-                  opacity: 0.7
-                }}>
-                  →
-                </div>
-              </div>
-            ))
+              );
+            })
           ) : (
             <div style={{
               padding: "32px",
@@ -284,9 +361,7 @@ function StartSearchPage({
               e.currentTarget.style.transform = "translateY(0)";
             }}
           >
-            <span style={{
-              fontSize: 20
-            }}>+</span>
+            <span style={{ fontSize: 20 }}>+</span>
             <span>Заполнить анкету игрока</span>
           </button>
           <p style={{
@@ -299,6 +374,135 @@ function StartSearchPage({
           </p>
         </div>
       </div>
+
+      {/* Модальное окно для ввода пароля */}
+      {showPasswordModal && (
+        <div style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: "rgba(0,0,0,0.5)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 1000,
+          padding: "16px"
+        }}
+          onClick={() => setShowPasswordModal(false)}
+        >
+          <div style={{
+            backgroundColor: "white",
+            borderRadius: "20px",
+            maxWidth: "400px",
+            width: "100%",
+            padding: "24px",
+            boxShadow: "0 10px 30px rgba(0,0,0,0.2)"
+          }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 style={{
+              margin: "0 0 12px 0",
+              fontSize: "20px",
+              fontWeight: "600",
+              color: "#1a237e"
+            }}>
+              Введите пароль
+            </h3>
+
+            <p style={{
+              margin: "0 0 16px 0",
+              fontSize: "14px",
+              color: "#666",
+              lineHeight: "1.5"
+            }}>
+              Для доступа к учетной записи тренера/капитана/менеджера
+              требуется специальный пароль.
+            </p>
+
+            <div style={{ marginBottom: "16px" }}>
+              <label style={{
+                display: "block",
+                marginBottom: "8px",
+                fontSize: "14px",
+                fontWeight: "600",
+                color: "#333"
+              }}>
+                Пароль
+              </label>
+              <input
+                type="password"
+                value={passwordInput}
+                onChange={(e) => setPasswordInput(e.target.value)}
+                placeholder="Введите пароль"
+                autoFocus
+                style={{
+                  width: "100%",
+                  padding: "14px",
+                  border: `2px solid ${passwordError ? "#d32f2f" : "#e0e0e0"}`,
+                  borderRadius: "10px",
+                  fontSize: "16px",
+                  boxSizing: "border-box"
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handlePasswordSubmit();
+                }}
+              />
+              {passwordError && (
+                <div style={{
+                  marginTop: "8px",
+                  fontSize: "13px",
+                  color: "#d32f2f",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "4px"
+                }}>
+                  ⚠️ {passwordError}
+                </div>
+              )}
+            </div>
+
+            <div style={{
+              display: "flex",
+              gap: "12px"
+            }}>
+              <button
+                onClick={() => setShowPasswordModal(false)}
+                style={{
+                  flex: 1,
+                  padding: "14px",
+                  backgroundColor: "#f5f5f5",
+                  color: "#666",
+                  border: "1px solid #e0e0e0",
+                  borderRadius: "10px",
+                  fontSize: "15px",
+                  fontWeight: "500",
+                  cursor: "pointer"
+                }}
+              >
+                Отмена
+              </button>
+              <button
+                onClick={handlePasswordSubmit}
+                style={{
+                  flex: 1,
+                  padding: "14px",
+                  backgroundColor: "#1976d2",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "10px",
+                  fontSize: "15px",
+                  fontWeight: "600",
+                  cursor: "pointer"
+                }}
+              >
+                Подтвердить
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <ContactInfo />
 
@@ -490,6 +694,35 @@ function EventsListPage({
             Мероприятия
           </h1>
           <div style={{ display: "flex", gap: "8px" }}>
+            {/* Кнопка настроек (теперь ведет на страницу) */}
+            <button
+              onClick={() => navigate("/settings")}
+              style={{
+                padding: "10px 16px",
+                backgroundColor: "#f5f5f5",
+                color: "#1a237e",
+                border: "1px solid #e0e0e0",
+                borderRadius: "10px",
+                fontSize: "14px",
+                fontWeight: "500",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                transition: "all 0.2s ease"
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "#e3f2fd";
+                e.currentTarget.style.borderColor = "#1976d2";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "#f5f5f5";
+                e.currentTarget.style.borderColor = "#e0e0e0";
+              }}
+            >
+              <span style={{ fontSize: "18px" }}>⚙️</span>
+              <span>Настройки</span>
+            </button>
             <button
               onClick={() => navigate("/events/create")}
               style={{
@@ -978,6 +1211,10 @@ function AppRoutes() {
       <Route
         path="/calendar"
         element={<CalendarPage />}
+      />
+      <Route
+        path="/settings"
+        element={<SettingsPage />}
       />
     </Routes>
   );
