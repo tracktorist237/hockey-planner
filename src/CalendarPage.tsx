@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { getEvents } from "./api/events";
 import { EventListDto, EventType } from "./types/events";
 import { CurrentPlayerHeader } from "./CurrentPlayerHeader";
+import { formatRuDateLabel } from "./utils/date";
 
 type ViewMode = "month" | "week";
 
@@ -35,15 +36,6 @@ const getEventTypeColor = (type: EventType): string => {
 const formatTime = (dateString: string): string => {
   const date = new Date(dateString);
   return date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-};
-
-const formatDate = (dateString: string): string => {
-  const date = new Date(dateString);
-  return date.toLocaleDateString('ru-RU', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric'
-  });
 };
 
 const getUniqueEventColors = (events: any[]): string[] => {
@@ -786,7 +778,7 @@ export function CalendarPage() {
                 gap: "8px"
               }}>
                 <span>📅</span>
-                <span>События {formatDate(selectedDate.toISOString())}</span>
+                <span>События {formatRuDateLabel(selectedDate.toISOString())}</span>
               </h3>
               {selectedDateEvents.length === 0 && (
                 <span style={{

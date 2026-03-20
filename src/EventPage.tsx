@@ -14,6 +14,7 @@ import {
 import { createLineRoster, updateLineRoster } from "./api/lines";
 import { CurrentPlayerHeader } from "./CurrentPlayerHeader";
 import { getUserById } from "./api/users";
+import { formatRuDateLabel } from "./utils/date";
 
 interface EventPageProps {
   eventId: string;
@@ -85,28 +86,6 @@ const getEventTypeColor = (type: EventType): string => {
     default:
       return "#757575";
   }
-};
-
-const formatDate = (dateString: string) => {
-  const date = new Date(dateString);
-  const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const eventDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-  const diffDays = Math.round((eventDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-
-  const timeStr = date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-
-  if (diffDays === 0) return `Сегодня, ${timeStr}`;
-  if (diffDays === 1) return `Завтра, ${timeStr}`;
-  if (diffDays === -1) return `Вчера, ${timeStr}`;
-  if (diffDays > 1 && diffDays < 7) {
-    const days = ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб'];
-    return `${days[date.getDay()]}, ${timeStr}`;
-  }
-  return date.toLocaleDateString('ru-RU', {
-    day: 'numeric',
-    month: 'short'
-  }).replace('.', '') + `, ${timeStr}`;
 };
 
 const getPositionName = (position: number): string => {
@@ -253,7 +232,7 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
     if (!event) return "Мероприятие";
     
     const typeName = getEventTypeName(event.type as EventType);
-    const date = formatDate(event.startTime);
+    const date = formatRuDateLabel(event.startTime);
     
     if (event.type === EventType.Game && event.homeTeamName && event.awayTeamName) {
       return `${event.homeTeamName} - ${event.awayTeamName} (${typeName})`;
@@ -2168,7 +2147,7 @@ export function EventPage({ eventId, onBack }: EventPageProps) {
                 alignItems: "center",
                 gap: "4px"
               }}>
-                🕒 {formatDate(event.startTime)}
+                🕒 {formatRuDateLabel(event.startTime)}
               </span>
 
               {/* Плашка дивизиона только для матчей */}

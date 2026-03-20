@@ -18,6 +18,7 @@ import { CurrentPlayerHeader } from './CurrentPlayerHeader';
 import { UpdateEventPage } from "./UpdateEventPage";
 import { CalendarPage } from "./CalendarPage";
 import { SettingsPage } from "./SettingsPage";
+import { formatRuDateLabel } from "./utils/date";
 
 interface User {
   id: string;
@@ -594,36 +595,6 @@ function EventsListPage({
     ?.filter(event => isUpcomingEvent(new Date(event.startTime)))
     ?.sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime()) || [];
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const eventDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-
-    const timeStr = date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-
-    if (eventDate.getTime() === today.getTime()) {
-      return `Сегодня, ${timeStr}`;
-    }
-    if (eventDate.getTime() === tomorrow.getTime()) {
-      return `Завтра, ${timeStr}`;
-    }
-
-    const diffDays = Math.round((eventDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-
-    if (diffDays > 1 && diffDays < 7) {
-      const days = ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб'];
-      return `${days[date.getDay()]}, ${timeStr}`;
-    }
-
-    return date.toLocaleDateString('ru-RU', {
-      day: 'numeric',
-      month: 'short'
-    }).replace('.', '') + `, ${timeStr}`;
-  };
-
   const getEventTypeName = (type: EventType): string => {
     switch (type) {
       case EventType.Practice:
@@ -889,7 +860,7 @@ function EventsListPage({
                       gap: "4px",
                       fontWeight: isToday ? "600" : "400"
                     }}>
-                      🕒 {formatDate(e.startTime)}
+                      🕒 {formatRuDateLabel(e.startTime)}
                     </span>
 
                     <span style={{
