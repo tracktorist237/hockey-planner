@@ -1,3 +1,4 @@
+
 const RU_WEEKDAYS_SHORT = ["вс", "пн", "вт", "ср", "чт", "пт", "сб"] as const;
 
 export const formatRuDateLabel = (dateString: string): string => {
@@ -12,6 +13,10 @@ export const formatRuDateLabel = (dateString: string): string => {
     day: "numeric",
     month: "long",
   });
+  const time = date.toLocaleTimeString("ru-RU", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 
-  return `${weekday}, ${dayMonth}`;
+  return `${weekday}, ${dayMonth} ${time}`;
 };
