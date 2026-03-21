@@ -38,13 +38,13 @@ export const getLeagueColor = (leagueName: string): string => {
 export const getRoleColor = (role: UserRole): string => {
   switch (role) {
     case UserRole.Coach:
-      return "#1e88e5";
+      return '#9c27b0';
     case UserRole.Captain:
-      return "#8e24aa";
+      return '#f57c00';
     case UserRole.Manager:
-      return "#ef6c00";
+      return '#388e3c';
     case UserRole.Player:
     default:
-      return "#546e7a";
+      return '#1976d2';
   }
 };
