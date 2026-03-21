@@ -1,6 +1,8 @@
 // CurrentPlayerHeader.tsx
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { normalizeRole, roleToLabel, UserRole } from "./constants/roles";
+import { getRoleColor } from "./utils/colors";
 
 interface CurrentPlayerHeaderProps {
   onBack?: () => void; // Опциональный пропс для совместимости
@@ -11,37 +13,15 @@ interface User {
   firstName?: string | null;
   lastName?: string | null;
   jerseyNumber?: number | null;
-  role?: number; // 1: Coach, 2: Captain, 3: Player, 4: Manager
+  role?: number | UserRole;
 }
 
-const getRoleName = (role?: number): string => {
-  switch (role) {
-    case 1:
-      return 'Тренер';
-    case 2:
-      return 'Капитан';
-    case 3:
-      return 'Игрок';
-    case 4:
-      return 'Менеджер';
-    default:
-      return 'Игрок';
-  }
+const getRoleName = (role?: number | UserRole): string => {
+  return roleToLabel[normalizeRole(role)];
 };
 
-const getRoleColor = (role?: number): string => {
-  switch (role) {
-    case 1: // Тренер
-      return '#9c27b0'; // Фиолетовый
-    case 2: // Капитан
-      return '#f57c00'; // Оранжевый
-    case 3: // Игрок
-      return '#1976d2'; // Синий
-    case 4: // Менеджер
-      return '#388e3c'; // Зеленый
-    default:
-      return '#1976d2';
-  }
+const getColorByRole = (role?: number | UserRole): string => {
+  return getRoleColor(normalizeRole(role));
 };
 
 export function CurrentPlayerHeader({
@@ -104,7 +84,7 @@ export function CurrentPlayerHeader({
           <div style={{
             width: "48px",
             height: "48px",
-            backgroundColor: getRoleColor(currentUser.role),
+            backgroundColor: getColorByRole(currentUser.role),
             color: "white",
             borderRadius: "12px",
             display: "flex",
@@ -113,7 +93,7 @@ export function CurrentPlayerHeader({
             fontWeight: "700",
             fontSize: "20px",
             flexShrink: 0,
-            boxShadow: `0 3px 8px ${getRoleColor(currentUser.role)}40`
+            boxShadow: `0 3px 8px ${getColorByRole(currentUser.role)}40`
           }}>
             {currentUser.jerseyNumber ? (
               `#${currentUser.jerseyNumber}`
@@ -142,8 +122,8 @@ export function CurrentPlayerHeader({
               gap: "6px"
             }}>
               <span style={{
-                backgroundColor: `${getRoleColor(currentUser.role)}20`,
-                color: getRoleColor(currentUser.role),
+                backgroundColor: `${getColorByRole(currentUser.role)}20`,
+                color: getColorByRole(currentUser.role),
                 padding: "2px 8px",
                 borderRadius: "10px",
                 fontSize: "12px",
