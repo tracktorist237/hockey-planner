@@ -1,6 +1,6 @@
 import { EventLookUpDto, EventType } from "src/types/events";
 import { getEventTypeColor, getLeagueColor } from "src/utils/colors";
-import { formatRuDateLabel } from "src/utils/date";
+import { formatRuDateWithoutTimeLabel } from "src/utils/date";
 import { formatTime, getEventTypeName } from "src/pages/CalendarPage/utils";
 
 interface EventsListProps {
@@ -19,7 +19,7 @@ export function EventsList({ selectedDate, events, onEventClick }: EventsListPro
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
         <h3 style={{ margin: 0, fontSize: "18px", fontWeight: "600", color: "#1a237e", display: "flex", alignItems: "center", gap: "8px" }}>
           <span>📅</span>
-          <span>События {formatRuDateLabel(selectedDate.toISOString())}</span>
+          <span>События {formatRuDateWithoutTimeLabel(selectedDate.toISOString())}</span>
         </h3>
         {events.length === 0 && <span style={{ fontSize: "14px", color: "#666", backgroundColor: "#f5f5f5", padding: "4px 12px", borderRadius: "20px" }}>Нет событий</span>}
       </div>

@@ -20,3 +20,19 @@ export const formatRuDateLabel = (dateString: string): string => {
 
   return `${weekday}, ${dayMonth} ${time}`;
 };
+
+export const formatRuDateWithoutTimeLabel = (dateString: string): string => {
+  const date = new Date(dateString);
+
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  const weekday = RU_WEEKDAYS_SHORT[date.getDay()];
+  const dayMonth = date.toLocaleDateString("ru-RU", {
+    day: "numeric",
+    month: "long",
+  });
+
+  return `${weekday}, ${dayMonth}`;
+};
