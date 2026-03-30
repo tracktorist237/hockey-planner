@@ -1,6 +1,7 @@
 import { useState } from "react";
 import {
   BrowserRouter,
+  Navigate,
   Route,
   Routes,
   useNavigate,
@@ -88,8 +89,9 @@ function AppRoutes() {
 
   return (
     <Routes>
+      <Route path="/" element={<Navigate to="/events" replace />} />
       <Route
-        path="/"
+        path="/start-search"
         element={
           <StartSearchPage
             onSelect={(user) => {

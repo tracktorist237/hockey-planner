@@ -278,7 +278,7 @@ export const EventsListPage = ({ currentUser }: EventsListPageProps) => {
         }}
       >
         <button
-          onClick={() => navigate("/")}
+          onClick={() => navigate("/start-search")}
           style={{
             padding: "12px 16px",
             border: "none",
