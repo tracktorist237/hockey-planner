@@ -15,6 +15,10 @@ export const GameForm = ({
   onHomeChange,
   onAwayChange,
 }: GameFormProps) => {
+  const TEAM_HINT = "Северная Столица";
+  const homeSuggestionsId = "home-team-suggestions";
+  const awaySuggestionsId = "away-team-suggestions";
+
   return (
     <div
       style={{
@@ -61,6 +65,7 @@ export const GameForm = ({
             value={homeTeamName}
             onChange={(e) => onHomeChange(e.target.value)}
             placeholder="Например: Медведи"
+            list={homeSuggestionsId}
             style={{
               width: "100%",
               padding: "14px",
@@ -72,6 +77,9 @@ export const GameForm = ({
               maxWidth: "100%",
             }}
           />
+          <datalist id={homeSuggestionsId}>
+            <option value={TEAM_HINT} />
+          </datalist>
         </div>
 
         <div style={{ width: "100%", boxSizing: "border-box" }}>
@@ -82,6 +90,7 @@ export const GameForm = ({
             value={awayTeamName}
             onChange={(e) => onAwayChange(e.target.value)}
             placeholder="Например: Волки"
+            list={awaySuggestionsId}
             style={{
               width: "100%",
               padding: "14px",
@@ -93,6 +102,9 @@ export const GameForm = ({
               maxWidth: "100%",
             }}
           />
+          <datalist id={awaySuggestionsId}>
+            <option value={TEAM_HINT} />
+          </datalist>
         </div>
       </div>
 

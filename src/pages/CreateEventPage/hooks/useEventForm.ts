@@ -49,9 +49,20 @@ const getFinalTitle = (formData: EventFormData): string => {
   return formData.title;
 };
 
+const normalizeTeamName = (name: string): string =>
+  name.trim().replace(/\s+/g, " ").toLocaleLowerCase("ru-RU");
+
 const validateForm = (formData: EventFormData): string | null => {
   if (formData.type === EventType.Game && (!formData.homeTeamName || !formData.awayTeamName)) {
     return "Для матча необходимо указать названия команд";
+  }
+
+  if (formData.type === EventType.Game) {
+    const normalizedHome = normalizeTeamName(formData.homeTeamName);
+    const normalizedAway = normalizeTeamName(formData.awayTeamName);
+    if (normalizedHome && normalizedAway && normalizedHome === normalizedAway) {
+      return "Домашняя и гостевая команда должны отличаться";
+    }
   }
 
   if (formData.type === EventType.Meeting && !formData.title.trim()) {

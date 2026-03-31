@@ -3,7 +3,8 @@ import { formatRuDateLabel } from "./date";
 
 export const generateShareTitle = (event: EventDto): string => {
   if (event.type === EventType.Game && event.homeTeamName && event.awayTeamName) {
-    return `${event.homeTeamName} - ${event.awayTeamName}`;
+    const leagueSuffix = event.leagueName ? ` • ${event.leagueName}` : "";
+    return `${event.homeTeamName} - ${event.awayTeamName}${leagueSuffix}`;
   }
 
   return event.title || "Событие";
@@ -11,13 +12,30 @@ export const generateShareTitle = (event: EventDto): string => {
 
 export const generateShareDescription = (event: EventDto): string => {
   const parts: string[] = [];
+  const addressParts: string[] = [];
+
+  if (event.title) {
+    parts.push(`🏒 ${event.title}`);
+  }
 
   if (event.startTime) {
     parts.push(`📅 ${formatRuDateLabel(event.startTime)}`);
   }
 
+  if (event.leagueName) {
+    parts.push(`🏆 Лига: ${event.leagueName}`);
+  }
+
   if (event.locationName) {
-    parts.push(`📍 ${event.locationName}`);
+    addressParts.push(event.locationName);
+  }
+
+  if (event.locationAddress) {
+    addressParts.push(event.locationAddress);
+  }
+
+  if (addressParts.length > 0) {
+    parts.push(`📍 ${addressParts.join(", ")}`);
   }
 
   if (event.description) {
