@@ -2,17 +2,46 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CurrentPlayerHeader } from "./CurrentPlayerHeader";
 import { APP_VERSION } from "./config/version";
+import { getVersionInfo } from "src/api/version";
 
-export function SettingsPage() {
+interface SettingsPageProps {
+  onOpenDebug?: () => void;
+}
+
+export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
   const navigate = useNavigate();
   const [isUpdating, setIsUpdating] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [isClearing, setIsClearing] = useState(false);
+  const currentUserId = (() => {
+    try {
+      const raw = localStorage.getItem("currentUser");
+      if (!raw) {
+        return null;
+      }
+      const parsed = JSON.parse(raw) as { id?: string | null };
+      return parsed?.id ?? null;
+    } catch {
+      return null;
+    }
+  })();
 
-  // Функция для ручного обновления
-  const manualUpdate = async (): Promise<boolean> => {
-    setIsUpdating(true);
-    
+  const compareVersions = (left: string, right: string): number => {
+    const leftParts = left.split(".").map((part) => Number.parseInt(part, 10) || 0);
+    const rightParts = right.split(".").map((part) => Number.parseInt(part, 10) || 0);
+    const maxLength = Math.max(leftParts.length, rightParts.length);
+
+    for (let index = 0; index < maxLength; index += 1) {
+      const leftPart = leftParts[index] ?? 0;
+      const rightPart = rightParts[index] ?? 0;
+      if (leftPart > rightPart) return 1;
+      if (leftPart < rightPart) return -1;
+    }
+
+    return 0;
+  };
+
+  const applyServiceWorkerUpdate = async (): Promise<boolean> => {
     try {
       if (!('serviceWorker' in navigator)) {
         return false;
@@ -43,16 +72,43 @@ export function SettingsPage() {
     } catch (error) {
       console.error('Ошибка при обновлении:', error);
       return false;
-    } finally {
-      setIsUpdating(false);
     }
   };
 
   const handleUpdate = async () => {
-    const hasUpdate = await manualUpdate();
-    if (!hasUpdate) {
-      setMessage('У вас последняя версия');
-      setTimeout(() => setMessage(null), 2000);
+    setIsUpdating(true);
+    setMessage(null);
+
+    try {
+      const versionInfo = await getVersionInfo();
+      const backendVersion = versionInfo.version?.trim();
+
+      if (!backendVersion) {
+        setMessage("❌ Сервер не вернул версию");
+        return;
+      }
+
+      const comparison = compareVersions(backendVersion, APP_VERSION);
+
+      if (comparison > 0) {
+        const hasUpdate = await applyServiceWorkerUpdate();
+        if (!hasUpdate) {
+          setMessage(`🆕 Доступна версия v${backendVersion}. Очистите кэш. Перезагрузите приложение.`);
+        }
+        return;
+      }
+
+      if (comparison === 0) {
+        setMessage(`✅ У вас последняя версия v${APP_VERSION}`);
+      } else {
+        setMessage(`ℹ️ Текущая версия v${APP_VERSION} новее версии сервера v${backendVersion}`);
+      }
+    } catch (updateError) {
+      console.error("Ошибка при проверке версии:", updateError);
+      setMessage("❌ Не удалось проверить обновления");
+    } finally {
+      setIsUpdating(false);
+      setTimeout(() => setMessage(null), 4000);
     }
   };
 
@@ -158,14 +214,6 @@ export function SettingsPage() {
           }}>
             ⚙️ Настройки приложения
           </h1>
-          <p style={{
-            margin: "0",
-            fontSize: "15px",
-            color: "#666",
-            lineHeight: "1.5"
-          }}>
-            Управление обновлениями и кэшем
-          </p>
         </div>
 
         {/* Карточка с версией */}
@@ -203,6 +251,44 @@ export function SettingsPage() {
 
           {/* Кнопки действий */}
           <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+
+            <button
+              onClick={() => currentUserId && navigate(`/users/${currentUserId}/edit`)}
+              disabled={!currentUserId || isUpdating || isClearing}
+              style={{
+                width: "100%",
+                padding: "16px",
+                backgroundColor: !currentUserId ? "#eceff1" : "#ede7f6",
+                color: !currentUserId ? "#90a4ae" : "#5e35b1",
+                border: "1px solid #d1c4e9",
+                borderRadius: "12px",
+                fontSize: "16px",
+                fontWeight: "600",
+                cursor: !currentUserId ? "not-allowed" : "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "8px",
+                transition: "all 0.2s ease",
+                opacity: isUpdating || isClearing ? 0.7 : 1
+              }}
+              onMouseEnter={(e) => {
+                if (currentUserId && !isUpdating && !isClearing) {
+                  e.currentTarget.style.backgroundColor = "#e1bee7";
+                  e.currentTarget.style.transform = "translateY(-1px)";
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (currentUserId && !isUpdating && !isClearing) {
+                  e.currentTarget.style.backgroundColor = "#ede7f6";
+                  e.currentTarget.style.transform = "translateY(0)";
+                }
+              }}
+            >
+              <span style={{ fontSize: "20px" }}>👤</span>
+              <span>{currentUserId ? "Редактировать профиль" : "Профиль не выбран"}</span>
+            </button>
+
             <button
               onClick={handleUpdate}
               disabled={isUpdating || isClearing}
@@ -283,6 +369,37 @@ export function SettingsPage() {
               <span>
                 {isClearing ? 'Очистка кэша...' : 'Очистить кэш'}
               </span>
+            </button>
+            
+            <button
+              onClick={onOpenDebug}
+              style={{
+                width: "100%",
+                padding: "16px",
+                backgroundColor: "#6e6c6c",
+                color: "white",
+                border: "1px solid #424242",
+                borderRadius: "12px",
+                fontSize: "16px",
+                fontWeight: "600",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "8px",
+                transition: "all 0.2s ease"
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "#000";
+                e.currentTarget.style.transform = "translateY(-1px)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "#212121";
+                e.currentTarget.style.transform = "translateY(0)";
+              }}
+            >
+              <span style={{ fontSize: "20px" }}>🛠️</span>
+              <span>Открыть debug-окно</span>
             </button>
           </div>
 

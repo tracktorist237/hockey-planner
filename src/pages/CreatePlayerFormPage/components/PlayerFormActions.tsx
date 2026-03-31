@@ -3,9 +3,18 @@ import { MouseEvent } from "react";
 interface PlayerFormActionsProps {
   submitting: boolean;
   onCancel: () => void;
+  submitText?: string;
+  submittingText?: string;
+  cancelText?: string;
 }
 
-export function PlayerFormActions({ submitting, onCancel }: PlayerFormActionsProps) {
+export function PlayerFormActions({
+  submitting,
+  onCancel,
+  submitText = "Создать игрока",
+  submittingText = "Создание анкеты...",
+  cancelText = "Отмена",
+}: PlayerFormActionsProps) {
   const updateButtonState = (
     event: MouseEvent<HTMLButtonElement>,
     state: "enter" | "leave",
@@ -37,10 +46,10 @@ export function PlayerFormActions({ submitting, onCancel }: PlayerFormActionsPro
           {submitting ? (
             <>
               <span style={{ width: "16px", height: "16px", border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "white", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
-              <span>Создание анкеты...</span>
+              <span>{submittingText}</span>
             </>
           ) : (
-            <span>Создать игрока</span>
+            <span>{submitText}</span>
           )}
         </button>
 
@@ -51,7 +60,7 @@ export function PlayerFormActions({ submitting, onCancel }: PlayerFormActionsPro
           onMouseLeave={(event) => updateButtonState(event, "leave")}
           style={{ width: "100%", padding: "14px 24px", backgroundColor: "#f5f5f5", color: "#666", border: "1px solid #e0e0e0", borderRadius: "12px", fontSize: "15px", fontWeight: "500", cursor: "pointer", transition: "all 0.2s ease" }}
         >
-          Отмена
+          {cancelText}
         </button>
       </div>
     </div>

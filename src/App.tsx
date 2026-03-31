@@ -14,6 +14,8 @@ import { DeleteEventPage } from "./DeleteEventPage";
 import { EventPage } from "src/pages/EventPage/EventPage";
 import { SettingsPage } from "./SettingsPage";
 import { UpdateEventPage } from "./UpdateEventPage";
+import { UpdateUserPage } from "./UpdateUserPage";
+import { DebugOverlay } from "src/components/DebugOverlay";
 import { normalizeRole } from "./constants/roles";
 import { EventsListPage } from "./pages/EventsListPage/EventsListPage";
 import StartSearchPage from "./pages/StartSearchPage/StartSearchPage";
@@ -85,32 +87,37 @@ function AppRoutes() {
   const [currentUser, setCurrentUser] = useState<User | null>(() =>
     getStoredCurrentUser(),
   );
+  const [isDebugOpen, setIsDebugOpen] = useState(false);
   const navigate = useNavigate();
 
   return (
-    <Routes>
-      <Route path="/" element={<Navigate to="/events" replace />} />
-      <Route
-        path="/start-search"
-        element={
-          <StartSearchPage
-            onSelect={(user) => {
-              setCurrentUser(user);
-              localStorage.setItem("currentUser", JSON.stringify(user));
-              navigate("/events");
-            }}
-          />
-        }
-      />
-      <Route path="/events" element={<EventsListPage currentUser={currentUser} />} />
-      <Route path="/events/create" element={<CreateEventWrapper />} />
-      <Route path="/events/:id" element={<EventPageWrapper currentUser={currentUser} />} />
-      <Route path="/events/:id/delete" element={<DeleteEventPage />} />
-      <Route path="/create-player" element={<CreatePlayerFormPage />} />
-      <Route path="/events/:id/edit" element={<UpdateEventPage />} />
-      <Route path="/calendar" element={<CalendarPage />} />
-      <Route path="/settings" element={<SettingsPage />} />
-    </Routes>
+    <>
+      <Routes>
+        <Route path="/" element={<Navigate to="/events" replace />} />
+        <Route
+          path="/start-search"
+          element={
+            <StartSearchPage
+              onSelect={(user) => {
+                setCurrentUser(user);
+                localStorage.setItem("currentUser", JSON.stringify(user));
+                navigate("/events");
+              }}
+            />
+          }
+        />
+        <Route path="/events" element={<EventsListPage currentUser={currentUser} />} />
+        <Route path="/events/create" element={<CreateEventWrapper />} />
+        <Route path="/events/:id" element={<EventPageWrapper currentUser={currentUser} />} />
+        <Route path="/events/:id/delete" element={<DeleteEventPage />} />
+        <Route path="/create-player" element={<CreatePlayerFormPage />} />
+        <Route path="/events/:id/edit" element={<UpdateEventPage />} />
+        <Route path="/users/:id/edit" element={<UpdateUserPage />} />
+        <Route path="/calendar" element={<CalendarPage />} />
+        <Route path="/settings" element={<SettingsPage onOpenDebug={() => setIsDebugOpen(true)} />} />
+      </Routes>
+      <DebugOverlay isOpen={isDebugOpen} onClose={() => setIsDebugOpen(false)} />
+    </>
   );
 }
 
