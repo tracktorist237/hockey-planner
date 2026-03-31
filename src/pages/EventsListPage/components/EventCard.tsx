@@ -21,6 +21,19 @@ const getEventTypeName = (type: EventType): string => {
   }
 };
 
+const getAttendanceStatusMeta = (attendanceStatus?: number | null) => {
+  switch (attendanceStatus) {
+    case 2:
+      return { label: "Смогу", emoji: "✅", background: "#e8f5e9", color: "#2e7d32" };
+    case 3:
+      return { label: "Не смогу", emoji: "❌", background: "#ffebee", color: "#c62828" };
+    case 1:
+      return { label: "Ожидается ответ", emoji: "⏳", background: "#fff8e1", color: "#ef6c00" };
+    default:
+      return null;
+  }
+};
+
 const EventCardComponent = ({ event, onOpen }: EventCardProps) => {
   const isToday = useMemo(() => {
     const eventDate = new Date(event.startTime);
@@ -35,6 +48,7 @@ const EventCardComponent = ({ event, onOpen }: EventCardProps) => {
 
     return eventDay === today;
   }, [event.startTime]);
+  const attendanceStatusMeta = getAttendanceStatusMeta(event.attendanceStatus);
 
   return (
     <div
@@ -148,6 +162,33 @@ const EventCardComponent = ({ event, onOpen }: EventCardProps) => {
           </div>
         )}
       </div>
+      
+      {attendanceStatusMeta && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            marginBottom: "8px",
+          }}
+        >
+          <div
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              backgroundColor: attendanceStatusMeta.background,
+              color: attendanceStatusMeta.color,
+              padding: "4px 10px",
+              borderRadius: "10px",
+              fontSize: "12px",
+              fontWeight: "600",
+            }}
+          >
+            <span>{attendanceStatusMeta.emoji}</span>
+            <span>{attendanceStatusMeta.label}</span>
+          </div>
+        </div>
+      )}
 
       {event.locationName && (
         <div

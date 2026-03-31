@@ -11,7 +11,7 @@ interface EventsListPageProps {
 
 export const EventsListPage = ({ currentUser }: EventsListPageProps) => {
   const navigate = useNavigate();
-  const { events, loading, error } = useEventsData();
+  const { events, loading, error } = useEventsData(currentUser?.id);
 
   const handleOpenEvent = useCallback(
     (eventId: string) => {

@@ -11,6 +11,7 @@ export interface EventLookUpDto {
   type: number;
   startTime: string; // ISO date
   status: number;
+  attendanceStatus?: number | null;
   locationName?: string;
   locationAddress?: string;
   iceRinkNumber?: string;

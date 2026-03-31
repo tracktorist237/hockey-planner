@@ -10,14 +10,14 @@ const isUpcomingEvent = (startTime: string): boolean => {
   return eventDay.getTime() >= today.getTime();
 };
 
-export const useEventsData = () => {
+export const useEventsData = (currentUserId?: string) => {
   const [events, setEvents] = useState<EventLookUpDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const loadEvents = useCallback(async () => {
     try {
-      const data = await getEvents();
+      const data = await getEvents(currentUserId);
       setEvents(data.events ?? []);
       setError(null);
     } catch (err) {
@@ -26,7 +26,7 @@ export const useEventsData = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [currentUserId]);
 
   useEffect(() => {
     setLoading(true);

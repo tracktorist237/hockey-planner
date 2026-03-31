@@ -2,8 +2,9 @@ import { EventListDto, EventDto, CreateEventDto } from "../types/events";
 
 const API_BASE = process.env.REACT_APP_API_BASE || '';
 
-export async function getEvents(): Promise<EventListDto> {
-  const res = await fetch(`${API_BASE}/api/events`, { credentials: "include" });
+export async function getEvents(currentUserId?: string): Promise<EventListDto> {
+  const query = currentUserId ? `?currentUserId=${encodeURIComponent(currentUserId)}` : "";
+  const res = await fetch(`${API_BASE}/api/events${query}`, { credentials: "include" });
   if (!res.ok) throw new Error(`GET /api/events failed: ${res.status}`);
   return res.json();
 }
