@@ -15,6 +15,7 @@ export interface EventFormData {
   leagueName: string;
   homeTeamName: string;
   awayTeamName: string;
+  selectedExerciseIds: string[];
   useAddressSearch: boolean;
   type: EventType;
 }

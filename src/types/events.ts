@@ -67,6 +67,7 @@ export interface EventDto {
   homeTeamName?: string | null;
   awayTeamName?: string | null;
   leagueName?: string | null;
+  exercises?: ExerciseDto[];
 }
 
 
@@ -81,4 +82,11 @@ export interface CreateEventDto {
   homeTeamName?: string | null;
   awayTeamName?: string | null;
   leagueName?: string | null;
+  exerciseIds?: string[];
+}
+
+export interface ExerciseDto {
+  id: string;
+  name: string;
+  videoUrl: string;
 }

@@ -9,6 +9,7 @@ import { FormHeader } from "src/pages/CreateEventPage/components/FormHeader";
 import { GameForm } from "src/pages/CreateEventPage/components/GameForm";
 import { LocationForm } from "src/pages/CreateEventPage/components/LocationForm";
 import { MeetingForm } from "src/pages/CreateEventPage/components/MeetingForm";
+import { PracticeExercisesSection } from "src/pages/CreateEventPage/components/PracticeExercisesSection";
 import { useUpdateEventForm } from "src/pages/UpdateEventPage/hooks/useUpdateEventForm";
 
 export function UpdateEventPage() {
@@ -35,6 +36,7 @@ export function UpdateEventPage() {
             <EventTypeSelector currentType={formData.type} onChange={handleTypeChange} />
             {isMeeting && <MeetingForm title={formData.title} onChange={(value) => updateField("title", value)} />}
             {isGame && <GameForm leagueName={formData.leagueName} homeTeamName={formData.homeTeamName} awayTeamName={formData.awayTeamName} onLeagueChange={(value) => updateField("leagueName", value)} onHomeChange={(value) => updateField("homeTeamName", value)} onAwayChange={(value) => updateField("awayTeamName", value)} />}
+            {isPractice && <PracticeExercisesSection selectedExerciseIds={formData.selectedExerciseIds} onChange={(ids) => updateField("selectedExerciseIds", ids)} />}
             <EventDetailsFields description={formData.description} startTime={formData.startTime} isPractice={isPractice} onDescriptionChange={(value) => updateField("description", value)} onStartTimeChange={(value) => updateField("startTime", value)} />
             <LocationForm locationName={formData.locationName} locationAddress={formData.locationAddress} iceRinkNumber={formData.iceRinkNumber} useAddressSearch={formData.useAddressSearch} onLocationNameChange={(value) => updateField("locationName", value)} onLocationAddressChange={(value) => updateField("locationAddress", value)} onIceRinkNumberChange={(value) => updateField("iceRinkNumber", value)} onToggleSearch={() => updateField("useAddressSearch", !formData.useAddressSearch)} />
           </div>

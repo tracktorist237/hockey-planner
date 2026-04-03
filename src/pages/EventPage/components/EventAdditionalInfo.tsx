@@ -79,6 +79,59 @@ export const EventAdditionalInfo = ({ event }: EventAdditionalInfoProps) => {
           )}
         </div>
       )}
+
+      {event.exercises && event.exercises.length > 0 && (
+        <div
+          style={{
+            backgroundColor: "white",
+            borderRadius: "16px",
+            padding: "20px",
+            marginBottom: "20px",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+          }}
+        >
+          <h3
+            style={{
+              margin: "0 0 16px 0",
+              fontSize: "16px",
+              fontWeight: "600",
+              color: "#333",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+            }}
+          >
+            <span>🏋️</span>
+            <span>Упражнения тренировки</span>
+          </h3>
+          <div style={{ display: "grid", gap: "8px" }}>
+            {event.exercises.map((exercise, index) => (
+              <a
+                key={exercise.id}
+                href={exercise.videoUrl}
+                target="_blank"
+                rel="noreferrer"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: "12px",
+                  padding: "10px 12px",
+                  backgroundColor: "#f8f9fa",
+                  borderRadius: "10px",
+                  border: "1px solid #e0e0e0",
+                  textDecoration: "none",
+                }}
+              >
+                <span style={{ fontSize: "14px", color: "#1a237e", fontWeight: "600" }}>
+                  {index + 1}. {exercise.name}
+                </span>
+                <span style={{ fontSize: "13px", color: "#1976d2" }}>Открыть видео ↗</span>
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
     </>
   );
 };

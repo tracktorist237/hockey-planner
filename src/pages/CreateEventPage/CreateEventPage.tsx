@@ -7,6 +7,7 @@ import { FormHeader } from "src/pages/CreateEventPage/components/FormHeader";
 import { GameForm } from "src/pages/CreateEventPage/components/GameForm";
 import { LocationForm } from "src/pages/CreateEventPage/components/LocationForm";
 import { MeetingForm } from "src/pages/CreateEventPage/components/MeetingForm";
+import { PracticeExercisesSection } from "src/pages/CreateEventPage/components/PracticeExercisesSection";
 import { useEventForm } from "src/pages/CreateEventPage/hooks/useEventForm";
 import { CreateEventPageProps } from "src/pages/CreateEventPage/types";
 import { useScrollVisibility } from "src/hooks/useScrollVisibility";
@@ -37,6 +38,13 @@ export function CreateEventPage({ onBack, onCreated }: CreateEventPageProps) {
                 onLeagueChange={(value) => updateField("leagueName", value)}
                 onHomeChange={(value) => updateField("homeTeamName", value)}
                 onAwayChange={(value) => updateField("awayTeamName", value)}
+              />
+            )}
+
+            {isPractice && (
+              <PracticeExercisesSection
+                selectedExerciseIds={formData.selectedExerciseIds}
+                onChange={(ids) => updateField("selectedExerciseIds", ids)}
               />
             )}
 
