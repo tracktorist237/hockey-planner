@@ -33,6 +33,7 @@ const initialFormData: EventFormData = {
   leagueName: "",
   homeTeamName: "",
   awayTeamName: "",
+  uniformColorId: "",
   selectedExerciseIds: [],
   useAddressSearch: true,
   type: EventType.Practice,
@@ -101,6 +102,7 @@ export const useEventForm = ({
       homeTeamName: newType === EventType.Game ? prev.homeTeamName : "",
       awayTeamName: newType === EventType.Game ? prev.awayTeamName : "",
       leagueName: newType === EventType.Game ? prev.leagueName : "",
+      uniformColorId: newType === EventType.Game ? prev.uniformColorId : "",
       selectedExerciseIds: newType === EventType.Practice ? prev.selectedExerciseIds : [],
     }));
   };
@@ -129,6 +131,7 @@ export const useEventForm = ({
         ? {
             homeTeamName: formData.homeTeamName || null,
             awayTeamName: formData.awayTeamName || null,
+            uniformColorId: formData.uniformColorId || null,
           }
         : {}),
       ...(formData.type === EventType.Practice

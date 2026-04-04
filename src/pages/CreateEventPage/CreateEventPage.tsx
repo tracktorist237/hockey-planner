@@ -35,9 +35,11 @@ export function CreateEventPage({ onBack, onCreated }: CreateEventPageProps) {
                 leagueName={formData.leagueName}
                 homeTeamName={formData.homeTeamName}
                 awayTeamName={formData.awayTeamName}
+                uniformColorId={formData.uniformColorId}
                 onLeagueChange={(value) => updateField("leagueName", value)}
                 onHomeChange={(value) => updateField("homeTeamName", value)}
                 onAwayChange={(value) => updateField("awayTeamName", value)}
+                onUniformColorChange={(value) => updateField("uniformColorId", value)}
               />
             )}
 

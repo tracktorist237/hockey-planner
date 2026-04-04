@@ -33,6 +33,7 @@ const mapEventToFormData = (
   leagueName: event.leagueName ?? "",
   homeTeamName: event.homeTeamName ?? "",
   awayTeamName: event.awayTeamName ?? "",
+  uniformColorId: event.uniformColorId ?? "",
   selectedExerciseIds: event.exercises?.map((exercise) => exercise.id) ?? [],
   useAddressSearch: true,
   type: normalizeType(event.type),

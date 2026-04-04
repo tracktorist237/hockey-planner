@@ -1,19 +1,25 @@
+import { UniformColorSection } from "src/pages/CreateEventPage/components/UniformColorSection";
+
 interface GameFormProps {
   leagueName: string;
   homeTeamName: string;
   awayTeamName: string;
+  uniformColorId: string;
   onLeagueChange: (value: string) => void;
   onHomeChange: (value: string) => void;
   onAwayChange: (value: string) => void;
+  onUniformColorChange: (value: string) => void;
 }
 
 export const GameForm = ({
   leagueName,
   homeTeamName,
   awayTeamName,
+  uniformColorId,
   onLeagueChange,
   onHomeChange,
   onAwayChange,
+  onUniformColorChange,
 }: GameFormProps) => {
   const TEAM_HINT = "Северная Столица";
   const homeSuggestionsId = "home-team-suggestions";
@@ -107,6 +113,8 @@ export const GameForm = ({
           </datalist>
         </div>
       </div>
+
+      <UniformColorSection selectedUniformColorId={uniformColorId} onChange={onUniformColorChange} />
 
       {homeTeamName && awayTeamName && (
         <div

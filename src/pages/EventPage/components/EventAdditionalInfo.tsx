@@ -132,6 +132,60 @@ export const EventAdditionalInfo = ({ event }: EventAdditionalInfoProps) => {
           </div>
         </div>
       )}
+
+      {event.type === 2 && event.uniformColor?.imageUrl && (
+        <div
+          style={{
+            backgroundColor: "white",
+            borderRadius: "12px",
+            padding: "12px",
+            marginBottom: "16px",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+          }}
+        >
+          <h3
+            style={{
+              margin: "0 0 8px 0",
+              fontSize: "14px",
+              fontWeight: "600",
+              color: "#333",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+            }}
+          >
+            <span>🎽</span>
+            <span>Цвет формы</span>
+          </h3>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
+              padding: "8px",
+              borderRadius: "8px",
+              border: "1px solid #eceff1",
+              backgroundColor: "#fafbfc",
+            }}
+          >
+            <img
+              src={event.uniformColor.imageUrl}
+              alt="Цвет формы команды"
+              style={{
+                width: "72px",
+                height: "72px",
+                objectFit: "cover",
+                borderRadius: "8px",
+                border: "1px solid #e0e0e0",
+                backgroundColor: "white",
+              }}
+            />
+            <div style={{ display: "grid", gap: "2px" }}>
+              <span style={{ fontSize: "16px", color: "#1a237e", fontWeight: 600 }}>{event.uniformColor.name}</span>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };
