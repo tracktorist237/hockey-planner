@@ -6,6 +6,16 @@ import { EventDto, EventType } from "./types/events";
 import { AddressSearchInput } from "./AddressSearchInput";
 import { CurrentPlayerHeader } from "./CurrentPlayerHeader";
 
+const toDateTimeLocalValue = (value: string): string => {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  const tzOffsetMs = date.getTimezoneOffset() * 60_000;
+  return new Date(date.getTime() - tzOffsetMs).toISOString().slice(0, 16);
+};
+
 export function UpdateEventPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -45,7 +55,7 @@ export function UpdateEventPage() {
         setType(eventData.type);
         setTitle(eventData.title || "");
         setDescription(eventData.description || "");
-        setStartTime(new Date(eventData.startTime).toISOString().slice(0, 16));
+        setStartTime(toDateTimeLocalValue(eventData.startTime));
         setLocationName(eventData.locationName || "");
         setLocationAddress(eventData.locationAddress || "");
         setIceRinkNumber(eventData.iceRinkNumber || "");
