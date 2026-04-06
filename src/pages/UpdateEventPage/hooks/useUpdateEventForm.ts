@@ -11,7 +11,12 @@ interface UseUpdateEventFormOptions {
 
 const toDateTimeLocal = (value: string): string => {
   const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? "" : date.toISOString().slice(0, 16);
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  const timezoneOffsetMs = date.getTimezoneOffset() * 60_000;
+  return new Date(date.getTime() - timezoneOffsetMs).toISOString().slice(0, 16);
 };
 
 const normalizeType = (type: number): EventType => {
