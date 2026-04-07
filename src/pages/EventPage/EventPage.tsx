@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { getUsers } from "src/api/users";
 import { CurrentPlayerHeader } from "src/CurrentPlayerHeader";
 import { ActionMenu } from "src/pages/EventPage/components/ActionMenu";
 import { AttendanceList } from "src/pages/EventPage/components/AttendanceList";
@@ -34,6 +35,7 @@ const getCurrentUserId = (currentUser?: EventPageProps["currentUser"]): string |
 
 export function EventPage({ eventId, onBack, currentUser }: EventPageProps) {
   const [isActionsOpen, setIsActionsOpen] = useState(false);
+  const [avatarUrls, setAvatarUrls] = useState<Record<string, string>>({});
   const selectedUserId = useMemo(() => getCurrentUserId(currentUser), [currentUser]);
 
   const { event, loading, error, copySuccess, copyEventLink, reloadEvent, setError } = useEventData(eventId);
@@ -42,6 +44,70 @@ export function EventPage({ eventId, onBack, currentUser }: EventPageProps) {
   const attendance = useAttendance({ event, selectedUserId, reloadEvent, onError: reportError });
   const lineManagement = useLineManagement({ event, currentUserId: selectedUserId, reloadEvent, onError: reportError });
   const playerModal = usePlayerModal({ onError: reportError });
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadAvatars = async () => {
+      if (!event) {
+        if (isMounted) {
+          setAvatarUrls({});
+        }
+        return;
+      }
+
+      const userIds = new Set<string>();
+      const knownPhotos: Record<string, string> = {};
+
+      event.attendances?.forEach((attendanceItem) => {
+        userIds.add(attendanceItem.userId);
+        if (attendanceItem.photoUrl) {
+          knownPhotos[attendanceItem.userId] = attendanceItem.photoUrl;
+        }
+      });
+
+      event.roster?.forEach((line) => {
+        line.members?.forEach((member) => {
+          userIds.add(member.userId);
+          if (member.photoUrl) {
+            knownPhotos[member.userId] = member.photoUrl;
+          }
+        });
+      });
+
+      if (Object.keys(knownPhotos).length > 0 && isMounted) {
+        setAvatarUrls((prev) => ({ ...prev, ...knownPhotos }));
+      }
+
+      if (userIds.size === 0) {
+        return;
+      }
+
+      try {
+        const users = await getUsers();
+        if (!isMounted) {
+          return;
+        }
+
+        const resolved: Record<string, string> = { ...knownPhotos };
+        users.forEach((user) => {
+          if (userIds.has(user.id) && user.photoUrl) {
+            resolved[user.id] = user.photoUrl;
+          }
+        });
+
+        setAvatarUrls(resolved);
+      } catch (avatarError) {
+        console.error("Ошибка загрузки аватаров игроков:", avatarError);
+      }
+    };
+
+    void loadAvatars();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [event]);
 
   if (loading) {
     return <LoadingState />;
@@ -59,7 +125,18 @@ export function EventPage({ eventId, onBack, currentUser }: EventPageProps) {
     <div style={{ padding: "0", minHeight: "100vh", backgroundColor: "#f5f5f5", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", boxSizing: "border-box" }}>
       <div style={{ backgroundColor: "white", padding: "16px", borderBottom: "1px solid #e0e0e0", boxShadow: "0 2px 4px rgba(0,0,0,0.05)", position: "sticky", top: 0, zIndex: 100 }}>
         <div style={{ display: "flex", alignItems: "center", marginBottom: "12px" }}>
-          <button onClick={onBack} style={{ width: "44px", height: "44px", display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid #e0e0e0", background: "white", fontSize: "20px", cursor: "pointer", borderRadius: "10px", marginRight: "12px", flexShrink: 0, transition: "all 0.2s ease" }} onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#f5f5f5"; e.currentTarget.style.borderColor = "#1976d2"; }} onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "white"; e.currentTarget.style.borderColor = "#e0e0e0"; }}>
+          <button
+            onClick={onBack}
+            style={{ width: "44px", height: "44px", display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid #e0e0e0", background: "white", fontSize: "20px", cursor: "pointer", borderRadius: "10px", marginRight: "12px", flexShrink: 0, transition: "all 0.2s ease" }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = "#f5f5f5";
+              e.currentTarget.style.borderColor = "#1976d2";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "white";
+              e.currentTarget.style.borderColor = "#e0e0e0";
+            }}
+          >
             ←
           </button>
           <div style={{ flex: 1 }}>
@@ -73,8 +150,16 @@ export function EventPage({ eventId, onBack, currentUser }: EventPageProps) {
         <ActionMenu eventId={event.id} isOpen={isActionsOpen} onToggle={() => setIsActionsOpen((prev) => !prev)} />
         <EventAdditionalInfo event={event} />
         <AttendanceResponseCard {...attendance} />
-        <AttendanceList attendances={event.attendances} onPlayerClick={playerModal.handleOpenPlayerInfo} />
-        <RosterManager {...lineManagement} onPlayerClick={playerModal.handleOpenPlayerInfo} />
+        <AttendanceList
+          attendances={event.attendances}
+          onPlayerClick={playerModal.handleOpenPlayerInfo}
+          avatarUrls={avatarUrls}
+        />
+        <RosterManager
+          {...lineManagement}
+          onPlayerClick={playerModal.handleOpenPlayerInfo}
+          avatarUrls={avatarUrls}
+        />
       </div>
 
       <PlayerInfoModal player={playerModal.selectedPlayer} isOpen={playerModal.isPlayerModalOpen} onClose={playerModal.handleCloseModal} />

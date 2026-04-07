@@ -1,6 +1,7 @@
 import { AttendanceLookUpDto, LineDto } from "src/types/events";
 import { Slot } from "src/pages/EventPage/types";
 import { LineCircles } from "src/pages/EventPage/components/LineCircles";
+import { PlayerAvatar } from "src/components/PlayerAvatar";
 
 interface RosterManagerProps {
   sortedRoster: LineDto[];
@@ -27,6 +28,7 @@ interface RosterManagerProps {
   selectForSlot: (player: AttendanceLookUpDto) => void;
   cancelLineEditor: () => void;
   onPlayerClick: (userId: string) => void;
+  avatarUrls?: Record<string, string>;
 }
 
 const getSlotLabel = (slot: Slot): string => {
@@ -70,6 +72,7 @@ const renderEditableSlot = (
   setActiveSlot: (slot: Slot | null) => void,
   onPlayerClick: (userId: string) => void,
   clearSlot: (slot: Slot) => void,
+  avatarUrls?: Record<string, string>,
 ) => {
   return (
     <div key={slot} style={{ textAlign: "center", width: "70px" }}>
@@ -90,6 +93,7 @@ const renderEditableSlot = (
           fontWeight: lineSlots[slot] ? "600" : "400",
           color: lineSlots[slot] ? "#1a237e" : "#666",
           transition: "all 0.2s ease",
+          position: "relative",
         }}
         onMouseEnter={(e) => {
           if (!lineSlots[slot]) {
@@ -102,7 +106,47 @@ const renderEditableSlot = (
           }
         }}
       >
-        {lineSlots[slot] ? lineSlots[slot]!.jerseyNumber ?? "?" : <span style={{ opacity: 0.7 }}>＋</span>}
+        {lineSlots[slot] ? (
+          <>
+            <PlayerAvatar
+              size={56}
+              shape="circle"
+              photoUrl={lineSlots[slot]!.photoUrl ?? avatarUrls?.[lineSlots[slot]!.userId]}
+              jerseyNumber={lineSlots[slot]!.jerseyNumber}
+              fallbackPrefix=""
+              showBadgeWhenPhoto={false}
+              fallbackBg="#e3f2fd"
+              fallbackColor="#1a237e"
+              fontSize={20}
+            />
+            <div
+              style={{
+                position: "absolute",
+                right: "-2px",
+                bottom: "-2px",
+                minWidth: "16px",
+                height: "16px",
+                padding: "0 3px",
+                borderRadius: "9px",
+                backgroundColor: "rgba(20,20,20,0.82)",
+                color: "#fff",
+                border: "1px solid rgba(255,255,255,0.95)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "9px",
+                fontWeight: "700",
+                lineHeight: 1,
+                zIndex: 6,
+                boxShadow: "0 1px 3px rgba(0,0,0,0.35)",
+              }}
+            >
+              #{lineSlots[slot]!.jerseyNumber ?? "?"}
+            </div>
+          </>
+        ) : (
+          <span style={{ opacity: 0.7 }}>＋</span>
+        )}
       </div>
 
       <div style={{ fontSize: "10px", color: "#666", fontWeight: "500", marginBottom: "4px" }}>{getSlotLabel(slot)}</div>
@@ -188,6 +232,7 @@ export const RosterManager = ({
   selectForSlot,
   cancelLineEditor,
   onPlayerClick,
+  avatarUrls,
 }: RosterManagerProps) => {
   return (
     <div
@@ -290,13 +335,13 @@ export const RosterManager = ({
 
           <div style={{ display: "flex", gap: "12px", justifyContent: "center", marginBottom: "16px", flexWrap: "wrap" }}>
             {(["LW", "C", "RW"] as Slot[]).map((slot) =>
-              renderEditableSlot(slot, lineSlots, activeSlot, setActiveSlot, onPlayerClick, clearSlot),
+              renderEditableSlot(slot, lineSlots, activeSlot, setActiveSlot, onPlayerClick, clearSlot, avatarUrls),
             )}
           </div>
 
           <div style={{ display: "flex", gap: "12px", justifyContent: "center", marginTop: "8px", marginBottom: "16px", flexWrap: "wrap" }}>
             {(["LD", "RD"] as Slot[]).map((slot) =>
-              renderEditableSlot(slot, lineSlots, activeSlot, setActiveSlot, onPlayerClick, clearSlot),
+              renderEditableSlot(slot, lineSlots, activeSlot, setActiveSlot, onPlayerClick, clearSlot, avatarUrls),
             )}
           </div>
 
@@ -327,23 +372,17 @@ export const RosterManager = ({
                         e.currentTarget.style.backgroundColor = "#fff";
                       }}
                     >
-                      <div
-                        style={{
-                          width: "36px",
-                          height: "36px",
-                          backgroundColor: "#1976d2",
-                          color: "white",
-                          borderRadius: "8px",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          fontWeight: "600",
-                          fontSize: "14px",
-                          flexShrink: 0,
-                        }}
-                      >
-                        #{player.jerseyNumber || "?"}
-                      </div>
+                      <PlayerAvatar
+                        size={36}
+                        shape="rounded"
+                        photoUrl={player.photoUrl ?? avatarUrls?.[player.userId]}
+                        jerseyNumber={player.jerseyNumber}
+                        fallbackPrefix="#"
+                        badgePrefix="#"
+                        fallbackBg="#1976d2"
+                        fallbackColor="#fff"
+                        fontSize={13}
+                      />
                       <div style={{ flex: 1 }}>
                         <div style={{ fontWeight: "500", fontSize: "15px" }}>
                           {player.firstName} {player.lastName}
@@ -570,7 +609,11 @@ export const RosterManager = ({
               </button>
             </div>
 
-            <LineCircles members={line.members} onPlayerClick={onPlayerClick} />
+            <LineCircles
+              members={line.members}
+              onPlayerClick={onPlayerClick}
+              avatarUrls={avatarUrls}
+            />
           </div>
         ))
       ) : (

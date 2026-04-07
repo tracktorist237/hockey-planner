@@ -1,10 +1,12 @@
 import { PlayerLookUpDto } from "src/types/events";
 import { PlayerRole } from "src/types/lines";
 import { Slot, roleToSlot } from "src/pages/EventPage/types";
+import { PlayerAvatar } from "src/components/PlayerAvatar";
 
 interface LineCirclesProps {
   members?: PlayerLookUpDto[] | null;
   onPlayerClick: (userId: string) => void;
+  avatarUrls?: Record<string, string>;
 }
 
 const getSlotLabel = (slot: Slot): string => {
@@ -24,7 +26,7 @@ const getSlotLabel = (slot: Slot): string => {
   }
 };
 
-export const LineCircles = ({ members, onPlayerClick }: LineCirclesProps) => {
+export const LineCircles = ({ members, onPlayerClick, avatarUrls }: LineCirclesProps) => {
   const slots: Record<Slot, PlayerLookUpDto | null> = {
     LW: null,
     C: null,
@@ -65,6 +67,7 @@ export const LineCircles = ({ members, onPlayerClick }: LineCirclesProps) => {
           color: "#1a237e",
           cursor: slots[slot] ? "pointer" : "default",
           transition: "all 0.2s ease",
+          position: "relative",
         }}
         onMouseEnter={(e) => {
           if (slots[slot]) {
@@ -79,7 +82,47 @@ export const LineCircles = ({ members, onPlayerClick }: LineCirclesProps) => {
           }
         }}
       >
-        {slots[slot] ? slots[slot]!.jerseyNumber ?? "?" : <span style={{ color: "#666", opacity: 0.5 }}>—</span>}
+        {slots[slot] ? (
+          <>
+            <PlayerAvatar
+              size={56}
+              shape="circle"
+              photoUrl={slots[slot]!.photoUrl ?? avatarUrls?.[slots[slot]!.userId]}
+              jerseyNumber={slots[slot]!.jerseyNumber}
+              fallbackPrefix=""
+              showBadgeWhenPhoto={false}
+              fallbackBg="#e3f2fd"
+              fallbackColor="#1a237e"
+              fontSize={20}
+            />
+            <div
+              style={{
+                position: "absolute",
+                right: "-2px",
+                bottom: "-2px",
+                minWidth: "16px",
+                height: "16px",
+                padding: "0 3px",
+                borderRadius: "9px",
+                backgroundColor: "rgba(20,20,20,0.82)",
+                color: "#fff",
+                border: "1px solid rgba(255,255,255,0.95)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "9px",
+                fontWeight: "700",
+                lineHeight: 1,
+                zIndex: 6,
+                boxShadow: "0 1px 3px rgba(0,0,0,0.35)",
+              }}
+            >
+              #{slots[slot]!.jerseyNumber ?? "?"}
+            </div>
+          </>
+        ) : (
+          <span style={{ color: "#666", opacity: 0.5 }}>—</span>
+        )}
       </div>
       <div
         style={{

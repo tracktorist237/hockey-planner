@@ -1,3 +1,4 @@
+import { PlayerAvatar } from "src/components/PlayerAvatar";
 import { PlayerDetails } from "src/pages/EventPage/types";
 
 interface PlayerInfoModalProps {
@@ -54,7 +55,7 @@ const calculateAge = (birthDate: string): number | null => {
   const monthDiff = today.getMonth() - birth.getMonth();
 
   if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-    age--;
+    age -= 1;
   }
 
   return age;
@@ -108,21 +109,18 @@ export const PlayerInfoModal = ({ player, isOpen, onClose }: PlayerInfoModalProp
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <div
-              style={{
-                width: "48px",
-                height: "48px",
-                backgroundColor: "white",
-                color: "#1a237e",
-                borderRadius: "12px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontWeight: "700",
-                fontSize: "22px",
-              }}
-            >
-              #{player.jerseyNumber || "?"}
+            <div style={{ borderRadius: "12px", overflow: "hidden" }}>
+              <PlayerAvatar
+                size={48}
+                shape="rounded"
+                photoUrl={player.photoUrl}
+                jerseyNumber={player.jerseyNumber}
+                fallbackBg="white"
+                fallbackColor="#1a237e"
+                fallbackPrefix="#"
+                badgePrefix="#"
+                fontSize={18}
+              />
             </div>
             <div>
               <h2 style={{ margin: 0, fontSize: "20px", fontWeight: "600" }}>
@@ -279,6 +277,20 @@ export const PlayerInfoModal = ({ player, isOpen, onClose }: PlayerInfoModalProp
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
                   <span style={{ color: "#666" }}>Вторая позиция:</span>
                   <span style={{ fontWeight: "500", color: "#333" }}>{getPositionName(player.secondaryPosition)}</span>
+                </div>
+              )}
+
+              {player.spbhlPlayerId && (
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px" }}>
+                  <span style={{ color: "#666" }}>Профиль СПБХЛ:</span>
+                  <a
+                    href={`https://spbhl.ru/Player?PlayerID=${player.spbhlPlayerId}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{ fontWeight: "500", color: "#1976d2", textDecoration: "none" }}
+                  >
+                    Открыть
+                  </a>
                 </div>
               )}
             </div>

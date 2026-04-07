@@ -1,5 +1,6 @@
 import { roleToLabel, UserRole } from "../../../constants/roles";
 import { User } from "../../../types/user";
+import { PlayerAvatar } from "src/components/PlayerAvatar";
 
 interface PlayerListProps {
   users: User[];
@@ -66,23 +67,17 @@ export const PlayerList = ({ users, loading, onSelectUser }: PlayerListProps) =>
                 e.currentTarget.style.backgroundColor = "#fff";
               }}
             >
-              <div
-                style={{
-                  width: "36px",
-                  height: "36px",
-                  backgroundColor: isSpecial ? "#f57c00" : "#1976d2",
-                  color: "white",
-                  borderRadius: "8px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontWeight: "600",
-                  fontSize: "14px",
-                  flexShrink: 0,
-                }}
-              >
-                #{user.jerseyNumber || "?"}
-              </div>
+              <PlayerAvatar
+                size={36}
+                shape="rounded"
+                photoUrl={user.photoUrl}
+                jerseyNumber={user.jerseyNumber}
+                fallbackPrefix="#"
+                badgePrefix="#"
+                fallbackBg={isSpecial ? "#f57c00" : "#1976d2"}
+                fallbackColor="white"
+                fontSize={13}
+              />
               <div style={{ flex: 1 }}>
                 <div
                   style={{

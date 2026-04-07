@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { normalizeRole, roleToLabel, UserRole } from "./constants/roles";
 import { getRoleColor } from "./utils/colors";
+import { PlayerAvatar } from "src/components/PlayerAvatar";
 
 interface CurrentPlayerHeaderProps {
   onBack?: () => void; // Опциональный пропс для совместимости
@@ -14,6 +15,7 @@ interface User {
   lastName?: string | null;
   jerseyNumber?: number | null;
   role?: number | UserRole;
+  photoUrl?: string | null;
 }
 
 const getRoleName = (role?: number | UserRole): string => {
@@ -81,25 +83,20 @@ export function CurrentPlayerHeader({
           gap: "12px",
           width: "100%"
         }}>
-          <div style={{
-            width: "48px",
-            height: "48px",
-            backgroundColor: getColorByRole(currentUser.role),
-            color: "white",
-            borderRadius: "12px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontWeight: "700",
-            fontSize: "20px",
-            flexShrink: 0,
-            boxShadow: `0 3px 8px ${getColorByRole(currentUser.role)}40`
-          }}>
-            {currentUser.jerseyNumber ? (
-              `#${currentUser.jerseyNumber}`
-            ) : (
-              currentUser.firstName?.[0] || currentUser.lastName?.[0] || "?"
-            )}
+          <div style={{ boxShadow: `0 3px 8px ${getColorByRole(currentUser.role)}40`, borderRadius: "12px" }}>
+            <PlayerAvatar
+              size={48}
+              shape="rounded"
+              photoUrl={currentUser.photoUrl}
+              jerseyNumber={currentUser.jerseyNumber}
+              fallbackBg={getColorByRole(currentUser.role)}
+              fallbackColor="white"
+              fallbackPrefix="#"
+              badgePrefix="#"
+              fontSize={16}
+              badgeSizePx={18}
+              badgeFontSizePx={10}
+            />
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ 

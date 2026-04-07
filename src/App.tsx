@@ -42,6 +42,8 @@ const getStoredCurrentUser = (): User | null => {
       lastName: parsed.lastName ?? null,
       jerseyNumber: parsed.jerseyNumber ?? null,
       fullName: parsed.fullName,
+      photoUrl: parsed.photoUrl ?? null,
+      spbhlPlayerId: parsed.spbhlPlayerId ?? null,
       role: normalizeRole(parsed.role),
     };
   } catch (error) {

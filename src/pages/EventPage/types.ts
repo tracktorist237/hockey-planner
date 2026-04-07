@@ -26,6 +26,7 @@ export interface PlayerDetails {
   email?: string | null;
   phone?: string | null;
   photoUrl?: string | null;
+  spbhlPlayerId?: string | null;
 }
 
 export type Slot = "LW" | "C" | "RW" | "LD" | "RD";

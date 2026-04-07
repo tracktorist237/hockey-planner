@@ -1,10 +1,16 @@
 import { useCallback, useState } from "react";
-import { createUser, User } from "src/api/users";
+import { createUser, uploadUserAvatar, User } from "src/api/users";
 import { getFieldStatus, validateField } from "src/pages/CreatePlayerFormPage/validation";
 import { UserFormData, ValidationErrors, ValidatedFieldName } from "src/pages/CreatePlayerFormPage/types";
 
 interface UsePlayerFormOptions {
   onSuccess?: (user: User) => void;
+}
+
+interface SubmitExtras {
+  photoUrl?: string | null;
+  spbhlPlayerId?: string | null;
+  avatarFile?: File | null;
 }
 
 const INITIAL_FORM_DATA: UserFormData = {
@@ -97,7 +103,10 @@ export const usePlayerForm = ({ onSuccess }: UsePlayerFormOptions = {}) => {
     return Object.keys(newErrors).length === 0;
   }, [formData]);
 
-  const handleSubmit = useCallback(async (event?: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = useCallback(async (
+    event?: React.FormEvent<HTMLFormElement>,
+    extras?: SubmitExtras,
+  ) => {
     event?.preventDefault();
 
     if (!validateForm()) {
@@ -109,9 +118,19 @@ export const usePlayerForm = ({ onSuccess }: UsePlayerFormOptions = {}) => {
     setError(null);
 
     try {
-      const createdUser = await createUser(formData);
-      localStorage.setItem("currentUser", JSON.stringify(createdUser));
-      onSuccess?.(createdUser);
+      const createdUser = await createUser({
+        ...formData,
+        photoUrl: extras?.photoUrl ?? null,
+        spbhlPlayerId: extras?.spbhlPlayerId ?? null,
+      });
+
+      let finalUser = createdUser;
+      if (extras?.avatarFile) {
+        finalUser = await uploadUserAvatar(createdUser.id, extras.avatarFile);
+      }
+
+      localStorage.setItem("currentUser", JSON.stringify(finalUser));
+      onSuccess?.(finalUser);
       return true;
     } catch (submitError) {
       const message = submitError instanceof Error ? submitError.message : "Произошла ошибка при создании анкеты";

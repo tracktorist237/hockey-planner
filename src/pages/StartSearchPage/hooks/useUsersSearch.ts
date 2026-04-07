@@ -9,6 +9,8 @@ const mapApiUser = (user: ApiUsersUser): User => ({
   lastName: user.lastName ?? null,
   jerseyNumber: user.jerseyNumber ?? null,
   fullName: user.fullName ?? undefined,
+  photoUrl: user.photoUrl ?? null,
+  spbhlPlayerId: user.spbhlPlayerId ?? null,
   role: normalizeRole(user.role),
 });
 

@@ -223,6 +223,7 @@ export const useLineManagement = ({
         jerseyNumber: member.jerseyNumber,
         firstName: member.firstName,
         lastName: member.lastName,
+        photoUrl: member.photoUrl ?? null,
         primaryPosition: 0,
         handedness: 0,
         status: 2,

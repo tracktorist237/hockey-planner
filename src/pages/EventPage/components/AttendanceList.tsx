@@ -1,11 +1,13 @@
 import { AttendanceLookUpDto } from "src/types/events";
+import { PlayerAvatar } from "src/components/PlayerAvatar";
 
 interface AttendanceListProps {
   attendances?: AttendanceLookUpDto[];
   onPlayerClick: (userId: string) => void;
+  avatarUrls?: Record<string, string>;
 }
 
-export const AttendanceList = ({ attendances, onPlayerClick }: AttendanceListProps) => {
+export const AttendanceList = ({ attendances, onPlayerClick, avatarUrls }: AttendanceListProps) => {
   return (
     <div
       style={{
@@ -106,33 +108,29 @@ export const AttendanceList = ({ attendances, onPlayerClick }: AttendanceListPro
           >
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                <div
-                  style={{
-                    width: "32px",
-                    height: "32px",
-                    backgroundColor:
-                      attendance.status === 2
-                        ? "#e8f5e9"
-                        : attendance.status === 3
-                          ? "#ffebee"
-                          : "#fff3e0",
-                    color:
-                      attendance.status === 2
-                        ? "#2e7d32"
-                        : attendance.status === 3
-                          ? "#c62828"
-                          : "#ef6c00",
-                    borderRadius: "8px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontWeight: "600",
-                    fontSize: "14px",
-                    flexShrink: 0,
-                  }}
-                >
-                  #{attendance.jerseyNumber || "?"}
-                </div>
+                <PlayerAvatar
+                  size={32}
+                  shape="rounded"
+                  photoUrl={attendance.photoUrl ?? avatarUrls?.[attendance.userId]}
+                  jerseyNumber={attendance.jerseyNumber}
+                  fallbackPrefix="#"
+                  badgePrefix="#"
+                  fontSize={12}
+                  fallbackBg={
+                    attendance.status === 2
+                      ? "#e8f5e9"
+                      : attendance.status === 3
+                        ? "#ffebee"
+                        : "#fff3e0"
+                  }
+                  fallbackColor={
+                    attendance.status === 2
+                      ? "#2e7d32"
+                      : attendance.status === 3
+                        ? "#c62828"
+                        : "#ef6c00"
+                  }
+                />
                 <div>
                   <div
                     style={{

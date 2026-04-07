@@ -36,6 +36,7 @@ export interface PlayerLookUpDto {
   jerseyNumber?: number;
   firstName?: string;
   lastName?: string;
+  photoUrl?: string | null;
   role: number;
 }
 
@@ -44,6 +45,7 @@ export interface AttendanceLookUpDto {
   jerseyNumber?: number;
   firstName?: string;
   lastName?: string;
+  photoUrl?: string | null;
   primaryPosition: number;
   handedness: number;
   status: number;
