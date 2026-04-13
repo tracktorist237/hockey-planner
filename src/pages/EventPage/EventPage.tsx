@@ -154,6 +154,7 @@ export function EventPage({ eventId, onBack, currentUser }: EventPageProps) {
           attendances={event.attendances}
           onPlayerClick={playerModal.handleOpenPlayerInfo}
           avatarUrls={avatarUrls}
+          eventCreatedAt={event.createdAt}
         />
         <RosterManager
           {...lineManagement}

@@ -2,6 +2,7 @@ import { AttendanceLookUpDto, LineDto } from "src/types/events";
 import { Slot } from "src/pages/EventPage/types";
 import { LineCircles } from "src/pages/EventPage/components/LineCircles";
 import { PlayerAvatar } from "src/components/PlayerAvatar";
+import { getAdaptiveFontSize } from "src/utils/text";
 
 interface RosterManagerProps {
   sortedRoster: LineDto[];
@@ -155,15 +156,16 @@ const renderEditableSlot = (
         <>
           <div
             style={{
-              fontSize: "11px",
+              fontSize: `${getAdaptiveFontSize(lineSlots[slot]!.lastName, {
+                base: 11,
+                min: 8,
+                startShrinkAt: 10,
+                maxLength: 24,
+              })}px`,
               color: "#333",
               lineHeight: "1.2",
-              height: "26px",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              display: "-webkit-box",
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: "vertical",
+              minHeight: "26px",
+              whiteSpace: "nowrap",
               marginBottom: "4px",
               cursor: "pointer",
               transition: "color 0.2s ease",

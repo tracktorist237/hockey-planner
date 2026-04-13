@@ -1,6 +1,7 @@
 import { roleToLabel, UserRole } from "../../../constants/roles";
 import { User } from "../../../types/user";
 import { PlayerAvatar } from "src/components/PlayerAvatar";
+import { getAdaptiveFontSize } from "src/utils/text";
 
 interface PlayerListProps {
   users: User[];
@@ -82,11 +83,17 @@ export const PlayerList = ({ users, loading, onSelectUser }: PlayerListProps) =>
                 <div
                   style={{
                     fontWeight: "600",
-                    fontSize: "16px",
+                    fontSize: `${getAdaptiveFontSize(`${user.firstName ?? ""} ${user.lastName ?? ""}`, {
+                      base: 16,
+                      min: 12,
+                      startShrinkAt: 18,
+                      maxLength: 40,
+                    })}px`,
                     marginBottom: "2px",
                     display: "flex",
                     alignItems: "center",
                     gap: "8px",
+                    whiteSpace: "nowrap",
                   }}
                 >
                   {user.firstName} {user.lastName}

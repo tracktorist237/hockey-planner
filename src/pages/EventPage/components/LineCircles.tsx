@@ -2,6 +2,7 @@ import { PlayerLookUpDto } from "src/types/events";
 import { PlayerRole } from "src/types/lines";
 import { Slot, roleToSlot } from "src/pages/EventPage/types";
 import { PlayerAvatar } from "src/components/PlayerAvatar";
+import { getAdaptiveFontSize } from "src/utils/text";
 
 interface LineCirclesProps {
   members?: PlayerLookUpDto[] | null;
@@ -137,15 +138,16 @@ export const LineCircles = ({ members, onPlayerClick, avatarUrls }: LineCirclesP
       {slots[slot] && (
         <div
           style={{
-            fontSize: "11px",
+            fontSize: `${getAdaptiveFontSize(slots[slot]!.lastName, {
+              base: 11,
+              min: 8,
+              startShrinkAt: 10,
+              maxLength: 24,
+            })}px`,
             color: "#333",
             lineHeight: "1.2",
-            height: "26px",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            display: "-webkit-box",
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: "vertical",
+            minHeight: "26px",
+            whiteSpace: "nowrap",
             cursor: "pointer",
             transition: "color 0.2s ease",
           }}

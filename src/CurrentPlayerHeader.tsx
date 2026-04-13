@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { normalizeRole, roleToLabel, UserRole } from "./constants/roles";
 import { getRoleColor } from "./utils/colors";
 import { PlayerAvatar } from "src/components/PlayerAvatar";
+import { getAdaptiveFontSize } from "src/utils/text";
 
 interface CurrentPlayerHeaderProps {
   onBack?: () => void; // Опциональный пропс для совместимости
@@ -48,6 +49,13 @@ export function CurrentPlayerHeader({
   const handleSelectPlayer = () => {
     navigate("/");
   };
+  const displayName = currentUser ? `${currentUser.lastName ?? ""} ${currentUser.firstName ?? ""}`.trim() : "";
+  const displayNameSize = getAdaptiveFontSize(displayName, {
+    base: 18,
+    min: 12,
+    startShrinkAt: 18,
+    maxLength: 42,
+  });
 
   return (
     <div
@@ -101,12 +109,10 @@ export function CurrentPlayerHeader({
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ 
               fontWeight: "600",
-              fontSize: "18px",
+              fontSize: `${displayNameSize}px`,
               color: "#1a237e",
               marginBottom: "4px",
               whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
               maxWidth: "200px"
             }}>
               {currentUser.lastName} {currentUser.firstName}

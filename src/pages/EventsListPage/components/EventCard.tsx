@@ -205,8 +205,8 @@ const EventCardComponent = ({ event, onOpen }: EventCardProps) => {
           <span
             style={{
               overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
+              whiteSpace: "normal",
+              overflowWrap: "anywhere",
             }}
           >
             {event.locationName}

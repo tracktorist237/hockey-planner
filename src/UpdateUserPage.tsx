@@ -22,6 +22,7 @@ import {
   getFieldStatus,
   validateField,
 } from "src/pages/CreatePlayerFormPage/validation";
+import { getAdaptiveFontSize } from "src/utils/text";
 
 const SPBHL_PROFILE_URL = "https://spbhl.ru/Player?PlayerID=";
 const getSpbhlAvatarUrl = (playerId: string, size: "M" | "O" = "O") =>
@@ -844,8 +845,12 @@ export function UpdateUserPage() {
                           color: "#1f2937",
                           marginBottom: "4px",
                           whiteSpace: "nowrap",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
+                          fontSize: `${getAdaptiveFontSize(player.fullName, {
+                            base: 16,
+                            min: 11,
+                            startShrinkAt: 18,
+                            maxLength: 42,
+                          })}px`,
                         }}
                       >
                         {player.fullName}

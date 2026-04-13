@@ -8,6 +8,7 @@ import { HockeyInfoForm } from "src/pages/CreatePlayerFormPage/components/Hockey
 import { PersonalInfoForm } from "src/pages/CreatePlayerFormPage/components/PersonalInfoForm";
 import { PlayerFormActions } from "src/pages/CreatePlayerFormPage/components/PlayerFormActions";
 import { usePlayerForm } from "src/pages/CreatePlayerFormPage/hooks/usePlayerForm";
+import { getAdaptiveFontSize } from "src/utils/text";
 
 const getSpbhlAvatarUrl = (playerId: string, size: "M" | "O" = "O") =>
   `https://spbhl.ru/ImageHandler.ashx?ID=${playerId}&Size=${size}&TableName=Player`;
@@ -245,7 +246,20 @@ export function CreatePlayerFormPage() {
                 <div key={player.playerId} style={{ border: "1px solid #e3e8ef", borderRadius: "12px", padding: "10px", marginBottom: "10px", display: "flex", gap: "10px", alignItems: "center" }}>
                   <img src={player.photoSmallUrl} alt={player.fullName} style={{ width: "56px", height: "56px", borderRadius: "10px", objectFit: "cover", backgroundColor: "#eceff1", flexShrink: 0 }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontWeight: 600, color: "#1f2937", marginBottom: "4px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    <div
+                      style={{
+                        fontWeight: 600,
+                        color: "#1f2937",
+                        marginBottom: "4px",
+                        whiteSpace: "nowrap",
+                        fontSize: `${getAdaptiveFontSize(player.fullName, {
+                          base: 16,
+                          min: 11,
+                          startShrinkAt: 18,
+                          maxLength: 42,
+                        })}px`,
+                      }}
+                    >
                       {player.fullName}
                     </div>
                     <div style={{ fontSize: "13px", color: "#607d8b" }}>{player.birthDate ? `Дата рождения: ${player.birthDate}` : "Дата рождения: —"}</div>

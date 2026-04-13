@@ -52,7 +52,7 @@ export function MonthView({ currentDate, selectedDate, isMobile, daysInMonth, fi
               ) : (
                 <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
                   {dayEvents.slice(0, 3).map((event) => (
-                    <div key={event.id} style={{ fontSize: "11px", padding: "2px 4px", backgroundColor: `${getEventTypeColor(event.type as EventType)}20`, borderLeft: `3px solid ${getEventTypeColor(event.type as EventType)}`, borderRadius: "4px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", color: "#333", fontWeight: "500" }}>
+                    <div key={event.id} style={{ fontSize: "11px", padding: "2px 4px", backgroundColor: `${getEventTypeColor(event.type as EventType)}20`, borderLeft: `3px solid ${getEventTypeColor(event.type as EventType)}`, borderRadius: "4px", whiteSpace: "nowrap", overflow: "hidden", color: "#333", fontWeight: "500" }}>
                       {formatTime(event.startTime)} {event.title}
                     </div>
                   ))}
