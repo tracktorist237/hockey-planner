@@ -15,25 +15,33 @@ export const useEventsData = (currentUserId?: string) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const loadEvents = useCallback(async () => {
-    try {
-      const data = await getEvents(currentUserId);
-      setEvents(data.events ?? []);
-      setError(null);
-    } catch (err) {
-      console.error(err);
-      setError("Не удалось загрузить мероприятия");
-    } finally {
-      setLoading(false);
-    }
-  }, [currentUserId]);
+  const loadEvents = useCallback(
+    async (silent = false) => {
+      if (!silent) {
+        setLoading(true);
+      }
+
+      try {
+        const data = await getEvents(currentUserId);
+        setEvents(data.events ?? []);
+        setError(null);
+      } catch (err) {
+        console.error(err);
+        setError("Не удалось загрузить мероприятия");
+      } finally {
+        if (!silent) {
+          setLoading(false);
+        }
+      }
+    },
+    [currentUserId],
+  );
 
   useEffect(() => {
-    setLoading(true);
     void loadEvents();
 
     const interval = window.setInterval(() => {
-      void loadEvents();
+      void loadEvents(true);
     }, 30000);
 
     return () => {
@@ -54,5 +62,6 @@ export const useEventsData = (currentUserId?: string) => {
     events: upcomingEvents,
     loading,
     error,
+    reloadEvents: loadEvents,
   };
 };

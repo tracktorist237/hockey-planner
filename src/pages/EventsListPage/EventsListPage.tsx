@@ -11,7 +11,7 @@ interface EventsListPageProps {
 
 export const EventsListPage = ({ currentUser }: EventsListPageProps) => {
   const navigate = useNavigate();
-  const { events, loading, error } = useEventsData(currentUser?.id);
+  const { events, loading, error, reloadEvents } = useEventsData(currentUser?.id);
 
   const handleOpenEvent = useCallback(
     (eventId: string) => {
@@ -128,7 +128,22 @@ export const EventsListPage = ({ currentUser }: EventsListPageProps) => {
               borderLeft: "4px solid #c62828",
             }}
           >
-            ⚠️ {error}
+            <div style={{ marginBottom: "12px" }}>⚠️ {error}</div>
+            <button
+              onClick={() => void reloadEvents()}
+              disabled={loading}
+              style={{
+                padding: "10px 14px",
+                borderRadius: "10px",
+                border: "1px solid #ef9a9a",
+                backgroundColor: loading ? "#ffcdd2" : "white",
+                color: "#b71c1c",
+                fontWeight: "600",
+                cursor: loading ? "wait" : "pointer",
+              }}
+            >
+              {loading ? "Обновление..." : "Обновить"}
+            </button>
           </div>
         ) : events.length > 0 ? (
           <div>
