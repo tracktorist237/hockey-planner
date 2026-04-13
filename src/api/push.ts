@@ -9,6 +9,19 @@ export interface PushSubscriptionPayload {
   userAgent?: string;
 }
 
+export interface PushBroadcastPayload {
+  title: string;
+  body: string;
+  url?: string;
+}
+
+export interface PushBroadcastResult {
+  success: boolean;
+  total: number;
+  sent: number;
+  removed: number;
+}
+
 export const getPushPublicKey = async (): Promise<string> => {
   const response = await fetch(`${API_BASE}/api/push/public-key`);
   if (!response.ok) {
@@ -49,3 +62,19 @@ export const unsubscribePush = async (endpoint: string): Promise<void> => {
   }
 };
 
+export const broadcastPush = async (
+  payload: PushBroadcastPayload,
+): Promise<PushBroadcastResult> => {
+  const response = await fetch(`${API_BASE}/api/push/broadcast`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(text || "Ошибка отправки push-уведомления");
+  }
+
+  return (await response.json()) as PushBroadcastResult;
+};

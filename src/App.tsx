@@ -20,6 +20,7 @@ import { normalizeRole } from "./constants/roles";
 import { EventsListPage } from "./pages/EventsListPage/EventsListPage";
 import StartSearchPage from "./pages/StartSearchPage/StartSearchPage";
 import { User } from "./types/user";
+import { AdminPushPage } from "./pages/AdminPushPage";
 
 const getStoredCurrentUser = (): User | null => {
   const saved = localStorage.getItem("currentUser");
@@ -117,6 +118,7 @@ function AppRoutes() {
         <Route path="/users/:id/edit" element={<UpdateUserPage />} />
         <Route path="/calendar" element={<CalendarPage />} />
         <Route path="/settings" element={<SettingsPage onOpenDebug={() => setIsDebugOpen(true)} />} />
+        <Route path="/admin/push" element={<AdminPushPage />} />
       </Routes>
       <DebugOverlay isOpen={isDebugOpen} onClose={() => setIsDebugOpen(false)} />
     </>

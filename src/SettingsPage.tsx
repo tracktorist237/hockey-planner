@@ -335,7 +335,7 @@ export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
           <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
             <button
               onClick={handleEnableBirthdayNotifications}
-              disabled={isBusy || notificationPermission === "granted"}
+              disabled={isBusy}
               style={{
                 width: "100%",
                 padding: "16px",
@@ -345,7 +345,7 @@ export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
                 borderRadius: "12px",
                 fontSize: "16px",
                 fontWeight: "600",
-                cursor: notificationPermission === "granted" || isPushSubscribing ? "default" : "pointer",
+                cursor: isPushSubscribing ? "default" : "pointer",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -354,14 +354,15 @@ export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
                 opacity: isBusy ? 0.7 : 1,
               }}
               onMouseEnter={(event) => {
-                if (notificationPermission !== "granted" && !isBusy) {
+                if (!isBusy) {
                   event.currentTarget.style.backgroundColor = "#ffecb3";
                   event.currentTarget.style.transform = "translateY(-1px)";
                 }
               }}
               onMouseLeave={(event) => {
-                if (notificationPermission !== "granted" && !isBusy) {
-                  event.currentTarget.style.backgroundColor = "#fff8e1";
+                if (!isBusy) {
+                  event.currentTarget.style.backgroundColor =
+                    notificationPermission === "granted" ? "#e8f5e9" : "#fff8e1";
                   event.currentTarget.style.transform = "translateY(0)";
                 }
               }}
