@@ -63,11 +63,19 @@ export const useLineManagement = ({
     return [...(event?.roster ?? [])].sort((a, b) => (a.order || 0) - (b.order || 0));
   }, [event?.roster]);
 
+  const editingLineId = useMemo(() => {
+    if (editingLineIndex === null) {
+      return null;
+    }
+
+    return sortedRoster[editingLineIndex]?.id ?? null;
+  }, [editingLineIndex, sortedRoster]);
+
   const usedUserIds = useMemo(() => {
     const ids = new Set<string>();
 
-    event?.roster?.forEach((line, index) => {
-      if (index === editingLineIndex) {
+    event?.roster?.forEach((line) => {
+      if (editingLineId && line.id === editingLineId) {
         return;
       }
 
@@ -81,7 +89,7 @@ export const useLineManagement = ({
     });
 
     return ids;
-  }, [editingLineIndex, event?.roster, lineSlots]);
+  }, [editingLineId, event?.roster, lineSlots]);
 
   const availablePlayers = useMemo(() => {
     return (
