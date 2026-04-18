@@ -1,47 +1,134 @@
-import { useEffect, useState } from "react";
-import { getEvents, EventListDto } from "./api/events";
+import { useState } from "react";
+import {
+  BrowserRouter,
+  Navigate,
+  Route,
+  Routes,
+  useNavigate,
+  useParams,
+} from "react-router-dom";
+import { CalendarPage } from "./CalendarPage";
+import { CreateEventPage } from "./CreateEventPage";
+import { CreatePlayerFormPage } from "./CreatePlayerFormPage";
+import { DeleteEventPage } from "./DeleteEventPage";
+import { EventPage } from "src/pages/EventPage/EventPage";
+import { SettingsPage } from "./SettingsPage";
+import { UpdateEventPage } from "./UpdateEventPage";
+import { UpdateUserPage } from "./UpdateUserPage";
+import { DebugOverlay } from "src/components/DebugOverlay";
+import { normalizeRole } from "./constants/roles";
+import { EventsListPage } from "./pages/EventsListPage/EventsListPage";
+import StartSearchPage from "./pages/StartSearchPage/StartSearchPage";
+import { User } from "./types/user";
+import { AdminPushPage } from "./pages/AdminPushPage";
 
-export default function App() {
-  const [events, setEvents] = useState<EventListDto | null>(null);
-  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+const getStoredCurrentUser = (): User | null => {
+  const saved = localStorage.getItem("currentUser");
+  if (!saved) {
+    return null;
+  }
 
-  useEffect(() => {
-    getEvents().then(setEvents).catch(console.error);
-  }, []);
+  try {
+    const parsed = JSON.parse(saved) as Partial<User> & {
+      role?: number | string | null;
+    };
 
-  if (selectedEventId) {
-    return (
-      <div>
-        <button onClick={() => setSelectedEventId(null)}>⬅ Назад</button>
-        <h2>Экран мероприятия</h2>
-        <p>Здесь скоро будет явка и состав</p>
-        <p>ID события: {selectedEventId}</p>
-      </div>
-    );
+    if (!parsed?.id) {
+      return null;
+    }
+
+    return {
+      id: parsed.id,
+      firstName: parsed.firstName ?? null,
+      lastName: parsed.lastName ?? null,
+      jerseyNumber: parsed.jerseyNumber ?? null,
+      fullName: parsed.fullName,
+      photoUrl: parsed.photoUrl ?? null,
+      spbhlPlayerId: parsed.spbhlPlayerId ?? null,
+      role: normalizeRole(parsed.role),
+    };
+  } catch (error) {
+    console.error("Ошибка при парсинге currentUser:", error);
+    localStorage.removeItem("currentUser");
+    return null;
+  }
+};
+
+function EventPageWrapper({
+  currentUser,
+}: {
+  currentUser: User | null;
+}) {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+
+  if (!id) {
+    return <div>Некорректный ID события</div>;
   }
 
   return (
-    <div>
-      <h1>Список мероприятий</h1>
-      {events?.events?.map((e) => (
-        <div
-          key={e.id}
-          style={{
-            padding: "10px",
-            margin: "10px",
-            border: "1px solid #ccc",
-            borderRadius: "5px",
-            cursor: "pointer",
-          }}
-          onClick={() => setSelectedEventId(e.id)}
-        >
-          <h3>{e.title ?? "Без названия"}</h3>
-          <p>
-            {new Date(e.startTime).toLocaleString()} —{" "}
-            {new Date(e.endTime).toLocaleString()}
-          </p>
-        </div>
-      ))}
-    </div>
+    <EventPage
+      eventId={id}
+      onBack={() => navigate("/events")}
+      currentUser={currentUser}
+    />
+  );
+}
+
+function CreateEventWrapper() {
+  const navigate = useNavigate();
+
+  return (
+    <CreateEventPage
+      onBack={() => navigate("/events")}
+      onCreated={(id) => navigate(`/events/${id}`)}
+    />
+  );
+}
+
+function AppRoutes() {
+  const [currentUser, setCurrentUser] = useState<User | null>(() =>
+    getStoredCurrentUser(),
+  );
+  const [isDebugOpen, setIsDebugOpen] = useState(false);
+  const navigate = useNavigate();
+
+  return (
+    <>
+      <Routes>
+        <Route path="/" element={<Navigate to="/events" replace />} />
+        <Route
+          path="/start-search"
+          element={
+            <StartSearchPage
+              onSelect={(user) => {
+                setCurrentUser(user);
+                localStorage.setItem("currentUser", JSON.stringify(user));
+                navigate("/events");
+              }}
+            />
+          }
+        />
+        <Route path="/events" element={<EventsListPage currentUser={currentUser} />} />
+        <Route path="/events/create" element={<CreateEventWrapper />} />
+        <Route path="/events/:id" element={<EventPageWrapper currentUser={currentUser} />} />
+        <Route path="/events/:id/delete" element={<DeleteEventPage />} />
+        <Route path="/create-player" element={<CreatePlayerFormPage />} />
+        <Route path="/events/:id/edit" element={<UpdateEventPage />} />
+        <Route path="/users/:id/edit" element={<UpdateUserPage />} />
+        <Route path="/calendar" element={<CalendarPage />} />
+        <Route path="/settings" element={<SettingsPage onOpenDebug={() => setIsDebugOpen(true)} />} />
+        <Route path="/admin/push" element={<AdminPushPage />} />
+      </Routes>
+      <DebugOverlay isOpen={isDebugOpen} onClose={() => setIsDebugOpen(false)} />
+    </>
+  );
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AppRoutes />
+    </BrowserRouter>
   );
 }

@@ -1,0 +1,189 @@
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+input, textarea, button {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  box-sizing: border-box;
+  max-width: 100%;
+}
+
+input:focus, textarea:focus, button:focus {
+  outline: none;
+  border-color: #1976d2 !important;
+  box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.1);
+}
+
+input[type="datetime-local"] {
+  min-height: 48px;
+}
+
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  padding: 8px;
+  margin-right: -8px;
+  cursor: pointer;
+}
+
+@supports (padding: max(0px)) {
+  div[style*="position: fixed"][style*="top: 0"] {
+    padding-top: max(16px, env(safe-area-inset-top, 16px));
+  }
+
+  div[style*="position: fixed"][style*="bottom: 0"] {
+    padding-bottom: max(16px, env(safe-area-inset-bottom, 16px));
+  }
+
+  div[style*="paddingTop: 92px"] {
+    padding-top: max(92px, calc(92px + env(safe-area-inset-top, 0px)));
+  }
+}
+
+@media (min-width: 768px) {
+  div[style*="padding: 0"] {
+    padding: 0;
+    max-width: 100%;
+  }
+
+  div[style*="paddingTop: 92px"] {
+    padding: 32px;
+    padding-top: 124px;
+    padding-bottom: 152px;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  div[style*="position: fixed"][style*="top: 0"] {
+    padding: 24px 0;
+    height: 88px;
+  }
+
+  div[style*="position: fixed"][style*="top: 0"] > div {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 0 32px;
+    width: 100%;
+  }
+
+  div[style*="position: fixed"][style*="bottom: 0"] {
+    padding: 24px 0;
+    height: 104px;
+  }
+
+  div[style*="position: fixed"][style*="bottom: 0"] > div {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 0 32px;
+    width: 100%;
+  }
+
+  div[style*="position: fixed"][style*="bottom: 0"] button {
+    padding: 18px 24px;
+    font-size: 17px;
+    min-width: 140px;
+  }
+
+  input, textarea {
+    font-size: 15px;
+    padding: 15px 18px;
+  }
+
+  div[style*="width: 52px"] {
+    width: 60px;
+    height: 32px;
+  }
+
+  div[style*="left: 28px;"] {
+    left: 32px !important;
+  }
+
+  div[style*="borderRadius: 16px"] {
+    padding: 28px;
+    border-radius: 20px;
+  }
+
+  button[style*="minHeight: 70px"] {
+    padding: 18px 12px !important;
+    min-height: 80px !important;
+    font-size: 15px !important;
+  }
+
+  span[style*="fontSize: 20px"] {
+    font-size: 24px !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  div[style*="paddingTop: 92px"] {
+    max-width: 700px;
+  }
+
+  div[style*="position: fixed"][style*="top: 0"] > div {
+    max-width: 700px;
+  }
+
+  div[style*="position: fixed"][style*="bottom: 0"] > div {
+    max-width: 700px;
+  }
+}
+
+@media (min-width: 1200px) {
+  div[style*="paddingTop: 92px"] {
+    max-width: 800px;
+  }
+
+  div[style*="position: fixed"][style*="top: 0"] > div {
+    max-width: 800px;
+  }
+
+  div[style*="position: fixed"][style*="bottom: 0"] > div {
+    max-width: 800px;
+  }
+
+  div[style*="borderRadius: 16px"] {
+    padding: 32px;
+  }
+}
+
+@media (max-width: 360px) {
+  div[style*="gridTemplateColumns: repeat(3, 1fr)"] {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+
+  button[style*="minHeight: 70px"] {
+    padding: 12px 4px !important;
+    min-height: 65px !important;
+    font-size: 13px !important;
+  }
+
+  span[style*="fontSize: 20px"] {
+    font-size: 18px !important;
+  }
+
+  div[style*="paddingTop: 92px"] {
+    padding-top: 84px;
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  div[style*="height: 76px"] {
+    height: 68px;
+    padding: 12px;
+  }
+
+  div[style*="height: 88px"] {
+    height: 80px;
+    padding: 12px;
+  }
+
+  div[style*="position: fixed"][style*="top: 0"] > div {
+    padding: 0 12px;
+  }
+
+  div[style*="position: fixed"][style*="bottom: 0"] > div {
+    padding: 0 12px;
+  }
+}
