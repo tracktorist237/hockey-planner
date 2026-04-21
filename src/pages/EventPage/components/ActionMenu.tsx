@@ -2,9 +2,14 @@ interface ActionMenuProps {
   eventId: string;
   isOpen: boolean;
   onToggle: () => void;
+  canManage: boolean;
 }
 
-export const ActionMenu = ({ eventId, isOpen, onToggle }: ActionMenuProps) => {
+export const ActionMenu = ({ eventId, isOpen, onToggle, canManage }: ActionMenuProps) => {
+  if (!canManage) {
+    return null;
+  }
+
   return (
     <div
       style={{

@@ -4,6 +4,7 @@ import { CurrentPlayerHeader } from "./CurrentPlayerHeader";
 import { APP_VERSION } from "./config/version";
 import { getVersionInfo } from "src/api/version";
 import { getPushPublicKey, subscribePush } from "src/api/push";
+import { BottomNav } from "src/components/BottomNav";
 
 interface SettingsPageProps {
   onOpenDebug?: () => void;
@@ -290,7 +291,7 @@ export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
         </div>
       </div>
 
-      <div style={{ padding: "16px" }}>
+      <div style={{ padding: "16px", paddingBottom: "120px" }}>
         <div
           style={{
             backgroundColor: "white",
@@ -572,6 +573,7 @@ export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
           </div>
         </div>
       </div>
+      <BottomNav activeTab="settings" />
 
       <style>
         {`

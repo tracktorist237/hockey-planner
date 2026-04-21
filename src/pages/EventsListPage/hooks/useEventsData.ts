@@ -10,7 +10,7 @@ const isUpcomingEvent = (startTime: string): boolean => {
   return eventDay.getTime() >= today.getTime();
 };
 
-export const useEventsData = (currentUserId?: string) => {
+export const useEventsData = (currentUserId?: string, teamId?: string | null) => {
   const [events, setEvents] = useState<EventLookUpDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -22,7 +22,7 @@ export const useEventsData = (currentUserId?: string) => {
       }
 
       try {
-        const data = await getEvents(currentUserId);
+        const data = await getEvents(currentUserId, teamId);
         setEvents(data.events ?? []);
         setError(null);
       } catch (err) {
@@ -34,7 +34,7 @@ export const useEventsData = (currentUserId?: string) => {
         }
       }
     },
-    [currentUserId],
+    [currentUserId, teamId],
   );
 
   useEffect(() => {

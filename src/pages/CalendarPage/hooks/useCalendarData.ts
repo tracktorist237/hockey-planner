@@ -16,8 +16,19 @@ export const useCalendarData = ({ currentDate, selectedDate, onInitialDateSelect
   const initialDateSelected = useRef(false);
 
   useEffect(() => {
+    let currentUserId: string | undefined;
+    const rawCurrentUser = localStorage.getItem("currentUser");
+    if (rawCurrentUser) {
+      try {
+        currentUserId = (JSON.parse(rawCurrentUser) as { id?: string | null })?.id ?? undefined;
+      } catch {
+        currentUserId = undefined;
+      }
+    }
+    const currentTeamId = localStorage.getItem("currentTeamId");
+
     setLoading(true);
-    getEvents()
+    getEvents(currentUserId, currentTeamId || undefined)
       .then((response) => {
         setEvents(response);
         setError(null);

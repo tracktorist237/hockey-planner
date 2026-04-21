@@ -12,9 +12,9 @@ import { useEventForm } from "src/pages/CreateEventPage/hooks/useEventForm";
 import { CreateEventPageProps } from "src/pages/CreateEventPage/types";
 import { useScrollVisibility } from "src/hooks/useScrollVisibility";
 
-export function CreateEventPage({ onBack, onCreated }: CreateEventPageProps) {
+export function CreateEventPage({ onBack, onCreated, currentTeamId }: CreateEventPageProps) {
   const { formData, updateField, handleTypeChange, handleSubmit, loading, error, isGame, isMeeting, isPractice } =
-    useEventForm({ onCreated });
+    useEventForm({ onCreated, teamId: currentTeamId });
   const { isHeaderVisible, isFooterVisible } = useScrollVisibility();
 
   return (

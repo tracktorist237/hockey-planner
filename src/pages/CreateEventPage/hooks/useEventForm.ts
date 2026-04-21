@@ -7,6 +7,7 @@ interface UseEventFormOptions {
   onCreated?: (id: string) => void;
   submitEvent?: (dto: CreateEventDto) => Promise<void | string>;
   initialData?: EventFormData;
+  teamId?: string | null;
 }
 
 interface UseEventFormResult {
@@ -82,6 +83,7 @@ export const useEventForm = ({
   onCreated,
   submitEvent,
   initialData,
+  teamId,
 }: UseEventFormOptions): UseEventFormResult => {
   const [formData, setFormData] = useState<EventFormData>(initialData ?? initialFormData);
   const [loading, setLoading] = useState(false);
@@ -139,6 +141,7 @@ export const useEventForm = ({
             exerciseIds: formData.selectedExerciseIds,
           }
         : {}),
+      teamId: teamId ?? null,
     };
 
     try {

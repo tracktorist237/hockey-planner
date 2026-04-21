@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { getUsers } from "src/api/users";
+import { canManageEvents } from "src/constants/permissions";
 import { CurrentPlayerHeader } from "src/CurrentPlayerHeader";
 import { ActionMenu } from "src/pages/EventPage/components/ActionMenu";
 import { AttendanceList } from "src/pages/EventPage/components/AttendanceList";
@@ -33,10 +34,29 @@ const getCurrentUserId = (currentUser?: EventPageProps["currentUser"]): string |
   }
 };
 
+const getCurrentUserRole = (currentUser?: EventPageProps["currentUser"]): number | string | null => {
+  if (currentUser?.role !== undefined) {
+    return currentUser.role;
+  }
+
+  const stored = localStorage.getItem("currentUser");
+  if (!stored) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(stored) as { role?: number | string | null };
+    return parsed.role ?? null;
+  } catch {
+    return null;
+  }
+};
+
 export function EventPage({ eventId, onBack, currentUser }: EventPageProps) {
   const [isActionsOpen, setIsActionsOpen] = useState(false);
   const [avatarUrls, setAvatarUrls] = useState<Record<string, string>>({});
   const selectedUserId = useMemo(() => getCurrentUserId(currentUser), [currentUser]);
+  const canManageEvent = useMemo(() => canManageEvents(getCurrentUserRole(currentUser)), [currentUser]);
 
   const { event, loading, error, copySuccess, copyEventLink, reloadEvent, setError } = useEventData(eventId);
   const reportError = (message: string) => setError(message ? message : null);
@@ -147,7 +167,12 @@ export function EventPage({ eventId, onBack, currentUser }: EventPageProps) {
 
       <div style={{ padding: "16px", paddingBottom: "100px" }}>
         <EventInfoCard event={event} copySuccess={copySuccess} copyEventLink={copyEventLink} />
-        <ActionMenu eventId={event.id} isOpen={isActionsOpen} onToggle={() => setIsActionsOpen((prev) => !prev)} />
+        <ActionMenu
+          eventId={event.id}
+          isOpen={isActionsOpen}
+          onToggle={() => setIsActionsOpen((prev) => !prev)}
+          canManage={canManageEvent}
+        />
         <EventAdditionalInfo event={event} />
         <AttendanceResponseCard {...attendance} />
         <AttendanceList
@@ -157,6 +182,7 @@ export function EventPage({ eventId, onBack, currentUser }: EventPageProps) {
           eventCreatedAt={event.createdAt}
         />
         <RosterManager
+          canManage={canManageEvent}
           {...lineManagement}
           onPlayerClick={playerModal.handleOpenPlayerInfo}
           avatarUrls={avatarUrls}

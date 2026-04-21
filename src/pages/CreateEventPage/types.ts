@@ -3,6 +3,7 @@ import { EventType } from "src/types/events";
 export interface CreateEventPageProps {
   onBack: () => void;
   onCreated: (id: string) => void;
+  currentTeamId?: string | null;
 }
 
 export interface EventFormData {

@@ -17,6 +17,7 @@ export interface EventLookUpDto {
   iceRinkNumber?: string;
   leagueName?: string | null;
   uniformColorId?: string | null;
+  teamId?: string | null;
 }
 
 export interface EventListDto {
@@ -72,6 +73,7 @@ export interface EventDto {
   leagueName?: string | null;
   uniformColorId?: string | null;
   uniformColor?: UniformColorDto | null;
+  teamId?: string | null;
   exercises?: ExerciseDto[];
 }
 
@@ -88,6 +90,7 @@ export interface CreateEventDto {
   awayTeamName?: string | null;
   leagueName?: string | null;
   uniformColorId?: string | null;
+  teamId?: string | null;
   exerciseIds?: string[];
 }
 

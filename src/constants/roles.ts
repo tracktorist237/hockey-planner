@@ -26,9 +26,9 @@ export const roleToLabel: Record<UserRole, string> = {
   [UserRole.Manager]: "Менеджер",
 };
 
-export const normalizeRole = (role: number | UserRole | null | undefined): UserRole => {
+export const normalizeRole = (role: number | string | UserRole | null | undefined): UserRole => {
   if (typeof role === "string") {
-    return roleToNumber[role as UserRole] ? role : UserRole.Player;
+    return roleToNumber[role as UserRole] ? (role as UserRole) : UserRole.Player;
   }
 
   if (typeof role === "number") {

@@ -2,8 +2,15 @@ import { EventListDto, EventDto, CreateEventDto } from "../types/events";
 
 const API_BASE = process.env.REACT_APP_API_BASE || '';
 
-export async function getEvents(currentUserId?: string): Promise<EventListDto> {
-  const query = currentUserId ? `?currentUserId=${encodeURIComponent(currentUserId)}` : "";
+export async function getEvents(currentUserId?: string, teamId?: string | null): Promise<EventListDto> {
+  const queryParts: string[] = [];
+  if (currentUserId) {
+    queryParts.push(`currentUserId=${encodeURIComponent(currentUserId)}`);
+  }
+  if (teamId) {
+    queryParts.push(`teamId=${encodeURIComponent(teamId)}`);
+  }
+  const query = queryParts.length > 0 ? `?${queryParts.join("&")}` : "";
   const res = await fetch(`${API_BASE}/api/events${query}`, { credentials: "include" });
   if (!res.ok) throw new Error(`GET /api/events failed: ${res.status}`);
   return res.json();

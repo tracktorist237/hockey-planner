@@ -5,6 +5,7 @@ import { PlayerAvatar } from "src/components/PlayerAvatar";
 import { getAdaptiveFontSize } from "src/utils/text";
 
 interface RosterManagerProps {
+  canManage: boolean;
   sortedRoster: LineDto[];
   creatingLine: boolean;
   setCreatingLine: (value: boolean) => void;
@@ -210,6 +211,7 @@ const renderEditableSlot = (
 };
 
 export const RosterManager = ({
+  canManage,
   sortedRoster,
   creatingLine,
   setCreatingLine,
@@ -272,7 +274,7 @@ export const RosterManager = ({
             fontSize: "14px",
             fontWeight: "500",
             cursor: "pointer",
-            display: "flex",
+            display: canManage ? "flex" : "none",
             alignItems: "center",
             gap: "6px",
             transition: "all 0.2s ease",
@@ -291,7 +293,7 @@ export const RosterManager = ({
         </button>
       </div>
 
-      {creatingLine && (
+      {canManage && creatingLine && (
         <div
           style={{
             marginTop: "16px",
@@ -522,6 +524,7 @@ export const RosterManager = ({
                         borderRadius: "6px",
                         cursor: "pointer",
                         fontSize: "12px",
+                        display: canManage ? "inline-flex" : "none",
                       }}
                       title="Переименовать"
                     >
@@ -531,7 +534,7 @@ export const RosterManager = ({
                 )}
               </div>
 
-              <div style={{ display: "flex", gap: "4px" }}>
+              <div style={{ display: canManage ? "flex" : "none", gap: "4px" }}>
                 <button
                   onClick={() => {
                     void moveLineUp(index);
@@ -571,7 +574,7 @@ export const RosterManager = ({
               </div>
             </div>
 
-            <div style={{ display: "flex", gap: "8px", marginBottom: "12px", flexWrap: "wrap" }}>
+            <div style={{ display: canManage ? "flex" : "none", gap: "8px", marginBottom: "12px", flexWrap: "wrap" }}>
               <button
                 onClick={() => startEditLine(index)}
                 style={{
@@ -642,6 +645,7 @@ export const RosterManager = ({
               fontSize: "15px",
               fontWeight: "500",
               cursor: "pointer",
+              display: canManage ? "inline-block" : "none",
             }}
           >
             Создать первое звено

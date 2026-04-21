@@ -49,6 +49,7 @@ export const useUpdateEventForm = ({
   onUpdated,
 }: UseUpdateEventFormOptions) => {
   const [loadingInitial, setLoadingInitial] = useState(true);
+  const [teamId, setTeamId] = useState<string | null>(null);
 
   const {
     formData,
@@ -63,6 +64,7 @@ export const useUpdateEventForm = ({
     setFormData,
     setError,
   } = useEventForm({
+    teamId,
     submitEvent: async (dto) => {
       if (!eventId) {
         throw new Error("ID события не указан");
@@ -87,14 +89,14 @@ export const useUpdateEventForm = ({
         if (!active) {
           return;
         }
+        setTeamId(event.teamId ?? null);
         setFormData(mapEventToFormData(event));
       })
       .catch((err) => {
         if (!active) {
           return;
         }
-        const message =
-          err instanceof Error ? err.message : "Не удалось загрузить событие";
+        const message = err instanceof Error ? err.message : "Не удалось загрузить событие";
         setError(message);
       })
       .finally(() => {

@@ -1,17 +1,29 @@
 import { useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { CurrentPlayerHeader } from "../../CurrentPlayerHeader";
-import { User } from "../../types/user";
+import { BottomNav } from "src/components/BottomNav";
+import { canManageEvents } from "src/constants/permissions";
+import { CurrentPlayerHeader } from "src/CurrentPlayerHeader";
+import { User } from "src/types/user";
 import { EventCard } from "./components/EventCard";
+import { TeamSwitcher } from "./components/TeamSwitcher";
 import { useEventsData } from "./hooks/useEventsData";
 
 interface EventsListPageProps {
   currentUser: User | null;
+  currentTeamId: string | null;
+  currentTeamName: string | null;
+  onTeamChange: (teamId: string | null, teamName?: string | null) => void;
 }
 
-export const EventsListPage = ({ currentUser }: EventsListPageProps) => {
+export const EventsListPage = ({
+  currentUser,
+  currentTeamId,
+  currentTeamName,
+  onTeamChange,
+}: EventsListPageProps) => {
   const navigate = useNavigate();
-  const { events, loading, error, reloadEvents } = useEventsData(currentUser?.id);
+  const { events, loading, error, reloadEvents } = useEventsData(currentUser?.id, currentTeamId);
+  const canCreateEvents = canManageEvents(currentUser?.role);
 
   const handleOpenEvent = useCallback(
     (eventId: string) => {
@@ -27,8 +39,7 @@ export const EventsListPage = ({ currentUser }: EventsListPageProps) => {
         minHeight: "100vh",
         backgroundColor: "#f5f5f5",
         boxSizing: "border-box",
-        fontFamily:
-          "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
       }}
     >
       <div
@@ -58,49 +69,44 @@ export const EventsListPage = ({ currentUser }: EventsListPageProps) => {
             Мероприятия
           </h1>
           <div style={{ display: "flex", gap: "8px" }}>
-            <button
-              onClick={() => navigate("/events/create")}
-              style={{
-                padding: "10px 16px",
-                backgroundColor: "#1976d2",
-                color: "white",
-                border: "none",
-                borderRadius: "10px",
-                fontSize: "14px",
-                fontWeight: "500",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-                transition: "all 0.2s ease",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = "#1565c0";
-                e.currentTarget.style.transform = "translateY(-1px)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "#1976d2";
-                e.currentTarget.style.transform = "translateY(0)";
-              }}
-            >
-              <span style={{ fontSize: "20px" }}>+</span>
-              <span>Добавить</span>
-            </button>
+            {canCreateEvents && (
+              <button
+                onClick={() => navigate("/events/create")}
+                style={{
+                  padding: "10px 16px",
+                  backgroundColor: "#1976d2",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "10px",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  transition: "all 0.2s ease",
+                }}
+              >
+                <span style={{ fontSize: "20px" }}>+</span>
+                <span>Добавить</span>
+              </button>
+            )}
           </div>
         </div>
 
         <CurrentPlayerHeader />
+        <TeamSwitcher
+          currentUserId={currentUser?.id}
+          currentTeamId={currentTeamId}
+          currentTeamName={currentTeamName}
+          onTeamChange={onTeamChange}
+          filterOnly
+        />
       </div>
 
       <div style={{ padding: "16px" }}>
         {loading ? (
-          <div
-            style={{
-              padding: "48px 16px",
-              textAlign: "center",
-              color: "#666",
-            }}
-          >
+          <div style={{ padding: "48px 16px", textAlign: "center", color: "#666" }}>
             <div
               style={{
                 width: "32px",
@@ -112,9 +118,7 @@ export const EventsListPage = ({ currentUser }: EventsListPageProps) => {
                 margin: "0 auto 16px auto",
               }}
             />
-            <div style={{ fontSize: "16px", fontWeight: "500" }}>
-              Загрузка мероприятий...
-            </div>
+            <div style={{ fontSize: "16px", fontWeight: "500" }}>Загрузка мероприятий...</div>
           </div>
         ) : error ? (
           <div
@@ -155,14 +159,7 @@ export const EventsListPage = ({ currentUser }: EventsListPageProps) => {
                 marginBottom: "16px",
               }}
             >
-              <h2
-                style={{
-                  margin: "0",
-                  fontSize: "18px",
-                  fontWeight: "600",
-                  color: "#333",
-                }}
-              >
+              <h2 style={{ margin: "0", fontSize: "18px", fontWeight: "600", color: "#333" }}>
                 Предстоящие мероприятия
               </h2>
               <div
@@ -193,157 +190,36 @@ export const EventsListPage = ({ currentUser }: EventsListPageProps) => {
               marginTop: "24px",
             }}
           >
-            <div
-              style={{
-                fontSize: "64px",
-                marginBottom: "16px",
-                opacity: 0.3,
-              }}
-            >
-              🗓️
-            </div>
-            <h3
-              style={{
-                margin: "0 0 8px 0",
-                fontSize: "20px",
-                fontWeight: "600",
-                color: "#333",
-              }}
-            >
+            <div style={{ fontSize: "64px", marginBottom: "16px", opacity: 0.3 }}>🗓️</div>
+            <h3 style={{ margin: "0 0 8px 0", fontSize: "20px", fontWeight: "600", color: "#333" }}>
               Нет предстоящих мероприятий
             </h3>
-            <p
-              style={{
-                margin: "0 0 24px 0",
-                fontSize: "15px",
-                color: "#666",
-                lineHeight: "1.5",
-              }}
-            >
+            <p style={{ margin: "0 0 24px 0", fontSize: "15px", color: "#666", lineHeight: "1.5" }}>
               Здесь будут отображаться предстоящие тренировки, матчи и встречи
             </p>
-            <button
-              onClick={() => navigate("/events/create")}
-              style={{
-                padding: "14px 24px",
-                backgroundColor: "#1976d2",
-                color: "white",
-                border: "none",
-                borderRadius: "12px",
-                fontSize: "16px",
-                fontWeight: "600",
-                cursor: "pointer",
-                transition: "all 0.2s ease",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = "#1565c0";
-                e.currentTarget.style.transform = "translateY(-1px)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "#1976d2";
-                e.currentTarget.style.transform = "translateY(0)";
-              }}
-            >
-              Создать первое мероприятие
-            </button>
+            {canCreateEvents && (
+              <button
+                onClick={() => navigate("/events/create")}
+                style={{
+                  padding: "14px 24px",
+                  backgroundColor: "#1976d2",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "12px",
+                  fontSize: "16px",
+                  fontWeight: "600",
+                  cursor: "pointer",
+                }}
+              >
+                Создать первое мероприятие
+              </button>
+            )}
           </div>
         )}
       </div>
 
-      <div
-        style={{
-          position: "fixed",
-          bottom: "12px",
-          left: "12px",
-          right: "12px",
-          background: "linear-gradient(180deg, rgba(255,255,255,0.96), rgba(248,250,255,0.92))",
-          backdropFilter: "blur(10px)",
-          WebkitBackdropFilter: "blur(10px)",
-          padding: "12px",
-          border: "1px solid rgba(25, 118, 210, 0.18)",
-          borderRadius: "18px",
-          boxShadow: "0 10px 26px rgba(15, 30, 64, 0.16)",
-        }}
-      >
-        <div style={{ position: "relative", display: "flex", gap: "8px" }}>
-          <button
-            onClick={() => navigate("/settings")}
-            style={{
-              padding: "12px 14px",
-              border: "none",
-              background: "linear-gradient(180deg, #eef4ff, #e1ebff)",
-              borderRadius: "14px",
-              fontSize: "13px",
-              cursor: "pointer",
-              color: "#1f4fa5",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: "4px",
-              transition: "all 0.2s ease",
-              flex: 1,
-              fontWeight: "600",
-              boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.75)",
-            }}
-          >
-            <span style={{ fontSize: "20px" }}>⚙️</span>
-            <span>Настройки</span>
-          </button>
-
-          <button
-            onClick={() => navigate("/start-search")}
-            style={{
-              position: "absolute",
-              left: "50%",
-              top: "0",
-              transform: "translate(-50%, -50%)",
-              width: "62px",
-              height: "62px",
-              borderRadius: "50%",
-              border: "4px solid rgba(255,255,255,0.95)",
-              background: "linear-gradient(180deg, #2f7bff, #1257cf)",
-              color: "white",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              boxShadow: "0 10px 24px rgba(25,118,210,0.42), 0 2px 6px rgba(0,0,0,0.18)",
-              fontSize: "26px",
-              zIndex: 2,
-            }}
-            aria-label="Главная"
-            title="Главная"
-          >
-            🏠
-          </button>
-
-          <button
-            onClick={() => navigate("/calendar")}
-            style={{
-              padding: "12px 14px",
-              border: "none",
-              background: "linear-gradient(180deg, #eef4ff, #e1ebff)",
-              borderRadius: "14px",
-              fontSize: "13px",
-              cursor: "pointer",
-              color: "#1f4fa5",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: "4px",
-              transition: "all 0.2s ease",
-              flex: 1,
-              fontWeight: "600",
-              boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.75)",
-            }}
-          >
-            <span style={{ fontSize: "20px" }}>🗓️</span>
-            <span>Режим календаря</span>
-          </button>
-        </div>
-      </div>
-
-      <div style={{ height: "110px" }}></div>
+      <BottomNav activeTab="events" />
+      <div style={{ height: "110px" }} />
       <style>
         {`
           @keyframes spin {
