@@ -1,4 +1,7 @@
 import { useNavigate } from "react-router-dom";
+import { BottomNav } from "src/components/BottomNav";
+import { useAuth } from "src/hooks/useAuth";
+import { useCurrentTeam } from "src/hooks/useCurrentTeam";
 import { CalendarHeader } from "src/pages/CalendarPage/components/CalendarHeader";
 import { ErrorState } from "src/pages/CalendarPage/components/ErrorState";
 import { EventsList } from "src/pages/CalendarPage/components/EventsList";
@@ -8,15 +11,27 @@ import { MonthView } from "src/pages/CalendarPage/components/MonthView";
 import { WeekView } from "src/pages/CalendarPage/components/WeekView";
 import { useCalendarData } from "src/pages/CalendarPage/hooks/useCalendarData";
 import { useCalendarNavigation } from "src/pages/CalendarPage/hooks/useCalendarNavigation";
-import { BottomNav } from "src/components/BottomNav";
 
 export function CalendarPage() {
   const navigate = useNavigate();
+  const { currentUser } = useAuth();
+  const { teamId: currentTeamId } = useCurrentTeam(currentUser?.id ?? null);
   const { viewMode, setViewMode, currentDate, selectedDate, setSelectedDate, isMobile, goPrev, goNext, goToday, selectDate } = useCalendarNavigation();
-  const { loading, error, daysInMonth, firstDayOfMonth, weekDays, selectedDateEvents, getEventsForDate } = useCalendarData({ currentDate, selectedDate, onInitialDateSelect: setSelectedDate });
+  const { loading, error, daysInMonth, firstDayOfMonth, weekDays, selectedDateEvents, getEventsForDate } = useCalendarData({
+    currentDate,
+    selectedDate,
+    currentUserId: currentUser?.id,
+    teamId: currentTeamId,
+    onInitialDateSelect: setSelectedDate,
+  });
 
-  if (loading) return <LoadingState text="Загрузка календаря..." />;
-  if (error) return <ErrorState error={error} onBack={() => navigate("/events")} />;
+  if (loading) {
+    return <LoadingState text="Загрузка календаря..." />;
+  }
+
+  if (error) {
+    return <ErrorState error={error} onBack={() => navigate("/events")} />;
+  }
 
   return (
     <div style={{ padding: 0, minHeight: "100vh", backgroundColor: "#f5f5f5", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", boxSizing: "border-box" }}>

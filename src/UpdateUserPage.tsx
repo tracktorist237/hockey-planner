@@ -1,5 +1,5 @@
 import { ChangeEvent, FormEvent, useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { searchSpbhlPlayers, SpbhlPlayerSearchItem } from "src/api/spbhl";
 import {
   getUserById,
@@ -8,6 +8,8 @@ import {
   User,
   UpdateUserData,
 } from "src/api/users";
+import { normalizeRole } from "src/constants/roles";
+import { useAuth } from "src/hooks/useAuth";
 import { ErrorMessage } from "src/pages/CreatePlayerFormPage/components/ErrorMessage";
 import { FormHeader } from "src/pages/CreatePlayerFormPage/components/FormHeader";
 import { HockeyInfoForm } from "src/pages/CreatePlayerFormPage/components/HockeyInfoForm";
@@ -22,7 +24,9 @@ import {
   getFieldStatus,
   validateField,
 } from "src/pages/CreatePlayerFormPage/validation";
+import { User as AuthUser } from "src/types/user";
 import { getAdaptiveFontSize } from "src/utils/text";
+import { clearOnboardingRequired } from "src/utils/onboarding";
 
 const SPBHL_PROFILE_URL = "https://spbhl.ru/Player?PlayerID=";
 const getSpbhlAvatarUrl = (playerId: string, size: "M" | "O" = "O") =>
@@ -57,6 +61,9 @@ const isValidBirthYear = (value: string): boolean => /^\d{4}$/.test(value);
 export function UpdateUserPage() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
+  const { currentUser, setCurrentUser } = useAuth();
+  const nextPath = searchParams.get("next") || "/settings";
 
   const [formData, setFormData] = useState<UserFormData>(INITIAL_FORM_DATA);
   const [errors, setErrors] = useState<ValidationErrors>({});
@@ -91,13 +98,31 @@ export function UpdateUserPage() {
     [errors, formData],
   );
 
-  const updateLocalCurrentUser = useCallback((user: User) => {
-    try {
-      localStorage.setItem("currentUser", JSON.stringify(user));
-    } catch (storageError) {
-      console.error("Не удалось обновить currentUser в localStorage", storageError);
-    }
-  }, []);
+  const mapToAuthUser = useCallback(
+    (user: User): AuthUser => ({
+      id: user.id,
+      firstName: user.firstName ?? null,
+      lastName: user.lastName ?? null,
+      jerseyNumber: user.jerseyNumber ?? null,
+      fullName: user.fullName ?? `${user.lastName ?? ""} ${user.firstName ?? ""}`.trim(),
+      photoUrl: user.photoUrl ?? null,
+      spbhlPlayerId: user.spbhlPlayerId ?? null,
+      email: currentUser?.email ?? null,
+      emailConfirmed: Boolean(currentUser?.emailConfirmed),
+      role: normalizeRole(user.role ?? currentUser?.role),
+    }),
+    [currentUser?.email, currentUser?.emailConfirmed, currentUser?.role],
+  );
+
+  const syncCurrentUser = useCallback(
+    (user: User) => {
+      const mappedUser = mapToAuthUser(user);
+      if (currentUser?.id === mappedUser.id) {
+        setCurrentUser(mappedUser);
+      }
+    },
+    [currentUser?.id, mapToAuthUser, setCurrentUser],
+  );
 
   useEffect(() => {
     if (!id) {
@@ -346,7 +371,7 @@ export function UpdateUserPage() {
       try {
         const updatedUser = await uploadUserAvatar(id, file);
         setPhotoUrl(updatedUser.photoUrl ?? null);
-        updateLocalCurrentUser(updatedUser);
+        syncCurrentUser(updatedUser);
         setSuccessMessage("Свой аватар загружен");
       } catch (uploadError) {
         const message =
@@ -358,7 +383,7 @@ export function UpdateUserPage() {
         setIsUploadingAvatar(false);
       }
     },
-    [id, updateLocalCurrentUser],
+    [id, syncCurrentUser],
   );
 
   const handleSubmit = useCallback(
@@ -387,9 +412,12 @@ export function UpdateUserPage() {
 
       try {
         const updatedUser = await updateUser(id, payload);
-        updateLocalCurrentUser(updatedUser);
+        syncCurrentUser(updatedUser);
+        if (nextPath === "/teams") {
+          clearOnboardingRequired();
+        }
         setSuccessMessage("✅ Профиль обновлён");
-        setTimeout(() => navigate("/settings"), 700);
+        setTimeout(() => navigate(nextPath), 700);
       } catch (submitError) {
         const message =
           submitError instanceof Error
@@ -400,7 +428,7 @@ export function UpdateUserPage() {
         setSubmitting(false);
       }
     },
-    [formData, id, navigate, photoUrl, spbhlPlayerId, updateLocalCurrentUser, validateForm],
+    [formData, id, navigate, nextPath, photoUrl, spbhlPlayerId, syncCurrentUser, validateForm],
   );
 
   if (loadingInitial) {
@@ -422,7 +450,7 @@ export function UpdateUserPage() {
       }}
     >
       <FormHeader
-        onBack={() => navigate("/settings")}
+        onBack={() => navigate(nextPath)}
         title="Редактирование профиля"
         subtitle="Обновите данные игрока, привязку СПБХЛ и аватар"
       />
@@ -671,7 +699,7 @@ export function UpdateUserPage() {
 
         <PlayerFormActions
           submitting={submitting || isUploadingAvatar}
-          onCancel={() => navigate("/settings")}
+          onCancel={() => navigate(nextPath)}
           submitText="Сохранить изменения"
           submittingText="Сохраняем..."
         />

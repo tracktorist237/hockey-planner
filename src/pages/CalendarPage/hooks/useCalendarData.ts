@@ -6,29 +6,26 @@ import { EventListDto, EventLookUpDto } from "src/types/events";
 interface UseCalendarDataOptions {
   currentDate: Date;
   selectedDate: Date | null;
+  currentUserId?: string;
+  teamId?: string | null;
   onInitialDateSelect?: (date: Date) => void;
 }
 
-export const useCalendarData = ({ currentDate, selectedDate, onInitialDateSelect }: UseCalendarDataOptions) => {
+export const useCalendarData = ({
+  currentDate,
+  selectedDate,
+  currentUserId,
+  teamId,
+  onInitialDateSelect,
+}: UseCalendarDataOptions) => {
   const [events, setEvents] = useState<EventListDto | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const initialDateSelected = useRef(false);
 
   useEffect(() => {
-    let currentUserId: string | undefined;
-    const rawCurrentUser = localStorage.getItem("currentUser");
-    if (rawCurrentUser) {
-      try {
-        currentUserId = (JSON.parse(rawCurrentUser) as { id?: string | null })?.id ?? undefined;
-      } catch {
-        currentUserId = undefined;
-      }
-    }
-    const currentTeamId = localStorage.getItem("currentTeamId");
-
     setLoading(true);
-    getEvents(currentUserId, currentTeamId || undefined)
+    getEvents(currentUserId, teamId ?? undefined)
       .then((response) => {
         setEvents(response);
         setError(null);
@@ -38,7 +35,7 @@ export const useCalendarData = ({ currentDate, selectedDate, onInitialDateSelect
         setError("Не удалось загрузить мероприятия");
       })
       .finally(() => setLoading(false));
-  }, []);
+  }, [currentUserId, teamId]);
 
   useEffect(() => {
     if (!loading && events && !initialDateSelected.current) {

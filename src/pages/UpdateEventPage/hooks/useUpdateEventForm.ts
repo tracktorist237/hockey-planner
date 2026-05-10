@@ -26,9 +26,7 @@ const normalizeType = (type: number): EventType => {
   return EventType.Practice;
 };
 
-const mapEventToFormData = (
-  event: Awaited<ReturnType<typeof getEvent>>,
-): EventFormData => ({
+const mapEventToFormData = (event: Awaited<ReturnType<typeof getEvent>>): EventFormData => ({
   title: event.title ?? "",
   description: event.description ?? "",
   startTime: toDateTimeLocal(event.startTime),
@@ -44,10 +42,7 @@ const mapEventToFormData = (
   type: normalizeType(event.type),
 });
 
-export const useUpdateEventForm = ({
-  eventId,
-  onUpdated,
-}: UseUpdateEventFormOptions) => {
+export const useUpdateEventForm = ({ eventId, onUpdated }: UseUpdateEventFormOptions) => {
   const [loadingInitial, setLoadingInitial] = useState(true);
   const [teamId, setTeamId] = useState<string | null>(null);
 
@@ -65,11 +60,11 @@ export const useUpdateEventForm = ({
     setError,
   } = useEventForm({
     teamId,
-    submitEvent: async (dto) => {
+    submitEvent: async (dto, currentUserId) => {
       if (!eventId) {
         throw new Error("ID события не указан");
       }
-      await updateEvent(eventId, dto);
+      await updateEvent(eventId, dto, currentUserId);
     },
   });
 

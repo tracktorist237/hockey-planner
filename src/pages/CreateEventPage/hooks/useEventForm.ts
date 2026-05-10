@@ -1,11 +1,12 @@
 import { Dispatch, SetStateAction, useMemo, useState } from "react";
 import { createEvent } from "src/api/events";
+import { useAuth } from "src/hooks/useAuth";
 import { CreateEventDto, EventType } from "src/types/events";
 import { EventFormData } from "src/pages/CreateEventPage/types";
 
 interface UseEventFormOptions {
   onCreated?: (id: string) => void;
-  submitEvent?: (dto: CreateEventDto) => Promise<void | string>;
+  submitEvent?: (dto: CreateEventDto, currentUserId?: string) => Promise<void | string>;
   initialData?: EventFormData;
   teamId?: string | null;
 }
@@ -85,6 +86,7 @@ export const useEventForm = ({
   initialData,
   teamId,
 }: UseEventFormOptions): UseEventFormResult => {
+  const { currentUser } = useAuth();
   const [formData, setFormData] = useState<EventFormData>(initialData ?? initialFormData);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -146,12 +148,12 @@ export const useEventForm = ({
 
     try {
       if (submitEvent) {
-        const submitResult = await submitEvent(dto);
+        const submitResult = await submitEvent(dto, currentUser?.id);
         if (typeof submitResult === "string") {
           onCreated?.(submitResult);
         }
       } else {
-        const id = await createEvent(dto);
+        const id = await createEvent(dto, currentUser?.id);
         onCreated?.(id);
       }
       return true;

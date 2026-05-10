@@ -16,47 +16,11 @@ import { useLineManagement } from "src/pages/EventPage/hooks/useLineManagement";
 import { usePlayerModal } from "src/pages/EventPage/hooks/usePlayerModal";
 import { EventPageProps } from "src/pages/EventPage/types";
 
-const getCurrentUserId = (currentUser?: EventPageProps["currentUser"]): string | null => {
-  if (currentUser?.id) {
-    return currentUser.id;
-  }
-
-  const stored = localStorage.getItem("currentUser");
-  if (!stored) {
-    return null;
-  }
-
-  try {
-    const parsed = JSON.parse(stored) as { id?: string };
-    return parsed.id ?? null;
-  } catch {
-    return null;
-  }
-};
-
-const getCurrentUserRole = (currentUser?: EventPageProps["currentUser"]): number | string | null => {
-  if (currentUser?.role !== undefined) {
-    return currentUser.role;
-  }
-
-  const stored = localStorage.getItem("currentUser");
-  if (!stored) {
-    return null;
-  }
-
-  try {
-    const parsed = JSON.parse(stored) as { role?: number | string | null };
-    return parsed.role ?? null;
-  } catch {
-    return null;
-  }
-};
-
 export function EventPage({ eventId, onBack, currentUser }: EventPageProps) {
   const [isActionsOpen, setIsActionsOpen] = useState(false);
   const [avatarUrls, setAvatarUrls] = useState<Record<string, string>>({});
-  const selectedUserId = useMemo(() => getCurrentUserId(currentUser), [currentUser]);
-  const canManageEvent = useMemo(() => canManageEvents(getCurrentUserRole(currentUser)), [currentUser]);
+  const selectedUserId = useMemo(() => currentUser?.id ?? null, [currentUser?.id]);
+  const canManageEvent = useMemo(() => canManageEvents(currentUser?.role), [currentUser?.role]);
 
   const { event, loading, error, copySuccess, copyEventLink, reloadEvent, setError } = useEventData(eventId);
   const reportError = (message: string) => setError(message ? message : null);

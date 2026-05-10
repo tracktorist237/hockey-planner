@@ -1,5 +1,5 @@
 import { User } from "../../types/user";
 
 export interface StartSearchPageProps {
-  onSelect: (user: User) => void;
+  onSelect: (user: User) => void | Promise<void>;
 }

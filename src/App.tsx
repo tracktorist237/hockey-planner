@@ -1,4 +1,4 @@
-import { ReactElement, useState } from "react";
+import { ReactElement } from "react";
 import {
   BrowserRouter,
   Navigate,
@@ -11,72 +11,37 @@ import { CalendarPage } from "./CalendarPage";
 import { CreateEventPage } from "./CreateEventPage";
 import { CreatePlayerFormPage } from "./CreatePlayerFormPage";
 import { DeleteEventPage } from "./DeleteEventPage";
-import { EventPage } from "src/pages/EventPage/EventPage";
 import { SettingsPage } from "./SettingsPage";
 import { UpdateEventPage } from "./UpdateEventPage";
 import { UpdateUserPage } from "./UpdateUserPage";
+import { AdminPushPage } from "src/pages/AdminPushPage";
+import { AuthPage } from "src/pages/AuthPage";
+import { ConfirmEmailPage } from "src/pages/ConfirmEmailPage";
+import { EventPage } from "src/pages/EventPage/EventPage";
+import { EventsListPage } from "src/pages/EventsListPage/EventsListPage";
+import { LinkPlayerPage } from "src/pages/LinkPlayerPage";
+import { TeamsPage } from "src/pages/TeamsPage";
+import { ProfilePage } from "src/pages/ProfilePage";
+import StartSearchPage from "src/pages/StartSearchPage/StartSearchPage";
 import { DebugOverlay } from "src/components/DebugOverlay";
 import { PermissionDenied } from "src/components/PermissionDenied";
-import { normalizeRole } from "./constants/roles";
-import { EventsListPage } from "./pages/EventsListPage/EventsListPage";
-import StartSearchPage from "./pages/StartSearchPage/StartSearchPage";
-import { User } from "./types/user";
-import { AdminPushPage } from "./pages/AdminPushPage";
-import { useCurrentTeam } from "./hooks/useCurrentTeam";
-import { TeamsPage } from "./pages/TeamsPage";
+import { useCurrentTeam } from "src/hooks/useCurrentTeam";
+import { useAuth } from "src/hooks/useAuth";
 import { canManageEvents } from "src/constants/permissions";
+import { AuthProvider } from "src/context/AuthContext";
+import { shouldRunOnboarding } from "src/utils/onboarding";
+import { useState } from "react";
 
-const getStoredCurrentUser = (): User | null => {
-  const saved = localStorage.getItem("currentUser");
-  if (!saved) {
-    return null;
-  }
-
-  try {
-    const parsed = JSON.parse(saved) as Partial<User> & {
-      role?: number | string | null;
-    };
-
-    if (!parsed?.id) {
-      return null;
-    }
-
-    return {
-      id: parsed.id,
-      firstName: parsed.firstName ?? null,
-      lastName: parsed.lastName ?? null,
-      jerseyNumber: parsed.jerseyNumber ?? null,
-      fullName: parsed.fullName,
-      photoUrl: parsed.photoUrl ?? null,
-      spbhlPlayerId: parsed.spbhlPlayerId ?? null,
-      role: normalizeRole(parsed.role),
-    };
-  } catch (error) {
-    console.error("Ошибка при парсинге currentUser:", error);
-    localStorage.removeItem("currentUser");
-    return null;
-  }
-};
-
-function EventPageWrapper({
-  currentUser,
-}: {
-  currentUser: User | null;
-}) {
+function EventPageWrapper() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { currentUser } = useAuth();
 
   if (!id) {
     return <div>Некорректный ID события</div>;
   }
 
-  return (
-    <EventPage
-      eventId={id}
-      onBack={() => navigate("/events")}
-      currentUser={currentUser}
-    />
-  );
+  return <EventPage eventId={id} onBack={() => navigate("/events")} currentUser={currentUser} />;
 }
 
 function CreateEventWrapper({ currentTeamId }: { currentTeamId: string | null }) {
@@ -91,13 +56,33 @@ function CreateEventWrapper({ currentTeamId }: { currentTeamId: string | null })
   );
 }
 
-function RequireEventManager({
-  currentUser,
-  children,
-}: {
-  currentUser: User | null;
-  children: ReactElement;
-}) {
+function RequireAuth({ children }: { children: ReactElement }) {
+  const { authLoading, isAuthenticated } = useAuth();
+
+  if (authLoading) {
+    return <div style={{ padding: 24 }}>Загрузка...</div>;
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
+}
+
+function RequireOnboardingComplete({ children }: { children: ReactElement }) {
+  const { currentUser } = useAuth();
+
+  if (shouldRunOnboarding(currentUser)) {
+    return <Navigate to="/onboarding/link-player" replace />;
+  }
+
+  return children;
+}
+
+function RequireEventManager({ children }: { children: ReactElement }) {
+  const { currentUser } = useAuth();
+
   if (!canManageEvents(currentUser?.role)) {
     return (
       <PermissionDenied
@@ -110,106 +95,216 @@ function RequireEventManager({
   return children;
 }
 
-function RequireCurrentUser({
-  currentUser,
-  children,
-}: {
-  currentUser: User | null;
-  children: ReactElement;
-}) {
+function RequireOwnProfile({ children }: { children: ReactElement }) {
+  const { currentUser } = useAuth();
+  const { id } = useParams<{ id: string }>();
+
   if (!currentUser?.id) {
-    return <Navigate to="/start-search" replace />;
+    return <Navigate to="/login" replace />;
+  }
+
+  if (!id || id !== currentUser.id) {
+    return (
+      <PermissionDenied
+        title="Недостаточно прав"
+        message="Редактирование доступно только для вашего профиля."
+      />
+    );
   }
 
   return children;
 }
 
 function AppRoutes() {
-  const [currentUser, setCurrentUser] = useState<User | null>(() =>
-    getStoredCurrentUser(),
-  );
+  const { currentUser, isAuthenticated, login } = useAuth();
   const { teamId: currentTeamId, teamName: currentTeamName, setCurrentTeam } = useCurrentTeam(currentUser?.id ?? null);
   const [isDebugOpen, setIsDebugOpen] = useState(false);
   const navigate = useNavigate();
+  const homePath = isAuthenticated
+    ? shouldRunOnboarding(currentUser)
+      ? "/onboarding/link-player"
+      : "/events"
+    : "/login";
 
   return (
     <>
       <Routes>
-        <Route path="/" element={<Navigate to="/events" replace />} />
+        <Route
+          path="/"
+          element={<Navigate to={homePath} replace />}
+        />
+
+        <Route
+          path="/login"
+          element={<AuthPage />}
+        />
+
+        <Route
+          path="/confirm-email"
+          element={<ConfirmEmailPage />}
+        />
+
+        <Route
+          path="/onboarding/link-player"
+          element={
+            <RequireAuth>
+              <LinkPlayerPage />
+            </RequireAuth>
+          }
+        />
+
         <Route
           path="/start-search"
           element={
-            <StartSearchPage
-              onSelect={(user) => {
-                setCurrentUser(user);
-                localStorage.setItem("currentUser", JSON.stringify(user));
-                navigate("/events");
-              }}
-            />
+            isAuthenticated ? (
+              <Navigate to="/events" replace />
+            ) : (
+              <StartSearchPage
+                onSelect={async (user) => {
+                  await login(user);
+                  navigate("/events", { replace: true });
+                }}
+              />
+            )
           }
         />
+
         <Route
           path="/events"
           element={
-            <EventsListPage
-              currentUser={currentUser}
-              currentTeamId={currentTeamId}
-              currentTeamName={currentTeamName}
-              onTeamChange={setCurrentTeam}
-            />
+            <RequireAuth>
+              <RequireOnboardingComplete>
+                <EventsListPage
+                  currentUser={currentUser}
+                  currentTeamId={currentTeamId}
+                  currentTeamName={currentTeamName}
+                  onTeamChange={setCurrentTeam}
+                />
+              </RequireOnboardingComplete>
+            </RequireAuth>
           }
         />
+
         <Route
           path="/events/create"
           element={
-            <RequireEventManager currentUser={currentUser}>
-              <CreateEventWrapper currentTeamId={currentTeamId} />
-            </RequireEventManager>
+            <RequireAuth>
+              <RequireOnboardingComplete>
+                <RequireEventManager>
+                  <CreateEventWrapper currentTeamId={currentTeamId} />
+                </RequireEventManager>
+              </RequireOnboardingComplete>
+            </RequireAuth>
           }
         />
-        <Route path="/events/:id" element={<EventPageWrapper currentUser={currentUser} />} />
+
+        <Route
+          path="/events/:id"
+          element={
+            <RequireAuth>
+              <RequireOnboardingComplete>
+                <EventPageWrapper />
+              </RequireOnboardingComplete>
+            </RequireAuth>
+          }
+        />
+
         <Route
           path="/events/:id/delete"
           element={
-            <RequireEventManager currentUser={currentUser}>
-              <DeleteEventPage />
-            </RequireEventManager>
+            <RequireAuth>
+              <RequireOnboardingComplete>
+                <RequireEventManager>
+                  <DeleteEventPage />
+                </RequireEventManager>
+              </RequireOnboardingComplete>
+            </RequireAuth>
           }
         />
-        <Route path="/create-player" element={<CreatePlayerFormPage />} />
+
         <Route
           path="/events/:id/edit"
           element={
-            <RequireEventManager currentUser={currentUser}>
-              <UpdateEventPage />
-            </RequireEventManager>
+            <RequireAuth>
+              <RequireOnboardingComplete>
+                <RequireEventManager>
+                  <UpdateEventPage />
+                </RequireEventManager>
+              </RequireOnboardingComplete>
+            </RequireAuth>
           }
         />
+
+        <Route path="/create-player" element={<CreatePlayerFormPage />} />
+
         <Route
           path="/users/:id/edit"
           element={
-            <RequireCurrentUser currentUser={currentUser}>
+            <RequireOwnProfile>
               <UpdateUserPage />
-            </RequireCurrentUser>
+            </RequireOwnProfile>
           }
         />
-        <Route path="/calendar" element={<CalendarPage />} />
-        <Route path="/settings" element={<SettingsPage onOpenDebug={() => setIsDebugOpen(true)} />} />
-        <Route path="/admin/push" element={<AdminPushPage />} />
+
+        <Route
+          path="/profile"
+          element={
+            <RequireAuth>
+              <ProfilePage />
+            </RequireAuth>
+          }
+        />
+
+        <Route
+          path="/calendar"
+          element={
+            <RequireAuth>
+              <RequireOnboardingComplete>
+                <CalendarPage />
+              </RequireOnboardingComplete>
+            </RequireAuth>
+          }
+        />
+
+        <Route
+          path="/settings"
+          element={
+            <RequireAuth>
+              <RequireOnboardingComplete>
+                <SettingsPage onOpenDebug={() => setIsDebugOpen(true)} />
+              </RequireOnboardingComplete>
+            </RequireAuth>
+          }
+        />
+
+        <Route
+          path="/admin/push"
+          element={
+            <RequireAuth>
+              <RequireOnboardingComplete>
+                <AdminPushPage />
+              </RequireOnboardingComplete>
+            </RequireAuth>
+          }
+        />
+
         <Route
           path="/teams"
           element={
-            <RequireCurrentUser currentUser={currentUser}>
-              <TeamsPage
-                currentUser={currentUser}
-                currentTeamId={currentTeamId}
-                currentTeamName={currentTeamName}
-                onTeamChange={setCurrentTeam}
-              />
-            </RequireCurrentUser>
+            <RequireAuth>
+              <RequireOnboardingComplete>
+                <TeamsPage
+                  currentUser={currentUser}
+                  currentTeamId={currentTeamId}
+                  currentTeamName={currentTeamName}
+                  onTeamChange={setCurrentTeam}
+                />
+              </RequireOnboardingComplete>
+            </RequireAuth>
           }
         />
       </Routes>
+
       <DebugOverlay isOpen={isDebugOpen} onClose={() => setIsDebugOpen(false)} />
     </>
   );
@@ -217,8 +312,10 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <AppRoutes />
-    </BrowserRouter>
+    <AuthProvider>
+      <BrowserRouter>
+        <AppRoutes />
+      </BrowserRouter>
+    </AuthProvider>
   );
 }

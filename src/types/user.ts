@@ -8,6 +8,8 @@ export interface User {
   fullName?: string;
   photoUrl?: string | null;
   spbhlPlayerId?: string | null;
+  email?: string | null;
+  emailConfirmed?: boolean;
   role: UserRole;
 }
 
@@ -19,5 +21,7 @@ export interface ApiUser {
   fullName?: string | null;
   photoUrl?: string | null;
   spbhlPlayerId?: string | null;
+  email?: string | null;
+  emailConfirmed?: boolean;
   role?: number | UserRole;
 }

@@ -1,20 +1,17 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { deleteEvent } from "./api/events"; // 👈 импортируем
+import { useAuth } from "src/hooks/useAuth";
 
 export function DeleteEventPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { currentUser } = useAuth();
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [confirmed, setConfirmed] = useState(false);
-
-  const currentUser = (() => {
-    const saved = localStorage.getItem("currentUser");
-    return saved ? JSON.parse(saved) : null;
-  })();
 
   if (!id) {
     return (
@@ -84,7 +81,7 @@ export function DeleteEventPage() {
     setError(null);
 
     try {
-      const data = await deleteEvent(id);
+      const data = await deleteEvent(id, currentUser.id);
       setMessage(data.message);
 
       // через 2 секунды — возврат к списку

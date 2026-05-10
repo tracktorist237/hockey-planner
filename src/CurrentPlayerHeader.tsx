@@ -1,55 +1,32 @@
-// CurrentPlayerHeader.tsx
-import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { normalizeRole, roleToLabel, UserRole } from "./constants/roles";
-import { getRoleColor } from "./utils/colors";
 import { PlayerAvatar } from "src/components/PlayerAvatar";
+import { normalizeRole, roleToLabel, UserRole } from "src/constants/roles";
+import { useAuth } from "src/hooks/useAuth";
+import { getRoleColor } from "src/utils/colors";
 import { getAdaptiveFontSize } from "src/utils/text";
 
 interface CurrentPlayerHeaderProps {
-  onBack?: () => void; // Опциональный пропс для совместимости
+  onBack?: () => void;
 }
 
-interface User {
-  id: string;
-  firstName?: string | null;
-  lastName?: string | null;
-  jerseyNumber?: number | null;
-  role?: number | UserRole;
-  photoUrl?: string | null;
-}
+const getRoleName = (role?: number | UserRole): string => roleToLabel[normalizeRole(role)];
+const getColorByRole = (role?: number | UserRole): string => getRoleColor(normalizeRole(role));
 
-const getRoleName = (role?: number | UserRole): string => {
-  return roleToLabel[normalizeRole(role)];
-};
-
-const getColorByRole = (role?: number | UserRole): string => {
-  return getRoleColor(normalizeRole(role));
-};
-
-export function CurrentPlayerHeader({
-  onBack,
-}: CurrentPlayerHeaderProps) {
+export function CurrentPlayerHeader({ onBack }: CurrentPlayerHeaderProps) {
   const navigate = useNavigate();
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-
-  useEffect(() => {
-    // Получаем пользователя из localStorage при монтировании
-    const storedUser = localStorage.getItem("currentUser");
-    if (storedUser) {
-      try {
-        setCurrentUser(JSON.parse(storedUser));
-      } catch (e) {
-        console.error("Ошибка при парсинге пользователя:", e);
-        localStorage.removeItem("currentUser");
-      }
-    }
-  }, []);
+  const { currentUser } = useAuth();
 
   const handleSelectPlayer = () => {
-    navigate("/");
+    if (onBack) {
+      onBack();
+      return;
+    }
+    navigate("/start-search");
   };
-  const displayName = currentUser ? `${currentUser.lastName ?? ""} ${currentUser.firstName ?? ""}`.trim() : "";
+
+  const displayName = currentUser
+    ? `${currentUser.lastName ?? ""} ${currentUser.firstName ?? ""}`.trim()
+    : "";
   const displayNameSize = getAdaptiveFontSize(displayName, {
     base: 18,
     min: 12,
@@ -68,30 +45,30 @@ export function CurrentPlayerHeader({
         cursor: !currentUser ? "pointer" : "default",
         transition: "background-color 0.2s ease",
         borderRadius: "8px",
-        margin: !currentUser ? "4px -4px" : "0"
+        margin: !currentUser ? "4px -4px" : "0",
       }}
       onClick={!currentUser ? handleSelectPlayer : undefined}
-      onMouseEnter={(e) => {
+      onMouseEnter={(event) => {
         if (!currentUser) {
-          e.currentTarget.style.backgroundColor = "#f5f5f5";
-          e.currentTarget.style.padding = "8px 4px 12px 4px";
+          event.currentTarget.style.backgroundColor = "#f5f5f5";
+          event.currentTarget.style.padding = "8px 4px 12px 4px";
         }
       }}
-      onMouseLeave={(e) => {
+      onMouseLeave={(event) => {
         if (!currentUser) {
-          e.currentTarget.style.backgroundColor = "transparent";
-          e.currentTarget.style.padding = "8px 0 12px 0";
+          event.currentTarget.style.backgroundColor = "transparent";
+          event.currentTarget.style.padding = "8px 0 12px 0";
         }
       }}
     >
       {currentUser ? (
-        <div style={{ 
-          display: "flex", 
-          alignItems: "center", 
-          gap: "12px",
-          width: "100%"
-        }}>
-          <div style={{ boxShadow: `0 3px 8px ${getColorByRole(currentUser.role)}40`, borderRadius: "12px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px", width: "100%" }}>
+          <div
+            style={{
+              boxShadow: `0 3px 8px ${getColorByRole(currentUser.role)}40`,
+              borderRadius: "12px",
+            }}
+          >
             <PlayerAvatar
               size={48}
               shape="rounded"
@@ -106,83 +83,116 @@ export function CurrentPlayerHeader({
               badgeFontSizePx={10}
             />
           </div>
+
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ 
-              fontWeight: "600",
-              fontSize: `${displayNameSize}px`,
-              color: "#1a237e",
-              marginBottom: "4px",
-              whiteSpace: "nowrap",
-              maxWidth: "200px"
-            }}>
+            <div
+              style={{
+                fontWeight: "600",
+                fontSize: `${displayNameSize}px`,
+                color: "#1a237e",
+                marginBottom: "4px",
+                whiteSpace: "nowrap",
+                maxWidth: "200px",
+              }}
+            >
               {currentUser.lastName} {currentUser.firstName}
             </div>
-            <div style={{ 
-              fontSize: "13px",
-              color: "#666",
-              display: "flex",
-              alignItems: "center",
-              gap: "6px"
-            }}>
-              <span style={{
-                backgroundColor: `${getColorByRole(currentUser.role)}20`,
-                color: getColorByRole(currentUser.role),
-                padding: "2px 8px",
-                borderRadius: "10px",
-                fontSize: "12px",
-                fontWeight: "600"
-              }}>
+            <div
+              style={{
+                fontSize: "13px",
+                color: "#666",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                flexWrap: "wrap",
+              }}
+            >
+              <span
+                style={{
+                  backgroundColor: `${getColorByRole(currentUser.role)}20`,
+                  color: getColorByRole(currentUser.role),
+                  padding: "2px 8px",
+                  borderRadius: "10px",
+                  fontSize: "12px",
+                  fontWeight: "600",
+                }}
+              >
                 {getRoleName(currentUser.role)}
               </span>
+              {currentUser.emailConfirmed === false && (
+                <button
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    navigate("/profile");
+                  }}
+                  style={{
+                    border: "1px solid #fed7aa",
+                    background: "#fff7ed",
+                    color: "#9a3412",
+                    padding: "2px 8px",
+                    borderRadius: "10px",
+                    fontSize: "12px",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                  }}
+                  title="Подтвердите почту, чтобы восстановить доступ к профилю"
+                >
+                  Подтвердить почту
+                </button>
+              )}
             </div>
           </div>
         </div>
       ) : (
-        <div style={{ 
-          display: "flex", 
-          alignItems: "center", 
-          gap: "12px",
-          width: "100%"
-        }}>
-          <div style={{
-            width: "48px",
-            height: "48px",
-            backgroundColor: "#f5f5f5",
-            color: "#999",
-            borderRadius: "12px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontWeight: "400",
-            fontSize: "24px",
-            flexShrink: 0
-          }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px", width: "100%" }}>
+          <div
+            style={{
+              width: "48px",
+              height: "48px",
+              backgroundColor: "#f5f5f5",
+              color: "#999",
+              borderRadius: "12px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontWeight: "400",
+              fontSize: "24px",
+              flexShrink: 0,
+            }}
+          >
             👤
           </div>
           <div style={{ flex: 1 }}>
-            <div style={{ 
-              fontWeight: "600",
-              fontSize: "16px",
-              color: "#1a237e",
-              marginBottom: "4px"
-            }}>
+            <div
+              style={{
+                fontWeight: "600",
+                fontSize: "16px",
+                color: "#1a237e",
+                marginBottom: "4px",
+              }}
+            >
               Гость
             </div>
-            <div style={{ 
-              fontSize: "14px",
-              color: "#666",
-              display: "flex",
-              alignItems: "center",
-              gap: "6px"
-            }}>
-              <span style={{
-                backgroundColor: "#fff3e0",
-                color: "#ef6c00",
-                padding: "2px 8px",
-                borderRadius: "10px",
-                fontSize: "12px",
-                fontWeight: "500"
-              }}>
+            <div
+              style={{
+                fontSize: "14px",
+                color: "#666",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+              }}
+            >
+              <span
+                style={{
+                  backgroundColor: "#fff3e0",
+                  color: "#ef6c00",
+                  padding: "2px 8px",
+                  borderRadius: "10px",
+                  fontSize: "12px",
+                  fontWeight: "500",
+                }}
+              >
                 Без роли
               </span>
               <span>Нажмите чтобы выбрать</span>
@@ -190,15 +200,14 @@ export function CurrentPlayerHeader({
           </div>
         </div>
       )}
-      
+
       <style>
         {`
-          /* Для очень маленьких экранов */
           @media (max-width: 360px) {
             div[style*="gap: 12px"] {
               gap: 8px !important;
             }
-            
+
             div[style*="fontSize: 18px"] {
               font-size: 16px !important;
             }

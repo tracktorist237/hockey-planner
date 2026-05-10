@@ -5,6 +5,7 @@ import { APP_VERSION } from "./config/version";
 import { getVersionInfo } from "src/api/version";
 import { getPushPublicKey, subscribePush } from "src/api/push";
 import { BottomNav } from "src/components/BottomNav";
+import { useAuth } from "src/hooks/useAuth";
 
 interface SettingsPageProps {
   onOpenDebug?: () => void;
@@ -25,6 +26,7 @@ const base64UrlToUint8Array = (value: string): Uint8Array => {
 
 export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
   const navigate = useNavigate();
+  const { currentUser } = useAuth();
   const [isUpdating, setIsUpdating] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [isClearing, setIsClearing] = useState(false);
@@ -33,18 +35,7 @@ export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
     typeof window !== "undefined" && "Notification" in window ? Notification.permission : "unsupported",
   );
 
-  const currentUserId = (() => {
-    try {
-      const raw = localStorage.getItem("currentUser");
-      if (!raw) {
-        return null;
-      }
-      const parsed = JSON.parse(raw) as { id?: string | null };
-      return parsed?.id ?? null;
-    } catch {
-      return null;
-    }
-  })();
+  const currentUserId = currentUser?.id ?? null;
 
   const compareVersions = (left: string, right: string): number => {
     const leftParts = left.split(".").map((part) => Number.parseInt(part, 10) || 0);
@@ -379,7 +370,7 @@ export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
             </button>
 
             <button
-              onClick={() => currentUserId && navigate(`/users/${currentUserId}/edit`)}
+              onClick={() => currentUserId && navigate("/profile")}
               disabled={!currentUserId || isBusy}
               style={{
                 width: "100%",
@@ -412,7 +403,7 @@ export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
               }}
             >
               <span style={{ fontSize: "20px" }}>👤</span>
-              <span>{currentUserId ? "Редактировать профиль" : "Профиль не выбран"}</span>
+              <span>{currentUserId ? "Профиль пользователя" : "Профиль не выбран"}</span>
             </button>
 
             <button
