@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { getEventGoalies } from "src/api/goalies";
 import { getMyTeams } from "src/api/teams";
 import { getUsers } from "src/api/users";
 import { CurrentPlayerHeader } from "src/CurrentPlayerHeader";
@@ -7,6 +8,8 @@ import { AttendanceList } from "src/pages/EventPage/components/AttendanceList";
 import { AttendanceResponseCard } from "src/pages/EventPage/components/AttendanceResponseCard";
 import { EventAdditionalInfo } from "src/pages/EventPage/components/EventAdditionalInfo";
 import { EventInfoCard } from "src/pages/EventPage/components/EventInfoCard";
+import { GoaliesPanel } from "src/pages/EventPage/components/GoaliesPanel";
+import { GoalieResponseCard } from "src/pages/EventPage/components/GoalieResponseCard";
 import { ErrorState, LoadingState, NotFoundState } from "src/pages/EventPage/components/PageState";
 import { PlayerInfoModal } from "src/pages/EventPage/components/PlayerInfoModal";
 import { RosterManager } from "src/pages/EventPage/components/RosterManager";
@@ -16,15 +19,42 @@ import { useLineManagement } from "src/pages/EventPage/hooks/useLineManagement";
 import { usePlayerModal } from "src/pages/EventPage/hooks/usePlayerModal";
 import { EventPageProps } from "src/pages/EventPage/types";
 
+const GOALIE_POSITION = 1;
+
 export function EventPage({ eventId, onBack, currentUser }: EventPageProps) {
   const [isActionsOpen, setIsActionsOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<"attendance" | "roster" | "goalies">("attendance");
   const [avatarUrls, setAvatarUrls] = useState<Record<string, string>>({});
   const [manageableTeamIds, setManageableTeamIds] = useState<Set<string>>(new Set());
+  const [resolvedCurrentUserPosition, setResolvedCurrentUserPosition] = useState<number | null | undefined>(undefined);
+  const [resolvedGoalieStatus, setResolvedGoalieStatus] = useState<boolean | undefined>(undefined);
   const selectedUserId = useMemo(() => currentUser?.id ?? null, [currentUser?.id]);
+  const currentUserPrimaryPosition = currentUser?.primaryPosition ?? resolvedCurrentUserPosition;
   const { event, loading, error, copySuccess, copyEventLink, reloadEvent, setError } = useEventData(eventId);
   const canManageEvent = useMemo(
     () => Boolean(event?.teamId && manageableTeamIds.has(event.teamId)),
     [event?.teamId, manageableTeamIds],
+  );
+  const playerAttendances = useMemo(
+    () => event?.attendances?.filter((attendanceItem) => attendanceItem.primaryPosition !== GOALIE_POSITION) ?? [],
+    [event?.attendances],
+  );
+  const isCurrentUserGoalie = useMemo(
+    () =>
+      Boolean(
+        selectedUserId &&
+          (
+            currentUser?.primaryPosition === GOALIE_POSITION ||
+            resolvedCurrentUserPosition === GOALIE_POSITION ||
+            resolvedGoalieStatus === true ||
+            event?.attendances?.some(
+              (attendanceItem) =>
+                attendanceItem.userId === selectedUserId &&
+                attendanceItem.primaryPosition === GOALIE_POSITION,
+            )
+          ),
+      ),
+    [currentUser?.primaryPosition, event?.attendances, resolvedCurrentUserPosition, resolvedGoalieStatus, selectedUserId],
   );
 
   const reportError = (message: string) => setError(message ? message : null);
@@ -45,6 +75,63 @@ export function EventPage({ eventId, onBack, currentUser }: EventPageProps) {
       })
       .catch(() => setManageableTeamIds(new Set()));
   }, [currentUser?.id]);
+
+  useEffect(() => {
+    if (!selectedUserId) {
+      setResolvedCurrentUserPosition(null);
+      return;
+    }
+
+    if (currentUser?.primaryPosition !== undefined) {
+      setResolvedCurrentUserPosition(currentUser.primaryPosition ?? null);
+      return;
+    }
+
+    let isMounted = true;
+    setResolvedCurrentUserPosition(undefined);
+    void getUsers()
+      .then((users) => {
+        if (!isMounted) {
+          return;
+        }
+
+        setResolvedCurrentUserPosition(users.find((user) => user.id === selectedUserId)?.primaryPosition ?? null);
+      })
+      .catch(() => {
+        if (isMounted) {
+          setResolvedCurrentUserPosition(null);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [currentUser?.primaryPosition, selectedUserId]);
+
+  useEffect(() => {
+    if (!selectedUserId || !event?.id) {
+      setResolvedGoalieStatus(false);
+      return;
+    }
+
+    let isMounted = true;
+    setResolvedGoalieStatus(undefined);
+    void getEventGoalies(event.id, selectedUserId)
+      .then((goalies) => {
+        if (isMounted) {
+          setResolvedGoalieStatus(goalies.isGoalie);
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setResolvedGoalieStatus(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [event?.id, selectedUserId]);
 
   useEffect(() => {
     let isMounted = true;
@@ -155,19 +242,58 @@ export function EventPage({ eventId, onBack, currentUser }: EventPageProps) {
           canManage={canManageEvent}
         />
         <EventAdditionalInfo event={event} />
-        <AttendanceResponseCard {...attendance} />
-        <AttendanceList
-          attendances={event.attendances}
-          onPlayerClick={playerModal.handleOpenPlayerInfo}
-          avatarUrls={avatarUrls}
-          eventCreatedAt={event.createdAt}
-        />
-        <RosterManager
-          canManage={canManageEvent}
-          {...lineManagement}
-          onPlayerClick={playerModal.handleOpenPlayerInfo}
-          avatarUrls={avatarUrls}
-        />
+        {currentUserPrimaryPosition === undefined || resolvedGoalieStatus === undefined ? (
+          <div style={{ backgroundColor: "white", borderRadius: "16px", padding: "20px", marginBottom: "20px", boxShadow: "0 2px 8px rgba(0,0,0,0.08)", color: "#607d8b" }}>
+            Загружаем профиль игрока...
+          </div>
+        ) : !isCurrentUserGoalie ? (
+          <AttendanceResponseCard {...attendance} />
+        ) : (
+          <GoalieResponseCard eventId={event.id} currentUserId={selectedUserId} />
+        )}
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "8px", marginBottom: "16px" }}>
+          {[
+            ["attendance", "Явка"],
+            ["roster", "Состав"],
+            ["goalies", "Вратари"],
+          ].map(([tab, label]) => (
+            <button
+              key={tab}
+              type="button"
+              onClick={() => setActiveTab(tab as typeof activeTab)}
+              style={{
+                padding: "12px 8px",
+                borderRadius: "12px",
+                border: activeTab === tab ? "1px solid #1976d2" : "1px solid #d0d7de",
+                backgroundColor: activeTab === tab ? "#e3f2fd" : "white",
+                color: activeTab === tab ? "#1565c0" : "#475569",
+                fontWeight: 800,
+                cursor: "pointer",
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {activeTab === "attendance" && (
+          <AttendanceList
+            attendances={playerAttendances}
+            onPlayerClick={playerModal.handleOpenPlayerInfo}
+            avatarUrls={avatarUrls}
+            eventCreatedAt={event.createdAt}
+          />
+        )}
+        {activeTab === "roster" && (
+          <RosterManager
+            canManage={canManageEvent}
+            {...lineManagement}
+            onPlayerClick={playerModal.handleOpenPlayerInfo}
+            avatarUrls={avatarUrls}
+          />
+        )}
+        {activeTab === "goalies" && <GoaliesPanel eventId={event.id} currentUserId={selectedUserId} />}
       </div>
 
       <PlayerInfoModal player={playerModal.selectedPlayer} isOpen={playerModal.isPlayerModalOpen} onClose={playerModal.handleCloseModal} />

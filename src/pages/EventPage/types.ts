@@ -9,6 +9,7 @@ export interface EventPageProps {
     firstName?: string | null;
     lastName?: string | null;
     jerseyNumber?: number | null;
+    primaryPosition?: number | null;
     role?: number | string | null;
   } | null;
 }

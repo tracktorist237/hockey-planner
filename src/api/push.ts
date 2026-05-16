@@ -6,6 +6,7 @@ export interface PushSubscriptionPayload {
     p256dh: string;
     auth: string;
   };
+  userId?: string | null;
   userAgent?: string;
 }
 

@@ -18,6 +18,9 @@ export interface EventLookUpDto {
   leagueName?: string | null;
   uniformColorId?: string | null;
   teamId?: string | null;
+  goalieNeededCount?: number | null;
+  goalieConfirmedCount?: number | null;
+  goalieApplicationStatus?: number | null;
 }
 
 export interface EventListDto {

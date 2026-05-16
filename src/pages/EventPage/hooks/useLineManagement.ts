@@ -46,6 +46,8 @@ const buildPlayersPayload = (line: LineDto): NonNullable<CreateUpdateLineData["p
   );
 };
 
+const GOALIE_POSITION = 1;
+
 export const useLineManagement = ({
   event,
   currentUserId,
@@ -94,7 +96,10 @@ export const useLineManagement = ({
   const availablePlayers = useMemo(() => {
     return (
       event?.attendances?.filter(
-        (attendance) => attendance.status === 2 && !usedUserIds.has(attendance.userId),
+        (attendance) =>
+          attendance.status === 2 &&
+          attendance.primaryPosition !== GOALIE_POSITION &&
+          !usedUserIds.has(attendance.userId),
       ) ?? []
     );
   }, [event?.attendances, usedUserIds]);

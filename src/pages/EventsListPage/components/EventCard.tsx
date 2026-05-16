@@ -34,6 +34,27 @@ const getAttendanceStatusMeta = (attendanceStatus?: number | null) => {
   }
 };
 
+const getGoalieStatusMeta = (goalieApplicationStatus?: number | null) => {
+  switch (goalieApplicationStatus) {
+    case 1:
+      return { label: "Заявка ждёт решения", emoji: "🥅", background: "#fff8e1", color: "#ef6c00" };
+    case 2:
+      return { label: "Заявка принята", emoji: "🥅", background: "#e3f2fd", color: "#1565c0" };
+    case 3:
+      return { label: "Заявка отклонена", emoji: "🥅", background: "#ffebee", color: "#c62828" };
+    case 4:
+      return { label: "Вам предложили", emoji: "🥅", background: "#eef2ff", color: "#1e3a8a" };
+    case 5:
+      return { label: "Вы подтверждены", emoji: "🥅", background: "#e8f5e9", color: "#2e7d32" };
+    case 6:
+      return { label: "Вы отказались", emoji: "🥅", background: "#ffebee", color: "#c62828" };
+    case 7:
+      return { label: "Заявка отменена", emoji: "🥅", background: "#f1f5f9", color: "#475569" };
+    default:
+      return null;
+  }
+};
+
 const EventCardComponent = ({ event, onOpen }: EventCardProps) => {
   const isToday = useMemo(() => {
     const eventDate = new Date(event.startTime);
@@ -48,7 +69,13 @@ const EventCardComponent = ({ event, onOpen }: EventCardProps) => {
 
     return eventDay === today;
   }, [event.startTime]);
-  const attendanceStatusMeta = getAttendanceStatusMeta(event.attendanceStatus);
+  const goalieStatusMeta = getGoalieStatusMeta(event.goalieApplicationStatus);
+  const attendanceStatusMeta = goalieStatusMeta ?? getAttendanceStatusMeta(event.attendanceStatus);
+  const hasGoalieRequest =
+    event.goalieNeededCount !== null &&
+    event.goalieNeededCount !== undefined &&
+    event.goalieNeededCount > 0;
+  const goalieConfirmedCount = event.goalieConfirmedCount ?? 0;
 
   return (
     <div
@@ -168,6 +195,8 @@ const EventCardComponent = ({ event, onOpen }: EventCardProps) => {
           style={{
             display: "flex",
             alignItems: "center",
+            gap: "8px",
+            flexWrap: "wrap",
             marginBottom: "8px",
           }}
         >
@@ -186,6 +215,45 @@ const EventCardComponent = ({ event, onOpen }: EventCardProps) => {
           >
             <span>{attendanceStatusMeta.emoji}</span>
             <span>{attendanceStatusMeta.label}</span>
+          </div>
+          {hasGoalieRequest && (
+            <div
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                backgroundColor: goalieConfirmedCount >= (event.goalieNeededCount ?? 0) ? "#e8f5e9" : "#e3f2fd",
+                color: goalieConfirmedCount >= (event.goalieNeededCount ?? 0) ? "#2e7d32" : "#1565c0",
+                padding: "4px 10px",
+                borderRadius: "10px",
+                fontSize: "12px",
+                fontWeight: "700",
+              }}
+            >
+              <span>🥅</span>
+              <span>Вратари {goalieConfirmedCount}/{event.goalieNeededCount}</span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {!attendanceStatusMeta && hasGoalieRequest && (
+        <div style={{ display: "flex", alignItems: "center", marginBottom: "8px" }}>
+          <div
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              backgroundColor: goalieConfirmedCount >= (event.goalieNeededCount ?? 0) ? "#e8f5e9" : "#e3f2fd",
+              color: goalieConfirmedCount >= (event.goalieNeededCount ?? 0) ? "#2e7d32" : "#1565c0",
+              padding: "4px 10px",
+              borderRadius: "10px",
+              fontSize: "12px",
+              fontWeight: "700",
+            }}
+          >
+            <span>🥅</span>
+            <span>Вратари {goalieConfirmedCount}/{event.goalieNeededCount}</span>
           </div>
         </div>
       )}

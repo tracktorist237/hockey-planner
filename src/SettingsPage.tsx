@@ -203,6 +203,7 @@ export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
         await subscribePush({
           endpoint: subscription.endpoint,
           keys: { p256dh, auth },
+          userId: currentUserId,
           userAgent: navigator.userAgent,
         });
 
