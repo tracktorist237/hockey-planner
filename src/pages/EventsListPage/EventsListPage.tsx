@@ -1,7 +1,7 @@
-import { useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { getMyTeams } from "src/api/teams";
 import { BottomNav } from "src/components/BottomNav";
-import { canManageEvents } from "src/constants/permissions";
 import { CurrentPlayerHeader } from "src/CurrentPlayerHeader";
 import { User } from "src/types/user";
 import { EventCard } from "./components/EventCard";
@@ -23,7 +23,19 @@ export const EventsListPage = ({
 }: EventsListPageProps) => {
   const navigate = useNavigate();
   const { events, loading, error, reloadEvents } = useEventsData(currentUser?.id, currentTeamId);
-  const canCreateEvents = canManageEvents(currentUser?.role);
+  const [canManageTeamEvents, setCanManageTeamEvents] = useState(false);
+  const canCreateEvents = canManageTeamEvents;
+
+  useEffect(() => {
+    if (!currentUser?.id) {
+      setCanManageTeamEvents(false);
+      return;
+    }
+
+    void getMyTeams(currentUser.id)
+      .then((teams) => setCanManageTeamEvents(teams.some((team) => team.myRole === 1 || team.myRole === 2)))
+      .catch(() => setCanManageTeamEvents(false));
+  }, [currentUser?.id]);
 
   const handleOpenEvent = useCallback(
     (eventId: string) => {

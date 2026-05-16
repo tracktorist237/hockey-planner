@@ -1,4 +1,13 @@
-import { CreateTeamRequest, JoinTeamByCodeRequest, TeamDto, TeamMemberDto } from "src/types/teams";
+import {
+  CreateTeamNewsRequest,
+  CreateTeamRequest,
+  JoinTeamByCodeRequest,
+  TeamDto,
+  TeamMemberDto,
+  TeamNewsDto,
+  UpdateTeamMemberRequest,
+  UpdateTeamRequest,
+} from "src/types/teams";
 
 const API_BASE = process.env.REACT_APP_API_BASE || "";
 
@@ -77,6 +86,36 @@ export async function getTeamMembers(teamId: string): Promise<TeamMemberDto[]> {
   return response.json();
 }
 
+export async function getTeamNews(teamId: string): Promise<TeamNewsDto[]> {
+  const response = await fetch(`${API_BASE}/api/teams/${encodeURIComponent(teamId)}/news`, {
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    await throwTeamsApiError(response, `GET /api/teams/${teamId}/news failed: ${response.status}`);
+  }
+  return response.json();
+}
+
+export async function createTeamNews(
+  teamId: string,
+  request: CreateTeamNewsRequest,
+  currentUserId?: string,
+): Promise<TeamNewsDto> {
+  const userId = currentUserId ?? requireCurrentUserId();
+  const response = await fetch(`${API_BASE}/api/teams/${encodeURIComponent(teamId)}/news?currentUserId=${encodeURIComponent(userId)}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify(request),
+  });
+
+  if (!response.ok) {
+    await throwTeamsApiError(response, `POST /api/teams/${teamId}/news failed: ${response.status}`);
+  }
+  return response.json();
+}
+
 export async function createTeam(request: CreateTeamRequest, currentUserId?: string): Promise<TeamDto> {
   const userId = currentUserId ?? requireCurrentUserId();
   const response = await fetch(`${API_BASE}/api/teams?currentUserId=${encodeURIComponent(userId)}`, {
@@ -119,6 +158,59 @@ export async function joinPublicTeam(teamId: string, currentUserId?: string): Pr
 
   if (!response.ok) {
     await throwTeamsApiError(response, `POST /api/teams/${teamId}/join-public failed: ${response.status}`);
+  }
+  return response.json();
+}
+
+export async function updateTeam(teamId: string, request: UpdateTeamRequest, currentUserId?: string): Promise<TeamDto> {
+  const userId = currentUserId ?? requireCurrentUserId();
+  const response = await fetch(`${API_BASE}/api/teams/${encodeURIComponent(teamId)}?currentUserId=${encodeURIComponent(userId)}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify(request),
+  });
+
+  if (!response.ok) {
+    await throwTeamsApiError(response, `PUT /api/teams/${teamId} failed: ${response.status}`);
+  }
+  return response.json();
+}
+
+export async function leaveTeam(teamId: string, currentUserId?: string): Promise<void> {
+  const userId = currentUserId ?? requireCurrentUserId();
+  const response = await fetch(
+    `${API_BASE}/api/teams/${encodeURIComponent(teamId)}/members/me?currentUserId=${encodeURIComponent(userId)}`,
+    {
+      method: "DELETE",
+      credentials: "include",
+    },
+  );
+
+  if (!response.ok) {
+    await throwTeamsApiError(response, `DELETE /api/teams/${teamId}/members/me failed: ${response.status}`);
+  }
+}
+
+export async function updateTeamMember(
+  teamId: string,
+  userId: string,
+  request: UpdateTeamMemberRequest,
+  currentUserId?: string,
+): Promise<TeamMemberDto> {
+  const actorId = currentUserId ?? requireCurrentUserId();
+  const response = await fetch(
+    `${API_BASE}/api/teams/${encodeURIComponent(teamId)}/members/${encodeURIComponent(userId)}?currentUserId=${encodeURIComponent(actorId)}`,
+    {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(request),
+    },
+  );
+
+  if (!response.ok) {
+    await throwTeamsApiError(response, `PUT /api/teams/${teamId}/members/${userId} failed: ${response.status}`);
   }
   return response.json();
 }

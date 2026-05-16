@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
+import { getMyTeams } from "src/api/teams";
 import { getUsers } from "src/api/users";
-import { canManageEvents } from "src/constants/permissions";
 import { CurrentPlayerHeader } from "src/CurrentPlayerHeader";
 import { ActionMenu } from "src/pages/EventPage/components/ActionMenu";
 import { AttendanceList } from "src/pages/EventPage/components/AttendanceList";
@@ -19,15 +19,32 @@ import { EventPageProps } from "src/pages/EventPage/types";
 export function EventPage({ eventId, onBack, currentUser }: EventPageProps) {
   const [isActionsOpen, setIsActionsOpen] = useState(false);
   const [avatarUrls, setAvatarUrls] = useState<Record<string, string>>({});
+  const [manageableTeamIds, setManageableTeamIds] = useState<Set<string>>(new Set());
   const selectedUserId = useMemo(() => currentUser?.id ?? null, [currentUser?.id]);
-  const canManageEvent = useMemo(() => canManageEvents(currentUser?.role), [currentUser?.role]);
-
   const { event, loading, error, copySuccess, copyEventLink, reloadEvent, setError } = useEventData(eventId);
+  const canManageEvent = useMemo(
+    () => Boolean(event?.teamId && manageableTeamIds.has(event.teamId)),
+    [event?.teamId, manageableTeamIds],
+  );
+
   const reportError = (message: string) => setError(message ? message : null);
 
   const attendance = useAttendance({ event, selectedUserId, reloadEvent, onError: reportError });
   const lineManagement = useLineManagement({ event, currentUserId: selectedUserId, reloadEvent, onError: reportError });
   const playerModal = usePlayerModal({ onError: reportError });
+
+  useEffect(() => {
+    if (!currentUser?.id) {
+      setManageableTeamIds(new Set());
+      return;
+    }
+
+    void getMyTeams(currentUser.id)
+      .then((teams) => {
+        setManageableTeamIds(new Set(teams.filter((team) => team.myRole === 1 || team.myRole === 2).map((team) => team.id)));
+      })
+      .catch(() => setManageableTeamIds(new Set()));
+  }, [currentUser?.id]);
 
   useEffect(() => {
     let isMounted = true;

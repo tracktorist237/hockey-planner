@@ -20,6 +20,8 @@ import { ConfirmEmailPage } from "src/pages/ConfirmEmailPage";
 import { EventPage } from "src/pages/EventPage/EventPage";
 import { EventsListPage } from "src/pages/EventsListPage/EventsListPage";
 import { LinkPlayerPage } from "src/pages/LinkPlayerPage";
+import { TeamDetailsPage } from "src/pages/TeamDetailsPage/TeamDetailsPage";
+import { TeamManagePage } from "src/pages/TeamDetailsPage/TeamManagePage";
 import { TeamsPage } from "src/pages/TeamsPage";
 import { ProfilePage } from "src/pages/ProfilePage";
 import StartSearchPage from "src/pages/StartSearchPage/StartSearchPage";
@@ -27,10 +29,10 @@ import { DebugOverlay } from "src/components/DebugOverlay";
 import { PermissionDenied } from "src/components/PermissionDenied";
 import { useCurrentTeam } from "src/hooks/useCurrentTeam";
 import { useAuth } from "src/hooks/useAuth";
-import { canManageEvents } from "src/constants/permissions";
 import { AuthProvider } from "src/context/AuthContext";
 import { shouldRunOnboarding } from "src/utils/onboarding";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { getMyTeams } from "src/api/teams";
 
 function EventPageWrapper() {
   const { id } = useParams<{ id: string }>();
@@ -82,12 +84,34 @@ function RequireOnboardingComplete({ children }: { children: ReactElement }) {
 
 function RequireEventManager({ children }: { children: ReactElement }) {
   const { currentUser } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [canManageTeamEvents, setCanManageTeamEvents] = useState(false);
 
-  if (!canManageEvents(currentUser?.role)) {
+  useEffect(() => {
+    if (!currentUser?.id) {
+      setCanManageTeamEvents(false);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    void getMyTeams(currentUser.id)
+      .then((teams) => {
+        setCanManageTeamEvents(teams.some((team) => team.myRole === 1 || team.myRole === 2));
+      })
+      .catch(() => setCanManageTeamEvents(false))
+      .finally(() => setLoading(false));
+  }, [currentUser?.id]);
+
+  if (loading) {
+    return <div style={{ padding: 24 }}>Проверяем права...</div>;
+  }
+
+  if (!canManageTeamEvents) {
     return (
       <PermissionDenied
         title="Недостаточно прав"
-        message="Эта страница доступна только тренеру, капитану или менеджеру."
+        message="Эта страница доступна владельцу или администратору команды."
       />
     );
   }
@@ -299,6 +323,32 @@ function AppRoutes() {
                   currentTeamName={currentTeamName}
                   onTeamChange={setCurrentTeam}
                 />
+              </RequireOnboardingComplete>
+            </RequireAuth>
+          }
+        />
+
+        <Route
+          path="/teams/:id"
+          element={
+            <RequireAuth>
+              <RequireOnboardingComplete>
+                <TeamDetailsPage
+                  currentUser={currentUser}
+                  currentTeamId={currentTeamId}
+                  onTeamChange={setCurrentTeam}
+                />
+              </RequireOnboardingComplete>
+            </RequireAuth>
+          }
+        />
+
+        <Route
+          path="/teams/:id/manage"
+          element={
+            <RequireAuth>
+              <RequireOnboardingComplete>
+                <TeamManagePage currentUser={currentUser} />
               </RequireOnboardingComplete>
             </RequireAuth>
           }

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { getUsers, User as ApiUser } from "src/api/users";
 import { useAuth } from "src/hooks/useAuth";
+import { markOnboardingCompleted } from "src/utils/onboarding";
 
 const getPlayerLabel = (user: ApiUser): string => {
   const name = `${user.lastName ?? ""} ${user.firstName ?? ""}`.trim();
@@ -75,6 +76,7 @@ export function LinkPlayerPage() {
     setError(null);
     try {
       const linkedUser = await linkPlayer({ userId: selectedPlayer.id });
+      markOnboardingCompleted(linkedUser.id);
       navigate(`/users/${linkedUser.id}/edit?next=/teams`, { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Не удалось привязать профиль.");

@@ -77,6 +77,14 @@ const validateForm = (formData: EventFormData): string | null => {
     return "Необходимо указать дату и время начала";
   }
 
+  if (!formData.locationName.trim()) {
+    return "Необходимо указать название места";
+  }
+
+  if (!formData.locationAddress.trim()) {
+    return "Необходимо указать адрес";
+  }
+
   return null;
 };
 

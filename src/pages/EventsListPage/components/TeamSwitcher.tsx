@@ -21,11 +21,13 @@ export function TeamSwitcher({
 }: TeamSwitcherProps) {
   const [teams, setTeams] = useState<TeamDto[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loaded, setLoaded] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [apiUnavailable, setApiUnavailable] = useState(false);
 
   const loadTeams = useCallback(async () => {
     setLoading(true);
+    setLoaded(false);
     try {
       const loadedTeams = filterOnly
         ? (currentUserId ? await getMyTeams(currentUserId) : [])
@@ -44,6 +46,7 @@ export function TeamSwitcher({
       }
     } finally {
       setLoading(false);
+      setLoaded(true);
     }
   }, [currentUserId, filterOnly]);
 
@@ -55,7 +58,7 @@ export function TeamSwitcher({
 
   const options = useMemo(() => {
     const all = [...teams];
-    if (currentTeamId && currentTeamName && !all.some((team) => team.id === currentTeamId)) {
+    if (!filterOnly && currentTeamId && currentTeamName && !all.some((team) => team.id === currentTeamId)) {
       all.unshift({
         id: currentTeamId,
         name: currentTeamName,
@@ -65,7 +68,17 @@ export function TeamSwitcher({
       });
     }
     return all;
-  }, [currentTeamId, currentTeamName, teams]);
+  }, [currentTeamId, currentTeamName, filterOnly, teams]);
+
+  useEffect(() => {
+    if (!filterOnly || !loaded || !currentTeamId) {
+      return;
+    }
+
+    if (!teams.some((team) => team.id === currentTeamId)) {
+      onTeamChange(null, null);
+    }
+  }, [currentTeamId, filterOnly, loaded, onTeamChange, teams]);
 
   const showMessage = useCallback((value: string) => {
     setMessage(value);
