@@ -111,8 +111,8 @@ export function ConfirmEmailPage() {
         <div style={{ fontSize: 44, marginBottom: 10 }}>
           {status === "loading" ? "⏳" : status === "success" ? "✅" : "⚠️"}
         </div>
-        <h1 style={{ margin: "0 0 10px", fontSize: 28, color: "#0f172a" }}>{title}</h1>
-        <p style={{ margin: "0 0 22px", color: "#475569", fontSize: 17, lineHeight: 1.45 }}>{message}</p>
+        <h1 style={{ margin: "0 0 10px", fontSize: 28, color: "var(--hp-text-strong)" }}>{title}</h1>
+        <p style={{ margin: "0 0 22px", color: "var(--hp-muted)", fontSize: 17, lineHeight: 1.45 }}>{message}</p>
 
         {status !== "loading" && (
           <button

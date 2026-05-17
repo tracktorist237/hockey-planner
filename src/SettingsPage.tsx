@@ -6,6 +6,7 @@ import { getVersionInfo } from "src/api/version";
 import { getPushPublicKey, subscribePush } from "src/api/push";
 import { BottomNav } from "src/components/BottomNav";
 import { useAuth } from "src/hooks/useAuth";
+import { ThemePreference, useTheme } from "src/context/ThemeContext";
 
 interface SettingsPageProps {
   onOpenDebug?: () => void;
@@ -27,6 +28,7 @@ const base64UrlToUint8Array = (value: string): Uint8Array => {
 export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
   const navigate = useNavigate();
   const { currentUser } = useAuth();
+  const { theme, appliedTheme, setTheme } = useTheme();
   const [isUpdating, setIsUpdating] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [isClearing, setIsClearing] = useState(false);
@@ -225,23 +227,29 @@ export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
   const isBusy = isUpdating || isClearing || isPushSubscribing;
   const messageType: "success" | "error" | "info" =
     message?.startsWith("✅") ? "success" : message?.startsWith("❌") ? "error" : "info";
+  const themeOptions: Array<{ value: ThemePreference; label: string; description: string }> = [
+    { value: "system", label: "Системная", description: "Приложение повторяет тему телефона или браузера" },
+    { value: "light", label: "Светлая", description: "Классический светлый интерфейс" },
+    { value: "dark", label: "Тёмная", description: "Тёмный ледовый режим для вечера и телефона" },
+  ];
 
   return (
     <div
       style={{
         padding: "0",
         minHeight: "100vh",
-        backgroundColor: "#f5f5f5",
+        background: "var(--hp-bg-gradient)",
+        color: "var(--hp-text)",
         fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
         boxSizing: "border-box",
       }}
     >
       <div
         style={{
-          backgroundColor: "white",
+          backgroundColor: "var(--hp-surface)",
           padding: "16px",
-          borderBottom: "1px solid #e0e0e0",
-          boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
+          borderBottom: "1px solid var(--hp-border)",
+          boxShadow: "var(--hp-shadow-sm)",
           position: "sticky",
           top: 0,
           zIndex: 100,
@@ -256,8 +264,9 @@ export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              border: "1px solid #e0e0e0",
-              background: "white",
+              border: "1px solid var(--hp-border)",
+              background: "var(--hp-surface)",
+              color: "var(--hp-text)",
               fontSize: "20px",
               cursor: "pointer",
               borderRadius: "10px",
@@ -266,12 +275,12 @@ export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
               transition: "all 0.2s ease",
             }}
             onMouseEnter={(event) => {
-              event.currentTarget.style.backgroundColor = "#f5f5f5";
-              event.currentTarget.style.borderColor = "#1976d2";
+              event.currentTarget.style.backgroundColor = "var(--hp-surface-hover)";
+              event.currentTarget.style.borderColor = "var(--hp-primary)";
             }}
             onMouseLeave={(event) => {
-              event.currentTarget.style.backgroundColor = "white";
-              event.currentTarget.style.borderColor = "#e0e0e0";
+              event.currentTarget.style.backgroundColor = "var(--hp-surface)";
+              event.currentTarget.style.borderColor = "var(--hp-border)";
             }}
             aria-label="Назад к событиям"
           >
@@ -286,36 +295,95 @@ export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
       <div style={{ padding: "16px", paddingBottom: "120px" }}>
         <div
           style={{
-            backgroundColor: "white",
+            backgroundColor: "var(--hp-surface)",
             borderRadius: "16px",
             padding: "20px",
             marginBottom: "20px",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+            boxShadow: "var(--hp-shadow-sm)",
           }}
         >
-          <h1 style={{ margin: "0 0 8px 0", fontSize: "22px", fontWeight: "700", color: "#1a237e" }}>
+          <h1 style={{ margin: "0 0 8px 0", fontSize: "22px", fontWeight: "700", color: "var(--hp-heading)" }}>
             Настройки приложения
           </h1>
         </div>
 
         <div
           style={{
-            backgroundColor: "white",
+            backgroundColor: "var(--hp-surface)",
+            borderRadius: "16px",
+            padding: "18px",
+            marginBottom: "20px",
+            boxShadow: "var(--hp-shadow-sm)",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", marginBottom: "12px" }}>
+            <div>
+              <h2 style={{ margin: 0, fontSize: "18px", color: "var(--hp-heading)" }}>Тема оформления</h2>
+              <div style={{ marginTop: "4px", fontSize: "13px", color: "var(--hp-muted)" }}>
+                Сейчас: {appliedTheme === "dark" ? "тёмная" : "светлая"}
+              </div>
+            </div>
+            <span style={{ fontSize: "22px" }}>{appliedTheme === "dark" ? "🌙" : "☀️"}</span>
+          </div>
+
+          <div
+            role="group"
+            aria-label="Тема оформления"
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(3, 1fr)",
+              gap: "4px",
+              padding: "4px",
+              borderRadius: "14px",
+              backgroundColor: "var(--hp-surface-soft)",
+              border: "1px solid var(--hp-border)",
+            }}
+          >
+            {themeOptions.map((option) => {
+              const isSelected = theme === option.value;
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setTheme(option.value)}
+                  title={option.description}
+                  style={{
+                    border: isSelected ? "1px solid var(--hp-primary)" : "1px solid transparent",
+                    borderRadius: "11px",
+                    padding: "10px 6px",
+                    backgroundColor: isSelected ? "var(--hp-surface)" : "transparent",
+                    color: isSelected ? "var(--hp-heading)" : "var(--hp-muted)",
+                    boxShadow: isSelected ? "var(--hp-shadow-sm)" : "none",
+                    cursor: "pointer",
+                    fontSize: "13px",
+                    fontWeight: isSelected ? 900 : 700,
+                    transition: "all 0.15s ease",
+                  }}
+                >
+                  {option.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+        <div
+          style={{
+            backgroundColor: "var(--hp-surface)",
             borderRadius: "16px",
             padding: "24px",
             marginBottom: "20px",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+            boxShadow: "var(--hp-shadow-sm)",
             textAlign: "center",
           }}
         >
-          <div style={{ backgroundColor: "#f8f9fa", borderRadius: "12px", padding: "20px", marginBottom: "20px" }}>
-            <div style={{ fontSize: "14px", color: "#666", marginBottom: "8px" }}>Текущая версия</div>
-            <div style={{ fontSize: "36px", fontWeight: "700", color: "#1a237e", marginBottom: "8px" }}>v{APP_VERSION}</div>
+          <div style={{ backgroundColor: "var(--hp-surface-soft)", borderRadius: "12px", padding: "20px", marginBottom: "20px" }}>
+            <div style={{ fontSize: "14px", color: "var(--hp-muted)", marginBottom: "8px" }}>Текущая версия</div>
+            <div style={{ fontSize: "36px", fontWeight: "700", color: "var(--hp-heading)", marginBottom: "8px" }}>v{APP_VERSION}</div>
             <div
               style={{
                 fontSize: "14px",
-                color: "#f57c00",
-                backgroundColor: "#fff3e0",
+                color: "var(--hp-warning)",
+                backgroundColor: "var(--hp-warning-soft)",
                 padding: "6px 16px",
                 borderRadius: "20px",
                 display: "inline-block",
@@ -332,9 +400,9 @@ export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
               style={{
                 width: "100%",
                 padding: "16px",
-                backgroundColor: notificationPermission === "granted" ? "#e8f5e9" : "#fff8e1",
-                color: notificationPermission === "granted" ? "#2e7d32" : "#ef6c00",
-                border: "1px solid #ffe0b2",
+                backgroundColor: notificationPermission === "granted" ? "var(--hp-success-soft)" : "var(--hp-warning-soft)",
+                color: notificationPermission === "granted" ? "var(--hp-success)" : "var(--hp-warning)",
+                border: `1px solid ${notificationPermission === "granted" ? "var(--hp-success-border)" : "var(--hp-warning-border)"}`,
                 borderRadius: "12px",
                 fontSize: "16px",
                 fontWeight: "600",
@@ -348,14 +416,14 @@ export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
               }}
               onMouseEnter={(event) => {
                 if (!isBusy) {
-                  event.currentTarget.style.backgroundColor = "#ffecb3";
+                  event.currentTarget.style.backgroundColor = "var(--hp-warning-soft)";
                   event.currentTarget.style.transform = "translateY(-1px)";
                 }
               }}
               onMouseLeave={(event) => {
                 if (!isBusy) {
                   event.currentTarget.style.backgroundColor =
-                    notificationPermission === "granted" ? "#e8f5e9" : "#fff8e1";
+                    notificationPermission === "granted" ? "var(--hp-success-soft)" : "var(--hp-warning-soft)";
                   event.currentTarget.style.transform = "translateY(0)";
                 }
               }}
@@ -376,9 +444,9 @@ export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
               style={{
                 width: "100%",
                 padding: "16px",
-                backgroundColor: !currentUserId ? "#eceff1" : "#ede7f6",
-                color: !currentUserId ? "#90a4ae" : "#5e35b1",
-                border: "1px solid #d1c4e9",
+                backgroundColor: !currentUserId ? "var(--hp-neutral-soft)" : "var(--hp-purple-soft)",
+                color: !currentUserId ? "var(--hp-muted)" : "var(--hp-purple)",
+                border: "1px solid var(--hp-purple-border)",
                 borderRadius: "12px",
                 fontSize: "16px",
                 fontWeight: "600",
@@ -392,13 +460,13 @@ export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
               }}
               onMouseEnter={(event) => {
                 if (currentUserId && !isBusy) {
-                  event.currentTarget.style.backgroundColor = "#e1bee7";
+                  event.currentTarget.style.backgroundColor = "var(--hp-purple-soft)";
                   event.currentTarget.style.transform = "translateY(-1px)";
                 }
               }}
               onMouseLeave={(event) => {
                 if (currentUserId && !isBusy) {
-                  event.currentTarget.style.backgroundColor = "#ede7f6";
+                  event.currentTarget.style.backgroundColor = "var(--hp-purple-soft)";
                   event.currentTarget.style.transform = "translateY(0)";
                 }
               }}
@@ -413,7 +481,7 @@ export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
               style={{
                 width: "100%",
                 padding: "16px",
-                backgroundColor: isUpdating ? "#78909c" : "#1976d2",
+                backgroundColor: isUpdating ? "var(--hp-muted)" : "var(--hp-primary)",
                 color: "white",
                 border: "none",
                 borderRadius: "12px",
@@ -429,13 +497,13 @@ export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
               }}
               onMouseEnter={(event) => {
                 if (!isBusy) {
-                  event.currentTarget.style.backgroundColor = "#1565c0";
+                  event.currentTarget.style.backgroundColor = "var(--hp-primary-hover)";
                   event.currentTarget.style.transform = "translateY(-1px)";
                 }
               }}
               onMouseLeave={(event) => {
                 if (!isBusy) {
-                  event.currentTarget.style.backgroundColor = "#1976d2";
+                  event.currentTarget.style.backgroundColor = "var(--hp-primary)";
                   event.currentTarget.style.transform = "translateY(0)";
                 }
               }}
@@ -450,9 +518,9 @@ export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
               style={{
                 width: "100%",
                 padding: "16px",
-                backgroundColor: isClearing ? "#78909c" : "#ffebee",
-                color: isClearing ? "white" : "#d32f2f",
-                border: "1px solid #ffcdd2",
+                backgroundColor: isClearing ? "var(--hp-neutral)" : "var(--hp-danger-soft)",
+                color: isClearing ? "white" : "var(--hp-danger)",
+                border: "1px solid var(--hp-danger-border)",
                 borderRadius: "12px",
                 fontSize: "16px",
                 fontWeight: "600",
@@ -466,13 +534,13 @@ export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
               }}
               onMouseEnter={(event) => {
                 if (!isBusy) {
-                  event.currentTarget.style.backgroundColor = "#ffcdd2";
+                  event.currentTarget.style.backgroundColor = "var(--hp-danger-border)";
                   event.currentTarget.style.transform = "translateY(-1px)";
                 }
               }}
               onMouseLeave={(event) => {
                 if (!isBusy) {
-                  event.currentTarget.style.backgroundColor = "#ffebee";
+                  event.currentTarget.style.backgroundColor = "var(--hp-danger-soft)";
                   event.currentTarget.style.transform = "translateY(0)";
                 }
               }}
@@ -486,9 +554,9 @@ export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
               style={{
                 width: "100%",
                 padding: "16px",
-                backgroundColor: "#6e6c6c",
-                color: "white",
-                border: "1px solid #424242",
+                backgroundColor: "var(--hp-neutral-soft)",
+                color: "var(--hp-neutral)",
+                border: "1px solid var(--hp-neutral-border)",
                 borderRadius: "12px",
                 fontSize: "16px",
                 fontWeight: "600",
@@ -500,11 +568,11 @@ export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
                 transition: "all 0.2s ease",
               }}
               onMouseEnter={(event) => {
-                event.currentTarget.style.backgroundColor = "#000";
+                event.currentTarget.style.backgroundColor = "var(--hp-neutral-border)";
                 event.currentTarget.style.transform = "translateY(-1px)";
               }}
               onMouseLeave={(event) => {
-                event.currentTarget.style.backgroundColor = "#212121";
+                event.currentTarget.style.backgroundColor = "var(--hp-neutral-soft)";
                 event.currentTarget.style.transform = "translateY(0)";
               }}
             >
@@ -518,8 +586,8 @@ export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
               style={{
                 marginTop: "20px",
                 padding: "12px",
-                backgroundColor: messageType === "success" ? "#e8f5e9" : messageType === "error" ? "#ffebee" : "#e3f2fd",
-                color: messageType === "success" ? "#2e7d32" : messageType === "error" ? "#c62828" : "#1976d2",
+                backgroundColor: messageType === "success" ? "var(--hp-success-soft)" : messageType === "error" ? "var(--hp-danger-soft)" : "var(--hp-primary-soft)",
+                color: messageType === "success" ? "var(--hp-success)" : messageType === "error" ? "var(--hp-danger)" : "var(--hp-primary)",
                 borderRadius: "8px",
                 fontSize: "14px",
                 textAlign: "center",
@@ -533,22 +601,22 @@ export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
 
         <div
           style={{
-            backgroundColor: "white",
+            backgroundColor: "var(--hp-surface)",
             borderRadius: "16px",
             padding: "20px",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+            boxShadow: "var(--hp-shadow-sm)",
           }}
         >
-          <h3 style={{ margin: "0 0 16px 0", fontSize: "18px", fontWeight: "600", color: "#1a237e" }}>ℹ️ Информация</h3>
+          <h3 style={{ margin: "0 0 16px 0", fontSize: "18px", fontWeight: "600", color: "var(--hp-heading)" }}>ℹ️ Информация</h3>
 
           <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
             <div
               style={{
                 padding: "12px",
-                backgroundColor: "#f5f5f5",
+                backgroundColor: "var(--hp-surface-soft)",
                 borderRadius: "8px",
                 fontSize: "14px",
-                color: "#666",
+                color: "var(--hp-muted)",
                 lineHeight: "1.5",
               }}
             >
@@ -559,7 +627,7 @@ export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
               <br />• ваши данные (игроки, мероприятия) не удаляются
             </div>
 
-            <div style={{ padding: "12px", backgroundColor: "#e3f2fd", borderRadius: "8px", fontSize: "14px", color: "#1976d2" }}>
+            <div style={{ padding: "12px", backgroundColor: "var(--hp-primary-soft)", borderRadius: "8px", fontSize: "14px", color: "var(--hp-primary)" }}>
               <strong>💡 Совет:</strong> используйте «Проверить обновления», если интерфейс не соответствует последней версии.
             </div>
           </div>
@@ -578,8 +646,8 @@ export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
             div[style*="minHeight: 100vh"] {
               max-width: 600px;
               margin: 0 auto;
-              border-left: 1px solid #e0e0e0;
-              border-right: 1px solid #e0e0e0;
+              border-left: 1px solid var(--hp-border);
+              border-right: 1px solid var(--hp-border);
             }
           }
         `}

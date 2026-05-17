@@ -10,8 +10,8 @@ interface JoinByCodeTabProps {
 export function JoinByCodeTab({ code, loading, onCodeChange, onJoin }: JoinByCodeTabProps) {
   return (
     <div style={{ marginTop: 14, display: "grid", gap: 10 }}>
-      <h2 style={{ margin: 0, fontSize: 20, color: "#0f172a" }}>Вступить по коду</h2>
-      <p style={{ margin: 0, color: "#64748b", lineHeight: 1.4 }}>
+      <h2 style={{ margin: 0, fontSize: 20, color: "var(--hp-text-strong)" }}>Вступить по коду</h2>
+      <p style={{ margin: 0, color: "var(--hp-muted)", lineHeight: 1.4 }}>
         Для закрытых команд. Код можно получить у владельца или администратора команды.
       </p>
       <input value={code} onChange={(event) => onCodeChange(event.target.value)} placeholder="Код приглашения" style={inputStyle} />
@@ -21,3 +21,4 @@ export function JoinByCodeTab({ code, loading, onCodeChange, onJoin }: JoinByCod
     </div>
   );
 }
+

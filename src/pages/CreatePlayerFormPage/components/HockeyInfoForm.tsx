@@ -11,8 +11,8 @@ interface HockeyInfoFormProps {
 
 export function HockeyInfoForm({ formData, errors, getFieldStatus, onChange }: HockeyInfoFormProps) {
   return (
-    <div style={{ backgroundColor: "white", borderRadius: "16px", padding: "20px", marginBottom: "20px", boxShadow: "0 2px 8px rgba(0,0,0,0.08)" }}>
-      <h3 style={{ margin: "0 0 16px 0", fontSize: "18px", fontWeight: "600", color: "#1a237e", display: "flex", alignItems: "center", gap: "8px" }}>
+    <div style={{ backgroundColor: "var(--hp-surface)", borderRadius: "16px", padding: "20px", marginBottom: "20px", boxShadow: "var(--hp-shadow-sm)" }}>
+      <h3 style={{ margin: "0 0 16px 0", fontSize: "18px", fontWeight: "600", color: "var(--hp-heading)", display: "flex", alignItems: "center", gap: "8px" }}>
         <span>🏒</span>
         <span>Хоккейная информация</span>
       </h3>
@@ -31,12 +31,12 @@ export function HockeyInfoForm({ formData, errors, getFieldStatus, onChange }: H
       />
 
       <div style={{ marginBottom: "16px" }}>
-        <label style={{ display: "block", marginBottom: "8px", fontWeight: "600", fontSize: "15px", color: "#333" }}>Основная позиция</label>
+        <label style={{ display: "block", marginBottom: "8px", fontWeight: "600", fontSize: "15px", color: "var(--hp-text)" }}>Основная позиция</label>
         <select
           name="primaryPosition"
           value={formData.primaryPosition}
           onChange={onChange}
-          style={{ width: "100%", padding: "14px", border: "2px solid #e0e0e0", borderRadius: "10px", fontSize: "16px", backgroundColor: "#fafafa", boxSizing: "border-box", cursor: "pointer" }}
+          style={{ width: "100%", padding: "14px", border: "2px solid var(--hp-border)", borderRadius: "10px", fontSize: "16px", backgroundColor: "var(--hp-input-bg)", boxSizing: "border-box", cursor: "pointer" }}
         >
           <option value={3}>Нападающий (Forward)</option>
           <option value={2}>Защитник (Defender)</option>
@@ -45,7 +45,7 @@ export function HockeyInfoForm({ formData, errors, getFieldStatus, onChange }: H
       </div>
 
       <div style={{ marginBottom: "8px" }}>
-        <label style={{ display: "block", marginBottom: "12px", fontWeight: "600", fontSize: "15px", color: "#333" }}>Хват клюшки *</label>
+        <label style={{ display: "block", marginBottom: "12px", fontWeight: "600", fontSize: "15px", color: "var(--hp-text)" }}>Хват клюшки *</label>
         <div style={{ display: "flex", gap: "20px", flexWrap: "wrap" }}>
           <div
             onClick={() => onChange({ target: { name: "handedness", value: "1" } } as ChangeEvent<HTMLInputElement>)}
@@ -55,8 +55,8 @@ export function HockeyInfoForm({ formData, errors, getFieldStatus, onChange }: H
               alignItems: "center",
               gap: "12px",
               padding: "12px 20px",
-              backgroundColor: formData.handedness === 1 ? "#e3f2fd" : "#f5f5f5",
-              border: `2px solid ${formData.handedness === 1 ? "#1976d2" : "#e0e0e0"}`,
+              backgroundColor: formData.handedness === 1 ? "var(--hp-primary-soft)" : "var(--hp-surface-soft)",
+              border: `2px solid ${formData.handedness === 1 ? "var(--hp-primary)" : "var(--hp-border)"}`,
               borderRadius: "12px",
               cursor: "pointer",
               transition: "all 0.2s ease"
@@ -67,14 +67,14 @@ export function HockeyInfoForm({ formData, errors, getFieldStatus, onChange }: H
                 width: "20px",
                 height: "20px",
                 borderRadius: "50%",
-                border: `2px solid ${formData.handedness === 1 ? "#1976d2" : "#999"}`,
-                backgroundColor: formData.handedness === 1 ? "#1976d2" : "white",
+                border: `2px solid ${formData.handedness === 1 ? "var(--hp-primary)" : "var(--hp-muted)"}`,
+                backgroundColor: formData.handedness === 1 ? "var(--hp-primary)" : "var(--hp-surface)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center"
               }}
             >
-              {formData.handedness === 1 && <div style={{ width: "10px", height: "10px", borderRadius: "50%", backgroundColor: "white" }} />}
+              {formData.handedness === 1 && <div style={{ width: "10px", height: "10px", borderRadius: "50%", backgroundColor: "var(--hp-surface)" }} />}
             </div>
             <span style={{ fontSize: "15px", fontWeight: formData.handedness === 1 ? "600" : "400" }}>🏒 Левый хват</span>
           </div>
@@ -87,8 +87,8 @@ export function HockeyInfoForm({ formData, errors, getFieldStatus, onChange }: H
               alignItems: "center",
               gap: "12px",
               padding: "12px 20px",
-              backgroundColor: formData.handedness === 2 ? "#e3f2fd" : "#f5f5f5",
-              border: `2px solid ${formData.handedness === 2 ? "#1976d2" : "#e0e0e0"}`,
+              backgroundColor: formData.handedness === 2 ? "var(--hp-primary-soft)" : "var(--hp-surface-soft)",
+              border: `2px solid ${formData.handedness === 2 ? "var(--hp-primary)" : "var(--hp-border)"}`,
               borderRadius: "12px",
               cursor: "pointer",
               transition: "all 0.2s ease"
@@ -99,20 +99,20 @@ export function HockeyInfoForm({ formData, errors, getFieldStatus, onChange }: H
                 width: "20px",
                 height: "20px",
                 borderRadius: "50%",
-                border: `2px solid ${formData.handedness === 2 ? "#1976d2" : "#999"}`,
-                backgroundColor: formData.handedness === 2 ? "#1976d2" : "white",
+                border: `2px solid ${formData.handedness === 2 ? "var(--hp-primary)" : "var(--hp-muted)"}`,
+                backgroundColor: formData.handedness === 2 ? "var(--hp-primary)" : "var(--hp-surface)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center"
               }}
             >
-              {formData.handedness === 2 && <div style={{ width: "10px", height: "10px", borderRadius: "50%", backgroundColor: "white" }} />}
+              {formData.handedness === 2 && <div style={{ width: "10px", height: "10px", borderRadius: "50%", backgroundColor: "var(--hp-surface)" }} />}
             </div>
             <span style={{ fontSize: "15px", fontWeight: formData.handedness === 2 ? "600" : "400" }}>🏒 Правый хват</span>
           </div>
         </div>
 
-        <div style={{ marginTop: "12px", padding: "10px 14px", backgroundColor: "#f8f9fa", borderRadius: "8px", fontSize: "13px", color: "#666", display: "flex", alignItems: "center", gap: "8px" }}>
+        <div style={{ marginTop: "12px", padding: "10px 14px", backgroundColor: "var(--hp-surface-soft)", borderRadius: "8px", fontSize: "13px", color: "var(--hp-muted)", display: "flex", alignItems: "center", gap: "8px" }}>
           <span style={{ fontSize: "16px" }}>💡</span>
           <span>{formData.handedness === 1 ? "Левый хват — правая рука сверху на клюшке" : "Правый хват — левая рука сверху на клюшке"}</span>
         </div>

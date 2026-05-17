@@ -6,13 +6,13 @@ export const ErrorMessage = ({ error }: ErrorMessageProps) => {
   return (
     <div
       style={{
-        backgroundColor: "#ffebee",
-        color: "#c62828",
+        backgroundColor: "var(--hp-danger-soft)",
+        color: "var(--hp-danger)",
         padding: "14px",
         borderRadius: "10px",
         marginBottom: "20px",
         fontSize: "15px",
-        borderLeft: "4px solid #c62828",
+        borderLeft: "4px solid var(--hp-danger)",
         width: "100%",
         boxSizing: "border-box",
       }}

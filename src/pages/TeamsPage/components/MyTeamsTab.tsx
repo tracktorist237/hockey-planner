@@ -14,16 +14,16 @@ interface MyTeamsTabProps {
 export function MyTeamsTab({ teams, loading, onGoPublic, onGoCode, onOpenTeam, pinnedTeamIds, onTogglePin }: MyTeamsTabProps) {
   return (
     <div style={{ marginTop: 14 }}>
-      <h2 style={{ margin: "0 0 6px", fontSize: 20, color: "#0f172a" }}>Мои команды</h2>
-      <p style={{ margin: "0 0 12px", color: "#64748b", lineHeight: 1.4 }}>
+      <h2 style={{ margin: "0 0 6px", fontSize: 20, color: "var(--hp-text-strong)" }}>Мои команды</h2>
+      <p style={{ margin: "0 0 12px", color: "var(--hp-muted)", lineHeight: 1.4 }}>
         Здесь только команды, в которые вы уже вступили. Управление открывается на отдельной странице команды.
       </p>
 
       <div style={{ display: "grid", gap: 10 }}>
-        {loading && <div style={{ color: "#64748b" }}>Загружаем...</div>}
+        {loading && <div style={{ color: "var(--hp-muted)" }}>Загружаем...</div>}
         {!loading && teams.length === 0 && (
-          <div style={{ border: "1px dashed #cbd5e1", borderRadius: 16, padding: 16, color: "#475569", background: "#f8fafc" }}>
-            <div style={{ fontWeight: 900, color: "#0f172a", marginBottom: 8 }}>Вы пока не состоите ни в одной команде</div>
+          <div style={{ border: "1px dashed var(--hp-border)", borderRadius: 16, padding: 16, color: "var(--hp-muted)", background: "var(--hp-surface-soft)" }}>
+            <div style={{ fontWeight: 900, color: "var(--hp-text-strong)", marginBottom: 8 }}>Вы пока не состоите ни в одной команде</div>
             <div style={{ lineHeight: 1.45, marginBottom: 12 }}>
               Можно найти публичную команду или вступить в закрытую по коду приглашения.
             </div>
@@ -52,3 +52,4 @@ export function MyTeamsTab({ teams, loading, onGoPublic, onGoCode, onOpenTeam, p
     </div>
   );
 }
+

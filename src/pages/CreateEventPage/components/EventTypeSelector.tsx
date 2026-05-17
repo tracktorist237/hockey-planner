@@ -12,7 +12,7 @@ export const EventTypeSelector = ({ currentType, onChange }: EventTypeSelectorPr
 
   return (
     <div style={{ marginBottom: "24px" }}>
-      <div style={{ display: "block", marginBottom: "12px", fontWeight: "600", fontSize: "16px", color: "#333" }}>
+      <div style={{ display: "block", marginBottom: "12px", fontWeight: "600", fontSize: "16px", color: "var(--hp-text)" }}>
         Тип события *
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "10px", width: "100%", boxSizing: "border-box" }}>
@@ -21,8 +21,8 @@ export const EventTypeSelector = ({ currentType, onChange }: EventTypeSelectorPr
           onClick={() => onChange(EventType.Practice)}
           style={{
             padding: "14px 8px",
-            border: `2px solid ${isPractice ? "#1976d2" : "#e0e0e0"}`,
-            background: isPractice ? "#e3f2fd" : "#fff",
+            border: `2px solid ${isPractice ? "var(--hp-primary)" : "var(--hp-border)"}`,
+            background: isPractice ? "var(--hp-primary-soft)" : "var(--hp-surface)",
             borderRadius: "10px",
             cursor: "pointer",
             fontSize: "14px",
@@ -38,12 +38,12 @@ export const EventTypeSelector = ({ currentType, onChange }: EventTypeSelectorPr
           }}
           onMouseEnter={(e) => {
             if (!isPractice) {
-              e.currentTarget.style.backgroundColor = "#f5f5f5";
+              e.currentTarget.style.backgroundColor = "var(--hp-surface-soft)";
             }
           }}
           onMouseLeave={(e) => {
             if (!isPractice) {
-              e.currentTarget.style.backgroundColor = "#fff";
+              e.currentTarget.style.backgroundColor = "var(--hp-surface)";
             }
           }}
         >
@@ -56,8 +56,8 @@ export const EventTypeSelector = ({ currentType, onChange }: EventTypeSelectorPr
           onClick={() => onChange(EventType.Game)}
           style={{
             padding: "14px 8px",
-            border: `2px solid ${isGame ? "#1976d2" : "#e0e0e0"}`,
-            background: isGame ? "#e3f2fd" : "#fff",
+            border: `2px solid ${isGame ? "var(--hp-primary)" : "var(--hp-border)"}`,
+            background: isGame ? "var(--hp-primary-soft)" : "var(--hp-surface)",
             borderRadius: "10px",
             cursor: "pointer",
             fontSize: "14px",
@@ -73,12 +73,12 @@ export const EventTypeSelector = ({ currentType, onChange }: EventTypeSelectorPr
           }}
           onMouseEnter={(e) => {
             if (!isGame) {
-              e.currentTarget.style.backgroundColor = "#f5f5f5";
+              e.currentTarget.style.backgroundColor = "var(--hp-surface-soft)";
             }
           }}
           onMouseLeave={(e) => {
             if (!isGame) {
-              e.currentTarget.style.backgroundColor = "#fff";
+              e.currentTarget.style.backgroundColor = "var(--hp-surface)";
             }
           }}
         >
@@ -91,8 +91,8 @@ export const EventTypeSelector = ({ currentType, onChange }: EventTypeSelectorPr
           onClick={() => onChange(EventType.Meeting)}
           style={{
             padding: "14px 8px",
-            border: `2px solid ${isMeeting ? "#1976d2" : "#e0e0e0"}`,
-            background: isMeeting ? "#e3f2fd" : "#fff",
+            border: `2px solid ${isMeeting ? "var(--hp-primary)" : "var(--hp-border)"}`,
+            background: isMeeting ? "var(--hp-primary-soft)" : "var(--hp-surface)",
             borderRadius: "10px",
             cursor: "pointer",
             fontSize: "14px",
@@ -108,12 +108,12 @@ export const EventTypeSelector = ({ currentType, onChange }: EventTypeSelectorPr
           }}
           onMouseEnter={(e) => {
             if (!isMeeting) {
-              e.currentTarget.style.backgroundColor = "#f5f5f5";
+              e.currentTarget.style.backgroundColor = "var(--hp-surface-soft)";
             }
           }}
           onMouseLeave={(e) => {
             if (!isMeeting) {
-              e.currentTarget.style.backgroundColor = "#fff";
+              e.currentTarget.style.backgroundColor = "var(--hp-surface)";
             }
           }}
         >

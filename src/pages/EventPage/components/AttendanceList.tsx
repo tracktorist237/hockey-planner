@@ -44,11 +44,11 @@ export const AttendanceList = ({ attendances, onPlayerClick, avatarUrls, eventCr
   return (
     <div
       style={{
-        backgroundColor: "white",
+        backgroundColor: "var(--hp-surface)",
         borderRadius: "16px",
         padding: "20px",
         marginBottom: "20px",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+        boxShadow: "var(--hp-shadow-sm)",
       }}
     >
       <h3
@@ -56,7 +56,7 @@ export const AttendanceList = ({ attendances, onPlayerClick, avatarUrls, eventCr
           margin: "0 0 16px 0",
           fontSize: "18px",
           fontWeight: "600",
-          color: "#1a237e",
+          color: "var(--hp-heading)",
           display: "flex",
           alignItems: "center",
           gap: "8px",
@@ -73,11 +73,11 @@ export const AttendanceList = ({ attendances, onPlayerClick, avatarUrls, eventCr
             justifyContent: "space-between",
             marginBottom: "8px",
             fontSize: "14px",
-            color: "#666",
+            color: "var(--hp-muted)",
           }}
         >
           <span>Готовы:</span>
-          <span style={{ fontWeight: "600", color: "#4caf50" }}>
+          <span style={{ fontWeight: "600", color: "var(--hp-success)" }}>
             {attendances?.filter((attendance) => attendance.status === 2).length || 0}
           </span>
         </div>
@@ -87,11 +87,11 @@ export const AttendanceList = ({ attendances, onPlayerClick, avatarUrls, eventCr
             justifyContent: "space-between",
             marginBottom: "8px",
             fontSize: "14px",
-            color: "#666",
+            color: "var(--hp-muted)",
           }}
         >
           <span>Не готовы:</span>
-          <span style={{ fontWeight: "600", color: "#f44336" }}>
+          <span style={{ fontWeight: "600", color: "var(--hp-danger)" }}>
             {attendances?.filter((attendance) => attendance.status === 3).length || 0}
           </span>
         </div>
@@ -100,7 +100,7 @@ export const AttendanceList = ({ attendances, onPlayerClick, avatarUrls, eventCr
             display: "flex",
             justifyContent: "space-between",
             fontSize: "14px",
-            color: "#666",
+            color: "var(--hp-muted)",
           }}
         >
           <span>Не ответили:</span>
@@ -114,7 +114,7 @@ export const AttendanceList = ({ attendances, onPlayerClick, avatarUrls, eventCr
         style={{
           maxHeight: "400px",
           overflowY: "auto",
-          border: "1px solid #e0e0e0",
+          border: "1px solid var(--hp-border)",
           borderRadius: "10px",
           padding: "8px",
         }}
@@ -130,7 +130,7 @@ export const AttendanceList = ({ attendances, onPlayerClick, avatarUrls, eventCr
               key={attendance.userId}
               style={{
                 padding: "12px",
-                borderBottom: "1px solid #f0f0f0",
+                borderBottom: "1px solid var(--hp-border)",
                 display: "flex",
                 flexDirection: "column",
                 gap: "4px",
@@ -139,7 +139,7 @@ export const AttendanceList = ({ attendances, onPlayerClick, avatarUrls, eventCr
               }}
               onClick={() => onPlayerClick(attendance.userId)}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = "#f5f5f5";
+                e.currentTarget.style.backgroundColor = "var(--hp-surface-soft)";
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.backgroundColor = "transparent";
@@ -157,17 +157,17 @@ export const AttendanceList = ({ attendances, onPlayerClick, avatarUrls, eventCr
                     fontSize={12}
                     fallbackBg={
                       attendance.status === 2
-                        ? "#e8f5e9"
+                        ? "var(--hp-success-soft)"
                         : attendance.status === 3
-                          ? "#ffebee"
-                          : "#fff3e0"
+                          ? "var(--hp-danger-soft)"
+                          : "var(--hp-warning-soft)"
                     }
                     fallbackColor={
                       attendance.status === 2
-                        ? "#2e7d32"
+                        ? "var(--hp-success)"
                         : attendance.status === 3
-                          ? "#c62828"
-                          : "#ef6c00"
+                          ? "var(--hp-danger)"
+                          : "var(--hp-warning)"
                     }
                   />
                   <div>
@@ -180,23 +180,23 @@ export const AttendanceList = ({ attendances, onPlayerClick, avatarUrls, eventCr
                           startShrinkAt: 18,
                           maxLength: 40,
                         })}px`,
-                        color: "#1a237e",
+                        color: "var(--hp-heading)",
                         transition: "color 0.2s ease",
                         whiteSpace: "nowrap",
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.color = "#1976d2";
+                        e.currentTarget.style.color = "var(--hp-primary)";
                         e.currentTarget.style.textDecoration = "underline";
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.color = "#1a237e";
+                        e.currentTarget.style.color = "var(--hp-heading)";
                         e.currentTarget.style.textDecoration = "none";
                       }}
                     >
                       {attendance.firstName} {attendance.lastName}
                     </div>
                     {formattedResponseTime && (
-                      <div style={{ marginTop: "2px", fontSize: "12px", color: "#666" }}>
+                      <div style={{ marginTop: "2px", fontSize: "12px", color: "var(--hp-muted)" }}>
                         Ответ: {formattedResponseTime}
                       </div>
                     )}
@@ -207,9 +207,9 @@ export const AttendanceList = ({ attendances, onPlayerClick, avatarUrls, eventCr
                     fontSize: "13px",
                     color:
                       attendance.status === 2
-                        ? "#2e7d32"
+                        ? "var(--hp-success)"
                         : attendance.status === 3
-                          ? "#c62828"
+                          ? "var(--hp-danger)"
                           : "#ff9800",
                     fontWeight: "500",
                     display: "flex",
@@ -226,24 +226,25 @@ export const AttendanceList = ({ attendances, onPlayerClick, avatarUrls, eventCr
                   style={{
                     marginLeft: "44px",
                     padding: "8px 12px",
-                    backgroundColor: "#f8f9fa",
+                    backgroundColor: "var(--hp-surface-soft)",
                     borderRadius: "8px",
-                    border: "1px solid #e0e0e0",
+                    border: "1px solid var(--hp-border)",
                     fontSize: "13px",
-                    color: "#555",
+                    color: "var(--hp-muted)",
                     display: "flex",
                     alignItems: "flex-start",
                     gap: "6px",
                   }}
                 >
-                  <span style={{ fontSize: "14px", color: "#666" }}>💬</span>
+                  <span style={{ fontSize: "14px", color: "var(--hp-muted)" }}>💬</span>
                   <span style={{ fontStyle: "italic", lineHeight: "1.4" }}>{attendance.notes}</span>
                 </div>
               )}
             </div>
           );
-        }) || <div style={{ padding: "16px", textAlign: "center", color: "#666" }}>Нет данных о явке</div>}
+        }) || <div style={{ padding: "16px", textAlign: "center", color: "var(--hp-muted)" }}>Нет данных о явке</div>}
       </div>
     </div>
   );
 };
+

@@ -18,8 +18,8 @@ export function WeekView({ weekDays, selectedDate, isMobile, onDayClick }: WeekV
           const isSelected = selectedDate ? isSameDay(day.date, selectedDate) : false;
 
           return (
-            <div key={index} onClick={() => onDayClick(day.date)} style={{ textAlign: "center", padding: isMobile ? "8px 4px" : "16px 8px", backgroundColor: isSelected ? "#bbdefb" : isToday ? "#e3f2fd" : "white", border: `2px solid ${isSelected || isToday ? "#1976d2" : "#e0e0e0"}`, borderRadius: "12px", cursor: "pointer", transition: "all 0.2s ease" }}>
-              <div style={{ fontSize: isMobile ? "12px" : "14px", fontWeight: isToday || isSelected ? "700" : "500", color: isToday || isSelected ? "#1976d2" : "#333", marginBottom: "4px" }}>{isMobile ? DAY_NAMES[index].slice(0, 2) : DAY_NAMES[index]}</div>
+            <div key={index} onClick={() => onDayClick(day.date)} style={{ textAlign: "center", padding: isMobile ? "8px 4px" : "16px 8px", backgroundColor: isSelected ? "var(--hp-primary-soft)" : isToday ? "var(--hp-primary-soft)" : "var(--hp-surface)", border: `2px solid ${isSelected || isToday ? "var(--hp-primary)" : "var(--hp-border)"}`, borderRadius: "12px", cursor: "pointer", transition: "all 0.2s ease" }}>
+              <div style={{ fontSize: isMobile ? "12px" : "14px", fontWeight: isToday || isSelected ? "700" : "500", color: isToday || isSelected ? "var(--hp-primary)" : "var(--hp-text)", marginBottom: "4px" }}>{isMobile ? DAY_NAMES[index].slice(0, 2) : DAY_NAMES[index]}</div>
               <div style={{ fontSize: isMobile ? "16px" : "20px", fontWeight: "600", marginBottom: "4px" }}>{day.date.getDate()}</div>
 
               {isMobile ? (
@@ -27,10 +27,10 @@ export function WeekView({ weekDays, selectedDate, isMobile, onDayClick }: WeekV
                   {eventColors.slice(0, 3).map((color, colorIndex) => (
                     <div key={colorIndex} style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: color, display: "inline-block" }} />
                   ))}
-                  {eventColors.length > 3 && <span style={{ fontSize: "10px", color: "#666" }}>+{eventColors.length - 3}</span>}
+                  {eventColors.length > 3 && <span style={{ fontSize: "10px", color: "var(--hp-muted)" }}>+{eventColors.length - 3}</span>}
                 </div>
               ) : (
-                day.events.length > 0 && <div style={{ fontSize: "12px", backgroundColor: "#1976d2", color: "white", padding: "2px 8px", borderRadius: "12px", display: "inline-block" }}>{day.events.length}</div>
+                day.events.length > 0 && <div style={{ fontSize: "12px", backgroundColor: "var(--hp-primary)", color: "white", padding: "2px 8px", borderRadius: "12px", display: "inline-block" }}>{day.events.length}</div>
               )}
             </div>
           );

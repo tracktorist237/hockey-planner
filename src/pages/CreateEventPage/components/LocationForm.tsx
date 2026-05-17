@@ -24,16 +24,16 @@ export const LocationForm = ({
   return (
     <div
       style={{
-        backgroundColor: "#f8f9fa",
+        backgroundColor: "var(--hp-surface-soft)",
         padding: "20px",
         borderRadius: "12px",
         marginBottom: "20px",
-        border: "1px solid #e0e0e0",
+        border: "1px solid var(--hp-border)",
         width: "100%",
         boxSizing: "border-box",
       }}
     >
-      <h3 style={{ marginTop: 0, marginBottom: "16px", fontSize: "18px", fontWeight: "600", color: "#1a237e" }}>
+      <h3 style={{ marginTop: 0, marginBottom: "16px", fontSize: "18px", fontWeight: "600", color: "var(--hp-heading)" }}>
         📍 Место проведения
       </h3>
 
@@ -48,10 +48,11 @@ export const LocationForm = ({
           style={{
             width: "100%",
             padding: "14px",
-            border: "1px solid #e0e0e0",
+            border: "1px solid var(--hp-border)",
             borderRadius: "10px",
             fontSize: "16px",
-            backgroundColor: "white",
+            backgroundColor: "var(--hp-surface)",
+            color: "var(--hp-text)",
             boxSizing: "border-box",
             maxWidth: "100%",
           }}
@@ -63,14 +64,14 @@ export const LocationForm = ({
           <label style={{ fontWeight: "500", fontSize: "15px", flexShrink: 0 }}>Адрес *</label>
 
           <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
-            <span style={{ fontSize: "14px", color: !useAddressSearch ? "#333" : "#999" }}>✏️ Ручной</span>
+            <span style={{ fontSize: "14px", color: !useAddressSearch ? "var(--hp-text)" : "var(--hp-muted)" }}>✏️ Ручной</span>
             <div
               onClick={onToggleSearch}
               style={{
                 position: "relative",
                 width: "52px",
                 height: "28px",
-                backgroundColor: useAddressSearch ? "#4caf50" : "#ddd",
+                backgroundColor: useAddressSearch ? "var(--hp-success)" : "var(--hp-border)",
                 borderRadius: "28px",
                 cursor: "pointer",
                 transition: "all 0.3s ease",
@@ -90,14 +91,14 @@ export const LocationForm = ({
                   left: useAddressSearch ? "28px" : "4px",
                   width: "20px",
                   height: "20px",
-                  backgroundColor: "white",
+                  backgroundColor: "var(--hp-surface)",
                   borderRadius: "50%",
                   transition: "all 0.3s ease",
                   boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
                 }}
               />
             </div>
-            <span style={{ fontSize: "14px", color: useAddressSearch ? "#333" : "#999" }}>🔍 Авто</span>
+            <span style={{ fontSize: "14px", color: useAddressSearch ? "var(--hp-text)" : "var(--hp-muted)" }}>🔍 Авто</span>
           </div>
         </div>
 
@@ -120,11 +121,12 @@ export const LocationForm = ({
             style={{
               width: "100%",
               padding: "14px",
-              border: "1px solid #e0e0e0",
+              border: "1px solid var(--hp-border)",
               borderRadius: "10px",
               fontSize: "16px",
               resize: "vertical",
-              backgroundColor: "white",
+              backgroundColor: "var(--hp-surface)",
+              color: "var(--hp-text)",
               minHeight: "100px",
               boxSizing: "border-box",
               maxWidth: "100%",
@@ -132,7 +134,7 @@ export const LocationForm = ({
           />
         )}
 
-        <div style={{ marginTop: "10px", fontSize: "13px", color: "#666", display: "flex", alignItems: "flex-start", gap: "6px" }}>
+        <div style={{ marginTop: "10px", fontSize: "13px", color: "var(--hp-muted)", display: "flex", alignItems: "flex-start", gap: "6px" }}>
           <span style={{ flexShrink: 0 }}>{useAddressSearch ? "💡" : "📝"}</span>
           <span>
             {useAddressSearch
@@ -153,10 +155,11 @@ export const LocationForm = ({
           style={{
             width: "100%",
             padding: "14px",
-            border: "1px solid #e0e0e0",
+            border: "1px solid var(--hp-border)",
             borderRadius: "10px",
             fontSize: "16px",
-            backgroundColor: "white",
+            backgroundColor: "var(--hp-surface)",
+            color: "var(--hp-text)",
             boxSizing: "border-box",
             maxWidth: "100%",
           }}

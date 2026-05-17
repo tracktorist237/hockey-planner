@@ -14,7 +14,7 @@ const tabs: Array<{ value: TeamsTab; label: string }> = [
 
 export function TeamsTabs({ activeTab, onChange }: TeamsTabsProps) {
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 6, padding: 6, borderRadius: 16, background: "#e2e8f0" }}>
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 6, padding: 6, borderRadius: 16, background: "var(--hp-surface-muted)" }}>
       {tabs.map((tab) => (
         <button
           key={tab.value}
@@ -26,9 +26,9 @@ export function TeamsTabs({ activeTab, onChange }: TeamsTabsProps) {
             padding: "11px 6px",
             fontWeight: 900,
             cursor: "pointer",
-            background: activeTab === tab.value ? "white" : "transparent",
-            color: activeTab === tab.value ? "#0f172a" : "#475569",
-            boxShadow: activeTab === tab.value ? "0 6px 18px rgba(15, 23, 42, 0.12)" : "none",
+            background: activeTab === tab.value ? "var(--hp-surface)" : "transparent",
+            color: activeTab === tab.value ? "var(--hp-text-strong)" : "var(--hp-muted)",
+            boxShadow: activeTab === tab.value ? "var(--hp-shadow-sm)" : "none",
             fontSize: 13,
           }}
         >

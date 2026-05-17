@@ -30,7 +30,7 @@ export function FieldWithValidation({
 }: FieldWithValidationProps) {
   return (
     <div style={{ marginBottom: "16px" }}>
-      <label style={{ display: "block", marginBottom: "8px", fontWeight: "600", fontSize: "15px", color: "#333" }}>
+      <label style={{ display: "block", marginBottom: "8px", fontWeight: "600", fontSize: "15px", color: "var(--hp-text)" }}>
         {label}{required ? " *" : ""}
       </label>
       <div style={{ position: "relative" }}>
@@ -43,7 +43,7 @@ export function FieldWithValidation({
           min={min}
           max={max}
           placeholder={placeholder}
-          style={{ width: "100%", padding: "14px", border: `2px solid ${status === "error" ? "#d32f2f" : status === "success" ? "#4caf50" : "#e0e0e0"}`, borderRadius: "10px", fontSize: "16px", backgroundColor: "#fafafa", boxSizing: "border-box", transition: "all 0.2s ease" }}
+          style={{ width: "100%", padding: "14px", border: `2px solid ${status === "error" ? "#d32f2f" : status === "success" ? "#4caf50" : "var(--hp-border)"}`, borderRadius: "10px", fontSize: "16px", backgroundColor: "var(--hp-input-bg)", boxSizing: "border-box", transition: "all 0.2s ease" }}
         />
         {status === "success" && (
           <span style={{ position: "absolute", right: "14px", top: "50%", transform: "translateY(-50%)", color: "#4caf50", fontSize: "18px" }}>✓</span>

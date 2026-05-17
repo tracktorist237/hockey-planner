@@ -85,7 +85,7 @@ export const PlayerInfoModal = ({ player, isOpen, onClose }: PlayerInfoModalProp
     >
       <div
         style={{
-          backgroundColor: "white",
+          backgroundColor: "var(--hp-surface)",
           borderRadius: "20px",
           maxWidth: "500px",
           width: "100%",
@@ -99,7 +99,7 @@ export const PlayerInfoModal = ({ player, isOpen, onClose }: PlayerInfoModalProp
         <div
           style={{
             padding: "20px",
-            borderBottom: "1px solid #e0e0e0",
+            borderBottom: "1px solid var(--hp-border)",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
@@ -116,7 +116,7 @@ export const PlayerInfoModal = ({ player, isOpen, onClose }: PlayerInfoModalProp
                 photoUrl={player.photoUrl}
                 jerseyNumber={player.jerseyNumber}
                 fallbackBg="white"
-                fallbackColor="#1a237e"
+                fallbackColor="var(--hp-heading)"
                 fallbackPrefix="#"
                 badgePrefix="#"
                 fontSize={18}
@@ -160,17 +160,17 @@ export const PlayerInfoModal = ({ player, isOpen, onClose }: PlayerInfoModalProp
             <div
               style={{
                 padding: "16px",
-                backgroundColor: "#f8f9fa",
+                backgroundColor: "var(--hp-surface-soft)",
                 borderRadius: "12px",
-                border: "1px solid #e0e0e0",
+                border: "1px solid var(--hp-border)",
               }}
             >
-              <div style={{ fontSize: "13px", color: "#666", marginBottom: "4px" }}>Основная позиция</div>
+              <div style={{ fontSize: "13px", color: "var(--hp-muted)", marginBottom: "4px" }}>Основная позиция</div>
               <div
                 style={{
                   fontSize: "18px",
                   fontWeight: "600",
-                  color: "#1a237e",
+                  color: "var(--hp-heading)",
                   display: "flex",
                   alignItems: "center",
                   gap: "6px",
@@ -184,39 +184,39 @@ export const PlayerInfoModal = ({ player, isOpen, onClose }: PlayerInfoModalProp
             <div
               style={{
                 padding: "16px",
-                backgroundColor: "#f8f9fa",
+                backgroundColor: "var(--hp-surface-soft)",
                 borderRadius: "12px",
-                border: "1px solid #e0e0e0",
+                border: "1px solid var(--hp-border)",
               }}
             >
-              <div style={{ fontSize: "13px", color: "#666", marginBottom: "4px" }}>Хват клюшки</div>
-              <div style={{ fontSize: "18px", fontWeight: "600", color: "#1a237e" }}>
+              <div style={{ fontSize: "13px", color: "var(--hp-muted)", marginBottom: "4px" }}>Хват клюшки</div>
+              <div style={{ fontSize: "18px", fontWeight: "600", color: "var(--hp-heading)" }}>
                 {getHandednessName(player.handedness || 0)}
               </div>
             </div>
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px", marginBottom: "24px" }}>
-            <div style={{ padding: "12px", backgroundColor: "#e3f2fd", borderRadius: "10px", textAlign: "center" }}>
+            <div style={{ padding: "12px", backgroundColor: "var(--hp-primary-soft)", borderRadius: "10px", textAlign: "center" }}>
               <div style={{ fontSize: "20px", marginBottom: "4px" }}>📏</div>
-              <div style={{ fontSize: "13px", color: "#666", marginBottom: "2px" }}>Рост</div>
-              <div style={{ fontSize: "16px", fontWeight: "600", color: "#1976d2" }}>
+              <div style={{ fontSize: "13px", color: "var(--hp-muted)", marginBottom: "2px" }}>Рост</div>
+              <div style={{ fontSize: "16px", fontWeight: "600", color: "var(--hp-primary)" }}>
                 {player.height ? `${player.height} см` : "—"}
               </div>
             </div>
 
-            <div style={{ padding: "12px", backgroundColor: "#e8f5e9", borderRadius: "10px", textAlign: "center" }}>
+            <div style={{ padding: "12px", backgroundColor: "var(--hp-success-soft)", borderRadius: "10px", textAlign: "center" }}>
               <div style={{ fontSize: "20px", marginBottom: "4px" }}>⚖️</div>
-              <div style={{ fontSize: "13px", color: "#666", marginBottom: "2px" }}>Вес</div>
-              <div style={{ fontSize: "16px", fontWeight: "600", color: "#2e7d32" }}>
+              <div style={{ fontSize: "13px", color: "var(--hp-muted)", marginBottom: "2px" }}>Вес</div>
+              <div style={{ fontSize: "16px", fontWeight: "600", color: "var(--hp-success)" }}>
                 {player.weight ? `${player.weight} кг` : "—"}
               </div>
             </div>
 
-            <div style={{ padding: "12px", backgroundColor: "#fff3e0", borderRadius: "10px", textAlign: "center" }}>
+            <div style={{ padding: "12px", backgroundColor: "var(--hp-warning-soft)", borderRadius: "10px", textAlign: "center" }}>
               <div style={{ fontSize: "20px", marginBottom: "4px" }}>🎂</div>
-              <div style={{ fontSize: "13px", color: "#666", marginBottom: "2px" }}>Возраст</div>
-              <div style={{ fontSize: "16px", fontWeight: "600", color: "#ef6c00" }}>
+              <div style={{ fontSize: "13px", color: "var(--hp-muted)", marginBottom: "2px" }}>Возраст</div>
+              <div style={{ fontSize: "16px", fontWeight: "600", color: "var(--hp-warning)" }}>
                 {player.birthDate ? `${calculateAge(player.birthDate)} лет` : "—"}
               </div>
             </div>
@@ -224,7 +224,7 @@ export const PlayerInfoModal = ({ player, isOpen, onClose }: PlayerInfoModalProp
 
           <div
             style={{
-              backgroundColor: "#f8f9fa",
+              backgroundColor: "var(--hp-surface-soft)",
               borderRadius: "12px",
               padding: "16px",
             }}
@@ -234,7 +234,7 @@ export const PlayerInfoModal = ({ player, isOpen, onClose }: PlayerInfoModalProp
                 margin: "0 0 16px 0",
                 fontSize: "16px",
                 fontWeight: "600",
-                color: "#333",
+                color: "var(--hp-text)",
                 display: "flex",
                 alignItems: "center",
                 gap: "8px",
@@ -246,28 +246,28 @@ export const PlayerInfoModal = ({ player, isOpen, onClose }: PlayerInfoModalProp
 
             <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
               <div style={{ display: "flex", justifyContent: "space-between" }}>
-                <span style={{ color: "#666" }}>ID игрока:</span>
-                <span style={{ fontWeight: "500", color: "#333" }}>{player.id.slice(0, 8)}...</span>
+                <span style={{ color: "var(--hp-muted)" }}>ID игрока:</span>
+                <span style={{ fontWeight: "500", color: "var(--hp-text)" }}>{player.id.slice(0, 8)}...</span>
               </div>
 
               {player.email && (
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span style={{ color: "#666" }}>Email:</span>
-                  <span style={{ fontWeight: "500", color: "#1976d2" }}>{player.email}</span>
+                  <span style={{ color: "var(--hp-muted)" }}>Email:</span>
+                  <span style={{ fontWeight: "500", color: "var(--hp-primary)" }}>{player.email}</span>
                 </div>
               )}
 
               {player.phone && (
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span style={{ color: "#666" }}>Телефон:</span>
-                  <span style={{ fontWeight: "500", color: "#333" }}>{player.phone}</span>
+                  <span style={{ color: "var(--hp-muted)" }}>Телефон:</span>
+                  <span style={{ fontWeight: "500", color: "var(--hp-text)" }}>{player.phone}</span>
                 </div>
               )}
 
               {player.birthDate && (
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span style={{ color: "#666" }}>Дата рождения:</span>
-                  <span style={{ fontWeight: "500", color: "#333" }}>
+                  <span style={{ color: "var(--hp-muted)" }}>Дата рождения:</span>
+                  <span style={{ fontWeight: "500", color: "var(--hp-text)" }}>
                     {new Date(player.birthDate).toLocaleDateString("ru-RU")}
                   </span>
                 </div>
@@ -275,19 +275,19 @@ export const PlayerInfoModal = ({ player, isOpen, onClose }: PlayerInfoModalProp
 
               {player.secondaryPosition && player.secondaryPosition !== 0 && (
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span style={{ color: "#666" }}>Вторая позиция:</span>
-                  <span style={{ fontWeight: "500", color: "#333" }}>{getPositionName(player.secondaryPosition)}</span>
+                  <span style={{ color: "var(--hp-muted)" }}>Вторая позиция:</span>
+                  <span style={{ fontWeight: "500", color: "var(--hp-text)" }}>{getPositionName(player.secondaryPosition)}</span>
                 </div>
               )}
 
               {player.spbhlPlayerId && (
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px" }}>
-                  <span style={{ color: "#666" }}>Профиль СПБХЛ:</span>
+                  <span style={{ color: "var(--hp-muted)" }}>Профиль СПБХЛ:</span>
                   <a
                     href={`https://spbhl.ru/Player?PlayerID=${player.spbhlPlayerId}`}
                     target="_blank"
                     rel="noreferrer"
-                    style={{ fontWeight: "500", color: "#1976d2", textDecoration: "none" }}
+                    style={{ fontWeight: "500", color: "var(--hp-primary)", textDecoration: "none" }}
                   >
                     Открыть
                   </a>
@@ -300,7 +300,7 @@ export const PlayerInfoModal = ({ player, isOpen, onClose }: PlayerInfoModalProp
         <div
           style={{
             padding: "20px",
-            borderTop: "1px solid #e0e0e0",
+            borderTop: "1px solid var(--hp-border)",
             display: "flex",
             justifyContent: "flex-end",
           }}
@@ -309,7 +309,7 @@ export const PlayerInfoModal = ({ player, isOpen, onClose }: PlayerInfoModalProp
             onClick={onClose}
             style={{
               padding: "12px 24px",
-              backgroundColor: "#1976d2",
+              backgroundColor: "var(--hp-primary)",
               color: "white",
               border: "none",
               borderRadius: "10px",
@@ -319,11 +319,11 @@ export const PlayerInfoModal = ({ player, isOpen, onClose }: PlayerInfoModalProp
               transition: "all 0.2s ease",
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = "#1565c0";
+              e.currentTarget.style.backgroundColor = "var(--hp-primary-hover)";
               e.currentTarget.style.transform = "translateY(-1px)";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = "#1976d2";
+              e.currentTarget.style.backgroundColor = "var(--hp-primary)";
               e.currentTarget.style.transform = "translateY(0)";
             }}
           >
@@ -334,3 +334,4 @@ export const PlayerInfoModal = ({ player, isOpen, onClose }: PlayerInfoModalProp
     </div>
   );
 };
+

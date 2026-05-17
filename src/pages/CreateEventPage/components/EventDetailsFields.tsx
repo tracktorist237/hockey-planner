@@ -16,7 +16,7 @@ export const EventDetailsFields = ({
   return (
     <>
       <div style={{ marginBottom: "20px", width: "100%", boxSizing: "border-box" }}>
-        <label style={{ display: "block", marginBottom: "8px", fontWeight: "600", fontSize: "16px", color: "#333" }}>
+        <label style={{ display: "block", marginBottom: "8px", fontWeight: "600", fontSize: "16px", color: "var(--hp-text)" }}>
           Описание
         </label>
         <textarea
@@ -27,11 +27,12 @@ export const EventDetailsFields = ({
           style={{
             width: "100%",
             padding: "14px",
-            border: "1px solid #e0e0e0",
+            border: "1px solid var(--hp-border)",
             borderRadius: "10px",
             fontSize: "16px",
             resize: "vertical",
-            backgroundColor: "#fafafa",
+            backgroundColor: "var(--hp-surface-soft)",
+            color: "var(--hp-text)",
             minHeight: "120px",
             lineHeight: "1.5",
             boxSizing: "border-box",
@@ -41,7 +42,7 @@ export const EventDetailsFields = ({
       </div>
 
       <div style={{ marginBottom: "20px", width: "100%", boxSizing: "border-box" }}>
-        <label style={{ display: "block", marginBottom: "8px", fontWeight: "600", fontSize: "16px", color: "#333" }}>
+        <label style={{ display: "block", marginBottom: "8px", fontWeight: "600", fontSize: "16px", color: "var(--hp-text)" }}>
           Дата и время начала *
         </label>
         <input
@@ -52,10 +53,11 @@ export const EventDetailsFields = ({
           style={{
             width: "100%",
             padding: "14px",
-            border: "1px solid #e0e0e0",
+            border: "1px solid var(--hp-border)",
             borderRadius: "10px",
             fontSize: "16px",
-            backgroundColor: "#fafafa",
+            backgroundColor: "var(--hp-surface-soft)",
+            color: "var(--hp-text)",
             boxSizing: "border-box",
             maxWidth: "100%",
           }}
@@ -66,13 +68,13 @@ export const EventDetailsFields = ({
         <div
           style={{
             padding: "12px",
-            backgroundColor: "#fff3e0",
+            backgroundColor: "var(--hp-warning-soft)",
             borderRadius: "10px",
             marginBottom: "20px",
             fontSize: "14px",
-            color: "#ef6c00",
+            color: "var(--hp-warning)",
             textAlign: "center",
-            border: "1px solid #ffe0b2",
+            border: "1px solid var(--hp-warning-border)",
             width: "100%",
             boxSizing: "border-box",
           }}

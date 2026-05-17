@@ -84,27 +84,27 @@ const renderEditableSlot = (
           width: "56px",
           height: "56px",
           borderRadius: "50%",
-          border: `2px ${activeSlot === slot ? "solid #1976d2" : "dashed #666"}`,
+          border: `2px ${activeSlot === slot ? "solid var(--hp-primary)" : "dashed var(--hp-muted)"}`,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           cursor: "pointer",
-          backgroundColor: lineSlots[slot] ? "#e3f2fd" : "#fff",
+          backgroundColor: lineSlots[slot] ? "var(--hp-primary-soft)" : "var(--hp-surface)",
           margin: "0 auto 4px auto",
           fontSize: "20px",
           fontWeight: lineSlots[slot] ? "600" : "400",
-          color: lineSlots[slot] ? "#1a237e" : "#666",
+          color: lineSlots[slot] ? "var(--hp-heading)" : "var(--hp-muted)",
           transition: "all 0.2s ease",
           position: "relative",
         }}
         onMouseEnter={(e) => {
           if (!lineSlots[slot]) {
-            e.currentTarget.style.backgroundColor = "#f5f5f5";
+            e.currentTarget.style.backgroundColor = "var(--hp-surface-soft)";
           }
         }}
         onMouseLeave={(e) => {
           if (!lineSlots[slot]) {
-            e.currentTarget.style.backgroundColor = "#fff";
+            e.currentTarget.style.backgroundColor = "var(--hp-surface)";
           }
         }}
       >
@@ -117,8 +117,8 @@ const renderEditableSlot = (
               jerseyNumber={lineSlots[slot]!.jerseyNumber}
               fallbackPrefix=""
               showBadgeWhenPhoto={false}
-              fallbackBg="#e3f2fd"
-              fallbackColor="#1a237e"
+              fallbackBg="var(--hp-primary-soft)"
+              fallbackColor="var(--hp-heading)"
               fontSize={20}
             />
             <div
@@ -151,7 +151,7 @@ const renderEditableSlot = (
         )}
       </div>
 
-      <div style={{ fontSize: "10px", color: "#666", fontWeight: "500", marginBottom: "4px" }}>{getSlotLabel(slot)}</div>
+      <div style={{ fontSize: "10px", color: "var(--hp-muted)", fontWeight: "500", marginBottom: "4px" }}>{getSlotLabel(slot)}</div>
 
       {lineSlots[slot] && (
         <>
@@ -163,7 +163,7 @@ const renderEditableSlot = (
                 startShrinkAt: 10,
                 maxLength: 24,
               })}px`,
-              color: "#333",
+              color: "var(--hp-text)",
               lineHeight: "1.2",
               minHeight: "26px",
               whiteSpace: "nowrap",
@@ -176,7 +176,7 @@ const renderEditableSlot = (
               onPlayerClick(lineSlots[slot]!.userId);
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.color = "#1976d2";
+              e.currentTarget.style.color = "var(--hp-primary)";
               e.currentTarget.style.textDecoration = "underline";
             }}
             onMouseLeave={(e) => {
@@ -194,9 +194,9 @@ const renderEditableSlot = (
             style={{
               padding: "2px 8px",
               fontSize: "10px",
-              backgroundColor: "#ffebee",
-              color: "#d32f2f",
-              border: "1px solid #ffcdd2",
+              backgroundColor: "var(--hp-danger-soft)",
+              color: "var(--hp-danger)",
+              border: "1px solid var(--hp-danger-border)",
               borderRadius: "4px",
               cursor: "pointer",
               width: "100%",
@@ -241,11 +241,11 @@ export const RosterManager = ({
   return (
     <div
       style={{
-        backgroundColor: "white",
+        backgroundColor: "var(--hp-surface)",
         borderRadius: "16px",
         padding: "20px",
         marginBottom: "20px",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+        boxShadow: "var(--hp-shadow-sm)",
       }}
     >
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
@@ -254,7 +254,7 @@ export const RosterManager = ({
             margin: "0",
             fontSize: "18px",
             fontWeight: "600",
-            color: "#1a237e",
+            color: "var(--hp-heading)",
             display: "flex",
             alignItems: "center",
             gap: "8px",
@@ -267,7 +267,7 @@ export const RosterManager = ({
           onClick={() => setCreatingLine(true)}
           style={{
             padding: "10px 16px",
-            backgroundColor: "#1976d2",
+            backgroundColor: "var(--hp-primary)",
             color: "white",
             border: "none",
             borderRadius: "10px",
@@ -280,11 +280,11 @@ export const RosterManager = ({
             transition: "all 0.2s ease",
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = "#1565c0";
+            e.currentTarget.style.backgroundColor = "var(--hp-primary-hover)";
             e.currentTarget.style.transform = "translateY(-1px)";
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = "#1976d2";
+            e.currentTarget.style.backgroundColor = "var(--hp-primary)";
             e.currentTarget.style.transform = "translateY(0)";
           }}
         >
@@ -297,14 +297,14 @@ export const RosterManager = ({
         <div
           style={{
             marginTop: "16px",
-            border: "1px solid #e0e0e0",
+            border: "1px solid var(--hp-border)",
             padding: "20px",
             borderRadius: "12px",
-            backgroundColor: "#f8f9fa",
+            backgroundColor: "var(--hp-surface-soft)",
           }}
         >
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-            <h4 style={{ margin: 0, fontSize: "16px", fontWeight: "600", color: "#1a237e" }}>
+            <h4 style={{ margin: 0, fontSize: "16px", fontWeight: "600", color: "var(--hp-heading)" }}>
               {editingLineIndex === null ? "Создание нового звена" : `Редактирование звена ${editingLineIndex + 1}`}
             </h4>
             <button
@@ -315,21 +315,21 @@ export const RosterManager = ({
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                border: "1px solid #e0e0e0",
-                background: "white",
+                border: "1px solid var(--hp-border)",
+                background: "var(--hp-surface)",
                 borderRadius: "8px",
                 cursor: "pointer",
                 fontSize: "16px",
                 transition: "all 0.2s ease",
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = "#f5f5f5";
-                e.currentTarget.style.borderColor = "#d32f2f";
-                e.currentTarget.style.color = "#d32f2f";
+                e.currentTarget.style.backgroundColor = "var(--hp-surface-soft)";
+                e.currentTarget.style.borderColor = "var(--hp-danger)";
+                e.currentTarget.style.color = "var(--hp-danger)";
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "white";
-                e.currentTarget.style.borderColor = "#e0e0e0";
+                e.currentTarget.style.backgroundColor = "var(--hp-surface)";
+                e.currentTarget.style.borderColor = "var(--hp-border)";
                 e.currentTarget.style.color = "inherit";
               }}
             >
@@ -350,18 +350,18 @@ export const RosterManager = ({
           </div>
 
           {activeSlot && (
-            <div style={{ marginTop: "16px", borderTop: "1px solid #e0e0e0", paddingTop: "16px" }}>
-              <h4 style={{ margin: "0 0 12px 0", fontSize: "16px", fontWeight: "500", color: "#333" }}>
+            <div style={{ marginTop: "16px", borderTop: "1px solid var(--hp-border)", paddingTop: "16px" }}>
+              <h4 style={{ margin: "0 0 12px 0", fontSize: "16px", fontWeight: "500", color: "var(--hp-text)" }}>
                 Выберите игрока для позиции {getSlotTitle(activeSlot)}
               </h4>
-              <div style={{ maxHeight: "200px", overflowY: "auto", border: "1px solid #e0e0e0", borderRadius: "8px" }}>
+              <div style={{ maxHeight: "200px", overflowY: "auto", border: "1px solid var(--hp-border)", borderRadius: "8px" }}>
                 {availablePlayers.length > 0 ? (
                   availablePlayers.map((player) => (
                     <div
                       key={player.userId}
                       style={{
                         padding: "12px 16px",
-                        borderBottom: "1px solid #f0f0f0",
+                        borderBottom: "1px solid var(--hp-border)",
                         cursor: "pointer",
                         transition: "background-color 0.2s ease",
                         display: "flex",
@@ -370,10 +370,10 @@ export const RosterManager = ({
                       }}
                       onClick={() => selectForSlot(player)}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = "#f5f5f5";
+                        e.currentTarget.style.backgroundColor = "var(--hp-surface-soft)";
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = "#fff";
+                        e.currentTarget.style.backgroundColor = "var(--hp-surface)";
                       }}
                     >
                       <PlayerAvatar
@@ -383,8 +383,8 @@ export const RosterManager = ({
                         jerseyNumber={player.jerseyNumber}
                         fallbackPrefix="#"
                         badgePrefix="#"
-                        fallbackBg="#1976d2"
-                        fallbackColor="#fff"
+                        fallbackBg="var(--hp-primary)"
+                        fallbackColor="white"
                         fontSize={13}
                       />
                       <div style={{ flex: 1 }}>
@@ -395,7 +395,7 @@ export const RosterManager = ({
                     </div>
                   ))
                 ) : (
-                  <div style={{ padding: "24px", textAlign: "center", color: "#666" }}>Нет доступных игроков</div>
+                  <div style={{ padding: "24px", textAlign: "center", color: "var(--hp-muted)" }}>Нет доступных игроков</div>
                 )}
               </div>
             </div>
@@ -409,7 +409,7 @@ export const RosterManager = ({
               width: "100%",
               padding: "14px",
               marginTop: "16px",
-              backgroundColor: "#4caf50",
+              backgroundColor: "var(--hp-success)",
               color: "white",
               border: "none",
               borderRadius: "10px",
@@ -427,7 +427,7 @@ export const RosterManager = ({
               e.currentTarget.style.transform = "translateY(-1px)";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = "#4caf50";
+              e.currentTarget.style.backgroundColor = "var(--hp-success)";
               e.currentTarget.style.transform = "translateY(0)";
             }}
           >
@@ -444,9 +444,9 @@ export const RosterManager = ({
             style={{
               marginTop: "20px",
               padding: "16px",
-              border: "1px solid #e0e0e0",
+              border: "1px solid var(--hp-border)",
               borderRadius: "12px",
-              backgroundColor: "#fff",
+              backgroundColor: "var(--hp-surface-soft)",
             }}
           >
             <div
@@ -468,7 +468,7 @@ export const RosterManager = ({
                       onChange={(e) => setNewLineName(e.target.value)}
                       style={{
                         padding: "8px 12px",
-                        border: "1px solid #1976d2",
+                        border: "1px solid var(--hp-primary)",
                         borderRadius: "8px",
                         fontSize: "15px",
                         flex: 1,
@@ -490,7 +490,7 @@ export const RosterManager = ({
                       }}
                       style={{
                         padding: "8px",
-                        backgroundColor: "#4caf50",
+                        backgroundColor: "var(--hp-success)",
                         color: "white",
                         border: "none",
                         borderRadius: "8px",
@@ -503,8 +503,8 @@ export const RosterManager = ({
                       onClick={() => setRenamingLineId(null)}
                       style={{
                         padding: "8px",
-                        backgroundColor: "#f5f5f5",
-                        border: "1px solid #e0e0e0",
+                        backgroundColor: "var(--hp-surface-soft)",
+                        border: "1px solid var(--hp-border)",
                         borderRadius: "8px",
                         cursor: "pointer",
                       }}
@@ -514,13 +514,13 @@ export const RosterManager = ({
                   </div>
                 ) : (
                   <>
-                    <strong style={{ fontSize: "16px", color: "#1a237e" }}>{line.name ?? `Звено ${line.order}`}</strong>
+                    <strong style={{ fontSize: "16px", color: "var(--hp-heading)" }}>{line.name ?? `Звено ${line.order}`}</strong>
                     <button
                       onClick={() => startRenameLine(line.id, line.name || `Звено ${line.order}`)}
                       style={{
                         padding: "6px 8px",
-                        backgroundColor: "#f5f5f5",
-                        border: "1px solid #e0e0e0",
+                        backgroundColor: "var(--hp-surface-soft)",
+                        border: "1px solid var(--hp-border)",
                         borderRadius: "6px",
                         cursor: "pointer",
                         fontSize: "12px",
@@ -542,8 +542,8 @@ export const RosterManager = ({
                   disabled={index === 0}
                   style={{
                     padding: "6px 8px",
-                    backgroundColor: index === 0 ? "#f5f5f5" : "#e3f2fd",
-                    color: index === 0 ? "#999" : "#1976d2",
+                    backgroundColor: index === 0 ? "var(--hp-surface-soft)" : "var(--hp-primary-soft)",
+                    color: index === 0 ? "#999" : "var(--hp-primary)",
                     border: "none",
                     borderRadius: "6px",
                     cursor: index === 0 ? "not-allowed" : "pointer",
@@ -560,8 +560,8 @@ export const RosterManager = ({
                   disabled={index === sortedRoster.length - 1}
                   style={{
                     padding: "6px 8px",
-                    backgroundColor: index === sortedRoster.length - 1 ? "#f5f5f5" : "#e3f2fd",
-                    color: index === sortedRoster.length - 1 ? "#999" : "#1976d2",
+                    backgroundColor: index === sortedRoster.length - 1 ? "var(--hp-surface-soft)" : "var(--hp-primary-soft)",
+                    color: index === sortedRoster.length - 1 ? "#999" : "var(--hp-primary)",
                     border: "none",
                     borderRadius: "6px",
                     cursor: index === sortedRoster.length - 1 ? "not-allowed" : "pointer",
@@ -579,7 +579,7 @@ export const RosterManager = ({
                 onClick={() => startEditLine(index)}
                 style={{
                   padding: "8px 12px",
-                  backgroundColor: "#1976d2",
+                  backgroundColor: "var(--hp-primary)",
                   color: "white",
                   border: "none",
                   borderRadius: "8px",
@@ -599,9 +599,9 @@ export const RosterManager = ({
                 }}
                 style={{
                   padding: "8px 12px",
-                  backgroundColor: "#ffebee",
-                  color: "#d32f2f",
-                  border: "1px solid #ffcdd2",
+                  backgroundColor: "var(--hp-danger-soft)",
+                  color: "var(--hp-danger)",
+                  border: "1px solid var(--hp-danger-border)",
                   borderRadius: "8px",
                   cursor: "pointer",
                   fontSize: "13px",
@@ -626,10 +626,10 @@ export const RosterManager = ({
           style={{
             padding: "32px 16px",
             textAlign: "center",
-            color: "#666",
-            border: "1px dashed #e0e0e0",
+            color: "var(--hp-muted)",
+            border: "1px dashed var(--hp-border)",
             borderRadius: "12px",
-            backgroundColor: "#fafafa",
+            backgroundColor: "var(--hp-surface-soft)",
           }}
         >
           <div style={{ fontSize: "48px", marginBottom: "16px", opacity: 0.3 }}>🏒</div>
@@ -638,7 +638,7 @@ export const RosterManager = ({
             onClick={() => setCreatingLine(true)}
             style={{
               padding: "12px 24px",
-              backgroundColor: "#1976d2",
+              backgroundColor: "var(--hp-primary)",
               color: "white",
               border: "none",
               borderRadius: "10px",
@@ -655,3 +655,4 @@ export const RosterManager = ({
     </div>
   );
 };
+

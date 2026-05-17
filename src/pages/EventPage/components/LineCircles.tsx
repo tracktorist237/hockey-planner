@@ -57,28 +57,28 @@ export const LineCircles = ({ members, onPlayerClick, avatarUrls }: LineCirclesP
           width: "56px",
           height: "56px",
           borderRadius: "50%",
-          border: "2px solid #1976d2",
+          border: "2px solid var(--hp-primary)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          backgroundColor: "#e3f2fd",
+          backgroundColor: "var(--hp-primary-soft)",
           margin: "0 auto 4px auto",
           fontSize: "20px",
           fontWeight: "600",
-          color: "#1a237e",
+          color: "var(--hp-heading)",
           cursor: slots[slot] ? "pointer" : "default",
           transition: "all 0.2s ease",
           position: "relative",
         }}
         onMouseEnter={(e) => {
           if (slots[slot]) {
-            e.currentTarget.style.backgroundColor = "#bbdefb";
+            e.currentTarget.style.backgroundColor = "var(--hp-info-border)";
             e.currentTarget.style.transform = "scale(1.05)";
           }
         }}
         onMouseLeave={(e) => {
           if (slots[slot]) {
-            e.currentTarget.style.backgroundColor = "#e3f2fd";
+            e.currentTarget.style.backgroundColor = "var(--hp-primary-soft)";
             e.currentTarget.style.transform = "scale(1)";
           }
         }}
@@ -92,8 +92,8 @@ export const LineCircles = ({ members, onPlayerClick, avatarUrls }: LineCirclesP
               jerseyNumber={slots[slot]!.jerseyNumber}
               fallbackPrefix=""
               showBadgeWhenPhoto={false}
-              fallbackBg="#e3f2fd"
-              fallbackColor="#1a237e"
+              fallbackBg="var(--hp-primary-soft)"
+              fallbackColor="var(--hp-heading)"
               fontSize={20}
             />
             <div
@@ -122,13 +122,13 @@ export const LineCircles = ({ members, onPlayerClick, avatarUrls }: LineCirclesP
             </div>
           </>
         ) : (
-          <span style={{ color: "#666", opacity: 0.5 }}>—</span>
+          <span style={{ color: "var(--hp-muted)", opacity: 0.5 }}>—</span>
         )}
       </div>
       <div
         style={{
           fontSize: "10px",
-          color: "#666",
+          color: "var(--hp-muted)",
           fontWeight: "500",
           marginBottom: "4px",
         }}
@@ -144,7 +144,7 @@ export const LineCircles = ({ members, onPlayerClick, avatarUrls }: LineCirclesP
               startShrinkAt: 10,
               maxLength: 24,
             })}px`,
-            color: "#333",
+            color: "var(--hp-text)",
             lineHeight: "1.2",
             minHeight: "26px",
             whiteSpace: "nowrap",
@@ -153,7 +153,7 @@ export const LineCircles = ({ members, onPlayerClick, avatarUrls }: LineCirclesP
           }}
           onClick={() => onPlayerClick(slots[slot]!.userId)}
           onMouseEnter={(e) => {
-            e.currentTarget.style.color = "#1976d2";
+            e.currentTarget.style.color = "var(--hp-primary)";
             e.currentTarget.style.textDecoration = "underline";
           }}
           onMouseLeave={(e) => {
@@ -178,3 +178,4 @@ export const LineCircles = ({ members, onPlayerClick, avatarUrls }: LineCirclesP
     </div>
   );
 };
+

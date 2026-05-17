@@ -63,7 +63,7 @@ function ContactItemsEditor({
 
   return (
     <div style={{ display: "grid", gap: 8 }}>
-      <div style={{ fontWeight: 900, color: "#334155", fontSize: 14 }}>{title}</div>
+      <div style={{ fontWeight: 900, color: "var(--hp-heading)", fontSize: 14 }}>{title}</div>
       {visibleItems.map((item, index) => (
         <div key={index} style={{ display: "grid", gridTemplateColumns: "minmax(0, 0.9fr) minmax(0, 1.3fr) auto", gap: 8 }}>
           <input value={item.title} onChange={(event) => updateItem(index, "title", event.target.value)} placeholder={titlePlaceholder} style={inputStyle} />
@@ -71,7 +71,7 @@ function ContactItemsEditor({
           <button
             type="button"
             onClick={() => removeItem(index)}
-            style={{ border: "1px solid #fecaca", borderRadius: 12, background: "#fff1f2", color: "#be123c", fontWeight: 900, padding: "0 10px", cursor: "pointer" }}
+            style={{ border: "1px solid var(--hp-danger-border)", borderRadius: 12, background: "var(--hp-danger-soft)", color: "var(--hp-danger)", fontWeight: 900, padding: "0 10px", cursor: "pointer" }}
             aria-label="Удалить пункт"
           >
             ×
@@ -81,7 +81,7 @@ function ContactItemsEditor({
       <button
         type="button"
         onClick={() => onChange([...visibleItems, emptyContact()])}
-        style={{ border: "1px dashed #93c5fd", borderRadius: 12, padding: "10px 12px", background: "#eff6ff", color: "#1d4ed8", fontWeight: 900, cursor: "pointer" }}
+        style={{ border: "1px dashed var(--hp-info-border)", borderRadius: 12, padding: "10px 12px", background: "var(--hp-info-soft)", color: "var(--hp-info)", fontWeight: 900, cursor: "pointer" }}
       >
         Добавить пункт
       </button>
@@ -250,33 +250,33 @@ export function TeamManagePage({ currentUser }: TeamManagePageProps) {
   const isPublic = form.visibility === TeamVisibility.Public;
 
   return (
-    <div style={{ minHeight: "100vh", padding: "16px", paddingBottom: "120px", background: "linear-gradient(135deg, #f8fafc 0%, #e0f2fe 100%)", boxSizing: "border-box" }}>
+    <div style={{ minHeight: "100vh", padding: "16px", paddingBottom: "120px", background: "linear-gradient(135deg, var(--hp-surface-soft) 0%, var(--hp-info-soft) 100%)", boxSizing: "border-box" }}>
       <main style={{ maxWidth: 620, margin: "0 auto" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
-          <button onClick={() => navigate(id ? `/teams/${id}` : "/teams")} style={{ borderRadius: 12, border: "1px solid #cbd5e1", background: "white", width: 42, height: 42, cursor: "pointer", fontSize: 20 }} aria-label="Назад">
+          <button onClick={() => navigate(id ? `/teams/${id}` : "/teams")} style={{ borderRadius: 12, border: "1px solid var(--hp-border)", background: "var(--hp-surface)", width: 42, height: 42, cursor: "pointer", fontSize: 20 }} aria-label="Назад">
             ←
           </button>
           <div>
-            <h1 style={{ margin: 0, fontSize: 26, color: "#0f172a" }}>Настройки команды</h1>
-            <div style={{ color: "#64748b", fontSize: 14 }}>{team?.name ?? "Оформление, права и приглашения"}</div>
+            <h1 style={{ margin: 0, fontSize: 26, color: "var(--hp-text-strong)" }}>Настройки команды</h1>
+            <div style={{ color: "var(--hp-muted)", fontSize: 14 }}>{team?.name ?? "Оформление, права и приглашения"}</div>
           </div>
         </div>
 
-        {error && <div style={{ marginBottom: 12, background: "#fee2e2", color: "#991b1b", borderRadius: 14, padding: "12px 14px" }}>{error}</div>}
-        {message && <div style={{ marginBottom: 12, background: "#dcfce7", color: "#166534", borderRadius: 14, padding: "12px 14px", fontWeight: 800 }}>{message}</div>}
+        {error && <div style={{ marginBottom: 12, background: "var(--hp-danger-soft)", color: "var(--hp-danger)", borderRadius: 14, padding: "12px 14px" }}>{error}</div>}
+        {message && <div style={{ marginBottom: 12, background: "var(--hp-success-soft)", color: "var(--hp-success)", borderRadius: 14, padding: "12px 14px", fontWeight: 800 }}>{message}</div>}
         {loading && <section style={cardStyle}>Загружаем настройки...</section>}
 
         {isDenied && (
           <section style={cardStyle}>
-            <h2 style={{ margin: "0 0 8px", color: "#0f172a" }}>Недостаточно прав</h2>
-            <p style={{ margin: 0, color: "#475569", lineHeight: 1.45 }}>Настройки команды доступны только владельцу и администраторам.</p>
+            <h2 style={{ margin: "0 0 8px", color: "var(--hp-text-strong)" }}>Недостаточно прав</h2>
+            <p style={{ margin: 0, color: "var(--hp-muted)", lineHeight: 1.45 }}>Настройки команды доступны только владельцу и администраторам.</p>
           </section>
         )}
 
         {!loading && team && canManageTeam(team) && (
           <>
             <section style={cardStyle}>
-              <h2 style={{ margin: "0 0 10px", fontSize: 20, color: "#0f172a" }}>Оформление сообщества</h2>
+              <h2 style={{ margin: "0 0 10px", fontSize: 20, color: "var(--hp-text-strong)" }}>Оформление сообщества</h2>
               <div style={{ display: "grid", gap: 10 }}>
                 <input value={form.name} onChange={(event) => setForm((value) => ({ ...value, name: event.target.value }))} placeholder="Название команды" style={inputStyle} />
                 <textarea value={form.description} onChange={(event) => setForm((value) => ({ ...value, description: event.target.value }))} placeholder="Описание команды" style={{ ...inputStyle, minHeight: 82, resize: "vertical", fontFamily: "inherit" }} />
@@ -285,34 +285,34 @@ export function TeamManagePage({ currentUser }: TeamManagePageProps) {
                 <ContactItemsEditor title="Телефоны" titlePlaceholder="Название: Капитан" valuePlaceholder="Телефон" items={form.phones} onChange={(phones) => setForm((value) => ({ ...value, phones }))} />
                 <ContactItemsEditor title="Ссылки" titlePlaceholder="Название: Чат команды" valuePlaceholder="Ссылка" items={form.links} onChange={(links) => setForm((value) => ({ ...value, links }))} />
                 <ContactItemsEditor title="Адреса" titlePlaceholder="Название: Домашняя арена" valuePlaceholder="Адрес" items={form.addresses} onChange={(addresses) => setForm((value) => ({ ...value, addresses }))} />
-                <button type="button" onClick={handleSaveTeam} disabled={teamSaving} style={{ border: 0, borderRadius: 14, padding: "13px 14px", background: "#2563eb", color: "white", fontWeight: 900, cursor: teamSaving ? "wait" : "pointer", opacity: teamSaving ? 0.72 : 1 }}>
+                <button type="button" onClick={handleSaveTeam} disabled={teamSaving} style={{ border: 0, borderRadius: 14, padding: "13px 14px", background: "var(--hp-primary)", color: "white", fontWeight: 900, cursor: teamSaving ? "wait" : "pointer", opacity: teamSaving ? 0.72 : 1 }}>
                   {teamSaving ? "Сохраняем..." : "Сохранить оформление"}
                 </button>
               </div>
             </section>
 
             <section style={{ ...cardStyle, marginTop: 14 }}>
-              <h2 style={{ margin: "0 0 10px", fontSize: 20, color: "#0f172a" }}>Приглашение</h2>
+              <h2 style={{ margin: "0 0 10px", fontSize: 20, color: "var(--hp-text-strong)" }}>Приглашение</h2>
               {team.inviteCode ? (
                 <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 8, alignItems: "center" }}>
-                  <div style={{ background: "#f8fafc", border: "1px dashed #cbd5e1", borderRadius: 14, padding: "10px 12px" }}>
-                    <div style={{ fontSize: 12, color: "#64748b", fontWeight: 800 }}>Код приглашения</div>
-                    <div style={{ fontSize: 20, color: "#0f172a", fontWeight: 900, letterSpacing: 1 }}>{team.inviteCode}</div>
+                  <div style={{ background: "var(--hp-surface-soft)", border: "1px dashed var(--hp-border)", borderRadius: 14, padding: "10px 12px" }}>
+                    <div style={{ fontSize: 12, color: "var(--hp-muted)", fontWeight: 800 }}>Код приглашения</div>
+                    <div style={{ fontSize: 20, color: "var(--hp-text-strong)", fontWeight: 900, letterSpacing: 1 }}>{team.inviteCode}</div>
                   </div>
-                  <button type="button" onClick={handleCopyInviteCode} style={{ border: 0, borderRadius: 14, padding: "14px 12px", background: copySuccess ? "#dcfce7" : "#dbeafe", color: copySuccess ? "#166534" : "#1d4ed8", fontWeight: 900, cursor: "pointer" }}>
+                  <button type="button" onClick={handleCopyInviteCode} style={{ border: 0, borderRadius: 14, padding: "14px 12px", background: copySuccess ? "var(--hp-success-soft)" : "var(--hp-primary-soft)", color: copySuccess ? "var(--hp-success)" : "var(--hp-info)", fontWeight: 900, cursor: "pointer" }}>
                     {copySuccess ? "Скопировано" : "Копировать"}
                   </button>
                 </div>
               ) : (
-                <div style={{ color: "#64748b" }}>Код приглашения недоступен.</div>
+                <div style={{ color: "var(--hp-muted)" }}>Код приглашения недоступен.</div>
               )}
             </section>
 
             <TeamMembersSection team={team} members={sortedMembers} loading={membersLoading} savingUserId={savingUserId} onSave={handleSaveMember} />
 
-            <section style={{ ...cardStyle, marginTop: 14, borderColor: "#fecaca", background: "linear-gradient(180deg, #fff 0%, #fff7f7 100%)" }}>
-              <h2 style={{ margin: "0 0 8px", fontSize: 20, color: "#991b1b" }}>Опасная зона</h2>
-              <p style={{ margin: "0 0 12px", color: "#7f1d1d", lineHeight: 1.45 }}>
+            <section style={{ ...cardStyle, marginTop: 14, borderColor: "var(--hp-danger-border)", background: "linear-gradient(180deg, var(--hp-surface) 0%, var(--hp-danger-soft) 100%)" }}>
+              <h2 style={{ margin: "0 0 8px", fontSize: 20, color: "var(--hp-danger)" }}>Опасная зона</h2>
+              <p style={{ margin: "0 0 12px", color: "var(--hp-danger)", lineHeight: 1.45 }}>
                 Эти настройки влияют на доступ к команде. Публичную команду видно в поиске, в неё можно вступить с подтверждением. Закрытая команда доступна только по коду приглашения.
               </p>
 
@@ -324,8 +324,8 @@ export function TeamManagePage({ currentUser }: TeamManagePageProps) {
                     border: `2px solid ${isPublic ? "#16a34a" : "#f97316"}`,
                     borderRadius: 16,
                     padding: 12,
-                    background: isPublic ? "#f0fdf4" : "#fff7ed",
-                    color: isPublic ? "#166534" : "#9a3412",
+                    background: isPublic ? "var(--hp-success-soft)" : "var(--hp-warning-soft)",
+                    color: isPublic ? "var(--hp-success)" : "var(--hp-warning)",
                     cursor: "pointer",
                     textAlign: "left",
                   }}
@@ -336,16 +336,16 @@ export function TeamManagePage({ currentUser }: TeamManagePageProps) {
                       <div style={{ marginTop: 3, fontSize: 13, fontWeight: 700 }}>{isPublic ? "Видна в поиске команд" : "Вступление только по коду"}</div>
                     </div>
                     <div style={{ width: 54, height: 30, borderRadius: 999, background: isPublic ? "#22c55e" : "#fb923c", padding: 3, boxSizing: "border-box", flexShrink: 0 }}>
-                      <div style={{ width: 24, height: 24, borderRadius: "50%", background: "white", transform: isPublic ? "translateX(24px)" : "translateX(0)", transition: "transform 0.15s ease" }} />
+                      <div style={{ width: 24, height: 24, borderRadius: "50%", background: "var(--hp-surface)", transform: isPublic ? "translateX(24px)" : "translateX(0)", transition: "transform 0.15s ease" }} />
                     </div>
                   </div>
                 </button>
 
-                <button type="button" onClick={handleSavePrivacy} disabled={privacySaving} style={{ border: "1px solid #fca5a5", borderRadius: 14, padding: "13px 14px", background: "#fff1f2", color: "#be123c", fontWeight: 900, cursor: privacySaving ? "wait" : "pointer", opacity: privacySaving ? 0.72 : 1 }}>
+                <button type="button" onClick={handleSavePrivacy} disabled={privacySaving} style={{ border: "1px solid var(--hp-danger-border)", borderRadius: 14, padding: "13px 14px", background: "var(--hp-danger-soft)", color: "var(--hp-danger)", fontWeight: 900, cursor: privacySaving ? "wait" : "pointer", opacity: privacySaving ? 0.72 : 1 }}>
                   {privacySaving ? "Сохраняем..." : "Сохранить приватность"}
                 </button>
 
-                <div style={{ borderTop: "1px solid #fecaca", paddingTop: 10, color: "#991b1b", fontSize: 14, lineHeight: 1.45 }}>
+                <div style={{ borderTop: "1px solid var(--hp-danger-border)", paddingTop: 10, color: "var(--hp-danger)", fontSize: 14, lineHeight: 1.45 }}>
                   Удаление команды пока недоступно: сначала нужно добавить безопасную передачу владения и подтверждение действия.
                 </div>
               </div>

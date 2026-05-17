@@ -49,17 +49,18 @@ export const EventsListPage = ({
       style={{
         padding: "0",
         minHeight: "100vh",
-        backgroundColor: "#f5f5f5",
+        background: "var(--hp-bg-gradient)",
+        color: "var(--hp-text)",
         boxSizing: "border-box",
         fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
       }}
     >
       <div
         style={{
-          backgroundColor: "white",
+          backgroundColor: "var(--hp-surface)",
           padding: "16px",
-          borderBottom: "1px solid #e0e0e0",
-          boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
+          borderBottom: "1px solid var(--hp-border)",
+          boxShadow: "var(--hp-shadow-sm)",
         }}
       >
         <div
@@ -75,7 +76,7 @@ export const EventsListPage = ({
               margin: "0",
               fontSize: "20px",
               fontWeight: "600",
-              color: "#1a237e",
+              color: "var(--hp-heading)",
             }}
           >
             Мероприятия
@@ -86,7 +87,7 @@ export const EventsListPage = ({
                 onClick={() => navigate("/events/create")}
                 style={{
                   padding: "10px 16px",
-                  backgroundColor: "#1976d2",
+                  backgroundColor: "var(--hp-primary)",
                   color: "white",
                   border: "none",
                   borderRadius: "10px",
@@ -118,13 +119,13 @@ export const EventsListPage = ({
 
       <div style={{ padding: "16px" }}>
         {loading ? (
-          <div style={{ padding: "48px 16px", textAlign: "center", color: "#666" }}>
+          <div style={{ padding: "48px 16px", textAlign: "center", color: "var(--hp-muted)" }}>
             <div
               style={{
                 width: "32px",
                 height: "32px",
-                border: "3px solid #e0e0e0",
-                borderTopColor: "#1976d2",
+                border: "3px solid var(--hp-border)",
+                borderTopColor: "var(--hp-primary)",
                 borderRadius: "50%",
                 animation: "spin 1s linear infinite",
                 margin: "0 auto 16px auto",
@@ -152,7 +153,7 @@ export const EventsListPage = ({
                 padding: "10px 14px",
                 borderRadius: "10px",
                 border: "1px solid #ef9a9a",
-                backgroundColor: loading ? "#ffcdd2" : "white",
+                backgroundColor: loading ? "#ffcdd2" : "var(--hp-surface)",
                 color: "#b71c1c",
                 fontWeight: "600",
                 cursor: loading ? "wait" : "pointer",
@@ -171,14 +172,14 @@ export const EventsListPage = ({
                 marginBottom: "16px",
               }}
             >
-              <h2 style={{ margin: "0", fontSize: "18px", fontWeight: "600", color: "#333" }}>
+              <h2 style={{ margin: "0", fontSize: "18px", fontWeight: "600", color: "var(--hp-text)" }}>
                 Предстоящие мероприятия
               </h2>
               <div
                 style={{
                   fontSize: "14px",
-                  color: "#666",
-                  backgroundColor: "#f0f0f0",
+                  color: "var(--hp-muted)",
+                  backgroundColor: "var(--hp-surface-muted)",
                   padding: "4px 10px",
                   borderRadius: "12px",
                 }}
@@ -196,17 +197,17 @@ export const EventsListPage = ({
             style={{
               padding: "48px 16px",
               textAlign: "center",
-              backgroundColor: "white",
+              backgroundColor: "var(--hp-surface)",
               borderRadius: "16px",
-              border: "1px solid #e0e0e0",
+              border: "1px solid var(--hp-border)",
               marginTop: "24px",
             }}
           >
             <div style={{ fontSize: "64px", marginBottom: "16px", opacity: 0.3 }}>🗓️</div>
-            <h3 style={{ margin: "0 0 8px 0", fontSize: "20px", fontWeight: "600", color: "#333" }}>
+            <h3 style={{ margin: "0 0 8px 0", fontSize: "20px", fontWeight: "600", color: "var(--hp-text)" }}>
               Нет предстоящих мероприятий
             </h3>
-            <p style={{ margin: "0 0 24px 0", fontSize: "15px", color: "#666", lineHeight: "1.5" }}>
+            <p style={{ margin: "0 0 24px 0", fontSize: "15px", color: "var(--hp-muted)", lineHeight: "1.5" }}>
               Здесь будут отображаться предстоящие тренировки, матчи и встречи
             </p>
             {canCreateEvents && (
@@ -214,7 +215,7 @@ export const EventsListPage = ({
                 onClick={() => navigate("/events/create")}
                 style={{
                   padding: "14px 24px",
-                  backgroundColor: "#1976d2",
+                  backgroundColor: "var(--hp-primary)",
                   color: "white",
                   border: "none",
                   borderRadius: "12px",
@@ -254,14 +255,14 @@ export const EventsListPage = ({
             div[style*="minHeight: 100vh"] {
               max-width: 600px;
               margin: 0 auto;
-              border-left: 1px solid #e0e0e0;
-              border-right: 1px solid #e0e0e0;
+              border-left: 1px solid var(--hp-border);
+              border-right: 1px solid var(--hp-border);
               min-height: 100vh;
             }
 
             div[style*="position: fixed"] {
               position: static !important;
-              border-top: 1px solid #e0e0e0;
+              border-top: 1px solid var(--hp-border);
               margin-top: 32px;
               box-shadow: none !important;
             }

@@ -15,11 +15,11 @@ export const PlayerList = ({ users, loading, onSelectUser }: PlayerListProps) =>
   return (
     <div
       style={{
-        border: "1px solid #e0e0e0",
+        border: "1px solid var(--hp-border)",
         borderRadius: "12px",
         maxHeight: "300px",
         overflowY: "auto",
-        backgroundColor: "#fff",
+        backgroundColor: "var(--hp-surface)",
         marginBottom: "20px",
       }}
     >
@@ -28,15 +28,15 @@ export const PlayerList = ({ users, loading, onSelectUser }: PlayerListProps) =>
           style={{
             padding: "32px",
             textAlign: "center",
-            color: "#666",
+            color: "var(--hp-muted)",
           }}
         >
           <div
             style={{
               width: "24px",
               height: "24px",
-              border: "2px solid #e0e0e0",
-              borderTopColor: "#1976d2",
+              border: "2px solid var(--hp-border)",
+              borderTopColor: "var(--hp-primary)",
               borderRadius: "50%",
               animation: "spin 1s linear infinite",
               margin: "0 auto 12px auto",
@@ -62,10 +62,10 @@ export const PlayerList = ({ users, loading, onSelectUser }: PlayerListProps) =>
               }}
               onClick={() => onSelectUser(user)}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = "#f5f5f5";
+                e.currentTarget.style.backgroundColor = "var(--hp-surface-soft)";
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "#fff";
+                e.currentTarget.style.backgroundColor = "var(--hp-surface)";
               }}
             >
               <PlayerAvatar
@@ -75,8 +75,8 @@ export const PlayerList = ({ users, loading, onSelectUser }: PlayerListProps) =>
                 jerseyNumber={user.jerseyNumber}
                 fallbackPrefix="#"
                 badgePrefix="#"
-                fallbackBg={isSpecial ? "#f57c00" : "#1976d2"}
-                fallbackColor="white"
+                fallbackBg={isSpecial ? "#f57c00" : "var(--hp-primary)"}
+                fallbackColor="var(--hp-surface)"
                 fontSize={13}
               />
               <div style={{ flex: 1 }}>
@@ -101,7 +101,7 @@ export const PlayerList = ({ users, loading, onSelectUser }: PlayerListProps) =>
                     <span
                       style={{
                         fontSize: "11px",
-                        backgroundColor: "#fff3e0",
+                        backgroundColor: "var(--hp-surface)3e0",
                         color: "#f57c00",
                         padding: "2px 8px",
                         borderRadius: "12px",
@@ -115,7 +115,7 @@ export const PlayerList = ({ users, loading, onSelectUser }: PlayerListProps) =>
                 <div
                   style={{
                     fontSize: "14px",
-                    color: "#666",
+                    color: "var(--hp-muted)",
                   }}
                 >
                   ID: {user.id.slice(0, 8)}...
@@ -124,7 +124,7 @@ export const PlayerList = ({ users, loading, onSelectUser }: PlayerListProps) =>
               <div
                 style={{
                   fontSize: "20px",
-                  color: "#666",
+                  color: "var(--hp-muted)",
                   opacity: 0.7,
                 }}
               >
@@ -138,7 +138,7 @@ export const PlayerList = ({ users, loading, onSelectUser }: PlayerListProps) =>
           style={{
             padding: "32px",
             textAlign: "center",
-            color: "#666",
+            color: "var(--hp-muted)",
           }}
         >
           <div
@@ -153,7 +153,7 @@ export const PlayerList = ({ users, loading, onSelectUser }: PlayerListProps) =>
           <div style={{ marginBottom: "8px", fontWeight: "500" }}>
             Игрок не найден
           </div>
-          <div style={{ fontSize: "14px", color: "#999" }}>
+          <div style={{ fontSize: "14px", color: "var(--hp-muted)" }}>
             Попробуйте другой запрос или добавьте себя
           </div>
         </div>

@@ -34,11 +34,11 @@ export function CalendarPage() {
   }
 
   return (
-    <div style={{ padding: 0, minHeight: "100vh", backgroundColor: "#f5f5f5", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", boxSizing: "border-box" }}>
+    <div style={{ padding: 0, minHeight: "100vh", background: "var(--hp-bg-gradient)", color: "var(--hp-text)", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", boxSizing: "border-box" }}>
       <CalendarHeader onBack={() => navigate("/events")} viewMode={viewMode} isMobile={isMobile} currentDate={currentDate} onViewModeChange={setViewMode} onPrev={goPrev} onNext={goNext} onToday={goToday} />
       <div style={{ padding: "16px", paddingBottom: "120px" }}>
         <Legend />
-        <div style={{ backgroundColor: "white", borderRadius: "16px", padding: isMobile ? "12px" : "20px", marginBottom: "20px", boxShadow: "0 2px 8px rgba(0,0,0,0.08)" }}>
+        <div style={{ backgroundColor: "var(--hp-surface)", borderRadius: "16px", padding: isMobile ? "12px" : "20px", marginBottom: "20px", boxShadow: "var(--hp-shadow-sm)" }}>
           {viewMode === "month" ? (
             <MonthView currentDate={currentDate} selectedDate={selectedDate} isMobile={isMobile} daysInMonth={daysInMonth} firstDayOfMonth={firstDayOfMonth} getEventsForDate={getEventsForDate} onDayClick={selectDate} />
           ) : (
@@ -48,7 +48,7 @@ export function CalendarPage() {
         <EventsList selectedDate={selectedDate} events={selectedDateEvents} onEventClick={(eventId) => navigate(`/events/${eventId}`)} />
       </div>
       <BottomNav activeTab="calendar" />
-      <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } } @media (min-width: 768px) { div[style*="minHeight: 100vh"] { max-width: 800px; margin: 0 auto; border-left: 1px solid #e0e0e0; border-right: 1px solid #e0e0e0; } } @supports (padding: max(0px)) { div[style*="position: sticky"] { padding-top: max(16px, env(safe-area-inset-top, 16px)); } }`}</style>
+      <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } } @media (min-width: 768px) { div[style*="minHeight: 100vh"] { max-width: 800px; margin: 0 auto; border-left: 1px solid var(--hp-border); border-right: 1px solid var(--hp-border); } } @supports (padding: max(0px)) { div[style*="position: sticky"] { padding-top: max(16px, env(safe-area-inset-top, 16px)); } }`}</style>
     </div>
   );
 }

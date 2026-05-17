@@ -57,7 +57,7 @@ export const StartSearchPage = ({ onSelect }: StartSearchPageProps) => {
       style={{
         padding: "16px",
         minHeight: "100vh",
-        backgroundColor: "#f5f5f5",
+        background: "var(--hp-bg-gradient)",
         boxSizing: "border-box",
         fontFamily:
           "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
@@ -75,7 +75,7 @@ export const StartSearchPage = ({ onSelect }: StartSearchPageProps) => {
             margin: "0 0 8px 0",
             fontSize: "28px",
             fontWeight: "700",
-            color: "#1a237e",
+            color: "var(--hp-heading)",
             lineHeight: "1.2",
           }}
         >
@@ -85,7 +85,7 @@ export const StartSearchPage = ({ onSelect }: StartSearchPageProps) => {
           style={{
             margin: "0",
             fontSize: "16px",
-            color: "#666",
+            color: "var(--hp-muted)",
             lineHeight: "1.4",
           }}
         >
@@ -95,11 +95,11 @@ export const StartSearchPage = ({ onSelect }: StartSearchPageProps) => {
 
       <div
         style={{
-          backgroundColor: "white",
+          backgroundColor: "var(--hp-surface)",
           borderRadius: "16px",
           padding: "20px",
           marginBottom: "20px",
-          boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+          boxShadow: "var(--hp-shadow-sm)",
         }}
       >
         <h2
@@ -107,7 +107,7 @@ export const StartSearchPage = ({ onSelect }: StartSearchPageProps) => {
             margin: "0 0 16px 0",
             fontSize: "20px",
             fontWeight: "600",
-            color: "#333",
+            color: "var(--hp-text)",
           }}
         >
           Поиск игрока
@@ -121,10 +121,10 @@ export const StartSearchPage = ({ onSelect }: StartSearchPageProps) => {
             style={{
               width: "100%",
               padding: "16px 16px 16px 48px",
-              border: "1px solid #e0e0e0",
+              border: "1px solid var(--hp-border)",
               borderRadius: "12px",
               fontSize: "16px",
-              backgroundColor: "#fafafa",
+              backgroundColor: "var(--hp-input-bg)",
               boxSizing: "border-box",
               WebkitAppearance: "none",
             }}
@@ -136,7 +136,7 @@ export const StartSearchPage = ({ onSelect }: StartSearchPageProps) => {
               top: "50%",
               transform: "translateY(-50%)",
               fontSize: "20px",
-              color: "#666",
+              color: "var(--hp-muted)",
             }}
           >
             🔍
@@ -172,7 +172,7 @@ export const StartSearchPage = ({ onSelect }: StartSearchPageProps) => {
 
           input:focus {
             outline: none;
-            border-color: #1976d2 !important;
+            border-color: var(--hp-primary) !important;
             box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.1);
           }
 

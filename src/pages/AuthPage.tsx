@@ -6,7 +6,8 @@ import { markOnboardingRequired, shouldRunOnboarding } from "src/utils/onboardin
 const panelStyle: CSSProperties = {
   minHeight: "100vh",
   padding: "20px 14px",
-  background: "radial-gradient(circle at top left, #dbeafe 0, transparent 34%), linear-gradient(135deg, #f8fafc 0%, #e0f2fe 100%)",
+  background: "var(--hp-bg-gradient)",
+  color: "var(--hp-text)",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
@@ -17,19 +18,21 @@ const cardStyle: CSSProperties = {
   maxWidth: 500,
   borderRadius: 28,
   padding: 22,
-  background: "rgba(255,255,255,0.95)",
-  boxShadow: "0 24px 80px rgba(15, 23, 42, 0.16)",
-  border: "1px solid rgba(148, 163, 184, 0.28)",
+  background: "var(--hp-surface)",
+  boxShadow: "var(--hp-shadow-md)",
+  border: "1px solid var(--hp-border)",
 };
 
 const inputStyle: CSSProperties = {
   width: "100%",
   borderRadius: 14,
-  border: "1px solid #cbd5e1",
+  border: "1px solid var(--hp-border)",
   padding: "15px 14px",
   fontSize: 17,
   outline: "none",
   boxSizing: "border-box",
+  background: "var(--hp-input-bg)",
+  color: "var(--hp-text)",
 };
 
 const buttonStyle: CSSProperties = {
@@ -56,7 +59,7 @@ const tabButtonStyle: CSSProperties = {
 const mutedButtonStyle: CSSProperties = {
   border: 0,
   background: "transparent",
-  color: "#2563eb",
+  color: "var(--hp-primary)",
   fontWeight: 800,
   fontSize: 15,
   cursor: "pointer",
@@ -178,8 +181,8 @@ export function AuthPage() {
           <div style={{ fontSize: 13, fontWeight: 900, color: "#0f766e", textTransform: "uppercase", letterSpacing: 1 }}>
             Hockey Planner
           </div>
-          <h1 style={{ margin: "8px 0 6px", fontSize: 30, color: "#0f172a" }}>{title}</h1>
-          <p style={{ margin: 0, color: "#475569", fontSize: 16, lineHeight: 1.45 }}>
+          <h1 style={{ margin: "8px 0 6px", fontSize: 30, color: "var(--hp-text-strong)" }}>{title}</h1>
+          <p style={{ margin: 0, color: "var(--hp-muted)", fontSize: 16, lineHeight: 1.45 }}>
             {mode === "login"
               ? "Введите email и пароль, которые указывали при регистрации."
               : mode === "register"
@@ -199,16 +202,16 @@ export function AuthPage() {
               padding: 6,
               marginBottom: 18,
               borderRadius: 18,
-              background: "#e2e8f0",
+              background: "var(--hp-surface-muted)",
             }}
           >
             <button
               type="button"
               style={{
                 ...tabButtonStyle,
-                background: mode === "login" ? "white" : "transparent",
-                color: mode === "login" ? "#0f172a" : "#475569",
-                boxShadow: mode === "login" ? "0 6px 18px rgba(15, 23, 42, 0.12)" : "none",
+                background: mode === "login" ? "var(--hp-surface)" : "transparent",
+                color: mode === "login" ? "var(--hp-text-strong)" : "var(--hp-muted)",
+                boxShadow: mode === "login" ? "var(--hp-shadow-sm)" : "none",
               }}
               onClick={() => setMode("login")}
             >
@@ -218,9 +221,9 @@ export function AuthPage() {
               type="button"
               style={{
                 ...tabButtonStyle,
-                background: mode === "register" ? "white" : "transparent",
-                color: mode === "register" ? "#0f172a" : "#475569",
-                boxShadow: mode === "register" ? "0 6px 18px rgba(15, 23, 42, 0.12)" : "none",
+                background: mode === "register" ? "var(--hp-surface)" : "transparent",
+                color: mode === "register" ? "var(--hp-text-strong)" : "var(--hp-muted)",
+                boxShadow: mode === "register" ? "var(--hp-shadow-sm)" : "none",
               }}
               onClick={() => setMode("register")}
             >
@@ -257,7 +260,7 @@ export function AuthPage() {
                     transform: "translateY(-50%)",
                     border: 0,
                     borderRadius: 10,
-                    background: "#e2e8f0",
+                    background: "var(--hp-surface-muted)",
                     color: "#334155",
                     padding: "8px 10px",
                     fontWeight: 800,
@@ -306,7 +309,7 @@ export function AuthPage() {
                     transform: "translateY(-50%)",
                     border: 0,
                     borderRadius: 10,
-                    background: "#e2e8f0",
+                    background: "var(--hp-surface-muted)",
                     color: "#334155",
                     padding: "8px 10px",
                     fontWeight: 800,

@@ -9,7 +9,7 @@ export const AddPlayerButton = () => {
         padding: "16px",
         backgroundColor: "#f8f9fa",
         borderRadius: "12px",
-        border: "1px solid #e3f2fd",
+        border: "1px solid var(--hp-primary-soft)",
         textAlign: "center",
       }}
     >
@@ -28,7 +28,7 @@ export const AddPlayerButton = () => {
         style={{
           width: "100%",
           padding: "16px 24px",
-          backgroundColor: "#1976d2",
+          backgroundColor: "var(--hp-primary)",
           color: "white",
           border: "none",
           borderRadius: "12px",
@@ -42,11 +42,11 @@ export const AddPlayerButton = () => {
           gap: "8px",
         }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.backgroundColor = "#1565c0";
+          e.currentTarget.style.backgroundColor = "var(--hp-primary-hover)";
           e.currentTarget.style.transform = "translateY(-1px)";
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.backgroundColor = "#1976d2";
+          e.currentTarget.style.backgroundColor = "var(--hp-primary)";
           e.currentTarget.style.transform = "translateY(0)";
         }}
       >

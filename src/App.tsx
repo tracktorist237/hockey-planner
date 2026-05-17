@@ -30,6 +30,7 @@ import { PermissionDenied } from "src/components/PermissionDenied";
 import { useCurrentTeam } from "src/hooks/useCurrentTeam";
 import { useAuth } from "src/hooks/useAuth";
 import { AuthProvider } from "src/context/AuthContext";
+import { ThemeProvider } from "src/context/ThemeContext";
 import { shouldRunOnboarding } from "src/utils/onboarding";
 import { useEffect, useState } from "react";
 import { getMyTeams } from "src/api/teams";
@@ -362,10 +363,12 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <AppRoutes />
-      </BrowserRouter>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <BrowserRouter>
+          <AppRoutes />
+        </BrowserRouter>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }

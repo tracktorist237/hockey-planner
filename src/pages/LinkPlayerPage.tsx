@@ -90,7 +90,8 @@ export function LinkPlayerPage() {
       style={{
         minHeight: "100vh",
         padding: "20px 14px",
-        background: "linear-gradient(135deg, #f8fafc 0%, #e0f2fe 100%)",
+        background: "var(--hp-bg-gradient)",
+        color: "var(--hp-text)",
         boxSizing: "border-box",
       }}
     >
@@ -98,16 +99,17 @@ export function LinkPlayerPage() {
         style={{
           maxWidth: 520,
           margin: "0 auto",
-          background: "white",
+          background: "var(--hp-surface)",
           borderRadius: 24,
           padding: 20,
-          boxShadow: "0 20px 60px rgba(15, 23, 42, 0.14)",
+          boxShadow: "var(--hp-shadow-md)",
+          border: "1px solid var(--hp-border)",
         }}
       >
-        <h1 style={{ margin: "0 0 8px", fontSize: 28, color: "#0f172a" }}>
+        <h1 style={{ margin: "0 0 8px", fontSize: 28, color: "var(--hp-text-strong)" }}>
           Найдите себя в списке команды
         </h1>
-        <p style={{ margin: "0 0 18px", color: "#475569", fontSize: 16, lineHeight: 1.45 }}>
+        <p style={{ margin: "0 0 18px", color: "var(--hp-muted)", fontSize: 16, lineHeight: 1.45 }}>
           Если вы уже были в команде, выберите себя. Мы привяжем email к старому профилю,
           и сохранятся номер, явка, аватарка и данные игрока.
         </p>
@@ -141,7 +143,7 @@ export function LinkPlayerPage() {
           style={{
             width: "100%",
             borderRadius: 14,
-            border: "1px solid #cbd5e1",
+            border: "1px solid var(--hp-border)",
             padding: "15px 14px",
             fontSize: 17,
             boxSizing: "border-box",
@@ -165,7 +167,7 @@ export function LinkPlayerPage() {
             paddingRight: 4,
           }}
         >
-          {loading && <div style={{ color: "#64748b" }}>Загружаем игроков...</div>}
+          {loading && <div style={{ color: "var(--hp-muted)" }}>Загружаем игроков...</div>}
           {!loading &&
             filteredPlayers.map((player) => {
               const isLinked = Boolean(player.email);
@@ -186,10 +188,10 @@ export function LinkPlayerPage() {
                 disabled={isLinked}
                 style={{
                   textAlign: "left",
-                  border: isSelected ? "2px solid #2563eb" : "1px solid #cbd5e1",
-                  borderRadius: 14,
-                  background: isSelected ? "#dbeafe" : isLinked ? "#f8fafc" : "white",
-                  color: isLinked ? "#94a3b8" : "#0f172a",
+            border: isSelected ? "2px solid var(--hp-primary)" : "1px solid var(--hp-border)",
+            borderRadius: 14,
+            background: isSelected ? "var(--hp-primary-soft)" : isLinked ? "var(--hp-surface-soft)" : "var(--hp-surface)",
+            color: isLinked ? "var(--hp-muted)" : "var(--hp-text-strong)",
                   padding: "13px 14px",
                   fontSize: 17,
                   fontWeight: 800,
@@ -239,14 +241,14 @@ export function LinkPlayerPage() {
           style={{
             width: "100%",
             marginTop: 10,
-            border: "1px solid #cbd5e1",
+            border: "1px solid var(--hp-border)",
             borderRadius: 16,
             padding: "14px 16px",
             fontSize: 16,
             fontWeight: 800,
             cursor: "pointer",
             background: "#f8fafc",
-            color: "#334155",
+            color: "var(--hp-text)",
           }}
         >
           Меня нет в списке, заполнить профиль

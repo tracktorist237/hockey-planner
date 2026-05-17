@@ -109,7 +109,7 @@ export function ProfilePage() {
       style={{
         padding: "16px",
         minHeight: "100vh",
-        backgroundColor: "#f5f5f5",
+        background: "var(--hp-bg-gradient)",
         fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
         boxSizing: "border-box",
       }}
@@ -120,9 +120,9 @@ export function ProfilePage() {
           style={{
             width: "44px",
             height: "44px",
-            border: "1px solid #e0e0e0",
+            border: "1px solid var(--hp-border)",
             borderRadius: "10px",
-            backgroundColor: "white",
+            backgroundColor: "var(--hp-surface)",
             cursor: "pointer",
             fontSize: "20px",
           }}
@@ -130,16 +130,16 @@ export function ProfilePage() {
         >
           ←
         </button>
-        <h1 style={{ margin: 0, fontSize: "22px", color: "#1a237e" }}>Профиль</h1>
+        <h1 style={{ margin: 0, fontSize: "22px", color: "var(--hp-heading)" }}>Профиль</h1>
       </div>
 
       <section
         style={{
-          backgroundColor: "white",
+          backgroundColor: "var(--hp-surface)",
           borderRadius: "16px",
           padding: "20px",
           marginBottom: "16px",
-          boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+          boxShadow: "var(--hp-shadow-sm)",
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
@@ -156,10 +156,10 @@ export function ProfilePage() {
             badgeFontSizePx={11}
           />
           <div style={{ minWidth: 0 }}>
-            <div style={{ fontSize: "20px", fontWeight: 700, color: "#1a237e", marginBottom: "6px" }}>
+            <div style={{ fontSize: "20px", fontWeight: 700, color: "var(--hp-heading)", marginBottom: "6px" }}>
               {fullName || "Без имени"}
             </div>
-            <div style={{ fontSize: "14px", color: "#546e7a" }}>ID: {currentUser.id}</div>
+          <div style={{ fontSize: "14px", color: "var(--hp-muted)" }}>ID: {currentUser.id}</div>
           </div>
         </div>
 
@@ -170,8 +170,8 @@ export function ProfilePage() {
               fontWeight: 600,
               padding: "4px 10px",
               borderRadius: "999px",
-              backgroundColor: "#eef4ff",
-              color: "#1f4fa5",
+              backgroundColor: "var(--hp-primary-soft)",
+              color: "var(--hp-primary-text)",
             }}
           >
             {roleToLabel[currentUser.role]}
@@ -182,8 +182,8 @@ export function ProfilePage() {
               fontWeight: 600,
               padding: "4px 10px",
               borderRadius: "999px",
-              backgroundColor: "#f3f5f7",
-              color: "#455a64",
+              backgroundColor: "var(--hp-neutral-soft)",
+              color: "var(--hp-neutral)",
             }}
           >
             Игровой № {currentUser.jerseyNumber ?? "—"}
@@ -194,8 +194,8 @@ export function ProfilePage() {
               fontWeight: 600,
               padding: "4px 10px",
               borderRadius: "999px",
-              backgroundColor: currentUser.emailConfirmed === false ? "#fff7ed" : "#ecfdf5",
-              color: currentUser.emailConfirmed === false ? "#9a3412" : "#166534",
+              backgroundColor: currentUser.emailConfirmed === false ? "var(--hp-warning-soft)" : "var(--hp-success-soft)",
+              color: currentUser.emailConfirmed === false ? "var(--hp-warning)" : "var(--hp-success)",
             }}
           >
             {currentUser.email ?? "Почта не указана"}
@@ -206,12 +206,12 @@ export function ProfilePage() {
       {currentUser.emailConfirmed === false && (
         <section
           style={{
-            backgroundColor: "#fff7ed",
+            backgroundColor: "var(--hp-warning-soft)",
             borderRadius: "16px",
             padding: "16px",
             marginBottom: "16px",
-            border: "1px solid #fed7aa",
-            color: "#9a3412",
+            border: "1px solid var(--hp-warning-border)",
+            color: "var(--hp-warning)",
             fontWeight: 700,
             lineHeight: 1.45,
           }}
@@ -228,9 +228,9 @@ export function ProfilePage() {
               width: "100%",
               padding: "12px 14px",
               borderRadius: "12px",
-              border: "1px solid #fb923c",
-              backgroundColor: "white",
-              color: "#9a3412",
+              border: "1px solid var(--hp-warning-border)",
+              backgroundColor: "var(--hp-surface)",
+              color: "var(--hp-warning)",
               fontWeight: 800,
               cursor: resendLoading ? "default" : "pointer",
               opacity: resendLoading ? 0.7 : 1,
@@ -244,12 +244,12 @@ export function ProfilePage() {
       {emailMessage && (
         <section
           style={{
-            backgroundColor: "#ecfdf5",
+            backgroundColor: "var(--hp-success-soft)",
             borderRadius: "16px",
             padding: "14px 16px",
             marginBottom: "16px",
-            border: "1px solid #bbf7d0",
-            color: "#166534",
+            border: "1px solid var(--hp-success-border)",
+            color: "var(--hp-success)",
             fontWeight: 700,
             lineHeight: 1.45,
           }}
@@ -261,12 +261,12 @@ export function ProfilePage() {
       {passwordMessage && (
         <section
           style={{
-            backgroundColor: "#ecfdf5",
+            backgroundColor: "var(--hp-success-soft)",
             borderRadius: "16px",
             padding: "14px 16px",
             marginBottom: "16px",
-            border: "1px solid #bbf7d0",
-            color: "#166534",
+            border: "1px solid var(--hp-success-border)",
+            color: "var(--hp-success)",
             fontWeight: 700,
             lineHeight: 1.45,
           }}
@@ -278,12 +278,12 @@ export function ProfilePage() {
       {emailError && (
         <section
           style={{
-            backgroundColor: "#fef2f2",
+            backgroundColor: "var(--hp-danger-soft)",
             borderRadius: "16px",
             padding: "14px 16px",
             marginBottom: "16px",
-            border: "1px solid #fecaca",
-            color: "#991b1b",
+            border: "1px solid var(--hp-danger-border)",
+            color: "var(--hp-danger)",
             fontWeight: 700,
             lineHeight: 1.45,
           }}
@@ -295,12 +295,12 @@ export function ProfilePage() {
       {passwordError && (
         <section
           style={{
-            backgroundColor: "#fef2f2",
+            backgroundColor: "var(--hp-danger-soft)",
             borderRadius: "16px",
             padding: "14px 16px",
             marginBottom: "16px",
-            border: "1px solid #fecaca",
-            color: "#991b1b",
+            border: "1px solid var(--hp-danger-border)",
+            color: "var(--hp-danger)",
             fontWeight: 700,
             lineHeight: 1.45,
           }}
@@ -311,11 +311,11 @@ export function ProfilePage() {
 
       <section
         style={{
-          backgroundColor: "white",
+          backgroundColor: "var(--hp-surface)",
           borderRadius: "16px",
           padding: "20px",
           marginBottom: "16px",
-          boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+          boxShadow: "var(--hp-shadow-sm)",
           display: "grid",
           gap: "10px",
         }}
@@ -326,9 +326,9 @@ export function ProfilePage() {
             width: "100%",
             padding: "14px 16px",
             borderRadius: "12px",
-            border: "1px solid #d1c4e9",
-            backgroundColor: "#ede7f6",
-            color: "#5e35b1",
+            border: "1px solid var(--hp-purple-border)",
+            backgroundColor: "var(--hp-purple-soft)",
+            color: "var(--hp-purple)",
             fontWeight: 700,
             cursor: "pointer",
           }}
@@ -351,9 +351,9 @@ export function ProfilePage() {
             width: "100%",
             padding: "14px 16px",
             borderRadius: "12px",
-            border: "1px solid #bfdbfe",
-            backgroundColor: "#eff6ff",
-            color: "#1d4ed8",
+            border: "1px solid var(--hp-info-border)",
+            backgroundColor: "var(--hp-info-soft)",
+            color: "var(--hp-info)",
             fontWeight: 700,
             cursor: "pointer",
           }}
@@ -369,11 +369,11 @@ export function ProfilePage() {
               gap: "10px",
               padding: "14px",
               borderRadius: "14px",
-              backgroundColor: "#f8fafc",
-              border: "1px solid #e2e8f0",
+              background: "var(--hp-bg-gradient)",
+              border: "1px solid var(--hp-border)",
             }}
           >
-            <div style={{ color: "#475569", fontSize: "14px", lineHeight: 1.4 }}>
+            <div style={{ color: "var(--hp-muted)", fontSize: "14px", lineHeight: 1.4 }}>
               Укажите новый email и текущий пароль. На новый адрес придет письмо подтверждения.
             </div>
             <input
@@ -387,7 +387,7 @@ export function ProfilePage() {
                 boxSizing: "border-box",
                 padding: "13px 14px",
                 borderRadius: "12px",
-                border: "1px solid #cbd5e1",
+                border: "1px solid var(--hp-border)",
                 fontSize: "16px",
               }}
             />
@@ -402,7 +402,7 @@ export function ProfilePage() {
                 boxSizing: "border-box",
                 padding: "13px 14px",
                 borderRadius: "12px",
-                border: "1px solid #cbd5e1",
+                border: "1px solid var(--hp-border)",
                 fontSize: "16px",
               }}
             />
@@ -414,7 +414,7 @@ export function ProfilePage() {
                 padding: "13px 16px",
                 borderRadius: "12px",
                 border: "none",
-                backgroundColor: "#2563eb",
+                backgroundColor: "var(--hp-primary)",
                 color: "white",
                 fontWeight: 800,
                 cursor: emailLoading ? "default" : "pointer",
@@ -442,9 +442,9 @@ export function ProfilePage() {
             width: "100%",
             padding: "14px 16px",
             borderRadius: "12px",
-            border: "1px solid #bbf7d0",
-            backgroundColor: "#ecfdf5",
-            color: "#166534",
+            border: "1px solid var(--hp-success-border)",
+            backgroundColor: "var(--hp-success-soft)",
+            color: "var(--hp-success)",
             fontWeight: 700,
             cursor: "pointer",
           }}
@@ -460,11 +460,11 @@ export function ProfilePage() {
               gap: "10px",
               padding: "14px",
               borderRadius: "14px",
-              backgroundColor: "#f8fafc",
-              border: "1px solid #e2e8f0",
+              background: "var(--hp-bg-gradient)",
+              border: "1px solid var(--hp-border)",
             }}
           >
-            <div style={{ color: "#475569", fontSize: "14px", lineHeight: 1.4 }}>
+            <div style={{ color: "var(--hp-muted)", fontSize: "14px", lineHeight: 1.4 }}>
               Введите текущий пароль и новый пароль. Новый пароль должен быть не короче 8 символов.
             </div>
             <input
@@ -478,7 +478,7 @@ export function ProfilePage() {
                 boxSizing: "border-box",
                 padding: "13px 14px",
                 borderRadius: "12px",
-                border: "1px solid #cbd5e1",
+                border: "1px solid var(--hp-border)",
                 fontSize: "16px",
               }}
             />
@@ -494,7 +494,7 @@ export function ProfilePage() {
                 boxSizing: "border-box",
                 padding: "13px 14px",
                 borderRadius: "12px",
-                border: "1px solid #cbd5e1",
+                border: "1px solid var(--hp-border)",
                 fontSize: "16px",
               }}
             />
@@ -510,7 +510,7 @@ export function ProfilePage() {
                 boxSizing: "border-box",
                 padding: "13px 14px",
                 borderRadius: "12px",
-                border: "1px solid #cbd5e1",
+                border: "1px solid var(--hp-border)",
                 fontSize: "16px",
               }}
             />
@@ -522,7 +522,7 @@ export function ProfilePage() {
                 padding: "13px 16px",
                 borderRadius: "12px",
                 border: "none",
-                backgroundColor: "#16a34a",
+                backgroundColor: "var(--hp-success)",
                 color: "white",
                 fontWeight: 800,
                 cursor: passwordLoading ? "default" : "pointer",
@@ -543,9 +543,9 @@ export function ProfilePage() {
             width: "100%",
             padding: "14px 16px",
             borderRadius: "12px",
-            border: "1px solid #ffcdd2",
-            backgroundColor: "#ffebee",
-            color: "#c62828",
+            border: "1px solid var(--hp-danger-border)",
+            backgroundColor: "var(--hp-danger-soft)",
+            color: "var(--hp-danger)",
             fontWeight: 700,
             cursor: "pointer",
           }}

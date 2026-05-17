@@ -38,7 +38,7 @@ export const PasswordModal = ({
     >
       <div
         style={{
-          backgroundColor: "white",
+          backgroundColor: "var(--hp-surface)",
           borderRadius: "20px",
           maxWidth: "400px",
           width: "100%",
@@ -52,7 +52,7 @@ export const PasswordModal = ({
             margin: "0 0 12px 0",
             fontSize: "20px",
             fontWeight: "600",
-            color: "#1a237e",
+            color: "var(--hp-heading)",
           }}
         >
           Введите пароль
@@ -62,7 +62,7 @@ export const PasswordModal = ({
           style={{
             margin: "0 0 16px 0",
             fontSize: "14px",
-            color: "#666",
+            color: "var(--hp-muted)",
             lineHeight: "1.5",
           }}
         >
@@ -77,7 +77,7 @@ export const PasswordModal = ({
               marginBottom: "8px",
               fontSize: "14px",
               fontWeight: "600",
-              color: "#333",
+              color: "var(--hp-text)",
             }}
           >
             Пароль
@@ -91,7 +91,7 @@ export const PasswordModal = ({
             style={{
               width: "100%",
               padding: "14px",
-              border: `2px solid ${passwordError ? "#d32f2f" : "#e0e0e0"}`,
+              border: `2px solid ${passwordError ? "#d32f2f" : "var(--hp-border)"}`,
               borderRadius: "10px",
               fontSize: "16px",
               boxSizing: "border-box",
@@ -129,9 +129,9 @@ export const PasswordModal = ({
             style={{
               flex: 1,
               padding: "14px",
-              backgroundColor: "#f5f5f5",
-              color: "#666",
-              border: "1px solid #e0e0e0",
+              backgroundColor: "var(--hp-surface-soft)",
+              color: "var(--hp-muted)",
+              border: "1px solid var(--hp-border)",
               borderRadius: "10px",
               fontSize: "15px",
               fontWeight: "500",
@@ -145,7 +145,7 @@ export const PasswordModal = ({
             style={{
               flex: 1,
               padding: "14px",
-              backgroundColor: "#1976d2",
+              backgroundColor: "var(--hp-primary)",
               color: "white",
               border: "none",
               borderRadius: "10px",

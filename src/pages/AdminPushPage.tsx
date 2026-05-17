@@ -48,8 +48,8 @@ export function AdminPushPage() {
             width: 40,
             height: 40,
             borderRadius: 10,
-            border: "1px solid #e0e0e0",
-            background: "#fff",
+            border: "1px solid var(--hp-border)",
+            background: "var(--hp-surface)",
             cursor: "pointer",
             fontSize: 18,
           }}
@@ -62,9 +62,9 @@ export function AdminPushPage() {
         </div>
       </div>
 
-      <div style={{ background: "#fff", borderRadius: 16, padding: 20, boxShadow: "0 2px 8px rgba(0,0,0,0.08)" }}>
+      <div style={{ background: "var(--hp-surface)", borderRadius: 16, padding: 20, boxShadow: "var(--hp-shadow-sm)" }}>
         <h1 style={{ marginTop: 0, marginBottom: 8 }}>Админ: push-рассылка</h1>
-        <p style={{ marginTop: 0, color: "#666" }}>
+        <p style={{ marginTop: 0, color: "var(--hp-muted)" }}>
           Страница доступна только по прямому URL. Кнопок перехода в приложении нет.
         </p>
 
@@ -109,7 +109,7 @@ export function AdminPushPage() {
               padding: "12px 16px",
               borderRadius: 12,
               border: "none",
-              background: submitting ? "#90a4ae" : "#1976d2",
+              background: submitting ? "#90a4ae" : "var(--hp-primary)",
               color: "#fff",
               fontWeight: 600,
               cursor: submitting ? "wait" : "pointer",

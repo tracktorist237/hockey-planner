@@ -133,10 +133,11 @@ export function AddressSearchInput({
         style={{
           width: "100%",
           padding: "10px 40px 10px 10px",
-          border: "1px solid #ccc",
+          border: "1px solid var(--hp-border)",
           borderRadius: "4px",
           fontSize: "16px",
-          backgroundColor: disabled ? "#f5f5f5" : "white"
+          backgroundColor: disabled ? "var(--hp-surface-soft)" : "var(--hp-input-bg)",
+          color: "var(--hp-text)"
         }}
       />
       
@@ -150,8 +151,8 @@ export function AddressSearchInput({
           <div style={{
             width: "16px",
             height: "16px",
-            border: "2px solid #ccc",
-            borderTopColor: "#1976d2",
+            border: "2px solid var(--hp-border)",
+            borderTopColor: "var(--hp-primary)",
             borderRadius: "50%",
             animation: "spin 1s linear infinite"
           }} />
@@ -164,10 +165,10 @@ export function AddressSearchInput({
           top: "100%",
           left: 0,
           right: 0,
-          backgroundColor: "white",
-          border: "1px solid #ccc",
+          backgroundColor: "var(--hp-surface)",
+          border: "1px solid var(--hp-border)",
           borderRadius: "4px",
-          boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
+          boxShadow: "var(--hp-shadow-md)",
           zIndex: 1000,
           maxHeight: "300px",
           overflowY: "auto"
@@ -177,7 +178,7 @@ export function AddressSearchInput({
               key={`${suggestion.lat}-${suggestion.lon}-${index}`}
               onClick={() => handleAddressSelect(suggestion)}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = "#f5f5f5";
+                e.currentTarget.style.backgroundColor = "var(--hp-surface-soft)";
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.backgroundColor = "transparent";
@@ -185,7 +186,7 @@ export function AddressSearchInput({
               style={{
                 padding: "10px",
                 cursor: "pointer",
-                borderBottom: "1px solid #eee",
+                borderBottom: "1px solid var(--hp-border)",
                 ...(index === addressSuggestions.length - 1 && {
                   borderBottom: "none"
                 })
@@ -195,10 +196,10 @@ export function AddressSearchInput({
                 {suggestion.address?.road || suggestion.address?.city || 'Адрес'}
                 {suggestion.address?.house_number && `, ${suggestion.address.house_number}`}
               </div>
-              <div style={{ fontSize: "12px", color: "#666", marginTop: "4px" }}>
+              <div style={{ fontSize: "12px", color: "var(--hp-muted)", marginTop: "4px" }}>
                 {suggestion.display_name}
               </div>
-              <div style={{ fontSize: "11px", color: "#999", marginTop: "2px" }}>
+              <div style={{ fontSize: "11px", color: "var(--hp-muted)", marginTop: "2px" }}>
                 {suggestion.type} • {suggestion.address?.city || suggestion.address?.town || suggestion.address?.village || ''}
               </div>
             </div>

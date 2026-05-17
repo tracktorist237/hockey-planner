@@ -28,11 +28,11 @@ export const AttendanceResponseCard = ({
   return (
     <div
       style={{
-        backgroundColor: "white",
+        backgroundColor: "var(--hp-surface)",
         borderRadius: "16px",
         padding: "20px",
         marginBottom: "20px",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+        boxShadow: "var(--hp-shadow-sm)",
       }}
     >
       <h3
@@ -40,7 +40,7 @@ export const AttendanceResponseCard = ({
           margin: "0 0 16px 0",
           fontSize: "16px",
           fontWeight: "600",
-          color: "#333",
+          color: "var(--hp-text)",
           display: "flex",
           alignItems: "center",
           gap: "8px",
@@ -62,7 +62,7 @@ export const AttendanceResponseCard = ({
                 flex: 1,
                 minWidth: "140px",
                 padding: "14px 16px",
-                backgroundColor: "#4caf50",
+                backgroundColor: "var(--hp-success)",
                 color: "white",
                 border: "none",
                 borderRadius: "10px",
@@ -84,7 +84,7 @@ export const AttendanceResponseCard = ({
               }}
               onMouseLeave={(e) => {
                 if (!submitting) {
-                  e.currentTarget.style.backgroundColor = "#4caf50";
+                  e.currentTarget.style.backgroundColor = "var(--hp-success)";
                   e.currentTarget.style.transform = "translateY(0)";
                 }
               }}
@@ -101,7 +101,7 @@ export const AttendanceResponseCard = ({
                 flex: 1,
                 minWidth: "140px",
                 padding: "14px 16px",
-                backgroundColor: "#f44336",
+                backgroundColor: "var(--hp-danger)",
                 color: "white",
                 border: "none",
                 borderRadius: "10px",
@@ -117,7 +117,7 @@ export const AttendanceResponseCard = ({
               }}
               onMouseEnter={(e) => {
                 if (!submitting) {
-                  e.currentTarget.style.backgroundColor = "#d32f2f";
+                  e.currentTarget.style.backgroundColor = "var(--hp-danger)";
                   e.currentTarget.style.transform = "translateY(-1px)";
                 }
               }}
@@ -139,9 +139,9 @@ export const AttendanceResponseCard = ({
               style={{
                 width: "100%",
                 padding: "12px 16px",
-                backgroundColor: "#f5f5f5",
-                color: "#666",
-                border: "1px solid #e0e0e0",
+                backgroundColor: "var(--hp-surface-soft)",
+                color: "var(--hp-muted)",
+                border: "1px solid var(--hp-border)",
                 borderRadius: "10px",
                 fontSize: "15px",
                 cursor: "pointer",
@@ -152,25 +152,25 @@ export const AttendanceResponseCard = ({
                 transition: "all 0.2s ease",
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = "#e0e0e0";
+                e.currentTarget.style.backgroundColor = "var(--hp-border)";
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "#f5f5f5";
+                e.currentTarget.style.backgroundColor = "var(--hp-surface-soft)";
               }}
             >
               <span>💬</span>
               <span>Добавить комментарий</span>
             </button>
           ) : (
-            <div style={{ marginTop: "12px", padding: "16px", backgroundColor: "#f8f9fa", borderRadius: "12px", border: "1px solid #e0e0e0" }}>
+            <div style={{ marginTop: "12px", padding: "16px", backgroundColor: "var(--hp-surface-soft)", borderRadius: "12px", border: "1px solid var(--hp-border)" }}>
               <div style={{ display: "flex", gap: "8px", marginBottom: "12px" }}>
                 <button
                   onClick={() => setAttendanceNote("Принесу пиво")}
                   style={{
                     padding: "8px 12px",
-                    backgroundColor: "#fff3e0",
-                    color: "#ef6c00",
-                    border: "1px solid #ffe0b2",
+                    backgroundColor: "var(--hp-warning-soft)",
+                    color: "var(--hp-warning)",
+                    border: "1px solid var(--hp-warning-border)",
                     borderRadius: "8px",
                     fontSize: "14px",
                     cursor: "pointer",
@@ -187,9 +187,9 @@ export const AttendanceResponseCard = ({
                   onClick={() => setAttendanceNote("После травмы")}
                   style={{
                     padding: "8px 12px",
-                    backgroundColor: "#e8eaf6",
-                    color: "#3949ab",
-                    border: "1px solid #c5cae9",
+                    backgroundColor: "var(--hp-purple-soft)",
+                    color: "var(--hp-purple)",
+                    border: "1px solid var(--hp-purple-border)",
                     borderRadius: "8px",
                     fontSize: "14px",
                     cursor: "pointer",
@@ -213,18 +213,18 @@ export const AttendanceResponseCard = ({
                   style={{
                     flex: 1,
                     padding: "12px",
-                    border: "1px solid #e0e0e0",
+                    border: "1px solid var(--hp-border)",
                     borderRadius: "8px",
                     fontSize: "15px",
-                    backgroundColor: "white",
+                    backgroundColor: "var(--hp-surface)",
                   }}
                 />
                 <button
                   onClick={() => setShowNoteInput(false)}
                   style={{
                     padding: "12px 16px",
-                    backgroundColor: "#f5f5f5",
-                    border: "1px solid #e0e0e0",
+                    backgroundColor: "var(--hp-surface-soft)",
+                    border: "1px solid var(--hp-border)",
                     borderRadius: "8px",
                     fontSize: "14px",
                     cursor: "pointer",
@@ -241,11 +241,11 @@ export const AttendanceResponseCard = ({
           <div
             style={{
               padding: "16px",
-              backgroundColor: myAttendance.status === 2 ? "#e8f5e9" : "#ffebee",
-              color: myAttendance.status === 2 ? "#2e7d32" : "#c62828",
+              backgroundColor: myAttendance.status === 2 ? "var(--hp-success-soft)" : "var(--hp-danger-soft)",
+              color: myAttendance.status === 2 ? "var(--hp-success)" : "var(--hp-danger)",
               borderRadius: "10px",
               marginBottom: "16px",
-              border: `1px solid ${myAttendance.status === 2 ? "#c8e6c9" : "#ffcdd2"}`,
+              border: `1px solid ${myAttendance.status === 2 ? "var(--hp-success-border)" : "var(--hp-danger-border)"}`,
             }}
           >
             <div
@@ -271,8 +271,8 @@ export const AttendanceResponseCard = ({
                   }}
                   style={{
                     padding: "8px 12px",
-                    backgroundColor: "rgba(255,255,255,0.5)",
-                    border: "1px solid rgba(0,0,0,0.1)",
+                    backgroundColor: "var(--hp-surface-soft)",
+                    border: "1px solid var(--hp-border)",
                     borderRadius: "8px",
                     fontSize: "13px",
                     cursor: "pointer",
@@ -281,10 +281,10 @@ export const AttendanceResponseCard = ({
                     gap: "4px",
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.8)";
+                    e.currentTarget.style.backgroundColor = "var(--hp-surface-hover)";
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.5)";
+                    e.currentTarget.style.backgroundColor = "var(--hp-surface-soft)";
                   }}
                 >
                   <span>💬</span>
@@ -298,7 +298,7 @@ export const AttendanceResponseCard = ({
                   disabled={submitting}
                   style={{
                     padding: "8px 12px",
-                    backgroundColor: "#4caf50",
+                    backgroundColor: "var(--hp-success)",
                     color: "white",
                     border: "none",
                     borderRadius: "8px",
@@ -320,7 +320,7 @@ export const AttendanceResponseCard = ({
               <div
                 style={{
                   padding: "8px 12px",
-                  backgroundColor: "rgba(255,255,255,0.5)",
+                  backgroundColor: "var(--hp-surface-soft)",
                   borderRadius: "8px",
                   fontSize: "14px",
                   display: "flex",
@@ -335,15 +335,15 @@ export const AttendanceResponseCard = ({
             )}
 
             {isEditingNote && (
-              <div style={{ marginTop: "12px", padding: "12px", backgroundColor: "rgba(255,255,255,0.5)", borderRadius: "8px" }}>
+              <div style={{ marginTop: "12px", padding: "12px", backgroundColor: "var(--hp-surface-soft)", borderRadius: "8px" }}>
                 <div style={{ display: "flex", gap: "8px", marginBottom: "8px" }}>
                   <button
                     onClick={() => setAttendanceNote("Принесу пиво")}
                     style={{
                       padding: "6px 10px",
-                      backgroundColor: "#fff3e0",
-                      color: "#ef6c00",
-                      border: "1px solid #ffe0b2",
+                      backgroundColor: "var(--hp-warning-soft)",
+                      color: "var(--hp-warning)",
+                      border: "1px solid var(--hp-warning-border)",
                       borderRadius: "6px",
                       fontSize: "13px",
                       cursor: "pointer",
@@ -360,9 +360,9 @@ export const AttendanceResponseCard = ({
                     onClick={() => setAttendanceNote("После травмы")}
                     style={{
                       padding: "6px 10px",
-                      backgroundColor: "#e8eaf6",
-                      color: "#3949ab",
-                      border: "1px solid #c5cae9",
+                      backgroundColor: "var(--hp-purple-soft)",
+                      color: "var(--hp-purple)",
+                      border: "1px solid var(--hp-purple-border)",
                       borderRadius: "6px",
                       fontSize: "13px",
                       cursor: "pointer",
@@ -385,10 +385,10 @@ export const AttendanceResponseCard = ({
                     style={{
                       flex: 1,
                       padding: "10px",
-                      border: "1px solid #e0e0e0",
+                      border: "1px solid var(--hp-border)",
                       borderRadius: "6px",
                       fontSize: "14px",
-                      backgroundColor: "white",
+                      backgroundColor: "var(--hp-surface)",
                     }}
                   />
                   <button
@@ -398,8 +398,8 @@ export const AttendanceResponseCard = ({
                     }}
                     style={{
                       padding: "10px 14px",
-                      backgroundColor: "#f5f5f5",
-                      border: "1px solid #e0e0e0",
+                      backgroundColor: "var(--hp-surface-soft)",
+                      border: "1px solid var(--hp-border)",
                       borderRadius: "6px",
                       fontSize: "13px",
                       cursor: "pointer",
@@ -420,9 +420,9 @@ export const AttendanceResponseCard = ({
             style={{
               width: "100%",
               padding: "12px 16px",
-              backgroundColor: "#f5f5f5",
-              color: "#666",
-              border: "1px solid #e0e0e0",
+              backgroundColor: "var(--hp-surface-soft)",
+              color: "var(--hp-muted)",
+              border: "1px solid var(--hp-border)",
               borderRadius: "10px",
               fontSize: "15px",
               cursor: submitting ? "not-allowed" : "pointer",
@@ -431,13 +431,13 @@ export const AttendanceResponseCard = ({
             }}
             onMouseEnter={(e) => {
               if (!submitting) {
-                e.currentTarget.style.backgroundColor = "#e0e0e0";
+                e.currentTarget.style.backgroundColor = "var(--hp-border)";
                 e.currentTarget.style.transform = "translateY(-1px)";
               }
             }}
             onMouseLeave={(e) => {
               if (!submitting) {
-                e.currentTarget.style.backgroundColor = "#f5f5f5";
+                e.currentTarget.style.backgroundColor = "var(--hp-surface-soft)";
                 e.currentTarget.style.transform = "translateY(0)";
               }
             }}
@@ -452,7 +452,7 @@ export const AttendanceResponseCard = ({
           style={{
             textAlign: "center",
             marginTop: "12px",
-            color: "#666",
+            color: "var(--hp-muted)",
             fontSize: "14px",
             display: "flex",
             alignItems: "center",
@@ -464,8 +464,8 @@ export const AttendanceResponseCard = ({
             style={{
               width: "16px",
               height: "16px",
-              border: "2px solid #e0e0e0",
-              borderTopColor: "#1976d2",
+              border: "2px solid var(--hp-border)",
+              borderTopColor: "var(--hp-primary)",
               borderRadius: "50%",
               animation: "spin 1s linear infinite",
             }}
@@ -476,3 +476,4 @@ export const AttendanceResponseCard = ({
     </div>
   );
 };
+

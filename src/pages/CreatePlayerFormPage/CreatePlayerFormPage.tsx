@@ -118,7 +118,7 @@ export function CreatePlayerFormPage() {
   const currentAvatarSrc = localAvatarPreview ?? photoUrl ?? undefined;
 
   return (
-    <div style={{ padding: "16px", minHeight: "100vh", backgroundColor: "#f5f5f5", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", boxSizing: "border-box" }}>
+    <div style={{ padding: "16px", minHeight: "100vh", backgroundColor: "var(--hp-surface-soft)", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", boxSizing: "border-box" }}>
       <FormHeader onBack={() => navigate("/")} />
       {error && <ErrorMessage error={error} />}
       {successMessage && (
@@ -139,10 +139,10 @@ export function CreatePlayerFormPage() {
         <PersonalInfoForm formData={formData} errors={errors} getFieldStatus={getFieldStatus} onChange={handleChange} calculateAge={calculateAge} />
         <HockeyInfoForm formData={formData} errors={errors} getFieldStatus={getFieldStatus} onChange={handleChange} />
 
-        <div style={{ backgroundColor: "white", borderRadius: "16px", padding: "20px", marginBottom: "20px", boxShadow: "0 2px 8px rgba(0,0,0,0.08)" }}>
-          <h3 style={{ margin: "0 0 12px 0", fontSize: "18px", color: "#1a237e" }}>Привязка СПБХЛ и аватар</h3>
+        <div style={{ backgroundColor: "var(--hp-surface)", borderRadius: "16px", padding: "20px", marginBottom: "20px", boxShadow: "var(--hp-shadow-sm)" }}>
+          <h3 style={{ margin: "0 0 12px 0", fontSize: "18px", color: "var(--hp-heading)" }}>Привязка СПБХЛ и аватар</h3>
 
-          <div style={{ marginBottom: "12px", fontSize: "14px", color: "#666" }}>
+          <div style={{ marginBottom: "12px", fontSize: "14px", color: "var(--hp-muted)" }}>
             Профиль СПБХЛ: {spbhlPlayerId ? `привязан (${spbhlPlayerId.slice(0, 8)}...)` : "не привязан"}
           </div>
 
@@ -154,11 +154,11 @@ export function CreatePlayerFormPage() {
               jerseyNumber={formData.jerseyNumber}
               fallbackPrefix="#"
               badgePrefix="#"
-              fallbackBg="#1976d2"
+              fallbackBg="var(--hp-primary)"
               fallbackColor="#fff"
               fontSize={18}
             />
-            <div style={{ fontSize: "14px", color: "#666", lineHeight: 1.4 }}>
+            <div style={{ fontSize: "14px", color: "var(--hp-muted)", lineHeight: 1.4 }}>
               {currentAvatarSrc
                 ? "Аватар будет сохранён при создании игрока."
                 : "Можно привязать СПБХЛ и взять фото, либо загрузить свою картинку."}
@@ -169,12 +169,12 @@ export function CreatePlayerFormPage() {
             <button
               type="button"
               onClick={openSpbhlModal}
-              style={{ padding: "10px 14px", borderRadius: "10px", border: "1px solid #1e88e5", backgroundColor: "#e3f2fd", color: "#1565c0", fontWeight: 600, cursor: "pointer" }}
+              style={{ padding: "10px 14px", borderRadius: "10px", border: "1px solid #1e88e5", backgroundColor: "var(--hp-primary-soft)", color: "var(--hp-primary-text)", fontWeight: 600, cursor: "pointer" }}
             >
               {spbhlPlayerId ? "Изменить привязку СПБХЛ" : "Привязать СПБХЛ"}
             </button>
 
-            <label style={{ padding: "10px 14px", borderRadius: "10px", border: "1px solid #d0d7de", backgroundColor: "#fff", color: "#374151", fontWeight: 600, cursor: "pointer" }}>
+            <label style={{ padding: "10px 14px", borderRadius: "10px", border: "1px solid var(--hp-border)", backgroundColor: "var(--hp-surface)", color: "var(--hp-text)", fontWeight: 600, cursor: "pointer" }}>
               Загрузить свой аватар
               <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={handleUploadLocalAvatar} style={{ display: "none" }} />
             </label>
@@ -202,13 +202,13 @@ export function CreatePlayerFormPage() {
 
       {isSpbhlModalOpen && (
         <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.45)", zIndex: 5000, display: "flex", alignItems: "center", justifyContent: "center", padding: "12px" }}>
-          <div style={{ width: "100%", maxWidth: "760px", maxHeight: "92vh", backgroundColor: "white", borderRadius: "16px", overflow: "hidden", display: "flex", flexDirection: "column" }}>
+          <div style={{ width: "100%", maxWidth: "760px", maxHeight: "92vh", backgroundColor: "var(--hp-surface)", borderRadius: "16px", overflow: "hidden", display: "flex", flexDirection: "column" }}>
             <div style={{ padding: "14px 16px", borderBottom: "1px solid #eceff1", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px" }}>
               <div>
-                <div style={{ fontWeight: 700, color: "#1a237e", marginBottom: "2px" }}>Поиск игрока СПБХЛ</div>
-                <div style={{ fontSize: "13px", color: "#666" }}>Выберите игрока для привязки.</div>
+                <div style={{ fontWeight: 700, color: "var(--hp-heading)", marginBottom: "2px" }}>Поиск игрока СПБХЛ</div>
+                <div style={{ fontSize: "13px", color: "var(--hp-muted)" }}>Выберите игрока для привязки.</div>
               </div>
-              <button type="button" onClick={() => setIsSpbhlModalOpen(false)} style={{ width: "34px", height: "34px", borderRadius: "8px", border: "1px solid #cfd8dc", backgroundColor: "white", cursor: "pointer", fontSize: "18px", lineHeight: 1 }}>
+              <button type="button" onClick={() => setIsSpbhlModalOpen(false)} style={{ width: "34px", height: "34px", borderRadius: "8px", border: "1px solid var(--hp-border)", backgroundColor: "var(--hp-surface)", cursor: "pointer", fontSize: "18px", lineHeight: 1 }}>
                 ×
               </button>
             </div>
@@ -219,16 +219,16 @@ export function CreatePlayerFormPage() {
                   value={spbhlSearchName}
                   onChange={(event) => setSpbhlSearchName(event.target.value)}
                   placeholder="Фамилия или ФИО"
-                  style={{ flex: "1 1 240px", minWidth: "180px", padding: "10px 12px", borderRadius: "10px", border: "1px solid #d0d7de", fontSize: "14px" }}
+                  style={{ flex: "1 1 240px", minWidth: "180px", padding: "10px 12px", borderRadius: "10px", border: "1px solid var(--hp-border)", fontSize: "14px" }}
                 />
                 <input
                   value={spbhlBirthYear}
                   onChange={(event) => setSpbhlBirthYear(event.target.value.replace(/[^\d]/g, "").slice(0, 4))}
                   placeholder="Год рождения"
                   inputMode="numeric"
-                  style={{ width: "130px", padding: "10px 12px", borderRadius: "10px", border: "1px solid #d0d7de", fontSize: "14px" }}
+                  style={{ width: "130px", padding: "10px 12px", borderRadius: "10px", border: "1px solid var(--hp-border)", fontSize: "14px" }}
                 />
-                <button type="button" onClick={() => void runSpbhlSearch(1)} disabled={spbhlLoading} style={{ padding: "10px 14px", borderRadius: "10px", border: "none", backgroundColor: spbhlLoading ? "#90caf9" : "#1976d2", color: "white", fontWeight: 600, cursor: spbhlLoading ? "wait" : "pointer" }}>
+                <button type="button" onClick={() => void runSpbhlSearch(1)} disabled={spbhlLoading} style={{ padding: "10px 14px", borderRadius: "10px", border: "none", backgroundColor: spbhlLoading ? "#90caf9" : "var(--hp-primary)", color: "white", fontWeight: 600, cursor: spbhlLoading ? "wait" : "pointer" }}>
                   {spbhlLoading ? "Поиск..." : "Найти"}
                 </button>
               </div>
@@ -268,7 +268,7 @@ export function CreatePlayerFormPage() {
                       {player.jerseyNumber ? ` · №${player.jerseyNumber}` : ""}
                     </div>
                   </div>
-                  <button type="button" onClick={() => handleBindSpbhlPlayer(player)} style={{ padding: "8px 12px", borderRadius: "8px", border: "1px solid #bbdefb", backgroundColor: "#e3f2fd", color: "#1565c0", fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}>
+                  <button type="button" onClick={() => handleBindSpbhlPlayer(player)} style={{ padding: "8px 12px", borderRadius: "8px", border: "1px solid #bbdefb", backgroundColor: "var(--hp-primary-soft)", color: "var(--hp-primary-text)", fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}>
                     Привязать
                   </button>
                 </div>
@@ -276,11 +276,11 @@ export function CreatePlayerFormPage() {
             </div>
 
             <div style={{ borderTop: "1px solid #eceff1", padding: "10px 16px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px" }}>
-              <button type="button" onClick={() => void runSpbhlSearch(Math.max(1, spbhlPage - 1))} disabled={spbhlLoading || spbhlPage <= 1} style={{ padding: "8px 12px", borderRadius: "8px", border: "1px solid #d0d7de", backgroundColor: "white", color: spbhlPage <= 1 ? "#9e9e9e" : "#374151", cursor: spbhlPage <= 1 ? "not-allowed" : "pointer" }}>
+              <button type="button" onClick={() => void runSpbhlSearch(Math.max(1, spbhlPage - 1))} disabled={spbhlLoading || spbhlPage <= 1} style={{ padding: "8px 12px", borderRadius: "8px", border: "1px solid var(--hp-border)", backgroundColor: "var(--hp-surface)", color: spbhlPage <= 1 ? "var(--hp-muted)" : "var(--hp-text)", cursor: spbhlPage <= 1 ? "not-allowed" : "pointer" }}>
                 ← Назад
               </button>
               <div style={{ fontSize: "13px", color: "#546e7a" }}>Страница {spbhlPage} из {spbhlTotalPages}</div>
-              <button type="button" onClick={() => void runSpbhlSearch(Math.min(spbhlTotalPages, spbhlPage + 1))} disabled={spbhlLoading || spbhlPage >= spbhlTotalPages} style={{ padding: "8px 12px", borderRadius: "8px", border: "1px solid #d0d7de", backgroundColor: "white", color: spbhlPage >= spbhlTotalPages ? "#9e9e9e" : "#374151", cursor: spbhlPage >= spbhlTotalPages ? "not-allowed" : "pointer" }}>
+              <button type="button" onClick={() => void runSpbhlSearch(Math.min(spbhlTotalPages, spbhlPage + 1))} disabled={spbhlLoading || spbhlPage >= spbhlTotalPages} style={{ padding: "8px 12px", borderRadius: "8px", border: "1px solid var(--hp-border)", backgroundColor: "var(--hp-surface)", color: spbhlPage >= spbhlTotalPages ? "var(--hp-muted)" : "var(--hp-text)", cursor: spbhlPage >= spbhlTotalPages ? "not-allowed" : "pointer" }}>
                 Вперёд →
               </button>
             </div>
@@ -291,11 +291,11 @@ export function CreatePlayerFormPage() {
       <style>
         {`
           @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-          input:focus, select:focus { outline: none; border-color: #1976d2 !important; box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.1); }
+          input:focus, select:focus { outline: none; border-color: var(--hp-primary) !important; box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.1); }
           input[type="date"] { appearance: none; -webkit-appearance: none; padding: 14px; font-family: inherit; }
           input[type="date"]::-webkit-calendar-picker-indicator { padding: 8px; margin-right: -8px; cursor: pointer; }
           @media (max-width: 360px) { div[style*="grid-template-columns: 1fr 1fr"] { grid-template-columns: 1fr !important; gap: 12px !important; } div[style*="padding: 20px"] { padding: 16px !important; } button[style*="padding: 16px 24px"] { padding: 14px 20px !important; } }
-          @media (min-width: 768px) { div[style*="minHeight: 100vh"] { max-width: 600px; margin: 0 auto; border-left: 1px solid #e0e0e0; border-right: 1px solid #e0e0e0; min-height: 100vh; } }
+          @media (min-width: 768px) { div[style*="minHeight: 100vh"] { max-width: 600px; margin: 0 auto; border-left: 1px solid var(--hp-border); border-right: 1px solid var(--hp-border); min-height: 100vh; } }
         `}
       </style>
     </div>

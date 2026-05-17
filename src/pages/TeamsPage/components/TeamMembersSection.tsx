@@ -22,11 +22,11 @@ const memberRoleLabel = (role: number): string => {
 const roleBadgeColor = (role: number) => {
   switch (role) {
     case TeamRole.Owner:
-      return { background: "#fef3c7", color: "#92400e" };
+      return { background: "var(--hp-warning-border)", color: "var(--hp-warning)" };
     case TeamRole.Admin:
       return { background: "#dbeafe", color: "#1d4ed8" };
     default:
-      return { background: "#f1f5f9", color: "#475569" };
+      return { background: "var(--hp-surface-soft)", color: "var(--hp-muted)" };
   }
 };
 
@@ -64,10 +64,10 @@ function EditableMemberRow({ member, canEditBadge, canEditRole, saving, onSave }
   };
 
   return (
-    <div style={{ border: "1px solid #e2e8f0", borderRadius: 14, padding: 12, background: "white" }}>
+    <div style={{ border: "1px solid var(--hp-border)", borderRadius: 14, padding: 12, background: "var(--hp-surface)" }}>
       <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "flex-start" }}>
         <div style={{ minWidth: 0 }}>
-          <div style={{ fontSize: 16, fontWeight: 900, color: "#0f172a" }}>
+          <div style={{ fontSize: 16, fontWeight: 900, color: "var(--hp-text-strong)" }}>
             #{member.jerseyNumber ?? "?"} {name}
           </div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 7 }}>
@@ -86,7 +86,7 @@ function EditableMemberRow({ member, canEditBadge, canEditRole, saving, onSave }
           <button
             type="button"
             onClick={() => setIsEditing((value) => !value)}
-            style={{ border: 0, borderRadius: 999, padding: "7px 10px", background: isEditing ? "#fee2e2" : "#f1f5f9", color: isEditing ? "#991b1b" : "#334155", fontWeight: 900, cursor: "pointer", whiteSpace: "nowrap" }}
+              style={{ border: 0, borderRadius: 999, padding: "7px 10px", background: isEditing ? "#fee2e2" : "var(--hp-surface-muted)", color: isEditing ? "#991b1b" : "var(--hp-text)", fontWeight: 900, cursor: "pointer", whiteSpace: "nowrap" }}
           >
             {isEditing ? "Скрыть" : "Изменить"}
           </button>
@@ -94,14 +94,14 @@ function EditableMemberRow({ member, canEditBadge, canEditRole, saving, onSave }
       </div>
 
       {isEditing && (canEditBadge || canEditRole) && (
-        <div style={{ display: "grid", gap: 8, marginTop: 10, paddingTop: 10, borderTop: "1px solid #f1f5f9" }}>
+        <div style={{ display: "grid", gap: 8, marginTop: 10, paddingTop: 10, borderTop: "1px solid var(--hp-border)" }}>
           {canEditRole && member.role !== TeamRole.Owner && (
-            <label style={{ display: "grid", gap: 5, fontSize: 13, color: "#475569", fontWeight: 800 }}>
+            <label style={{ display: "grid", gap: 5, fontSize: 13, color: "var(--hp-muted)", fontWeight: 800 }}>
               Права
               <select
                 value={role}
                 onChange={(event) => setRole(Number(event.target.value))}
-                style={{ border: "1px solid #cbd5e1", borderRadius: 10, padding: "9px 10px", fontWeight: 800 }}
+                style={{ border: "1px solid var(--hp-border)", borderRadius: 10, padding: "9px 10px", fontWeight: 800 }}
               >
                 <option value={TeamRole.Admin}>Админ</option>
                 <option value={TeamRole.Member}>Участник</option>
@@ -110,14 +110,14 @@ function EditableMemberRow({ member, canEditBadge, canEditRole, saving, onSave }
           )}
 
           {canEditBadge && (
-            <label style={{ display: "grid", gap: 5, fontSize: 13, color: "#475569", fontWeight: 800 }}>
+            <label style={{ display: "grid", gap: 5, fontSize: 13, color: "var(--hp-muted)", fontWeight: 800 }}>
               Бейдж
               <input
                 value={badgeTitle}
                 onChange={(event) => setBadgeTitle(event.target.value)}
                 maxLength={32}
                 placeholder="Например: Тренер, Капитан"
-                style={{ border: "1px solid #cbd5e1", borderRadius: 10, padding: "9px 10px", fontWeight: 700 }}
+                style={{ border: "1px solid var(--hp-border)", borderRadius: 10, padding: "9px 10px", fontWeight: 700 }}
               />
             </label>
           )}
@@ -127,7 +127,7 @@ function EditableMemberRow({ member, canEditBadge, canEditRole, saving, onSave }
               type="button"
               onClick={handleCancel}
               disabled={saving}
-              style={{ border: "1px solid #cbd5e1", borderRadius: 12, padding: "10px 12px", background: "white", color: "#334155", fontWeight: 900, cursor: saving ? "default" : "pointer" }}
+              style={{ border: "1px solid var(--hp-border)", borderRadius: 12, padding: "10px 12px", background: "var(--hp-surface)", color: "var(--hp-text)", fontWeight: 900, cursor: saving ? "default" : "pointer" }}
             >
               Отмена
             </button>
@@ -139,8 +139,8 @@ function EditableMemberRow({ member, canEditBadge, canEditRole, saving, onSave }
                 border: 0,
                 borderRadius: 12,
                 padding: "10px 12px",
-                background: canSave ? "#2563eb" : "#e2e8f0",
-                color: canSave ? "white" : "#64748b",
+                background: canSave ? "var(--hp-primary)" : "var(--hp-surface-muted)",
+                color: canSave ? "white" : "var(--hp-muted)",
                 fontWeight: 900,
                 cursor: canSave ? "pointer" : "default",
               }}
@@ -169,13 +169,13 @@ export function TeamMembersSection({ team, members, loading, savingUserId, onSav
   return (
     <section style={{ ...cardStyle, marginTop: 14 }}>
       <div style={{ marginBottom: 10 }}>
-        <h2 style={{ margin: 0, fontSize: 20, color: "#0f172a" }}>Участники и права</h2>
-        <div style={{ color: "#64748b", fontSize: 14, marginTop: 3 }}>{team.name}</div>
+        <h2 style={{ margin: 0, fontSize: 20, color: "var(--hp-text-strong)" }}>Участники и права</h2>
+        <div style={{ color: "var(--hp-muted)", fontSize: 14, marginTop: 3 }}>{team.name}</div>
       </div>
 
       <div style={{ display: "grid", gap: 10, maxHeight: 520, overflowY: "auto", paddingRight: 4 }}>
-        {loading && <div style={{ color: "#64748b" }}>Загружаем участников...</div>}
-        {!loading && members.length === 0 && <div style={{ color: "#64748b" }}>Участников пока нет.</div>}
+        {loading && <div style={{ color: "var(--hp-muted)" }}>Загружаем участников...</div>}
+        {!loading && members.length === 0 && <div style={{ color: "var(--hp-muted)" }}>Участников пока нет.</div>}
         {!loading &&
           members.map((member) => (
             <EditableMemberRow
@@ -191,3 +191,4 @@ export function TeamMembersSection({ team, members, loading, savingUserId, onSav
     </section>
   );
 }
+

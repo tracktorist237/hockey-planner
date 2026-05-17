@@ -7,6 +7,7 @@ declare const self: ServiceWorkerGlobalScope;
 // ⚠️ ВАЖНО: Этот комментарий - маркер для Workbox
 // Он будет заменен на список файлов для кеширования
 const manifest = self.__WB_MANIFEST; // Workbox заменит это на реальный массив
+void manifest;
 
 const CACHE_NAME = 'hockey-planner-v1';
 

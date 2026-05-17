@@ -89,21 +89,21 @@ export function UniformColorSection({ selectedUniformColorId, onChange }: Unifor
   return (
     <div
       style={{
-        backgroundColor: "#f8f9fa",
+        backgroundColor: "var(--hp-surface-soft)",
         padding: "12px",
         borderRadius: "10px",
         marginBottom: "12px",
-        border: "1px solid #e3f2fd",
+        border: "1px solid var(--hp-primary-soft)",
         width: "100%",
         boxSizing: "border-box",
       }}
     >
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px", marginBottom: "8px", flexWrap: "wrap" }}>
-        <h4 style={{ margin: 0, fontSize: "14px", fontWeight: "600", color: "#1a237e" }}>🎽 Цвет формы</h4>
+        <h4 style={{ margin: 0, fontSize: "14px", fontWeight: "600", color: "var(--hp-heading)" }}>🎽 Цвет формы</h4>
         <button
           type="button"
           onClick={() => setShowCreateForm((prev) => !prev)}
-          style={{ padding: "6px 10px", border: "1px solid #bbdefb", borderRadius: "8px", backgroundColor: "#e3f2fd", color: "#1565c0", fontSize: "12px", fontWeight: "600", cursor: "pointer" }}
+          style={{ padding: "6px 10px", border: "1px solid var(--hp-info-border)", borderRadius: "8px", backgroundColor: "var(--hp-primary-soft)", color: "var(--hp-primary-text)", fontSize: "12px", fontWeight: "600", cursor: "pointer" }}
         >
           {showCreateForm ? "Скрыть форму" : "+ Добавить в справочник"}
         </button>
@@ -111,16 +111,16 @@ export function UniformColorSection({ selectedUniformColorId, onChange }: Unifor
 
       {showCreateForm && (
         <div style={{ marginBottom: "8px", display: "grid", gap: "8px" }}>
-          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Название цвета формы" style={{ width: "100%", padding: "9px 10px", borderRadius: "8px", border: "1px solid #d0d7e2", fontSize: "13px", boxSizing: "border-box" }} />
-          <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={(e) => setFile(e.target.files?.[0] ?? null)} style={{ width: "100%", padding: "9px 10px", borderRadius: "8px", border: "1px solid #d0d7e2", fontSize: "13px", boxSizing: "border-box", backgroundColor: "white" }} />
-          <button type="button" onClick={() => void handleCreate()} disabled={saving} style={{ justifySelf: "start", padding: "7px 10px", borderRadius: "8px", border: "none", backgroundColor: "#1976d2", color: "white", fontSize: "12px", fontWeight: "600", cursor: saving ? "wait" : "pointer", opacity: saving ? 0.7 : 1 }}>
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Название цвета формы" style={{ width: "100%", padding: "9px 10px", borderRadius: "8px", border: "1px solid var(--hp-border)", fontSize: "13px", boxSizing: "border-box" }} />
+          <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={(e) => setFile(e.target.files?.[0] ?? null)} style={{ width: "100%", padding: "9px 10px", borderRadius: "8px", border: "1px solid var(--hp-border)", fontSize: "13px", boxSizing: "border-box", backgroundColor: "var(--hp-surface)" }} />
+          <button type="button" onClick={() => void handleCreate()} disabled={saving} style={{ justifySelf: "start", padding: "7px 10px", borderRadius: "8px", border: "none", backgroundColor: "var(--hp-primary)", color: "white", fontSize: "12px", fontWeight: "600", cursor: saving ? "wait" : "pointer", opacity: saving ? 0.7 : 1 }}>
             {saving ? "Сохраняем..." : "Сохранить цвет формы"}
           </button>
         </div>
       )}
 
       {error && (
-        <div style={{ marginBottom: "8px", padding: "8px 10px", backgroundColor: "#ffebee", color: "#c62828", borderRadius: "8px", fontSize: "12px" }}>
+        <div style={{ marginBottom: "8px", padding: "8px 10px", backgroundColor: "var(--hp-danger-soft)", color: "var(--hp-danger)", borderRadius: "8px", fontSize: "12px" }}>
           {error}
         </div>
       )}
@@ -134,8 +134,8 @@ export function UniformColorSection({ selectedUniformColorId, onChange }: Unifor
             width: "100%",
             padding: "9px 10px",
             borderRadius: "8px",
-            border: "1px solid #d0d7e2",
-            backgroundColor: "white",
+            border: "1px solid var(--hp-border)",
+            backgroundColor: "var(--hp-surface)",
             fontSize: "13px",
             boxSizing: "border-box",
           }}
@@ -157,8 +157,8 @@ export function UniformColorSection({ selectedUniformColorId, onChange }: Unifor
             gap: "10px",
             padding: "8px",
             borderRadius: "8px",
-            border: "1px solid #e0e0e0",
-            backgroundColor: "white",
+            border: "1px solid var(--hp-border)",
+            backgroundColor: "var(--hp-surface)",
           }}
         >
           <img
@@ -170,12 +170,12 @@ export function UniformColorSection({ selectedUniformColorId, onChange }: Unifor
               height: "56px",
               objectFit: "cover",
               borderRadius: "6px",
-              backgroundColor: "white",
-              border: "1px solid #eceff1",
+              backgroundColor: "var(--hp-surface)",
+              border: "1px solid var(--hp-neutral-soft)",
             }}
           />
           <div style={{ display: "grid", gap: "2px" }}>
-            <span style={{ fontSize: "13px", color: "#1a237e", fontWeight: 600 }}>{selectedItem.name}</span>
+            <span style={{ fontSize: "13px", color: "var(--hp-heading)", fontWeight: 600 }}>{selectedItem.name}</span>
           </div>
         </div>
       )}

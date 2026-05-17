@@ -12,8 +12,8 @@ interface CreateTeamTabProps {
 export function CreateTeamTab({ name, isPublic, loading, onNameChange, onPublicChange, onCreate }: CreateTeamTabProps) {
   return (
     <div style={{ marginTop: 14, display: "grid", gap: 10 }}>
-      <h2 style={{ margin: 0, fontSize: 20, color: "#0f172a" }}>Создать команду</h2>
-      <p style={{ margin: 0, color: "#64748b", lineHeight: 1.4 }}>
+      <h2 style={{ margin: 0, fontSize: 20, color: "var(--hp-text-strong)" }}>Создать команду</h2>
+      <p style={{ margin: 0, color: "var(--hp-muted)", lineHeight: 1.4 }}>
         Создавайте команду, если её ещё нет. Создатель становится владельцем.
       </p>
       <input value={name} onChange={(event) => onNameChange(event.target.value)} placeholder="Название команды" style={inputStyle} />
@@ -27,3 +27,4 @@ export function CreateTeamTab({ name, isPublic, loading, onNameChange, onPublicC
     </div>
   );
 }
+

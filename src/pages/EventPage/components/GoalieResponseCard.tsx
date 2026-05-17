@@ -96,34 +96,34 @@ export const GoalieResponseCard = ({ eventId, currentUserId }: GoalieResponseCar
   );
 
   return (
-    <div style={{ backgroundColor: "white", borderRadius: "16px", padding: "20px", marginBottom: "20px", boxShadow: "0 2px 8px rgba(0,0,0,0.08)" }}>
-      <h3 style={{ margin: "0 0 14px", fontSize: "16px", color: "#1a237e", display: "flex", alignItems: "center", gap: 8 }}>
+    <div style={{ backgroundColor: "var(--hp-surface)", borderRadius: "16px", padding: "20px", marginBottom: "20px", boxShadow: "var(--hp-shadow-sm)" }}>
+      <h3 style={{ margin: "0 0 14px", fontSize: "16px", color: "var(--hp-heading)", display: "flex", alignItems: "center", gap: 8 }}>
         <span>🥅</span>
         <span>Твой ответ как вратаря</span>
       </h3>
 
-      {loading && <div style={{ color: "#607d8b" }}>Загружаем...</div>}
-      {error && <div style={{ marginBottom: 12, padding: 12, borderRadius: 12, background: "#ffebee", color: "#c62828" }}>{error}</div>}
+      {loading && <div style={{ color: "var(--hp-muted)" }}>Загружаем...</div>}
+      {error && <div style={{ marginBottom: 12, padding: 12, borderRadius: 12, background: "var(--hp-danger-soft)", color: "var(--hp-danger)" }}>{error}</div>}
 
       {!loading && data && (
         <>
           {data.currentUserConflict && (
-            <div style={{ padding: 12, borderRadius: 12, background: "#fff7ed", color: "#9a3412", border: "1px solid #fed7aa", marginBottom: 12, fontWeight: 700 }}>
+            <div style={{ padding: 12, borderRadius: 12, background: "var(--hp-warning-soft)", color: "var(--hp-warning)", border: "1px solid var(--hp-warning-border)", marginBottom: 12, fontWeight: 700 }}>
               Конфликт: вы уже подтверждены на “{data.currentUserConflict.title}” {formatDateTime(data.currentUserConflict.startTime)}
             </div>
           )}
 
           {!data.request && (
-            <div style={{ color: "#64748b", lineHeight: 1.45 }}>
+            <div style={{ color: "var(--hp-muted)", lineHeight: 1.45 }}>
               По этому мероприятию пока нет объявления для вратарей.
             </div>
           )}
 
           {data.request && (!myApplication || canApplyAgain) && data.canApply && (
             <div style={{ display: "grid", gap: 10 }}>
-              {data.request.priceText && <div style={{ color: "#334155" }}>Цена: {data.request.priceText}</div>}
+              {data.request.priceText && <div style={{ color: "var(--hp-text)" }}>Цена: {data.request.priceText}</div>}
               {myApplication && canApplyAgain && (
-                <div style={{ padding: 12, borderRadius: 12, background: "#fff7ed", color: "#9a3412", fontWeight: 800 }}>
+                <div style={{ padding: 12, borderRadius: 12, background: "var(--hp-warning-soft)", color: "var(--hp-warning)", fontWeight: 800 }}>
                   Предыдущий ответ: {statusLabel[myApplication.status]}. Можно откликнуться снова.
                 </div>
               )}
@@ -132,7 +132,7 @@ export const GoalieResponseCard = ({ eventId, currentUserId }: GoalieResponseCar
                 onChange={(event) => setApplicationMessage(event.target.value)}
                 placeholder="Комментарий к заявке, если нужно"
                 rows={3}
-                style={{ padding: 10, borderRadius: 10, border: "1px solid #cbd5e1", resize: "vertical" }}
+                style={{ padding: 10, borderRadius: 10, border: "1px solid var(--hp-border)", resize: "vertical" }}
               />
               <button
                 type="button"
@@ -143,7 +143,7 @@ export const GoalieResponseCard = ({ eventId, currentUserId }: GoalieResponseCar
                   })
                 }
                 disabled={submitting}
-                style={{ padding: "14px 16px", border: 0, borderRadius: 12, background: "#0f766e", color: "white", fontSize: 16, fontWeight: 900, cursor: submitting ? "wait" : "pointer", opacity: submitting ? 0.75 : 1 }}
+                style={{ padding: "14px 16px", border: 0, borderRadius: 12, background: "var(--hp-success)", color: "white", fontSize: 16, fontWeight: 900, cursor: submitting ? "wait" : "pointer", opacity: submitting ? 0.75 : 1 }}
               >
                 {canApplyAgain ? "Откликнуться снова" : "Откликнуться"}
               </button>
@@ -151,14 +151,14 @@ export const GoalieResponseCard = ({ eventId, currentUserId }: GoalieResponseCar
           )}
 
           {data.request && !myApplication && !data.canApply && (
-            <div style={{ color: "#64748b", lineHeight: 1.45 }}>
+            <div style={{ color: "var(--hp-muted)", lineHeight: 1.45 }}>
               Объявление есть, но оно недоступно для отклика с текущими настройками.
             </div>
           )}
 
           {myApplication && !canApplyAgain && (
             <div style={{ display: "grid", gap: 10 }}>
-              <div style={{ padding: 12, borderRadius: 12, background: "#eef2ff", color: "#1e3a8a", fontWeight: 800 }}>
+              <div style={{ padding: 12, borderRadius: 12, background: "var(--hp-purple-soft)", color: "var(--hp-purple)", fontWeight: 800 }}>
                 {statusLabel[myApplication.status]}
               </div>
               {canConfirm && (
@@ -166,7 +166,7 @@ export const GoalieResponseCard = ({ eventId, currentUserId }: GoalieResponseCar
                   type="button"
                   onClick={() => runAction(() => updateGoalieApplicationStatus(eventId, currentUserId!, myApplication.id, GoalieApplicationStatus.Confirmed).then(() => undefined))}
                   disabled={submitting}
-                  style={{ padding: "14px 16px", border: 0, borderRadius: 12, background: "#2e7d32", color: "white", fontSize: 16, fontWeight: 900, cursor: submitting ? "wait" : "pointer" }}
+                  style={{ padding: "14px 16px", border: 0, borderRadius: 12, background: "var(--hp-success)", color: "white", fontSize: 16, fontWeight: 900, cursor: submitting ? "wait" : "pointer" }}
                 >
                   Подтвердить участие
                 </button>
@@ -176,7 +176,7 @@ export const GoalieResponseCard = ({ eventId, currentUserId }: GoalieResponseCar
                   type="button"
                   onClick={() => runAction(() => updateGoalieApplicationStatus(eventId, currentUserId!, myApplication.id, GoalieApplicationStatus.Declined).then(() => undefined))}
                   disabled={submitting}
-                  style={{ padding: "14px 16px", border: 0, borderRadius: 12, background: "#c62828", color: "white", fontSize: 16, fontWeight: 900, cursor: submitting ? "wait" : "pointer" }}
+                  style={{ padding: "14px 16px", border: 0, borderRadius: 12, background: "var(--hp-danger)", color: "white", fontSize: 16, fontWeight: 900, cursor: submitting ? "wait" : "pointer" }}
                 >
                   Отказаться
                 </button>
@@ -186,7 +186,7 @@ export const GoalieResponseCard = ({ eventId, currentUserId }: GoalieResponseCar
                   type="button"
                   onClick={() => runAction(() => updateGoalieApplicationStatus(eventId, currentUserId!, myApplication.id, GoalieApplicationStatus.Cancelled).then(() => undefined))}
                   disabled={submitting}
-                  style={{ padding: "12px 16px", border: "1px solid #cbd5e1", borderRadius: 12, background: "#f8fafc", color: "#475569", fontSize: 15, fontWeight: 800, cursor: submitting ? "wait" : "pointer" }}
+                  style={{ padding: "12px 16px", border: "1px solid var(--hp-border)", borderRadius: 12, background: "var(--hp-surface-soft)", color: "var(--hp-muted)", fontSize: 15, fontWeight: 800, cursor: submitting ? "wait" : "pointer" }}
                 >
                   Отменить ответ
                 </button>

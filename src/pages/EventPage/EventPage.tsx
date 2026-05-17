@@ -210,19 +210,19 @@ export function EventPage({ eventId, onBack, currentUser }: EventPageProps) {
   }
 
   return (
-    <div style={{ padding: "0", minHeight: "100vh", backgroundColor: "#f5f5f5", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", boxSizing: "border-box" }}>
-      <div style={{ backgroundColor: "white", padding: "16px", borderBottom: "1px solid #e0e0e0", boxShadow: "0 2px 4px rgba(0,0,0,0.05)", position: "sticky", top: 0, zIndex: 100 }}>
+    <div style={{ padding: "0", minHeight: "100vh", background: "var(--hp-bg-gradient)", color: "var(--hp-text)", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", boxSizing: "border-box" }}>
+      <div style={{ backgroundColor: "var(--hp-surface)", padding: "16px", borderBottom: "1px solid var(--hp-border)", boxShadow: "var(--hp-shadow-sm)", position: "sticky", top: 0, zIndex: 100 }}>
         <div style={{ display: "flex", alignItems: "center", marginBottom: "12px" }}>
           <button
             onClick={onBack}
-            style={{ width: "44px", height: "44px", display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid #e0e0e0", background: "white", fontSize: "20px", cursor: "pointer", borderRadius: "10px", marginRight: "12px", flexShrink: 0, transition: "all 0.2s ease" }}
+            style={{ width: "44px", height: "44px", display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid var(--hp-border)", background: "var(--hp-surface)", fontSize: "20px", cursor: "pointer", borderRadius: "10px", marginRight: "12px", flexShrink: 0, transition: "all 0.2s ease" }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = "#f5f5f5";
-              e.currentTarget.style.borderColor = "#1976d2";
+              e.currentTarget.style.backgroundColor = "var(--hp-surface-hover)";
+              e.currentTarget.style.borderColor = "var(--hp-primary)";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = "white";
-              e.currentTarget.style.borderColor = "#e0e0e0";
+              e.currentTarget.style.backgroundColor = "var(--hp-surface)";
+              e.currentTarget.style.borderColor = "var(--hp-border)";
             }}
           >
             ←
@@ -243,7 +243,7 @@ export function EventPage({ eventId, onBack, currentUser }: EventPageProps) {
         />
         <EventAdditionalInfo event={event} />
         {currentUserPrimaryPosition === undefined || resolvedGoalieStatus === undefined ? (
-          <div style={{ backgroundColor: "white", borderRadius: "16px", padding: "20px", marginBottom: "20px", boxShadow: "0 2px 8px rgba(0,0,0,0.08)", color: "#607d8b" }}>
+          <div style={{ backgroundColor: "var(--hp-surface)", borderRadius: "16px", padding: "20px", marginBottom: "20px", boxShadow: "var(--hp-shadow-sm)", color: "var(--hp-muted)" }}>
             Загружаем профиль игрока...
           </div>
         ) : !isCurrentUserGoalie ? (
@@ -265,9 +265,9 @@ export function EventPage({ eventId, onBack, currentUser }: EventPageProps) {
               style={{
                 padding: "12px 8px",
                 borderRadius: "12px",
-                border: activeTab === tab ? "1px solid #1976d2" : "1px solid #d0d7de",
-                backgroundColor: activeTab === tab ? "#e3f2fd" : "white",
-                color: activeTab === tab ? "#1565c0" : "#475569",
+                border: activeTab === tab ? "1px solid var(--hp-primary)" : "1px solid var(--hp-border)",
+                backgroundColor: activeTab === tab ? "var(--hp-primary-soft)" : "var(--hp-surface)",
+                color: activeTab === tab ? "var(--hp-primary-text)" : "var(--hp-muted)",
                 fontWeight: 800,
                 cursor: "pointer",
               }}
@@ -302,11 +302,11 @@ export function EventPage({ eventId, onBack, currentUser }: EventPageProps) {
         @keyframes spin { 0% { transform: rotate(0deg);} 100% { transform: rotate(360deg);} }
         button:focus, input:focus { outline: none; box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.2); }
         div[style*="overflowY: auto"]::-webkit-scrollbar { width: 8px; }
-        div[style*="overflowY: auto"]::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
-        div[style*="overflowY: auto"]::-webkit-scrollbar-thumb { background: #1976d2; border-radius: 4px; }
-        div[style*="overflowY: auto"]::-webkit-scrollbar-thumb:hover { background: #1565c0; }
+        div[style*="overflowY: auto"]::-webkit-scrollbar-track { background: var(--hp-surface-muted); border-radius: 4px; }
+        div[style*="overflowY: auto"]::-webkit-scrollbar-thumb { background: var(--hp-primary); border-radius: 4px; }
+        div[style*="overflowY: auto"]::-webkit-scrollbar-thumb:hover { background: var(--hp-primary-hover); }
         @media (max-width: 360px) { div[style*="padding: 16px"] { padding: 12px !important; } div[style*="padding: 20px"] { padding: 16px !important; } button[style*="padding: 14px 16px"] { padding: 12px !important; font-size: 15px !important; } }
-        @media (min-width: 768px) { div[style*="minHeight: 100vh"] { max-width: 600px; margin: 0 auto; border-left: 1px solid #e0e0e0; border-right: 1px solid #e0e0e0; min-height: 100vh; } }
+        @media (min-width: 768px) { div[style*="minHeight: 100vh"] { max-width: 600px; margin: 0 auto; border-left: 1px solid var(--hp-border); border-right: 1px solid var(--hp-border); min-height: 100vh; } }
         @supports (padding: max(0px)) { div[style*="position: sticky"] { padding-top: max(16px, env(safe-area-inset-top, 16px)); } }
         @keyframes slideDown { from { opacity: 0; transform: translateY(-10px);} to { opacity: 1; transform: translateY(0);} }
       `}</style>

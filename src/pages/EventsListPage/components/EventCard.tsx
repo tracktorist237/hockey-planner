@@ -24,11 +24,11 @@ const getEventTypeName = (type: EventType): string => {
 const getAttendanceStatusMeta = (attendanceStatus?: number | null) => {
   switch (attendanceStatus) {
     case 2:
-      return { label: "Смогу", emoji: "✅", background: "#e8f5e9", color: "#2e7d32" };
+      return { label: "Смогу", emoji: "✅", background: "var(--hp-success-soft)", color: "var(--hp-success)" };
     case 3:
-      return { label: "Не смогу", emoji: "❌", background: "#ffebee", color: "#c62828" };
+      return { label: "Не смогу", emoji: "❌", background: "var(--hp-danger-soft)", color: "var(--hp-danger)" };
     case 1:
-      return { label: "Ожидается ответ", emoji: "⏳", background: "#fff8e1", color: "#ef6c00" };
+      return { label: "Ожидается ответ", emoji: "⏳", background: "var(--hp-warning-soft)", color: "var(--hp-warning)" };
     default:
       return null;
   }
@@ -37,19 +37,19 @@ const getAttendanceStatusMeta = (attendanceStatus?: number | null) => {
 const getGoalieStatusMeta = (goalieApplicationStatus?: number | null) => {
   switch (goalieApplicationStatus) {
     case 1:
-      return { label: "Заявка ждёт решения", emoji: "🥅", background: "#fff8e1", color: "#ef6c00" };
+      return { label: "Заявка ждёт решения", emoji: "🥅", background: "var(--hp-warning-soft)", color: "var(--hp-warning)" };
     case 2:
-      return { label: "Заявка принята", emoji: "🥅", background: "#e3f2fd", color: "#1565c0" };
+      return { label: "Заявка принята", emoji: "🥅", background: "var(--hp-primary-soft)", color: "var(--hp-primary-text)" };
     case 3:
-      return { label: "Заявка отклонена", emoji: "🥅", background: "#ffebee", color: "#c62828" };
+      return { label: "Заявка отклонена", emoji: "🥅", background: "var(--hp-danger-soft)", color: "var(--hp-danger)" };
     case 4:
-      return { label: "Вам предложили", emoji: "🥅", background: "#eef2ff", color: "#1e3a8a" };
+      return { label: "Вам предложили", emoji: "🥅", background: "var(--hp-purple-soft)", color: "var(--hp-purple)" };
     case 5:
-      return { label: "Вы подтверждены", emoji: "🥅", background: "#e8f5e9", color: "#2e7d32" };
+      return { label: "Вы подтверждены", emoji: "🥅", background: "var(--hp-success-soft)", color: "var(--hp-success)" };
     case 6:
-      return { label: "Вы отказались", emoji: "🥅", background: "#ffebee", color: "#c62828" };
+      return { label: "Вы отказались", emoji: "🥅", background: "var(--hp-danger-soft)", color: "var(--hp-danger)" };
     case 7:
-      return { label: "Заявка отменена", emoji: "🥅", background: "#f1f5f9", color: "#475569" };
+      return { label: "Заявка отменена", emoji: "🥅", background: "var(--hp-surface-soft)", color: "var(--hp-muted)" };
     default:
       return null;
   }
@@ -80,26 +80,26 @@ const EventCardComponent = ({ event, onOpen }: EventCardProps) => {
   return (
     <div
       style={{
-        backgroundColor: "white",
+        backgroundColor: "var(--hp-surface)",
         padding: "16px",
         marginBottom: "12px",
-        border: isToday ? "none" : "1px solid #e0e0e0",
+        border: isToday ? "none" : "1px solid var(--hp-border)",
         borderRadius: "14px",
         cursor: "pointer",
         transition: "all 0.2s ease",
-        boxShadow: "0 2px 4px rgba(0,0,0,0.04)",
-        borderLeft: isToday ? "4px solid #1976d2" : "1px solid #e0e0e0",
+        boxShadow: "var(--hp-shadow-sm)",
+        borderLeft: isToday ? "4px solid var(--hp-primary)" : "1px solid var(--hp-border)",
       }}
       onClick={() => onOpen(event.id)}
       onMouseEnter={(elem) => {
-        elem.currentTarget.style.backgroundColor = "#f9f9f9";
+        elem.currentTarget.style.backgroundColor = "var(--hp-surface-hover)";
         elem.currentTarget.style.transform = "translateY(-2px)";
-        elem.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.08)";
+        elem.currentTarget.style.boxShadow = "var(--hp-shadow-md)";
       }}
       onMouseLeave={(elem) => {
-        elem.currentTarget.style.backgroundColor = "white";
+        elem.currentTarget.style.backgroundColor = "var(--hp-surface)";
         elem.currentTarget.style.transform = "translateY(0)";
-        elem.currentTarget.style.boxShadow = "0 2px 4px rgba(0,0,0,0.04)";
+        elem.currentTarget.style.boxShadow = "var(--hp-shadow-sm)";
       }}
     >
       <div
@@ -115,7 +115,7 @@ const EventCardComponent = ({ event, onOpen }: EventCardProps) => {
             margin: "0",
             fontSize: "17px",
             fontWeight: "600",
-            color: "#1a237e",
+            color: "var(--hp-heading)",
             lineHeight: "1.3",
             flex: 1,
           }}
@@ -125,7 +125,7 @@ const EventCardComponent = ({ event, onOpen }: EventCardProps) => {
         <div
           style={{
             fontSize: "24px",
-            color: "#1976d2",
+            color: "var(--hp-primary)",
             opacity: 0.7,
             marginLeft: "8px",
           }}
@@ -146,7 +146,7 @@ const EventCardComponent = ({ event, onOpen }: EventCardProps) => {
         <span
           style={{
             fontSize: "14px",
-            color: isToday ? "#1976d2" : "#666",
+            color: isToday ? "var(--hp-primary)" : "var(--hp-muted)",
             display: "flex",
             alignItems: "center",
             gap: "4px",
@@ -222,8 +222,8 @@ const EventCardComponent = ({ event, onOpen }: EventCardProps) => {
                 display: "inline-flex",
                 alignItems: "center",
                 gap: "6px",
-                backgroundColor: goalieConfirmedCount >= (event.goalieNeededCount ?? 0) ? "#e8f5e9" : "#e3f2fd",
-                color: goalieConfirmedCount >= (event.goalieNeededCount ?? 0) ? "#2e7d32" : "#1565c0",
+                backgroundColor: goalieConfirmedCount >= (event.goalieNeededCount ?? 0) ? "var(--hp-success-soft)" : "var(--hp-primary-soft)",
+                color: goalieConfirmedCount >= (event.goalieNeededCount ?? 0) ? "var(--hp-success)" : "var(--hp-primary-text)",
                 padding: "4px 10px",
                 borderRadius: "10px",
                 fontSize: "12px",
@@ -244,8 +244,8 @@ const EventCardComponent = ({ event, onOpen }: EventCardProps) => {
               display: "inline-flex",
               alignItems: "center",
               gap: "6px",
-              backgroundColor: goalieConfirmedCount >= (event.goalieNeededCount ?? 0) ? "#e8f5e9" : "#e3f2fd",
-              color: goalieConfirmedCount >= (event.goalieNeededCount ?? 0) ? "#2e7d32" : "#1565c0",
+              backgroundColor: goalieConfirmedCount >= (event.goalieNeededCount ?? 0) ? "var(--hp-success-soft)" : "var(--hp-primary-soft)",
+              color: goalieConfirmedCount >= (event.goalieNeededCount ?? 0) ? "var(--hp-success)" : "var(--hp-primary-text)",
               padding: "4px 10px",
               borderRadius: "10px",
               fontSize: "12px",
@@ -262,7 +262,7 @@ const EventCardComponent = ({ event, onOpen }: EventCardProps) => {
         <div
           style={{
             fontSize: "14px",
-            color: "#666",
+            color: "var(--hp-muted)",
             display: "flex",
             alignItems: "center",
             gap: "6px",

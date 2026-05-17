@@ -18,7 +18,8 @@ export function DeleteEventPage() {
       <div style={{
         padding: "16px",
         minHeight: "100vh",
-        backgroundColor: "#f5f5f5",
+        background: "var(--hp-bg-gradient)",
+        color: "var(--hp-text)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center"
@@ -31,17 +32,17 @@ export function DeleteEventPage() {
           }}>
             ⚠️
           </div>
-          <h2 style={{ margin: "0 0 8px 0", color: "#c62828" }}>
+          <h2 style={{ margin: "0 0 8px 0", color: "var(--hp-danger)" }}>
             Ошибка
           </h2>
-          <p style={{ margin: "0 0 24px 0", color: "#666" }}>
+          <p style={{ margin: "0 0 24px 0", color: "var(--hp-muted)" }}>
             Некорректный ID события
           </p>
           <button
             onClick={() => navigate("/events")}
             style={{
               padding: "14px 24px",
-              backgroundColor: "#1976d2",
+              backgroundColor: "var(--hp-primary)",
               color: "white",
               border: "none",
               borderRadius: "12px",
@@ -51,11 +52,11 @@ export function DeleteEventPage() {
               transition: "all 0.2s ease"
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = "#1565c0";
+              e.currentTarget.style.backgroundColor = "var(--hp-primary-hover)";
               e.currentTarget.style.transform = "translateY(-1px)";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = "#1976d2";
+              e.currentTarget.style.backgroundColor = "var(--hp-primary)";
               e.currentTarget.style.transform = "translateY(0)";
             }}
           >
@@ -104,17 +105,18 @@ export function DeleteEventPage() {
     <div style={{ 
       padding: "16px",
       minHeight: "100vh",
-      backgroundColor: "#f5f5f5",
+      background: "var(--hp-bg-gradient)",
+      color: "var(--hp-text)",
       fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
       boxSizing: "border-box"
     }}>
       {/* Хедер */}
       <div style={{
-        backgroundColor: "white",
+        backgroundColor: "var(--hp-surface)",
         padding: "16px",
         borderRadius: "16px",
         marginBottom: "20px",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.08)"
+        boxShadow: "var(--hp-shadow-sm)"
       }}>
         <div style={{
           display: "flex",
@@ -129,8 +131,8 @@ export function DeleteEventPage() {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              border: "1px solid #e0e0e0",
-              background: "white",
+              border: "1px solid var(--hp-border)",
+              background: "var(--hp-surface)",
               fontSize: "20px",
               cursor: "pointer",
               borderRadius: "10px",
@@ -139,12 +141,12 @@ export function DeleteEventPage() {
               transition: "all 0.2s ease"
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = "#f5f5f5";
-              e.currentTarget.style.borderColor = "#1976d2";
+              e.currentTarget.style.backgroundColor = "var(--hp-surface-hover)";
+              e.currentTarget.style.borderColor = "var(--hp-primary)";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = "white";
-              e.currentTarget.style.borderColor = "#e0e0e0";
+              e.currentTarget.style.backgroundColor = "var(--hp-surface)";
+              e.currentTarget.style.borderColor = "var(--hp-border)";
             }}
           >
             ←
@@ -153,7 +155,7 @@ export function DeleteEventPage() {
             margin: 0, 
             fontSize: "20px",
             fontWeight: "600",
-            color: "#1a237e"
+            color: "var(--hp-heading)"
           }}>
             Удаление мероприятия
           </h1>
@@ -165,14 +167,14 @@ export function DeleteEventPage() {
             alignItems: "center",
             gap: "12px",
             padding: "12px",
-            backgroundColor: "#f8f9fa",
+            backgroundColor: "var(--hp-surface-soft)",
             borderRadius: "10px",
-            border: "1px solid #e0e0e0"
+            border: "1px solid var(--hp-border)"
           }}>
             <div style={{
               width: "40px",
               height: "40px",
-              backgroundColor: "#1976d2",
+              backgroundColor: "var(--hp-primary)",
               color: "white",
               borderRadius: "8px",
               display: "flex",
@@ -187,7 +189,7 @@ export function DeleteEventPage() {
               <div style={{ fontWeight: "600", fontSize: "16px" }}>
                 {currentUser.firstName} {currentUser.lastName}
               </div>
-              <div style={{ fontSize: "13px", color: "#666" }}>
+              <div style={{ fontSize: "13px", color: "var(--hp-muted)" }}>
                 Вы вошли как организатор
               </div>
             </div>
@@ -197,17 +199,17 @@ export function DeleteEventPage() {
 
       {/* Основной контент */}
       <div style={{
-        backgroundColor: "white",
+        backgroundColor: "var(--hp-surface)",
         borderRadius: "16px",
         padding: "24px",
         marginBottom: "20px",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+        boxShadow: "var(--hp-shadow-sm)",
         textAlign: "center"
       }}>
         <div style={{
           fontSize: "64px",
           marginBottom: "20px",
-          color: "#d32f2f",
+          color: "var(--hp-danger)",
           opacity: 0.9
         }}>
           ⚠️
@@ -217,7 +219,7 @@ export function DeleteEventPage() {
           margin: "0 0 12px 0",
           fontSize: "22px",
           fontWeight: "700",
-          color: "#c62828"
+          color: "var(--hp-danger)"
         }}>
           Внимание! Опасное действие
         </h2>
@@ -225,15 +227,15 @@ export function DeleteEventPage() {
         <p style={{
           margin: "0 0 16px 0",
           fontSize: "16px",
-          color: "#666",
+          color: "var(--hp-muted)",
           lineHeight: "1.6"
         }}>
-          Вы собираетесь <strong style={{ color: "#c62828" }}>навсегда удалить</strong> это мероприятие.
+          Вы собираетесь <strong style={{ color: "var(--hp-danger)" }}>навсегда удалить</strong> это мероприятие.
         </p>
 
         <div style={{
-          backgroundColor: "#ffebee",
-          border: "1px solid #ffcdd2",
+          backgroundColor: "var(--hp-danger-soft)",
+          border: "1px solid var(--hp-danger-border)",
           borderRadius: "12px",
           padding: "16px",
           marginBottom: "24px",
@@ -242,7 +244,7 @@ export function DeleteEventPage() {
           <p style={{ 
             margin: "0 0 8px 0", 
             fontSize: "15px",
-            color: "#c62828",
+            color: "var(--hp-danger)",
             fontWeight: "600"
           }}>
             ⚠️ Это действие нельзя отменить
@@ -251,7 +253,7 @@ export function DeleteEventPage() {
             margin: "0", 
             paddingLeft: "20px",
             fontSize: "14px",
-            color: "#666",
+            color: "var(--hp-muted)",
             lineHeight: "1.6"
           }}>
             <li>Все данные о мероприятии будут удалены</li>
@@ -266,9 +268,9 @@ export function DeleteEventPage() {
             <div style={{
               marginBottom: "24px",
               padding: "16px",
-              backgroundColor: "#f8f9fa",
+              backgroundColor: "var(--hp-surface-soft)",
               borderRadius: "12px",
-              border: "1px solid #e0e0e0"
+              border: "1px solid var(--hp-border)"
             }}>
               <label style={{
                 display: "flex",
@@ -296,14 +298,14 @@ export function DeleteEventPage() {
                   <div style={{ 
                     fontWeight: "600", 
                     fontSize: "15px",
-                    color: "#333",
+                    color: "var(--hp-text)",
                     marginBottom: "4px"
                   }}>
                     Я понимаю последствия и хочу удалить мероприятие
                   </div>
                   <div style={{ 
                     fontSize: "13px", 
-                    color: "#666",
+                    color: "var(--hp-muted)",
                     lineHeight: "1.4"
                   }}>
                     Отметив этот чекбокс, вы подтверждаете, что осознаете необратимость этого действия
@@ -322,9 +324,9 @@ export function DeleteEventPage() {
                 onClick={handleCancel}
                 style={{
                   padding: "14px 28px",
-                  backgroundColor: "#f5f5f5",
-                  color: "#666",
-                  border: "1px solid #e0e0e0",
+                  backgroundColor: "var(--hp-surface-soft)",
+                  color: "var(--hp-muted)",
+                  border: "1px solid var(--hp-border)",
                   borderRadius: "12px",
                   fontSize: "16px",
                   fontWeight: "500",
@@ -333,11 +335,11 @@ export function DeleteEventPage() {
                   minWidth: "140px"
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = "#e0e0e0";
+                  e.currentTarget.style.backgroundColor = "var(--hp-surface-muted)";
                   e.currentTarget.style.transform = "translateY(-1px)";
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = "#f5f5f5";
+                  e.currentTarget.style.backgroundColor = "var(--hp-surface-soft)";
                   e.currentTarget.style.transform = "translateY(0)";
                 }}
               >
@@ -349,7 +351,7 @@ export function DeleteEventPage() {
                 onClick={handleDelete}
                 style={{
                   padding: "14px 28px",
-                  backgroundColor: confirmed ? "#d32f2f" : "#ffcdd2",
+                  backgroundColor: confirmed ? "var(--hp-danger)" : "var(--hp-danger-border)",
                   color: "white",
                   border: "none",
                   borderRadius: "12px",
@@ -362,13 +364,13 @@ export function DeleteEventPage() {
                 }}
                 onMouseEnter={(e) => {
                   if (confirmed && !loading) {
-                    e.currentTarget.style.backgroundColor = "#b71c1c";
+                    e.currentTarget.style.backgroundColor = "var(--hp-danger)";
                     e.currentTarget.style.transform = "translateY(-1px)";
                   }
                 }}
                 onMouseLeave={(e) => {
                   if (confirmed && !loading) {
-                    e.currentTarget.style.backgroundColor = "#d32f2f";
+                    e.currentTarget.style.backgroundColor = "var(--hp-danger)";
                     e.currentTarget.style.transform = "translateY(0)";
                   }
                 }}
@@ -398,8 +400,8 @@ export function DeleteEventPage() {
               <div style={{ 
                 marginTop: "16px", 
                 padding: "12px",
-                backgroundColor: "#ffebee",
-                color: "#c62828",
+                backgroundColor: "var(--hp-danger-soft)",
+                color: "var(--hp-danger)",
                 borderRadius: "10px",
                 fontSize: "14px"
               }}>
@@ -410,15 +412,15 @@ export function DeleteEventPage() {
         ) : (
           <div style={{
             padding: "24px",
-            backgroundColor: "#e8f5e9",
+            backgroundColor: "var(--hp-success-soft)",
             borderRadius: "12px",
-            border: "1px solid #c8e6c9",
+            border: "1px solid var(--hp-success-border)",
             marginBottom: "20px"
           }}>
             <div style={{
               fontSize: "48px",
               marginBottom: "16px",
-              color: "#2e7d32"
+              color: "var(--hp-success)"
             }}>
               ✓
             </div>
@@ -426,14 +428,14 @@ export function DeleteEventPage() {
               margin: "0 0 8px 0",
               fontSize: "20px",
               fontWeight: "600",
-              color: "#2e7d32"
+              color: "var(--hp-success)"
             }}>
               Успешно удалено!
             </h3>
             <p style={{
               margin: "0 0 20px 0",
               fontSize: "16px",
-              color: "#2e7d32",
+              color: "var(--hp-success)",
               opacity: 0.9
             }}>
               {message}
@@ -443,14 +445,14 @@ export function DeleteEventPage() {
               alignItems: "center", 
               justifyContent: "center",
               gap: "8px",
-              color: "#666",
+              color: "var(--hp-muted)",
               fontSize: "14px"
             }}>
               <span style={{ 
                 width: "16px", 
                 height: "16px", 
-                border: "2px solid #e0e0e0", 
-                borderTopColor: "#1976d2", 
+                border: "2px solid var(--hp-border)", 
+                borderTopColor: "var(--hp-primary)", 
                 borderRadius: "50%", 
                 animation: "spin 1s linear infinite" 
               }} />
@@ -463,14 +465,14 @@ export function DeleteEventPage() {
       <div style={{ 
         textAlign: "center", 
         fontSize: "13px", 
-        color: "#999",
+        color: "var(--hp-muted)",
         padding: "12px"
       }}>
         <p style={{ margin: "0 0 4px 0" }}>
           Удаление выполняется от имени текущего пользователя
         </p>
         <p style={{ margin: 0 }}>
-          ID события: <code style={{ backgroundColor: "#f5f5f5", padding: "2px 6px", borderRadius: "4px" }}>{id}</code>
+          ID события: <code style={{ backgroundColor: "var(--hp-surface-soft)", padding: "2px 6px", borderRadius: "4px" }}>{id}</code>
         </p>
       </div>
 
@@ -482,7 +484,7 @@ export function DeleteEventPage() {
           }
           
           input[type="checkbox"]:focus {
-            outline: 2px solid #1976d2;
+            outline: 2px solid var(--hp-primary);
             outline-offset: 2px;
           }
           

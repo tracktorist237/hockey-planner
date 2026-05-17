@@ -166,22 +166,22 @@ export function TeamSwitcher({
   return (
     <div
       style={{
-        border: "1px solid #dbe3f6",
+        border: "1px solid var(--hp-border)",
         borderRadius: "12px",
-        backgroundColor: "#f8fbff",
+        backgroundColor: "var(--hp-surface-soft)",
         padding: "12px",
         marginBottom: "12px",
       }}
     >
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-        <strong style={{ color: "#1a237e", fontSize: "14px" }}>Команда</strong>
+        <strong style={{ color: "var(--hp-heading)", fontSize: "14px" }}>Команда</strong>
         <button
           onClick={() => void loadTeams()}
           disabled={loading}
           style={{
             border: "none",
             background: "transparent",
-            color: "#1976d2",
+            color: "var(--hp-primary)",
             cursor: loading ? "wait" : "pointer",
             fontSize: "12px",
             fontWeight: 600,
@@ -195,8 +195,8 @@ export function TeamSwitcher({
         <div
           style={{
             fontSize: "12px",
-            color: "#455a64",
-            backgroundColor: "#eceff1",
+            color: "var(--hp-muted)",
+            backgroundColor: "var(--hp-surface-muted)",
             borderRadius: "8px",
             padding: "8px",
           }}
@@ -212,9 +212,10 @@ export function TeamSwitcher({
               width: "100%",
               padding: "10px 12px",
               borderRadius: "10px",
-              border: "1px solid #c8d8f2",
+              border: "1px solid var(--hp-border)",
               marginBottom: "10px",
-              backgroundColor: "white",
+              backgroundColor: "var(--hp-input-bg)",
+              color: "var(--hp-text)",
             }}
           >
             <option value="">Все мероприятия</option>
@@ -235,9 +236,9 @@ export function TeamSwitcher({
                     flex: 1,
                     padding: "8px 10px",
                     borderRadius: "10px",
-                    border: "1px solid #c5cae9",
-                    backgroundColor: currentUserId ? "white" : "#eceff1",
-                    color: "#3949ab",
+                    border: "1px solid var(--hp-border)",
+                    backgroundColor: currentUserId ? "var(--hp-surface)" : "var(--hp-surface-muted)",
+                    color: "var(--hp-primary-text)",
                     cursor: currentUserId ? "pointer" : "not-allowed",
                     fontSize: "12px",
                     fontWeight: 600,
@@ -252,8 +253,8 @@ export function TeamSwitcher({
                     flex: 1,
                     padding: "8px 10px",
                     borderRadius: "10px",
-                    border: "1px solid #1976d2",
-                    backgroundColor: currentUserId ? "#1976d2" : "#90a4ae",
+                    border: "1px solid var(--hp-primary)",
+                    backgroundColor: currentUserId ? "var(--hp-primary)" : "var(--hp-border-strong)",
                     color: "white",
                     cursor: currentUserId ? "pointer" : "not-allowed",
                     fontSize: "12px",
@@ -271,9 +272,9 @@ export function TeamSwitcher({
                   width: "100%",
                   padding: "8px 10px",
                   borderRadius: "10px",
-                  border: "1px solid #bbdefb",
-                  backgroundColor: "white",
-                  color: "#1565c0",
+                  border: "1px solid var(--hp-border)",
+                  backgroundColor: "var(--hp-surface)",
+                  color: "var(--hp-primary-text)",
                   cursor: "pointer",
                   fontSize: "12px",
                   fontWeight: 600,
@@ -291,8 +292,8 @@ export function TeamSwitcher({
           style={{
             marginTop: "8px",
             fontSize: "12px",
-            color: "#37474f",
-            backgroundColor: "#e3f2fd",
+            color: "var(--hp-primary-text)",
+            backgroundColor: "var(--hp-primary-soft)",
             borderRadius: "8px",
             padding: "6px 8px",
           }}

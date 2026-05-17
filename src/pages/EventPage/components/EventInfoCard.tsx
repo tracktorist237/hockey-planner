@@ -25,11 +25,11 @@ export const EventInfoCard = ({ event, copySuccess, copyEventLink }: EventInfoCa
   return (
     <div
       style={{
-        backgroundColor: "white",
+        backgroundColor: "var(--hp-surface)",
         borderRadius: "16px",
         padding: "20px",
         marginBottom: "20px",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+        boxShadow: "var(--hp-shadow-sm)",
       }}
     >
       <div
@@ -58,7 +58,7 @@ export const EventInfoCard = ({ event, copySuccess, copyEventLink }: EventInfoCa
           <span
             style={{
               fontSize: "18px",
-              color: "#666",
+              color: "var(--hp-muted)",
               display: "flex",
               alignItems: "center",
               gap: "4px",
@@ -95,7 +95,7 @@ export const EventInfoCard = ({ event, copySuccess, copyEventLink }: EventInfoCa
             margin: "0 0 12px 0",
             fontSize: "22px",
             fontWeight: "700",
-            color: "#1a237e",
+            color: "var(--hp-heading)",
           }}
         >
           {event.title}
@@ -111,28 +111,28 @@ export const EventInfoCard = ({ event, copySuccess, copyEventLink }: EventInfoCa
             marginTop: "8px",
             marginBottom: "12px",
             padding: "12px 16px",
-            backgroundColor: "#f8f9fa",
+            backgroundColor: "var(--hp-surface-soft)",
             borderRadius: "12px",
-            border: "1px solid #e0e0e0",
+            border: "1px solid var(--hp-border)",
           }}
         >
-          <span style={{ fontSize: "18px", fontWeight: "700", color: "#1a237e", flex: 1, textAlign: "center" }}>
+          <span style={{ fontSize: "18px", fontWeight: "700", color: "var(--hp-heading)", flex: 1, textAlign: "center" }}>
             {event.homeTeamName}
           </span>
           <span
             style={{
               fontSize: "14px",
-              color: "#666",
-              backgroundColor: "white",
+              color: "var(--hp-muted)",
+              backgroundColor: "var(--hp-surface)",
               padding: "4px 12px",
               borderRadius: "16px",
-              border: "1px solid #e0e0e0",
+              border: "1px solid var(--hp-border)",
               fontWeight: "600",
             }}
           >
             VS
           </span>
-          <span style={{ fontSize: "18px", fontWeight: "700", color: "#1a237e", flex: 1, textAlign: "center" }}>
+          <span style={{ fontSize: "18px", fontWeight: "700", color: "var(--hp-heading)", flex: 1, textAlign: "center" }}>
             {event.awayTeamName}
           </span>
         </div>
@@ -144,10 +144,10 @@ export const EventInfoCard = ({ event, copySuccess, copyEventLink }: EventInfoCa
           style={{
             width: "100%",
             padding: "8px 12px",
-            backgroundColor: copySuccess ? "#4caf50" : "#f5f5f5",
-            color: copySuccess ? "white" : "#666",
+            backgroundColor: copySuccess ? "#4caf50" : "var(--hp-surface-soft)",
+            color: copySuccess ? "white" : "var(--hp-muted)",
             border: "1px solid",
-            borderColor: copySuccess ? "#4caf50" : "#e0e0e0",
+            borderColor: copySuccess ? "#4caf50" : "var(--hp-border)",
             borderRadius: "8px",
             fontSize: "13px",
             cursor: "pointer",
@@ -159,16 +159,16 @@ export const EventInfoCard = ({ event, copySuccess, copyEventLink }: EventInfoCa
           }}
           onMouseEnter={(e) => {
             if (!copySuccess) {
-              e.currentTarget.style.backgroundColor = "#e3f2fd";
-              e.currentTarget.style.borderColor = "#1976d2";
-              e.currentTarget.style.color = "#1976d2";
+              e.currentTarget.style.backgroundColor = "var(--hp-primary-soft)";
+              e.currentTarget.style.borderColor = "var(--hp-primary)";
+              e.currentTarget.style.color = "var(--hp-primary-text)";
             }
           }}
           onMouseLeave={(e) => {
             if (!copySuccess) {
-              e.currentTarget.style.backgroundColor = "#f5f5f5";
-              e.currentTarget.style.borderColor = "#e0e0e0";
-              e.currentTarget.style.color = "#666";
+              e.currentTarget.style.backgroundColor = "var(--hp-surface-soft)";
+              e.currentTarget.style.borderColor = "var(--hp-border)";
+              e.currentTarget.style.color = "var(--hp-muted)";
             }
           }}
         >

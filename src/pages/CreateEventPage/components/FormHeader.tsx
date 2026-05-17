@@ -17,8 +17,8 @@ export const FormHeader = ({
         left: "0",
         right: "0",
         zIndex: "100",
-        backgroundColor: "white",
-        borderBottom: "1px solid #e0e0e0",
+        backgroundColor: "var(--hp-surface)",
+        borderBottom: "1px solid var(--hp-border)",
         boxShadow: isVisible ? "0 2px 4px rgba(0,0,0,0.05)" : "none",
         padding: "16px",
         height: "76px",
@@ -47,8 +47,8 @@ export const FormHeader = ({
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            border: "1px solid #e0e0e0",
-            background: "white",
+            border: "1px solid var(--hp-border)",
+            background: "var(--hp-surface)",
             fontSize: "20px",
             cursor: "pointer",
             borderRadius: "10px",
@@ -57,17 +57,17 @@ export const FormHeader = ({
             transition: "all 0.2s ease",
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = "#f5f5f5";
-            e.currentTarget.style.borderColor = "#1976d2";
+            e.currentTarget.style.backgroundColor = "var(--hp-surface-soft)";
+            e.currentTarget.style.borderColor = "var(--hp-primary)";
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = "white";
-            e.currentTarget.style.borderColor = "#e0e0e0";
+            e.currentTarget.style.backgroundColor = "var(--hp-surface)";
+            e.currentTarget.style.borderColor = "var(--hp-border)";
           }}
         >
           ⬅
         </button>
-        <h1 style={{ margin: 0, fontSize: "20px", fontWeight: "600", color: "#1a237e", flex: 1 }}>
+        <h1 style={{ margin: 0, fontSize: "20px", fontWeight: "600", color: "var(--hp-heading)", flex: 1 }}>
           {title}
         </h1>
       </div>

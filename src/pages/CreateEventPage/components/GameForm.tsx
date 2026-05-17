@@ -28,16 +28,16 @@ export const GameForm = ({
   return (
     <div
       style={{
-        backgroundColor: "#f8f9fa",
+        backgroundColor: "var(--hp-surface-soft)",
         padding: "20px",
         borderRadius: "12px",
         marginBottom: "20px",
-        border: "1px solid #e3f2fd",
+        border: "1px solid var(--hp-primary-soft)",
         width: "100%",
         boxSizing: "border-box",
       }}
     >
-      <h3 style={{ marginTop: 0, marginBottom: "16px", fontSize: "18px", fontWeight: "600", color: "#1a237e" }}>
+      <h3 style={{ marginTop: 0, marginBottom: "16px", fontSize: "18px", fontWeight: "600", color: "var(--hp-heading)" }}>
         🏆 Информация о матче
       </h3>
 
@@ -52,10 +52,11 @@ export const GameForm = ({
           style={{
             width: "100%",
             padding: "14px",
-            border: "1px solid #e0e0e0",
+            border: "1px solid var(--hp-border)",
             borderRadius: "10px",
             fontSize: "16px",
-            backgroundColor: "white",
+            backgroundColor: "var(--hp-surface)",
+            color: "var(--hp-text)",
             boxSizing: "border-box",
             maxWidth: "100%",
           }}
@@ -75,10 +76,11 @@ export const GameForm = ({
             style={{
               width: "100%",
               padding: "14px",
-              border: "1px solid #e0e0e0",
+              border: "1px solid var(--hp-border)",
               borderRadius: "10px",
               fontSize: "16px",
-              backgroundColor: "white",
+              backgroundColor: "var(--hp-surface)",
+              color: "var(--hp-text)",
               boxSizing: "border-box",
               maxWidth: "100%",
             }}
@@ -100,10 +102,11 @@ export const GameForm = ({
             style={{
               width: "100%",
               padding: "14px",
-              border: "1px solid #e0e0e0",
+              border: "1px solid var(--hp-border)",
               borderRadius: "10px",
               fontSize: "16px",
-              backgroundColor: "white",
+              backgroundColor: "var(--hp-surface)",
+              color: "var(--hp-text)",
               boxSizing: "border-box",
               maxWidth: "100%",
             }}
@@ -120,12 +123,12 @@ export const GameForm = ({
         <div
           style={{
             padding: "12px",
-            backgroundColor: "#e8f5e9",
+            backgroundColor: "var(--hp-success-soft)",
             borderRadius: "10px",
             fontSize: "14px",
-            color: "#2e7d32",
+            color: "var(--hp-success)",
             textAlign: "center",
-            border: "1px solid #c8e6c9",
+            border: "1px solid var(--hp-success-border)",
             width: "100%",
             boxSizing: "border-box",
           }}

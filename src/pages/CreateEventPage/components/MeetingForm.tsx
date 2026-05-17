@@ -6,7 +6,7 @@ interface MeetingFormProps {
 export const MeetingForm = ({ title, onChange }: MeetingFormProps) => {
   return (
     <div style={{ marginBottom: "20px", width: "100%", boxSizing: "border-box" }}>
-      <label style={{ display: "block", marginBottom: "8px", fontWeight: "600", fontSize: "16px", color: "#333" }}>
+      <label style={{ display: "block", marginBottom: "8px", fontWeight: "600", fontSize: "16px", color: "var(--hp-text)" }}>
         Название встречи *
       </label>
       <input
@@ -16,10 +16,11 @@ export const MeetingForm = ({ title, onChange }: MeetingFormProps) => {
         style={{
           width: "100%",
           padding: "14px",
-          border: "1px solid #e0e0e0",
+          border: "1px solid var(--hp-border)",
           borderRadius: "10px",
           fontSize: "16px",
-          backgroundColor: "#fafafa",
+          backgroundColor: "var(--hp-surface-soft)",
+          color: "var(--hp-text)",
           boxSizing: "border-box",
           maxWidth: "100%",
         }}

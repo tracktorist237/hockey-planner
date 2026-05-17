@@ -41,7 +41,7 @@ export function CurrentPlayerHeader({ onBack }: CurrentPlayerHeaderProps) {
         alignItems: "center",
         justifyContent: "flex-start",
         padding: "8px 0 12px 0",
-        borderBottom: "1px solid #e0e0e0",
+        borderBottom: "1px solid var(--hp-border)",
         cursor: !currentUser ? "pointer" : "default",
         transition: "background-color 0.2s ease",
         borderRadius: "8px",
@@ -50,7 +50,7 @@ export function CurrentPlayerHeader({ onBack }: CurrentPlayerHeaderProps) {
       onClick={!currentUser ? handleSelectPlayer : undefined}
       onMouseEnter={(event) => {
         if (!currentUser) {
-          event.currentTarget.style.backgroundColor = "#f5f5f5";
+          event.currentTarget.style.backgroundColor = "var(--hp-surface-hover)";
           event.currentTarget.style.padding = "8px 4px 12px 4px";
         }
       }}
@@ -89,7 +89,7 @@ export function CurrentPlayerHeader({ onBack }: CurrentPlayerHeaderProps) {
               style={{
                 fontWeight: "600",
                 fontSize: `${displayNameSize}px`,
-                color: "#1a237e",
+                color: "var(--hp-heading)",
                 marginBottom: "4px",
                 whiteSpace: "nowrap",
                 maxWidth: "200px",
@@ -100,7 +100,7 @@ export function CurrentPlayerHeader({ onBack }: CurrentPlayerHeaderProps) {
             <div
               style={{
                 fontSize: "13px",
-                color: "#666",
+                color: "var(--hp-muted)",
                 display: "flex",
                 alignItems: "center",
                 gap: "6px",
@@ -127,9 +127,9 @@ export function CurrentPlayerHeader({ onBack }: CurrentPlayerHeaderProps) {
                     navigate("/profile");
                   }}
                   style={{
-                    border: "1px solid #fed7aa",
-                    background: "#fff7ed",
-                    color: "#9a3412",
+                    border: "1px solid var(--hp-warning-border)",
+                    background: "var(--hp-warning-soft)",
+                    color: "var(--hp-warning)",
                     padding: "2px 8px",
                     borderRadius: "10px",
                     fontSize: "12px",
@@ -150,8 +150,8 @@ export function CurrentPlayerHeader({ onBack }: CurrentPlayerHeaderProps) {
             style={{
               width: "48px",
               height: "48px",
-              backgroundColor: "#f5f5f5",
-              color: "#999",
+              backgroundColor: "var(--hp-surface-muted)",
+              color: "var(--hp-muted)",
               borderRadius: "12px",
               display: "flex",
               alignItems: "center",
@@ -168,7 +168,7 @@ export function CurrentPlayerHeader({ onBack }: CurrentPlayerHeaderProps) {
               style={{
                 fontWeight: "600",
                 fontSize: "16px",
-                color: "#1a237e",
+                color: "var(--hp-heading)",
                 marginBottom: "4px",
               }}
             >
@@ -177,7 +177,7 @@ export function CurrentPlayerHeader({ onBack }: CurrentPlayerHeaderProps) {
             <div
               style={{
                 fontSize: "14px",
-                color: "#666",
+                color: "var(--hp-muted)",
                 display: "flex",
                 alignItems: "center",
                 gap: "6px",
@@ -186,7 +186,7 @@ export function CurrentPlayerHeader({ onBack }: CurrentPlayerHeaderProps) {
               <span
                 style={{
                   backgroundColor: "#fff3e0",
-                  color: "#ef6c00",
+                  color: "var(--hp-warning)",
                   padding: "2px 8px",
                   borderRadius: "10px",
                   fontSize: "12px",

@@ -27,12 +27,12 @@ export function UpdateEventPage() {
   }
 
   return (
-    <div style={{ padding: "0", maxWidth: "100%", margin: "0 auto", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", minHeight: "100vh", backgroundColor: "#f5f5f5", boxSizing: "border-box" }}>
+    <div style={{ padding: "0", maxWidth: "100%", margin: "0 auto", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", minHeight: "100vh", background: "var(--hp-bg-gradient)", boxSizing: "border-box" }}>
       <FormHeader onBack={() => navigate(`/events/${id}`)} isVisible={isHeaderVisible} title="Редактирование события" />
       <div style={{ padding: "16px", paddingTop: "92px", paddingBottom: "120px", maxWidth: "100%", margin: "0 auto", boxSizing: "border-box" }}>
         <div style={{ maxWidth: "100%", margin: "0 auto", boxSizing: "border-box" }}>
           {error && <ErrorMessage error={error} />}
-          <div style={{ backgroundColor: "white", borderRadius: "16px", padding: "20px", boxShadow: "0 2px 8px rgba(0,0,0,0.08)", width: "100%", boxSizing: "border-box" }}>
+          <div style={{ backgroundColor: "var(--hp-surface)", borderRadius: "16px", padding: "20px", boxShadow: "var(--hp-shadow-sm)", width: "100%", boxSizing: "border-box" }}>
             <EventTypeSelector currentType={formData.type} onChange={handleTypeChange} />
             {isMeeting && <MeetingForm title={formData.title} onChange={(value) => updateField("title", value)} />}
             {isGame && <GameForm leagueName={formData.leagueName} homeTeamName={formData.homeTeamName} awayTeamName={formData.awayTeamName} uniformColorId={formData.uniformColorId} onLeagueChange={(value) => updateField("leagueName", value)} onHomeChange={(value) => updateField("homeTeamName", value)} onAwayChange={(value) => updateField("awayTeamName", value)} onUniformColorChange={(value) => updateField("uniformColorId", value)} />}

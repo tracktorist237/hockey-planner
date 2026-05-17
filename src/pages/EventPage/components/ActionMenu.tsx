@@ -21,9 +21,9 @@ export const ActionMenu = ({ eventId, isOpen, onToggle, canManage }: ActionMenuP
         style={{
           width: "100%",
           padding: "14px 16px",
-          backgroundColor: "#f8f9fa",
-          color: "#1a237e",
-          border: "1px solid #e0e0e0",
+          backgroundColor: "var(--hp-surface-soft)",
+          color: "var(--hp-heading)",
+          border: "1px solid var(--hp-border)",
           borderRadius: "10px",
           fontSize: "15px",
           fontWeight: "600",
@@ -34,12 +34,12 @@ export const ActionMenu = ({ eventId, isOpen, onToggle, canManage }: ActionMenuP
           transition: "all 0.2s ease",
         }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.backgroundColor = "#e3f2fd";
-          e.currentTarget.style.borderColor = "#1976d2";
+          e.currentTarget.style.backgroundColor = "var(--hp-primary-soft)";
+          e.currentTarget.style.borderColor = "var(--hp-primary)";
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.backgroundColor = "#f8f9fa";
-          e.currentTarget.style.borderColor = "#e0e0e0";
+          e.currentTarget.style.backgroundColor = "var(--hp-surface-soft)";
+          e.currentTarget.style.borderColor = "var(--hp-border)";
         }}
       >
         <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
@@ -62,9 +62,9 @@ export const ActionMenu = ({ eventId, isOpen, onToggle, canManage }: ActionMenuP
           style={{
             marginTop: "12px",
             padding: "16px",
-            backgroundColor: "#f8f9fa",
+            backgroundColor: "var(--hp-surface-soft)",
             borderRadius: "12px",
-            border: "1px solid #e0e0e0",
+            border: "1px solid var(--hp-border)",
             animation: "slideDown 0.3s ease",
           }}
         >
@@ -83,7 +83,7 @@ export const ActionMenu = ({ eventId, isOpen, onToggle, canManage }: ActionMenuP
                 flex: 1,
                 minWidth: "140px",
                 padding: "14px 20px",
-                backgroundColor: "#1976d2",
+                backgroundColor: "var(--hp-primary)",
                 color: "white",
                 border: "none",
                 borderRadius: "10px",
@@ -97,11 +97,11 @@ export const ActionMenu = ({ eventId, isOpen, onToggle, canManage }: ActionMenuP
                 transition: "all 0.2s ease",
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = "#1565c0";
+                e.currentTarget.style.backgroundColor = "var(--hp-primary-hover)";
                 e.currentTarget.style.transform = "translateY(-1px)";
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "#1976d2";
+                e.currentTarget.style.backgroundColor = "var(--hp-primary)";
                 e.currentTarget.style.transform = "translateY(0)";
               }}
             >
@@ -117,9 +117,9 @@ export const ActionMenu = ({ eventId, isOpen, onToggle, canManage }: ActionMenuP
                 flex: 1,
                 minWidth: "140px",
                 padding: "14px 20px",
-                backgroundColor: "#ffebee",
-                color: "#d32f2f",
-                border: "1px solid #ffcdd2",
+                backgroundColor: "var(--hp-danger-soft)",
+                color: "var(--hp-danger)",
+                border: "1px solid var(--hp-danger-border)",
                 borderRadius: "10px",
                 fontSize: "15px",
                 fontWeight: "600",
@@ -131,11 +131,11 @@ export const ActionMenu = ({ eventId, isOpen, onToggle, canManage }: ActionMenuP
                 transition: "all 0.2s ease",
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = "#ffcdd2";
+                e.currentTarget.style.backgroundColor = "var(--hp-danger-border)";
                 e.currentTarget.style.transform = "translateY(-1px)";
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "#ffebee";
+                e.currentTarget.style.backgroundColor = "var(--hp-danger-soft)";
                 e.currentTarget.style.transform = "translateY(0)";
               }}
             >
@@ -148,9 +148,9 @@ export const ActionMenu = ({ eventId, isOpen, onToggle, canManage }: ActionMenuP
             style={{
               margin: "16px 0 0 0",
               fontSize: "13px",
-              color: "#666",
+              color: "var(--hp-muted)",
               textAlign: "center",
-              borderTop: "1px solid #e0e0e0",
+              borderTop: "1px solid var(--hp-border)",
               paddingTop: "16px",
             }}
           >

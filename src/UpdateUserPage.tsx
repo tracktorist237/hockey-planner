@@ -431,7 +431,7 @@ export function UpdateUserPage() {
 
   if (loadingInitial) {
     return (
-      <div style={{ padding: "24px", textAlign: "center", color: "#666" }}>
+      <div style={{ padding: "24px", textAlign: "center", color: "var(--hp-muted)" }}>
         Загрузка данных пользователя...
       </div>
     );
@@ -442,7 +442,7 @@ export function UpdateUserPage() {
       style={{
         padding: "16px",
         minHeight: "100vh",
-        backgroundColor: "#f5f5f5",
+        background: "var(--hp-bg-gradient)",
         fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
         boxSizing: "border-box",
       }}
@@ -458,8 +458,8 @@ export function UpdateUserPage() {
       {successMessage && (
         <div
           style={{
-            backgroundColor: "#e8f5e9",
-            color: "#2e7d32",
+            backgroundColor: "var(--hp-success-soft)",
+            color: "var(--hp-success)",
             padding: "12px 16px",
             borderRadius: "10px",
             marginBottom: "16px",
@@ -488,24 +488,24 @@ export function UpdateUserPage() {
 
         <div
           style={{
-            backgroundColor: "white",
+            backgroundColor: "var(--hp-surface)",
             borderRadius: "16px",
             padding: "20px",
             marginBottom: "20px",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+            boxShadow: "var(--hp-shadow-sm)",
           }}
         >
-          <h3 style={{ margin: "0 0 10px 0", fontSize: "18px", color: "#1a237e" }}>
+          <h3 style={{ margin: "0 0 10px 0", fontSize: "18px", color: "var(--hp-heading)" }}>
             Профиль СПБХЛ
           </h3>
-          <div style={{ color: "#666", fontSize: "14px", marginBottom: "14px" }}>
+          <div style={{ color: "var(--hp-muted)", fontSize: "14px", marginBottom: "14px" }}>
             Привяжите игрока СПБХЛ, чтобы использовать его фото и в будущем подтягивать статистику.
           </div>
 
           <div
             style={{
-              backgroundColor: "#f8f9fa",
-              border: "1px solid #e8eaed",
+              backgroundColor: "var(--hp-surface-soft)",
+              border: "1px solid var(--hp-border)",
               borderRadius: "12px",
               padding: "12px",
               marginBottom: "12px",
@@ -515,13 +515,13 @@ export function UpdateUserPage() {
           >
             {spbhlPlayerId ? (
               <>
-                <div style={{ marginBottom: "6px", color: "#2e7d32", fontWeight: 600 }}>
+                <div style={{ marginBottom: "6px", color: "var(--hp-success)", fontWeight: 600 }}>
                   Профиль привязан
                 </div>
                 <div>ID: {spbhlPlayerId}</div>
               </>
             ) : (
-              <div style={{ color: "#9e9e9e" }}>Профиль СПБХЛ не привязан</div>
+              <div style={{ color: "var(--hp-muted)" }}>Профиль СПБХЛ не привязан</div>
             )}
           </div>
 
@@ -532,9 +532,9 @@ export function UpdateUserPage() {
               style={{
                 padding: "10px 14px",
                 borderRadius: "10px",
-                border: "1px solid #1e88e5",
-                backgroundColor: "#e3f2fd",
-                color: "#1565c0",
+                border: "1px solid var(--hp-primary)",
+                backgroundColor: "var(--hp-primary-soft)",
+                color: "var(--hp-primary-text)",
                 fontWeight: 600,
                 cursor: "pointer",
               }}
@@ -550,9 +550,9 @@ export function UpdateUserPage() {
                   style={{
                     padding: "10px 14px",
                     borderRadius: "10px",
-                    border: "1px solid #ef9a9a",
-                    backgroundColor: "#ffebee",
-                    color: "#c62828",
+                    border: "1px solid var(--hp-danger-border)",
+                    backgroundColor: "var(--hp-danger-soft)",
+                    color: "var(--hp-danger)",
                     fontWeight: 600,
                     cursor: "pointer",
                   }}
@@ -569,9 +569,9 @@ export function UpdateUserPage() {
                     alignItems: "center",
                     padding: "10px 14px",
                     borderRadius: "10px",
-                    border: "1px solid #d0d7de",
-                    backgroundColor: "#fff",
-                    color: "#374151",
+                    border: "1px solid var(--hp-border)",
+                    backgroundColor: "var(--hp-surface)",
+                    color: "var(--hp-text)",
                     fontWeight: 600,
                     textDecoration: "none",
                   }}
@@ -585,14 +585,14 @@ export function UpdateUserPage() {
 
         <div
           style={{
-            backgroundColor: "white",
+            backgroundColor: "var(--hp-surface)",
             borderRadius: "16px",
             padding: "20px",
             marginBottom: "20px",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+            boxShadow: "var(--hp-shadow-sm)",
           }}
         >
-          <h3 style={{ margin: "0 0 12px 0", fontSize: "18px", color: "#1a237e" }}>
+          <h3 style={{ margin: "0 0 12px 0", fontSize: "18px", color: "var(--hp-heading)" }}>
             Аватар
           </h3>
 
@@ -602,13 +602,13 @@ export function UpdateUserPage() {
                 width: "88px",
                 height: "88px",
                 borderRadius: "14px",
-                backgroundColor: "#eceff1",
-                border: "1px solid #dfe3e8",
+                backgroundColor: "var(--hp-neutral-soft)",
+                border: "1px solid var(--hp-border)",
                 overflow: "hidden",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                color: "#78909c",
+                color: "var(--hp-muted)",
                 fontSize: "12px",
                 textAlign: "center",
                 padding: "8px",
@@ -625,7 +625,7 @@ export function UpdateUserPage() {
               )}
             </div>
 
-            <div style={{ color: "#666", fontSize: "14px", lineHeight: 1.4 }}>
+            <div style={{ color: "var(--hp-muted)", fontSize: "14px", lineHeight: 1.4 }}>
               {photoUrl ? "Текущий аватар будет сохранён в профиль." : "Выберите источник аватара."}
             </div>
           </div>
@@ -638,9 +638,9 @@ export function UpdateUserPage() {
               style={{
                 padding: "10px 14px",
                 borderRadius: "10px",
-                border: "1px solid #c8e6c9",
-                backgroundColor: !spbhlPlayerId ? "#f1f8e9" : "#e8f5e9",
-                color: !spbhlPlayerId ? "#9e9e9e" : "#2e7d32",
+                border: "1px solid var(--hp-success-border)",
+                backgroundColor: !spbhlPlayerId ? "var(--hp-success-soft)" : "var(--hp-success-soft)",
+                color: !spbhlPlayerId ? "var(--hp-muted)" : "var(--hp-success)",
                 fontWeight: 600,
                 cursor: !spbhlPlayerId ? "not-allowed" : "pointer",
               }}
@@ -652,9 +652,9 @@ export function UpdateUserPage() {
               style={{
                 padding: "10px 14px",
                 borderRadius: "10px",
-                border: "1px solid #d0d7de",
-                backgroundColor: "#fff",
-                color: "#374151",
+                border: "1px solid var(--hp-border)",
+                backgroundColor: "var(--hp-surface)",
+                color: "var(--hp-text)",
                 fontWeight: 600,
                 cursor: isUploadingAvatar ? "not-allowed" : "pointer",
                 opacity: isUploadingAvatar ? 0.7 : 1,
@@ -677,9 +677,9 @@ export function UpdateUserPage() {
               style={{
                 padding: "10px 14px",
                 borderRadius: "10px",
-                border: "1px solid #ffcdd2",
-                backgroundColor: !photoUrl ? "#fafafa" : "#ffebee",
-                color: !photoUrl ? "#9e9e9e" : "#c62828",
+                border: "1px solid var(--hp-danger-border)",
+                backgroundColor: !photoUrl ? "var(--hp-input-bg)" : "var(--hp-danger-soft)",
+                color: !photoUrl ? "var(--hp-muted)" : "var(--hp-danger)",
                 fontWeight: 600,
                 cursor: !photoUrl ? "not-allowed" : "pointer",
               }}
@@ -689,7 +689,7 @@ export function UpdateUserPage() {
           </div>
 
           {!spbhlPlayerId && (
-            <div style={{ marginTop: "10px", fontSize: "13px", color: "#757575" }}>
+            <div style={{ marginTop: "10px", fontSize: "13px", color: "var(--hp-muted)" }}>
               Чтобы взять фото из СПБХЛ, сначала привяжите профиль.
             </div>
           )}
@@ -721,7 +721,7 @@ export function UpdateUserPage() {
               width: "100%",
               maxWidth: "760px",
               maxHeight: "92vh",
-              backgroundColor: "white",
+              backgroundColor: "var(--hp-surface)",
               borderRadius: "16px",
               overflow: "hidden",
               display: "flex",
@@ -731,7 +731,7 @@ export function UpdateUserPage() {
             <div
               style={{
                 padding: "14px 16px",
-                borderBottom: "1px solid #eceff1",
+                borderBottom: "1px solid var(--hp-neutral-soft)",
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
@@ -739,10 +739,10 @@ export function UpdateUserPage() {
               }}
             >
               <div>
-                <div style={{ fontWeight: 700, color: "#1a237e", marginBottom: "2px" }}>
+                <div style={{ fontWeight: 700, color: "var(--hp-heading)", marginBottom: "2px" }}>
                   Поиск игрока СПБХЛ
                 </div>
-                <div style={{ fontSize: "13px", color: "#666" }}>
+                <div style={{ fontSize: "13px", color: "var(--hp-muted)" }}>
                   Фамилия предзаполнена из профиля, можно уточнить год рождения.
                 </div>
               </div>
@@ -753,8 +753,8 @@ export function UpdateUserPage() {
                   width: "34px",
                   height: "34px",
                   borderRadius: "8px",
-                  border: "1px solid #cfd8dc",
-                  backgroundColor: "white",
+                  border: "1px solid var(--hp-border)",
+                  backgroundColor: "var(--hp-surface)",
                   cursor: "pointer",
                   fontSize: "18px",
                   lineHeight: 1,
@@ -764,7 +764,7 @@ export function UpdateUserPage() {
               </button>
             </div>
 
-            <div style={{ padding: "14px 16px", borderBottom: "1px solid #eceff1" }}>
+            <div style={{ padding: "14px 16px", borderBottom: "1px solid var(--hp-neutral-soft)" }}>
               <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
                 <input
                   value={spbhlSearchName}
@@ -775,7 +775,7 @@ export function UpdateUserPage() {
                     minWidth: "180px",
                     padding: "10px 12px",
                     borderRadius: "10px",
-                    border: "1px solid #d0d7de",
+                    border: "1px solid var(--hp-border)",
                     fontSize: "14px",
                   }}
                 />
@@ -791,7 +791,7 @@ export function UpdateUserPage() {
                     width: "130px",
                     padding: "10px 12px",
                     borderRadius: "10px",
-                    border: "1px solid #d0d7de",
+                    border: "1px solid var(--hp-border)",
                     fontSize: "14px",
                   }}
                 />
@@ -804,7 +804,7 @@ export function UpdateUserPage() {
                     padding: "10px 14px",
                     borderRadius: "10px",
                     border: "none",
-                    backgroundColor: spbhlLoading ? "#90caf9" : "#1976d2",
+                    backgroundColor: spbhlLoading ? "var(--hp-primary-soft)" : "var(--hp-primary)",
                     color: "white",
                     fontWeight: 600,
                     cursor: spbhlLoading ? "wait" : "pointer",
@@ -815,7 +815,7 @@ export function UpdateUserPage() {
               </div>
 
               {spbhlError && (
-                <div style={{ marginTop: "8px", color: "#c62828", fontSize: "13px" }}>
+                <div style={{ marginTop: "8px", color: "var(--hp-danger)", fontSize: "13px" }}>
                   {spbhlError}
                 </div>
               )}
@@ -827,8 +827,8 @@ export function UpdateUserPage() {
                   style={{
                     padding: "20px",
                     textAlign: "center",
-                    color: "#607d8b",
-                    border: "1px dashed #cfd8dc",
+                    color: "var(--hp-muted)",
+                    border: "1px dashed var(--hp-border)",
                     borderRadius: "12px",
                   }}
                 >
@@ -842,7 +842,7 @@ export function UpdateUserPage() {
                   <div
                     key={player.playerId}
                     style={{
-                      border: "1px solid #e3e8ef",
+                      border: "1px solid var(--hp-border)",
                       borderRadius: "12px",
                       padding: "10px",
                       marginBottom: "10px",
@@ -859,7 +859,7 @@ export function UpdateUserPage() {
                         height: "56px",
                         borderRadius: "10px",
                         objectFit: "cover",
-                        backgroundColor: "#eceff1",
+                        backgroundColor: "var(--hp-neutral-soft)",
                         flexShrink: 0,
                       }}
                     />
@@ -868,7 +868,7 @@ export function UpdateUserPage() {
                       <div
                         style={{
                           fontWeight: 600,
-                          color: "#1f2937",
+                          color: "var(--hp-heading)",
                           marginBottom: "4px",
                           whiteSpace: "nowrap",
                           fontSize: `${getAdaptiveFontSize(player.fullName, {
@@ -881,10 +881,10 @@ export function UpdateUserPage() {
                       >
                         {player.fullName}
                       </div>
-                      <div style={{ fontSize: "13px", color: "#607d8b" }}>
+                      <div style={{ fontSize: "13px", color: "var(--hp-muted)" }}>
                         {player.birthDate ? `Дата рождения: ${player.birthDate}` : "Дата рождения: —"}
                       </div>
-                      <div style={{ fontSize: "13px", color: "#607d8b" }}>
+                      <div style={{ fontSize: "13px", color: "var(--hp-muted)" }}>
                         {player.teamName ? `Команда: ${player.teamName}` : "Команда: —"}
                         {player.jerseyNumber ? ` · №${player.jerseyNumber}` : ""}
                       </div>
@@ -897,9 +897,9 @@ export function UpdateUserPage() {
                         style={{
                           padding: "8px 12px",
                           borderRadius: "8px",
-                          border: "1px solid #bbdefb",
-                          backgroundColor: isAlreadyLinked ? "#e8f5e9" : "#e3f2fd",
-                          color: isAlreadyLinked ? "#2e7d32" : "#1565c0",
+                          border: "1px solid var(--hp-info-border)",
+                          backgroundColor: isAlreadyLinked ? "var(--hp-success-soft)" : "var(--hp-primary-soft)",
+                          color: isAlreadyLinked ? "var(--hp-success)" : "var(--hp-primary-text)",
                           fontWeight: 600,
                           cursor: "pointer",
                           whiteSpace: "nowrap",
@@ -914,7 +914,7 @@ export function UpdateUserPage() {
                         rel="noreferrer"
                         style={{
                           fontSize: "12px",
-                          color: "#546e7a",
+                          color: "var(--hp-muted)",
                           textAlign: "center",
                           textDecoration: "none",
                         }}
@@ -929,7 +929,7 @@ export function UpdateUserPage() {
 
             <div
               style={{
-                borderTop: "1px solid #eceff1",
+                borderTop: "1px solid var(--hp-neutral-soft)",
                 padding: "10px 16px",
                 display: "flex",
                 justifyContent: "space-between",
@@ -944,16 +944,16 @@ export function UpdateUserPage() {
                 style={{
                   padding: "8px 12px",
                   borderRadius: "8px",
-                  border: "1px solid #d0d7de",
-                  backgroundColor: "white",
-                  color: spbhlPage <= 1 ? "#9e9e9e" : "#374151",
+                  border: "1px solid var(--hp-border)",
+                  backgroundColor: "var(--hp-surface)",
+                  color: spbhlPage <= 1 ? "var(--hp-muted)" : "var(--hp-text)",
                   cursor: spbhlPage <= 1 ? "not-allowed" : "pointer",
                 }}
               >
                 ← Назад
               </button>
 
-              <div style={{ fontSize: "13px", color: "#546e7a" }}>
+              <div style={{ fontSize: "13px", color: "var(--hp-muted)" }}>
                 Страница {spbhlPage} из {spbhlTotalPages}
               </div>
 
@@ -964,9 +964,9 @@ export function UpdateUserPage() {
                 style={{
                   padding: "8px 12px",
                   borderRadius: "8px",
-                  border: "1px solid #d0d7de",
-                  backgroundColor: "white",
-                  color: spbhlPage >= spbhlTotalPages ? "#9e9e9e" : "#374151",
+                  border: "1px solid var(--hp-border)",
+                  backgroundColor: "var(--hp-surface)",
+                  color: spbhlPage >= spbhlTotalPages ? "var(--hp-muted)" : "var(--hp-text)",
                   cursor: spbhlPage >= spbhlTotalPages ? "not-allowed" : "pointer",
                 }}
               >
@@ -991,7 +991,7 @@ export function UpdateUserPage() {
           input:focus,
           select:focus {
             outline: none;
-            border-color: #1976d2 !important;
+            border-color: var(--hp-primary) !important;
             box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.1);
           }
 
@@ -1027,8 +1027,8 @@ export function UpdateUserPage() {
             div[style*="minHeight: 100vh"] {
               max-width: 640px;
               margin: 0 auto;
-              border-left: 1px solid #e0e0e0;
-              border-right: 1px solid #e0e0e0;
+              border-left: 1px solid var(--hp-border);
+              border-right: 1px solid var(--hp-border);
               min-height: 100vh;
             }
           }

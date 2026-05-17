@@ -29,10 +29,10 @@ const statusLabel: Record<GoalieApplicationStatus, string> = {
 };
 
 const statusColor = (status: GoalieApplicationStatus): string => {
-  if (status === GoalieApplicationStatus.Confirmed) return "#2e7d32";
-  if (status === GoalieApplicationStatus.Accepted || status === GoalieApplicationStatus.Proposed) return "#1565c0";
-  if (status === GoalieApplicationStatus.Rejected || status === GoalieApplicationStatus.Declined) return "#c62828";
-  return "#ef6c00";
+  if (status === GoalieApplicationStatus.Confirmed) return "var(--hp-success)";
+  if (status === GoalieApplicationStatus.Accepted || status === GoalieApplicationStatus.Proposed) return "var(--hp-primary-hover)";
+  if (status === GoalieApplicationStatus.Rejected || status === GoalieApplicationStatus.Declined) return "var(--hp-danger)";
+  return "var(--hp-warning)";
 };
 
 const formatDateTime = (value: string): string =>
@@ -146,46 +146,46 @@ export const GoaliesPanel = ({ eventId, currentUserId }: GoaliesPanelProps) => {
   };
 
   return (
-    <div style={{ backgroundColor: "white", borderRadius: "16px", padding: "20px", marginBottom: "20px", boxShadow: "0 2px 8px rgba(0,0,0,0.08)" }}>
-      <h3 style={{ margin: "0 0 16px", fontSize: "18px", color: "#1a237e", display: "flex", alignItems: "center", gap: 8 }}>
+    <div style={{ backgroundColor: "var(--hp-surface)", borderRadius: "16px", padding: "20px", marginBottom: "20px", boxShadow: "var(--hp-shadow-sm)" }}>
+      <h3 style={{ margin: "0 0 16px", fontSize: "18px", color: "var(--hp-heading)", display: "flex", alignItems: "center", gap: 8 }}>
         <span>🥅</span>
         <span>Вратари</span>
       </h3>
 
-      {loading && <div style={{ color: "#607d8b" }}>Загружаем вкладку вратарей...</div>}
-      {error && <div style={{ marginBottom: 12, padding: 12, borderRadius: 12, background: "#ffebee", color: "#c62828" }}>{error}</div>}
-      {message && <div style={{ marginBottom: 12, padding: 12, borderRadius: 12, background: "#e8f5e9", color: "#2e7d32", fontWeight: 700 }}>{message}</div>}
+      {loading && <div style={{ color: "var(--hp-muted)" }}>Загружаем вкладку вратарей...</div>}
+      {error && <div style={{ marginBottom: 12, padding: 12, borderRadius: 12, background: "var(--hp-danger-soft)", color: "var(--hp-danger)" }}>{error}</div>}
+      {message && <div style={{ marginBottom: 12, padding: 12, borderRadius: 12, background: "var(--hp-success-soft)", color: "var(--hp-success)", fontWeight: 700 }}>{message}</div>}
 
       {!loading && data && (
         <>
           {data.request && (
-            <div style={{ padding: 14, borderRadius: 14, background: "#f8fafc", border: "1px solid #e2e8f0", marginBottom: 14 }}>
+            <div style={{ padding: 14, borderRadius: 14, background: "var(--hp-surface-soft)", border: "1px solid var(--hp-border)", marginBottom: 14 }}>
               <div style={{ display: "flex", justifyContent: "space-between", gap: 12, marginBottom: 8 }}>
-                <strong style={{ color: "#0f172a" }}>Нужно вратарей: {confirmedCount}/{data.request.neededCount}</strong>
-                <span style={{ color: data.request.status === 2 ? "#2e7d32" : "#ef6c00", fontWeight: 800 }}>
+                <strong style={{ color: "var(--hp-text-strong)" }}>Нужно вратарей: {confirmedCount}/{data.request.neededCount}</strong>
+                <span style={{ color: data.request.status === 2 ? "var(--hp-success)" : "var(--hp-warning)", fontWeight: 800 }}>
                   {data.request.status === 2 ? "Набрано" : data.request.status === 3 ? "Закрыто" : "Открыто"}
                 </span>
               </div>
               {data.isGoalie || data.canManage ? (
                 <>
-                  {data.request.priceText && <div style={{ color: "#334155", marginBottom: 6 }}>Цена: {data.request.priceText}</div>}
-                  {data.request.description && <div style={{ color: "#475569", lineHeight: 1.45 }}>{data.request.description}</div>}
+                  {data.request.priceText && <div style={{ color: "var(--hp-text)", marginBottom: 6 }}>Цена: {data.request.priceText}</div>}
+                  {data.request.description && <div style={{ color: "var(--hp-muted)", lineHeight: 1.45 }}>{data.request.description}</div>}
                 </>
               ) : (
-                <div style={{ color: "#64748b" }}>Команда ищет вратаря на это мероприятие.</div>
+                <div style={{ color: "var(--hp-muted)" }}>Команда ищет вратаря на это мероприятие.</div>
               )}
             </div>
           )}
 
           {data.currentUserConflict && (
-            <div style={{ padding: 12, borderRadius: 12, background: "#fff7ed", color: "#9a3412", border: "1px solid #fed7aa", marginBottom: 14, fontWeight: 700 }}>
+            <div style={{ padding: 12, borderRadius: 12, background: "var(--hp-warning-soft)", color: "var(--hp-warning)", border: "1px solid var(--hp-warning-border)", marginBottom: 14, fontWeight: 700 }}>
               Конфликт: вы уже подтверждены на “{data.currentUserConflict.title}” {formatDateTime(data.currentUserConflict.startTime)}
             </div>
           )}
 
           {data.canManage && (
             <div style={{ display: "grid", gap: 10, marginBottom: 18 }}>
-              <strong style={{ color: "#1a237e" }}>Объявление</strong>
+              <strong style={{ color: "var(--hp-heading)" }}>Объявление</strong>
               <div style={{ display: "grid", gridTemplateColumns: "90px 1fr", gap: 8 }}>
                 <input
                   type="number"
@@ -193,20 +193,20 @@ export const GoaliesPanel = ({ eventId, currentUserId }: GoaliesPanelProps) => {
                   max={4}
                   value={neededCount}
                   onChange={(event) => setNeededCount(Number(event.target.value))}
-                  style={{ padding: 10, borderRadius: 10, border: "1px solid #cbd5e1" }}
+                  style={{ padding: 10, borderRadius: 10, border: "1px solid var(--hp-border)" }}
                 />
                 <input
                   value={priceText}
                   onChange={(event) => setPriceText(event.target.value)}
                   placeholder="Цена, например 1000 ₽ или по договорённости"
-                  style={{ padding: 10, borderRadius: 10, border: "1px solid #cbd5e1" }}
+                  style={{ padding: 10, borderRadius: 10, border: "1px solid var(--hp-border)" }}
                 />
               </div>
-              <select value={visibility} onChange={(event) => setVisibility(Number(event.target.value))} style={{ padding: 10, borderRadius: 10, border: "1px solid #cbd5e1" }}>
+              <select value={visibility} onChange={(event) => setVisibility(Number(event.target.value))} style={{ padding: 10, borderRadius: 10, border: "1px solid var(--hp-border)" }}>
                 <option value={GoalieRequestVisibility.TeamGoaliesOnly}>Видят только вратари команды</option>
                 <option value={GoalieRequestVisibility.AllGoalies}>Видят все вратари</option>
               </select>
-              <select value={responseMode} onChange={(event) => setResponseMode(Number(event.target.value))} style={{ padding: 10, borderRadius: 10, border: "1px solid #cbd5e1" }}>
+              <select value={responseMode} onChange={(event) => setResponseMode(Number(event.target.value))} style={{ padding: 10, borderRadius: 10, border: "1px solid var(--hp-border)" }}>
                 <option value={GoalieRequestResponseMode.Manual}>Ручное принятие заявок</option>
                 <option value={GoalieRequestResponseMode.AutoAccept}>Автопринятие первых заявок</option>
               </select>
@@ -215,16 +215,16 @@ export const GoaliesPanel = ({ eventId, currentUserId }: GoaliesPanelProps) => {
                 onChange={(event) => setDescription(event.target.value)}
                 placeholder="Текст объявления"
                 rows={4}
-                style={{ padding: 10, borderRadius: 10, border: "1px solid #cbd5e1", resize: "vertical" }}
+                style={{ padding: 10, borderRadius: 10, border: "1px solid var(--hp-border)", resize: "vertical" }}
               />
-              <button type="button" onClick={handleSaveRequest} disabled={submitting} style={{ padding: "12px 14px", border: 0, borderRadius: 12, background: "#1976d2", color: "white", fontWeight: 800, cursor: submitting ? "wait" : "pointer" }}>
+              <button type="button" onClick={handleSaveRequest} disabled={submitting} style={{ padding: "12px 14px", border: 0, borderRadius: 12, background: "var(--hp-primary)", color: "white", fontWeight: 800, cursor: submitting ? "wait" : "pointer" }}>
                 Сохранить объявление
               </button>
             </div>
           )}
 
           {data.myApplication && (
-            <div style={{ padding: 12, borderRadius: 12, background: "#eef2ff", marginBottom: 18 }}>
+            <div style={{ padding: 12, borderRadius: 12, background: "var(--hp-purple-soft)", marginBottom: 18 }}>
               <div style={{ fontWeight: 800, color: statusColor(data.myApplication.status) }}>
                 Ваша заявка: {statusLabel[data.myApplication.status]}
               </div>
@@ -233,21 +233,21 @@ export const GoaliesPanel = ({ eventId, currentUserId }: GoaliesPanelProps) => {
 
           {data.request && (
             <div style={{ marginBottom: 18 }}>
-              <strong style={{ color: "#1a237e" }}>Подтверждённые вратари</strong>
+              <strong style={{ color: "var(--hp-heading)" }}>Подтверждённые вратари</strong>
               <div style={{ display: "grid", gap: 8, marginTop: 10 }}>
                 {confirmedApplications.length === 0 && (
-                  <div style={{ padding: 12, borderRadius: 12, background: "#f8fafc", border: "1px solid #e2e8f0", color: "#64748b" }}>
+                  <div style={{ padding: 12, borderRadius: 12, background: "var(--hp-surface-soft)", border: "1px solid var(--hp-border)", color: "var(--hp-muted)" }}>
                     Пока никто не подтверждён.
                   </div>
                 )}
                 {confirmedApplications.map((application) => (
-                  <div key={application.id} style={{ padding: 12, borderRadius: 12, border: "1px solid #d7f3dc", background: "#f0fdf4", display: "flex", alignItems: "center", gap: 10 }}>
+                  <div key={application.id} style={{ padding: 12, borderRadius: 12, border: "1px solid var(--hp-success-border)", background: "var(--hp-success-soft)", display: "flex", alignItems: "center", gap: 10 }}>
                     <PlayerAvatar size={38} photoUrl={application.photoUrl} jerseyNumber={application.jerseyNumber} fallbackPrefix="#" badgePrefix="#" />
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontWeight: 900, color: "#0f172a", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      <div style={{ fontWeight: 900, color: "var(--hp-text-strong)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                         {goalieName(application)}
                       </div>
-                      <div style={{ color: "#2e7d32", fontSize: 13, fontWeight: 800 }}>Подтверждён</div>
+                      <div style={{ color: "var(--hp-success)", fontSize: 13, fontWeight: 800 }}>Подтверждён</div>
                     </div>
                   </div>
                 ))}
@@ -257,28 +257,28 @@ export const GoaliesPanel = ({ eventId, currentUserId }: GoaliesPanelProps) => {
 
           {data.canManage && data.request && (
             <div style={{ marginBottom: 18 }}>
-              <strong style={{ color: "#1a237e" }}>Заявки</strong>
+              <strong style={{ color: "var(--hp-heading)" }}>Заявки</strong>
               <div style={{ display: "grid", gap: 8, marginTop: 10 }}>
-                {applications.length === 0 && <div style={{ color: "#64748b" }}>Заявок пока нет.</div>}
+                {applications.length === 0 && <div style={{ color: "var(--hp-muted)" }}>Заявок пока нет.</div>}
                 {applications.map((application) => (
-                  <div key={application.id} style={{ padding: 12, borderRadius: 12, border: "1px solid #e2e8f0", display: "grid", gap: 8 }}>
+                  <div key={application.id} style={{ padding: 12, borderRadius: 12, border: "1px solid var(--hp-border)", display: "grid", gap: 8 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                       <PlayerAvatar size={36} photoUrl={application.photoUrl} jerseyNumber={application.jerseyNumber} fallbackPrefix="#" badgePrefix="#" />
                       <div style={{ flex: 1 }}>
-                        <div style={{ fontWeight: 800, color: "#0f172a" }}>{goalieName(application)}</div>
+                        <div style={{ fontWeight: 800, color: "var(--hp-text-strong)" }}>{goalieName(application)}</div>
                         <div style={{ fontSize: 13, color: statusColor(application.status), fontWeight: 700 }}>{statusLabel[application.status]}</div>
                       </div>
                     </div>
-                    {application.conflict && <div style={{ color: "#9a3412", fontSize: 13 }}>Конфликт: {application.conflict.title}, {formatDateTime(application.conflict.startTime)}</div>}
-                    {application.message && <div style={{ color: "#475569", fontSize: 13 }}>Комментарий: {application.message}</div>}
+                    {application.conflict && <div style={{ color: "var(--hp-warning)", fontSize: 13 }}>Конфликт: {application.conflict.title}, {formatDateTime(application.conflict.startTime)}</div>}
+                    {application.message && <div style={{ color: "var(--hp-muted)", fontSize: 13 }}>Комментарий: {application.message}</div>}
                     {application.status === GoalieApplicationStatus.Pending && (
                       <div style={{ display: "flex", gap: 8 }}>
-                        <button type="button" onClick={() => handleStatus(application, GoalieApplicationStatus.Accepted)} disabled={submitting} style={{ flex: 1, padding: 9, border: 0, borderRadius: 10, background: "#1976d2", color: "white", fontWeight: 800 }}>Принять</button>
-                        <button type="button" onClick={() => handleStatus(application, GoalieApplicationStatus.Rejected)} disabled={submitting} style={{ flex: 1, padding: 9, border: 0, borderRadius: 10, background: "#ef5350", color: "white", fontWeight: 800 }}>Отклонить</button>
+                        <button type="button" onClick={() => handleStatus(application, GoalieApplicationStatus.Accepted)} disabled={submitting} style={{ flex: 1, padding: 9, border: 0, borderRadius: 10, background: "var(--hp-primary)", color: "white", fontWeight: 800 }}>Принять</button>
+                        <button type="button" onClick={() => handleStatus(application, GoalieApplicationStatus.Rejected)} disabled={submitting} style={{ flex: 1, padding: 9, border: 0, borderRadius: 10, background: "var(--hp-danger)", color: "white", fontWeight: 800 }}>Отклонить</button>
                       </div>
                     )}
                     {application.status === GoalieApplicationStatus.Proposed && (
-                      <div style={{ padding: 10, borderRadius: 10, background: "#eef2ff", color: "#1e3a8a", fontSize: 13, fontWeight: 800 }}>
+                      <div style={{ padding: 10, borderRadius: 10, background: "var(--hp-purple-soft)", color: "var(--hp-purple)", fontSize: 13, fontWeight: 800 }}>
                         Предложение отправлено. Решение теперь за вратарём.
                       </div>
                     )}
@@ -289,21 +289,21 @@ export const GoaliesPanel = ({ eventId, currentUserId }: GoaliesPanelProps) => {
           )}
 
           {data.canManage && !data.request && (
-            <div style={{ padding: 12, borderRadius: 12, background: "#f8fafc", border: "1px solid #e2e8f0", color: "#475569", marginBottom: 18 }}>
+            <div style={{ padding: 12, borderRadius: 12, background: "var(--hp-surface-soft)", border: "1px solid var(--hp-border)", color: "var(--hp-muted)", marginBottom: 18 }}>
               Чтобы лично предложить вратарю участие, сначала сохраните объявление выше.
             </div>
           )}
 
           {data.canManage && data.request && data.availableGoalies.length === 0 && (
-            <div style={{ padding: 12, borderRadius: 12, background: "#f8fafc", border: "1px solid #e2e8f0", color: "#475569", marginBottom: 18 }}>
+            <div style={{ padding: 12, borderRadius: 12, background: "var(--hp-surface-soft)", border: "1px solid var(--hp-border)", color: "var(--hp-muted)", marginBottom: 18 }}>
               Нет доступных вратарей для личного предложения: все подходящие уже имеют заявку или предложение.
             </div>
           )}
 
           {data.canManage && data.request && data.availableGoalies.length > 0 && (
             <div style={{ display: "grid", gap: 10, marginBottom: 18 }}>
-              <strong style={{ color: "#1a237e" }}>Лично предложить вратарю</strong>
-              <select value={selectedGoalieId} onChange={(event) => setSelectedGoalieId(event.target.value)} style={{ padding: 10, borderRadius: 10, border: "1px solid #cbd5e1" }}>
+              <strong style={{ color: "var(--hp-heading)" }}>Лично предложить вратарю</strong>
+              <select value={selectedGoalieId} onChange={(event) => setSelectedGoalieId(event.target.value)} style={{ padding: 10, borderRadius: 10, border: "1px solid var(--hp-border)" }}>
                 <option value="">Выберите вратаря</option>
                 {data.availableGoalies.map((goalie) => (
                   <option key={goalie.userId} value={goalie.userId}>
@@ -311,8 +311,8 @@ export const GoaliesPanel = ({ eventId, currentUserId }: GoaliesPanelProps) => {
                   </option>
                 ))}
               </select>
-              <input value={proposalMessage} onChange={(event) => setProposalMessage(event.target.value)} placeholder="Комментарий к предложению" style={{ padding: 10, borderRadius: 10, border: "1px solid #cbd5e1" }} />
-              <button type="button" onClick={handlePropose} disabled={submitting || !selectedGoalieId} style={{ padding: "12px 14px", border: 0, borderRadius: 12, background: selectedGoalieId ? "#1a237e" : "#cbd5e1", color: "white", fontWeight: 800 }}>
+              <input value={proposalMessage} onChange={(event) => setProposalMessage(event.target.value)} placeholder="Комментарий к предложению" style={{ padding: 10, borderRadius: 10, border: "1px solid var(--hp-border)" }} />
+              <button type="button" onClick={handlePropose} disabled={submitting || !selectedGoalieId} style={{ padding: "12px 14px", border: 0, borderRadius: 12, background: selectedGoalieId ? "var(--hp-primary)" : "var(--hp-surface-muted)", color: "white", fontWeight: 800 }}>
                 Отправить личное предложение
               </button>
             </div>
@@ -320,12 +320,12 @@ export const GoaliesPanel = ({ eventId, currentUserId }: GoaliesPanelProps) => {
 
           {data.canManage && data.previousRequests.length > 0 && (
             <details style={{ marginTop: 12 }}>
-              <summary style={{ cursor: "pointer", fontWeight: 800, color: "#1a237e" }}>Скопировать из прошлых объявлений</summary>
+              <summary style={{ cursor: "pointer", fontWeight: 800, color: "var(--hp-heading)" }}>Скопировать из прошлых объявлений</summary>
               <div style={{ display: "grid", gap: 8, marginTop: 10 }}>
                 {data.previousRequests.map((previous) => (
-                  <button key={previous.id} type="button" onClick={() => copyPrevious(previous.description, previous.priceText)} style={{ textAlign: "left", padding: 10, borderRadius: 10, border: "1px solid #e2e8f0", background: "#f8fafc", cursor: "pointer" }}>
+                  <button key={previous.id} type="button" onClick={() => copyPrevious(previous.description, previous.priceText)} style={{ textAlign: "left", padding: 10, borderRadius: 10, border: "1px solid var(--hp-border)", background: "var(--hp-surface-soft)", cursor: "pointer" }}>
                     <div style={{ fontWeight: 800 }}>Нужно: {previous.neededCount}, цена: {previous.priceText || "не указана"}</div>
-                    <div style={{ color: "#64748b", fontSize: 13 }}>{previous.description || "Без текста"}</div>
+                    <div style={{ color: "var(--hp-muted)", fontSize: 13 }}>{previous.description || "Без текста"}</div>
                   </button>
                 ))}
               </div>
@@ -333,10 +333,11 @@ export const GoaliesPanel = ({ eventId, currentUserId }: GoaliesPanelProps) => {
           )}
 
           {!data.request && !data.canManage && (
-            <div style={{ color: "#64748b" }}>По этому мероприятию пока нет объявления для вратарей.</div>
+            <div style={{ color: "var(--hp-muted)" }}>По этому мероприятию пока нет объявления для вратарей.</div>
           )}
         </>
       )}
     </div>
   );
 };
+

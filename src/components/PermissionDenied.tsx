@@ -17,7 +17,7 @@ export function PermissionDenied({
     <div
       style={{
         minHeight: "100vh",
-        backgroundColor: "#f5f5f5",
+        background: "var(--hp-bg-gradient)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -29,16 +29,16 @@ export function PermissionDenied({
         style={{
           width: "100%",
           maxWidth: "460px",
-          backgroundColor: "white",
+          backgroundColor: "var(--hp-surface)",
           borderRadius: "16px",
-          border: "1px solid #e0e0e0",
-          boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+          border: "1px solid var(--hp-border)",
+          boxShadow: "var(--hp-shadow-sm)",
           padding: "24px",
           textAlign: "center",
         }}
       >
         <div style={{ fontSize: "42px", marginBottom: "10px" }}>🔒</div>
-        <h1 style={{ margin: 0, color: "#1a237e", fontSize: "24px" }}>{title}</h1>
+        <h1 style={{ margin: 0, color: "var(--hp-heading)", fontSize: "24px" }}>{title}</h1>
         <p style={{ margin: "10px 0 20px 0", color: "#546e7a", lineHeight: 1.5 }}>{message}</p>
         <button
           onClick={() => navigate(backPath)}
@@ -48,7 +48,7 @@ export function PermissionDenied({
             padding: "12px 18px",
             fontSize: "15px",
             fontWeight: 600,
-            backgroundColor: "#1976d2",
+            backgroundColor: "var(--hp-primary)",
             color: "white",
             cursor: "pointer",
           }}

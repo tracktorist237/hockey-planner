@@ -44,7 +44,8 @@ export function TeamsPage({ currentUser, currentTeamId, onTeamChange }: TeamsPag
         minHeight: "100vh",
         padding: "16px",
         paddingBottom: "120px",
-        background: "linear-gradient(135deg, #f8fafc 0%, #e0f2fe 100%)",
+        background: "var(--hp-bg-gradient)",
+        color: "var(--hp-text)",
         boxSizing: "border-box",
       }}
     >
@@ -54,8 +55,9 @@ export function TeamsPage({ currentUser, currentTeamId, onTeamChange }: TeamsPag
             onClick={() => navigate("/events")}
             style={{
               borderRadius: 12,
-              border: "1px solid #cbd5e1",
-              background: "white",
+              border: "1px solid var(--hp-border)",
+              background: "var(--hp-surface)",
+              color: "var(--hp-text)",
               width: 42,
               height: 42,
               cursor: "pointer",
@@ -66,8 +68,8 @@ export function TeamsPage({ currentUser, currentTeamId, onTeamChange }: TeamsPag
             ←
           </button>
           <div>
-            <h1 style={{ margin: 0, fontSize: 26, color: "#0f172a" }}>Команды</h1>
-            <div style={{ color: "#64748b", fontSize: 14 }}>Список, поиск и создание команд</div>
+            <h1 style={{ margin: 0, fontSize: 26, color: "var(--hp-heading)" }}>Команды</h1>
+            <div style={{ color: "var(--hp-muted)", fontSize: 14 }}>Список, поиск и создание команд</div>
           </div>
         </div>
 

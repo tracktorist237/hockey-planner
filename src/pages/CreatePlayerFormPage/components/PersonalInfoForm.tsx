@@ -12,8 +12,8 @@ interface PersonalInfoFormProps {
 
 export function PersonalInfoForm({ formData, errors, getFieldStatus, onChange, calculateAge }: PersonalInfoFormProps) {
   return (
-    <div style={{ backgroundColor: "white", borderRadius: "16px", padding: "20px", marginBottom: "20px", boxShadow: "0 2px 8px rgba(0,0,0,0.08)" }}>
-      <h3 style={{ margin: "0 0 16px 0", fontSize: "18px", fontWeight: "600", color: "#1a237e", display: "flex", alignItems: "center", gap: "8px" }}>
+    <div style={{ backgroundColor: "var(--hp-surface)", borderRadius: "16px", padding: "20px", marginBottom: "20px", boxShadow: "var(--hp-shadow-sm)" }}>
+      <h3 style={{ margin: "0 0 16px 0", fontSize: "18px", fontWeight: "600", color: "var(--hp-heading)", display: "flex", alignItems: "center", gap: "8px" }}>
         <span>👤</span>
         <span>Личная информация</span>
       </h3>
@@ -42,7 +42,7 @@ export function PersonalInfoForm({ formData, errors, getFieldStatus, onChange, c
       />
 
       {formData.birthDate && !errors.birthDate && (
-        <div style={{ marginTop: "8px", fontSize: "14px", color: "#666", display: "flex", alignItems: "center", gap: "6px" }}>
+        <div style={{ marginTop: "8px", fontSize: "14px", color: "var(--hp-muted)", display: "flex", alignItems: "center", gap: "6px" }}>
           <span>🎂</span>
           <span>Возраст: {calculateAge(formData.birthDate)} лет</span>
         </div>

@@ -23,13 +23,13 @@ export function BottomNav({ activeTab }: BottomNavProps) {
         bottom: "12px",
         left: "12px",
         right: "12px",
-        background: "linear-gradient(180deg, rgba(255,255,255,0.96), rgba(248,250,255,0.92))",
+        background: "var(--hp-surface)",
         backdropFilter: "blur(10px)",
         WebkitBackdropFilter: "blur(10px)",
         padding: "12px",
-        border: "1px solid rgba(25, 118, 210, 0.18)",
+        border: "1px solid var(--hp-border)",
         borderRadius: "18px",
-        boxShadow: "0 10px 26px rgba(15, 30, 64, 0.16)",
+        boxShadow: "var(--hp-shadow-md)",
         zIndex: 120,
       }}
     >
@@ -45,11 +45,11 @@ export function BottomNav({ activeTab }: BottomNavProps) {
                 border: "none",
                 background: isActive
                   ? "linear-gradient(180deg, #2f7bff, #1257cf)"
-                  : "linear-gradient(180deg, #eef4ff, #e1ebff)",
+                  : "var(--hp-surface-soft)",
                 borderRadius: "14px",
                 fontSize: "12px",
                 cursor: "pointer",
-                color: isActive ? "white" : "#1f4fa5",
+                color: isActive ? "white" : "var(--hp-primary-text)",
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",

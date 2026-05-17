@@ -61,27 +61,27 @@ export function CreateEventPage({ onBack, onCreated, currentTeamId }: CreateEven
   };
 
   return (
-    <div style={{ padding: "0", maxWidth: "100%", margin: "0 auto", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", minHeight: "100vh", backgroundColor: "#f5f5f5", boxSizing: "border-box" }}>
+    <div style={{ padding: "0", maxWidth: "100%", margin: "0 auto", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", minHeight: "100vh", background: "var(--hp-bg-gradient)", boxSizing: "border-box" }}>
       <FormHeader onBack={onBack} isVisible={isHeaderVisible} />
 
       <div style={{ padding: "16px", paddingTop: "92px", paddingBottom: "120px", maxWidth: "100%", margin: "0 auto", boxSizing: "border-box" }}>
         <div style={{ maxWidth: "100%", margin: "0 auto", boxSizing: "border-box" }}>
           {error && <ErrorMessage error={error} />}
 
-          <div style={{ backgroundColor: "white", borderRadius: "16px", padding: "20px", boxShadow: "0 2px 8px rgba(0,0,0,0.08)", width: "100%", boxSizing: "border-box" }}>
+          <div style={{ backgroundColor: "var(--hp-surface)", borderRadius: "16px", padding: "20px", boxShadow: "var(--hp-shadow-sm)", width: "100%", boxSizing: "border-box" }}>
             {teamOptions.length > 0 && (
               <label style={{ display: "block", marginBottom: "16px" }}>
-                <div style={{ fontSize: "14px", color: "#555", marginBottom: "8px", fontWeight: 700 }}>Команда</div>
+                <div style={{ fontSize: "14px", color: "var(--hp-muted)", marginBottom: "8px", fontWeight: 700 }}>Команда</div>
                 <select
                   value={selectedTeamId ?? ""}
                   onChange={(event) => setSelectedTeamId(event.target.value || null)}
                   style={{
                     width: "100%",
                     padding: "12px 14px",
-                    border: "1px solid #ddd",
+                    border: "1px solid var(--hp-border)",
                     borderRadius: "10px",
                     fontSize: "16px",
-                    backgroundColor: "white",
+                    backgroundColor: "var(--hp-surface)",
                     boxSizing: "border-box",
                   }}
                 >
