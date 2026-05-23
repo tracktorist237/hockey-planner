@@ -292,6 +292,8 @@ export function EventPage({ eventId, onBack, currentUser }: EventPageProps) {
             {...lineManagement}
             onPlayerClick={playerModal.handleOpenPlayerInfo}
             avatarUrls={avatarUrls}
+            eventType={event.type}
+            teamId={event.teamId}
           />
         )}
         {activeTab === "goalies" && <GoaliesPanel eventId={event.id} currentUserId={selectedUserId} />}

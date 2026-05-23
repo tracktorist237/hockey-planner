@@ -164,8 +164,8 @@ export const EventAdditionalInfo = ({ event }: EventAdditionalInfoProps) => {
               gap: "10px",
               padding: "8px",
               borderRadius: "8px",
-              border: "1px solid #eceff1",
-              backgroundColor: "#fafbfc",
+              border: "1px solid var(--hp-border)",
+              backgroundColor: "var(--hp-surface-soft)",
             }}
           >
             <img
@@ -178,6 +178,7 @@ export const EventAdditionalInfo = ({ event }: EventAdditionalInfoProps) => {
                 borderRadius: "8px",
                 border: "1px solid var(--hp-border)",
                 backgroundColor: "var(--hp-surface)",
+                boxShadow: "var(--hp-shadow-sm)",
               }}
             />
             <div style={{ display: "grid", gap: "2px" }}>

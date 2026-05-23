@@ -5,6 +5,7 @@ import { ExerciseDto } from "src/types/events";
 
 interface PracticeExercisesSectionProps {
   selectedExerciseIds: string[];
+  teamId: string | null;
   onChange: (ids: string[]) => void;
 }
 
@@ -20,7 +21,7 @@ const getCurrentUserId = (): string | null => {
   }
 };
 
-export function PracticeExercisesSection({ selectedExerciseIds, onChange }: PracticeExercisesSectionProps) {
+export function PracticeExercisesSection({ selectedExerciseIds, teamId, onChange }: PracticeExercisesSectionProps) {
   const [items, setItems] = useState<ExerciseDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -35,7 +36,13 @@ export function PracticeExercisesSection({ selectedExerciseIds, onChange }: Prac
     setLoading(true);
     setError(null);
 
-    void getExercises()
+    if (!teamId) {
+      setItems([]);
+      setLoading(false);
+      return;
+    }
+
+    void getExercises(teamId)
       .then((data) => {
         if (!active) return;
         setItems(data);
@@ -52,7 +59,25 @@ export function PracticeExercisesSection({ selectedExerciseIds, onChange }: Prac
     return () => {
       active = false;
     };
-  }, []);
+  }, [teamId]);
+
+  useEffect(() => {
+    if (!teamId && selectedExerciseIds.length > 0) {
+      onChange([]);
+    }
+  }, [onChange, selectedExerciseIds.length, teamId]);
+
+  useEffect(() => {
+    if (loading || selectedExerciseIds.length === 0) {
+      return;
+    }
+
+    const availableIds = new Set(items.map((item) => item.id));
+    const nextSelectedIds = selectedExerciseIds.filter((id) => availableIds.has(id));
+    if (nextSelectedIds.length !== selectedExerciseIds.length) {
+      onChange(nextSelectedIds);
+    }
+  }, [items, loading, onChange, selectedExerciseIds]);
 
   const selectedSet = useMemo(() => new Set(selectedExerciseIds), [selectedExerciseIds]);
 
@@ -76,6 +101,11 @@ export function PracticeExercisesSection({ selectedExerciseIds, onChange }: Prac
       return;
     }
 
+    if (!teamId) {
+      setError("Р’С‹Р±РµСЂРёС‚Рµ РєРѕРјР°РЅРґСѓ РґР»СЏ СѓРїСЂР°Р¶РЅРµРЅРёСЏ");
+      return;
+    }
+
     setSaving(true);
     setError(null);
     try {
@@ -83,6 +113,7 @@ export function PracticeExercisesSection({ selectedExerciseIds, onChange }: Prac
         {
           name: name.trim(),
           videoUrl: videoUrl.trim(),
+          teamId,
         },
         currentUserId,
       );
@@ -106,7 +137,8 @@ export function PracticeExercisesSection({ selectedExerciseIds, onChange }: Prac
         <button
           type="button"
           onClick={() => setShowCreateForm((prev) => !prev)}
-          style={{ padding: "8px 12px", border: "1px solid var(--hp-info-border)", borderRadius: "10px", backgroundColor: "var(--hp-primary-soft)", color: "var(--hp-primary-text)", fontSize: "13px", fontWeight: "600", cursor: "pointer" }}
+          disabled={!teamId}
+          style={{ padding: "8px 12px", border: "1px solid var(--hp-info-border)", borderRadius: "10px", backgroundColor: "var(--hp-primary-soft)", color: "var(--hp-primary-text)", fontSize: "13px", fontWeight: "600", cursor: teamId ? "pointer" : "not-allowed", opacity: teamId ? 1 : 0.65 }}
         >
           {showCreateForm ? "Скрыть форму" : "+ Добавить в банк"}
         </button>

@@ -29,6 +29,7 @@ interface UseLineManagementResult {
   deleteLine: (lineId: string) => Promise<void>;
   moveLineUp: (index: number) => Promise<void>;
   moveLineDown: (index: number) => Promise<void>;
+  assignLineUniformColor: (lineId: string, uniformColorId: string | null) => Promise<void>;
   startRenameLine: (lineId: string, currentName: string) => void;
   saveRenamedLine: () => Promise<void>;
   startEditLine: (index: number) => void;
@@ -45,6 +46,13 @@ const buildPlayersPayload = (line: LineDto): NonNullable<CreateUpdateLineData["p
     })) ?? []
   );
 };
+
+const buildLinePayload = (line: LineDto, order = line.order): CreateUpdateLineData => ({
+  name: line.name,
+  order,
+  uniformColorId: line.uniformColorId ?? null,
+  players: buildPlayersPayload(line),
+});
 
 const GOALIE_POSITION = 1;
 
@@ -221,6 +229,7 @@ export const useLineManagement = ({
       .map((line, index) => ({
         name: line.name,
         order: index + 1,
+        uniformColorId: line.uniformColorId ?? null,
         players: buildPlayersPayload(line),
       }));
 
@@ -290,15 +299,12 @@ export const useLineManagement = ({
         return {
           name: line.name,
           order: line.order,
+          uniformColorId: line.uniformColorId ?? null,
           players: newPlayers,
         };
       }
 
-      return {
-        name: line.name,
-        order: line.order,
-        players: buildPlayersPayload(line),
-      };
+      return buildLinePayload(line);
     });
 
     const body: CreateUpdateRosterRequest = {
@@ -331,15 +337,12 @@ export const useLineManagement = ({
         return {
           name: newLineName || line.name,
           order: line.order,
+          uniformColorId: line.uniformColorId ?? null,
           players: buildPlayersPayload(line),
         };
       }
 
-      return {
-        name: line.name,
-        order: line.order,
-        players: buildPlayersPayload(line),
-      };
+      return buildLinePayload(line);
     });
 
     const body: CreateUpdateRosterRequest = {
@@ -371,6 +374,7 @@ export const useLineManagement = ({
     const linesForPut = newRoster.map((line, idx) => ({
       name: line.name,
       order: idx + 1,
+      uniformColorId: line.uniformColorId ?? null,
       players: buildPlayersPayload(line),
     }));
 
@@ -407,6 +411,7 @@ export const useLineManagement = ({
     const linesForPut = newRoster.map((line, idx) => ({
       name: line.name,
       order: idx + 1,
+      uniformColorId: line.uniformColorId ?? null,
       players: buildPlayersPayload(line),
     }));
 
@@ -420,6 +425,30 @@ export const useLineManagement = ({
       await reloadEvent();
     } catch (err) {
       const message = err instanceof Error ? err.message : "Ошибка изменения порядка звеньев";
+      setError(message);
+    }
+  }, [currentUserId, ensureAuthorized, event, reloadEvent, setError, sortedRoster]);
+
+  const assignLineUniformColor = useCallback(async (lineId: string, uniformColorId: string | null) => {
+    if (!event || !ensureAuthorized() || !currentUserId) {
+      return;
+    }
+
+    const linesForPut = sortedRoster.map((line) => ({
+      ...buildLinePayload(line),
+      uniformColorId: line.id === lineId ? uniformColorId : line.uniformColorId ?? null,
+    }));
+
+    const body: CreateUpdateRosterRequest = {
+      eventId: event.id,
+      lines: linesForPut,
+    };
+
+    try {
+      await updateLineRoster(body, currentUserId);
+      await reloadEvent();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Ошибка назначения цвета формы звену";
       setError(message);
     }
   }, [currentUserId, ensureAuthorized, event, reloadEvent, setError, sortedRoster]);
@@ -442,6 +471,7 @@ export const useLineManagement = ({
     deleteLine,
     moveLineUp,
     moveLineDown,
+    assignLineUniformColor,
     startRenameLine,
     saveRenamedLine,
     startEditLine,

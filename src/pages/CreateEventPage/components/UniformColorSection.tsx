@@ -4,6 +4,7 @@ import { UniformColorDto } from "src/types/events";
 
 interface UniformColorSectionProps {
   selectedUniformColorId: string;
+  teamId: string | null;
   onChange: (id: string) => void;
 }
 
@@ -19,7 +20,7 @@ const getCurrentUserId = (): string | null => {
   }
 };
 
-export function UniformColorSection({ selectedUniformColorId, onChange }: UniformColorSectionProps) {
+export function UniformColorSection({ selectedUniformColorId, teamId, onChange }: UniformColorSectionProps) {
   const [items, setItems] = useState<UniformColorDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -33,7 +34,13 @@ export function UniformColorSection({ selectedUniformColorId, onChange }: Unifor
     setLoading(true);
     setError(null);
 
-    void getUniformColors()
+    if (!teamId) {
+      setItems([]);
+      setLoading(false);
+      return;
+    }
+
+    void getUniformColors(teamId)
       .then((data) => {
         if (!active) return;
         setItems(data);
@@ -50,7 +57,23 @@ export function UniformColorSection({ selectedUniformColorId, onChange }: Unifor
     return () => {
       active = false;
     };
-  }, []);
+  }, [teamId]);
+
+  useEffect(() => {
+    if (!teamId && selectedUniformColorId) {
+      onChange("");
+    }
+  }, [onChange, selectedUniformColorId, teamId]);
+
+  useEffect(() => {
+    if (!selectedUniformColorId || loading) {
+      return;
+    }
+
+    if (!items.some((item) => item.id === selectedUniformColorId)) {
+      onChange("");
+    }
+  }, [items, loading, onChange, selectedUniformColorId]);
 
   const selectedItem = useMemo(
     () => items.find((item) => item.id === selectedUniformColorId) ?? null,
@@ -69,10 +92,15 @@ export function UniformColorSection({ selectedUniformColorId, onChange }: Unifor
       return;
     }
 
+    if (!teamId) {
+      setError("Выберите команду для цвета формы");
+      return;
+    }
+
     setSaving(true);
     setError(null);
     try {
-      const created = await createUniformColorWithUpload(name.trim(), file, currentUserId);
+      const created = await createUniformColorWithUpload(name.trim(), file, currentUserId, teamId);
       setItems((prev) => [...prev, created].sort((a, b) => a.name.localeCompare(b.name, "ru")));
       setName("");
       setFile(null);
@@ -103,7 +131,8 @@ export function UniformColorSection({ selectedUniformColorId, onChange }: Unifor
         <button
           type="button"
           onClick={() => setShowCreateForm((prev) => !prev)}
-          style={{ padding: "6px 10px", border: "1px solid var(--hp-info-border)", borderRadius: "8px", backgroundColor: "var(--hp-primary-soft)", color: "var(--hp-primary-text)", fontSize: "12px", fontWeight: "600", cursor: "pointer" }}
+          disabled={!teamId}
+          style={{ padding: "6px 10px", border: "1px solid var(--hp-info-border)", borderRadius: "8px", backgroundColor: "var(--hp-primary-soft)", color: "var(--hp-primary-text)", fontSize: "12px", fontWeight: "600", cursor: teamId ? "pointer" : "not-allowed", opacity: teamId ? 1 : 0.65 }}
         >
           {showCreateForm ? "Скрыть форму" : "+ Добавить в справочник"}
         </button>
@@ -129,7 +158,7 @@ export function UniformColorSection({ selectedUniformColorId, onChange }: Unifor
         <select
           value={selectedUniformColorId}
           onChange={(e) => onChange(e.target.value)}
-          disabled={loading}
+          disabled={loading || !teamId}
           style={{
             width: "100%",
             padding: "9px 10px",

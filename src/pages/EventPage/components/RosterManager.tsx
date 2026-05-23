@@ -1,4 +1,6 @@
-import { AttendanceLookUpDto, LineDto } from "src/types/events";
+import { useEffect, useState } from "react";
+import { getUniformColors } from "src/api/uniformColors";
+import { AttendanceLookUpDto, EventType, LineDto, UniformColorDto } from "src/types/events";
 import { Slot } from "src/pages/EventPage/types";
 import { LineCircles } from "src/pages/EventPage/components/LineCircles";
 import { PlayerAvatar } from "src/components/PlayerAvatar";
@@ -23,6 +25,7 @@ interface RosterManagerProps {
   deleteLine: (lineId: string) => Promise<void>;
   moveLineUp: (index: number) => Promise<void>;
   moveLineDown: (index: number) => Promise<void>;
+  assignLineUniformColor: (lineId: string, uniformColorId: string | null) => Promise<void>;
   startRenameLine: (lineId: string, currentName: string) => void;
   saveRenamedLine: () => Promise<void>;
   startEditLine: (index: number) => void;
@@ -31,6 +34,8 @@ interface RosterManagerProps {
   cancelLineEditor: () => void;
   onPlayerClick: (userId: string) => void;
   avatarUrls?: Record<string, string>;
+  eventType: EventType;
+  teamId?: string | null;
 }
 
 const getSlotLabel = (slot: Slot): string => {
@@ -180,7 +185,7 @@ const renderEditableSlot = (
               e.currentTarget.style.textDecoration = "underline";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.color = "#333";
+              e.currentTarget.style.color = "var(--hp-text)";
               e.currentTarget.style.textDecoration = "none";
             }}
           >
@@ -229,6 +234,7 @@ export const RosterManager = ({
   deleteLine,
   moveLineUp,
   moveLineDown,
+  assignLineUniformColor,
   startRenameLine,
   saveRenamedLine,
   startEditLine,
@@ -237,7 +243,44 @@ export const RosterManager = ({
   cancelLineEditor,
   onPlayerClick,
   avatarUrls,
+  eventType,
+  teamId,
 }: RosterManagerProps) => {
+  const [showRosterSettings, setShowRosterSettings] = useState(false);
+  const [uniformColors, setUniformColors] = useState<UniformColorDto[]>([]);
+  const [uniformColorsLoading, setUniformColorsLoading] = useState(false);
+  const [uniformColorsError, setUniformColorsError] = useState<string | null>(null);
+  const canAssignLineUniformColors = canManage && eventType === EventType.Practice && Boolean(teamId);
+
+  useEffect(() => {
+    if (!showRosterSettings || !canAssignLineUniformColors || !teamId) {
+      return;
+    }
+
+    let active = true;
+    setUniformColorsLoading(true);
+    setUniformColorsError(null);
+
+    void getUniformColors(teamId)
+      .then((items) => {
+        if (active) setUniformColors(items);
+      })
+      .catch((error) => {
+        console.error(error);
+        if (active) {
+          setUniformColors([]);
+          setUniformColorsError("Не удалось загрузить цвета формы");
+        }
+      })
+      .finally(() => {
+        if (active) setUniformColorsLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [canAssignLineUniformColors, showRosterSettings, teamId]);
+
   return (
     <div
       style={{
@@ -263,35 +306,118 @@ export const RosterManager = ({
           <span>🏒</span>
           <span>Состав ({sortedRoster.length})</span>
         </h3>
-        <button
-          onClick={() => setCreatingLine(true)}
+        <div style={{ display: canManage ? "flex" : "none", alignItems: "center", gap: "8px" }}>
+          <button
+            onClick={() => setCreatingLine(true)}
+            style={{
+              padding: "10px 16px",
+              backgroundColor: "var(--hp-primary)",
+              color: "white",
+              border: "none",
+              borderRadius: "10px",
+              fontSize: "14px",
+              fontWeight: "500",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              transition: "all 0.2s ease",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = "var(--hp-primary-hover)";
+              e.currentTarget.style.transform = "translateY(-1px)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "var(--hp-primary)";
+              e.currentTarget.style.transform = "translateY(0)";
+            }}
+          >
+            <span>+</span>
+            <span>Добавить звено</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowRosterSettings((prev) => !prev)}
+            disabled={!canAssignLineUniformColors}
+            style={{
+              width: "40px",
+              height: "40px",
+              padding: 0,
+              backgroundColor: "var(--hp-surface-soft)",
+              color: "var(--hp-heading)",
+              border: "1px solid var(--hp-border)",
+              borderRadius: "10px",
+              cursor: canAssignLineUniformColors ? "pointer" : "not-allowed",
+              fontSize: "18px",
+              fontWeight: 900,
+              lineHeight: 1,
+              opacity: canAssignLineUniformColors ? 1 : 0.55,
+            }}
+            title="Настройки состава"
+            aria-label="Настройки состава"
+          >
+            ...
+          </button>
+        </div>
+      </div>
+
+      {canAssignLineUniformColors && showRosterSettings && (
+        <div
           style={{
-            padding: "10px 16px",
-            backgroundColor: "var(--hp-primary)",
-            color: "white",
-            border: "none",
-            borderRadius: "10px",
-            fontSize: "14px",
-            fontWeight: "500",
-            cursor: "pointer",
-            display: canManage ? "flex" : "none",
-            alignItems: "center",
-            gap: "6px",
-            transition: "all 0.2s ease",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = "var(--hp-primary-hover)";
-            e.currentTarget.style.transform = "translateY(-1px)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = "var(--hp-primary)";
-            e.currentTarget.style.transform = "translateY(0)";
+            marginBottom: "16px",
+            padding: "12px",
+            border: "1px solid var(--hp-border)",
+            borderRadius: "12px",
+            backgroundColor: "var(--hp-surface-soft)",
+            display: "grid",
+            gap: "10px",
           }}
         >
-          <span>+</span>
-          <span>Добавить звено</span>
-        </button>
-      </div>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px" }}>
+            <strong style={{ color: "var(--hp-heading)", fontSize: "14px" }}>Цвет формы по звеньям</strong>
+            {uniformColorsLoading && <span style={{ color: "var(--hp-muted)", fontSize: "12px" }}>Загрузка...</span>}
+          </div>
+          {uniformColorsError && <div style={{ color: "var(--hp-danger)", fontSize: "13px", fontWeight: 700 }}>{uniformColorsError}</div>}
+          {sortedRoster.length === 0 ? (
+            <div style={{ color: "var(--hp-muted)", fontSize: "13px" }}>Сначала создайте звено.</div>
+          ) : (
+            <div style={{ display: "grid", gap: "8px" }}>
+              {sortedRoster.map((line) => (
+                <label key={line.id} style={{ display: "grid", gridTemplateColumns: "minmax(96px, 0.8fr) minmax(0, 1.2fr)", gap: "8px", alignItems: "center" }}>
+                  <span style={{ color: "var(--hp-text)", fontSize: "13px", fontWeight: 800, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {line.name ?? `Звено ${line.order}`}
+                  </span>
+                  <select
+                    value={line.uniformColorId ?? ""}
+                    disabled={uniformColorsLoading}
+                    onChange={(event) => {
+                      void assignLineUniformColor(line.id, event.target.value || null);
+                    }}
+                    style={{
+                      width: "100%",
+                      minWidth: 0,
+                      padding: "9px 10px",
+                      border: "1px solid var(--hp-border)",
+                      borderRadius: "10px",
+                      backgroundColor: "var(--hp-input-bg)",
+                      color: "var(--hp-text)",
+                      fontSize: "13px",
+                      fontWeight: 700,
+                    }}
+                  >
+                    <option value="">Без цвета</option>
+                    {uniformColors.map((color) => (
+                      <option key={color.id} value={color.id}>
+                        {color.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {canManage && creatingLine && (
         <div
@@ -605,6 +731,29 @@ export const RosterManager = ({
                 </button>
               </div>
             </div>
+
+            {line.uniformColor?.name && (
+              <div style={{ marginBottom: "12px" }}>
+                <span
+                  style={{
+                    display: "inline-flex",
+                    maxWidth: "100%",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                    padding: "5px 9px",
+                    borderRadius: "999px",
+                    border: "1px solid var(--hp-border)",
+                    backgroundColor: "var(--hp-surface)",
+                    color: "var(--hp-muted)",
+                    fontSize: "12px",
+                    fontWeight: 800,
+                  }}
+                >
+                  Цвет формы: {line.uniformColor.name}
+                </span>
+              </div>
+            )}
 
             <div style={{ display: canManage ? "flex" : "none", gap: "8px", marginBottom: "12px", flexWrap: "wrap" }}>
               <button

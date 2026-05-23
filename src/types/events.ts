@@ -31,6 +31,8 @@ export interface LineDto {
   id: string;
   name?: string;
   order: number;
+  uniformColorId?: string | null;
+  uniformColor?: UniformColorDto | null;
   members?: PlayerLookUpDto[];
 }
 
@@ -101,10 +103,12 @@ export interface ExerciseDto {
   id: string;
   name: string;
   videoUrl: string;
+  teamId?: string | null;
 }
 
 export interface UniformColorDto {
   id: string;
   name: string;
   imageUrl: string;
+  teamId?: string | null;
 }

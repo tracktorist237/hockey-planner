@@ -5,10 +5,12 @@ const API_BASE = process.env.REACT_APP_API_BASE || "";
 export interface CreateExerciseDto {
   name: string;
   videoUrl: string;
+  teamId: string;
 }
 
-export async function getExercises(): Promise<ExerciseDto[]> {
-  const res = await fetch(`${API_BASE}/api/exercises`, { credentials: "include" });
+export async function getExercises(teamId: string): Promise<ExerciseDto[]> {
+  const query = new URLSearchParams({ teamId });
+  const res = await fetch(`${API_BASE}/api/exercises?${query.toString()}`, { credentials: "include" });
   if (!res.ok) throw new Error(`GET /api/exercises failed: ${res.status}`);
   return res.json();
 }

@@ -6,6 +6,7 @@ export interface CreateUpdatePlayerData {
 export interface CreateUpdateLineData {
   name?: string | null;
   order: number;
+  uniformColorId?: string | null;
   players?: CreateUpdatePlayerData[] | null;
 }
 

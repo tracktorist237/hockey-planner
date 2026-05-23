@@ -17,7 +17,7 @@ export function UpdateEventPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { isHeaderVisible, isFooterVisible } = useScrollVisibility();
-  const { formData, updateField, handleTypeChange, handleSubmit, loading, loadingInitial, error, isGame, isMeeting, isPractice } =
+  const { formData, updateField, handleTypeChange, handleSubmit, loading, loadingInitial, error, isGame, isMeeting, isPractice, teamId } =
     useUpdateEventForm({ eventId: id, onUpdated: () => id && navigate(`/events/${id}`) });
 
   if (!id) {
@@ -36,8 +36,8 @@ export function UpdateEventPage() {
           <div style={{ backgroundColor: "var(--hp-surface)", borderRadius: "16px", padding: "20px", boxShadow: "var(--hp-shadow-sm)", width: "100%", boxSizing: "border-box" }}>
             <EventTypeSelector currentType={formData.type} onChange={handleTypeChange} />
             {isMeeting && <MeetingForm title={formData.title} onChange={(value) => updateField("title", value)} />}
-            {isGame && <GameForm leagueName={formData.leagueName} homeTeamName={formData.homeTeamName} awayTeamName={formData.awayTeamName} uniformColorId={formData.uniformColorId} onLeagueChange={(value) => updateField("leagueName", value)} onHomeChange={(value) => updateField("homeTeamName", value)} onAwayChange={(value) => updateField("awayTeamName", value)} onUniformColorChange={(value) => updateField("uniformColorId", value)} />}
-            {isPractice && <PracticeExercisesSection selectedExerciseIds={formData.selectedExerciseIds} onChange={(ids) => updateField("selectedExerciseIds", ids)} />}
+            {isGame && <GameForm leagueName={formData.leagueName} homeTeamName={formData.homeTeamName} awayTeamName={formData.awayTeamName} uniformColorId={formData.uniformColorId} teamId={teamId} onLeagueChange={(value) => updateField("leagueName", value)} onHomeChange={(value) => updateField("homeTeamName", value)} onAwayChange={(value) => updateField("awayTeamName", value)} onUniformColorChange={(value) => updateField("uniformColorId", value)} />}
+            {isPractice && <PracticeExercisesSection selectedExerciseIds={formData.selectedExerciseIds} teamId={teamId} onChange={(ids) => updateField("selectedExerciseIds", ids)} />}
             <EventDetailsFields description={formData.description} startTime={formData.startTime} isPractice={isPractice} onDescriptionChange={(value) => updateField("description", value)} onStartTimeChange={(value) => updateField("startTime", value)} />
             <LocationForm locationName={formData.locationName} locationAddress={formData.locationAddress} iceRinkNumber={formData.iceRinkNumber} useAddressSearch={formData.useAddressSearch} onLocationNameChange={(value) => updateField("locationName", value)} onLocationAddressChange={(value) => updateField("locationAddress", value)} onIceRinkNumberChange={(value) => updateField("iceRinkNumber", value)} onToggleSearch={() => updateField("useAddressSearch", !formData.useAddressSearch)} />
           </div>

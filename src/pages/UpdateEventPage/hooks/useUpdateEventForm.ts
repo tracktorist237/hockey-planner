@@ -122,6 +122,7 @@ export const useUpdateEventForm = ({ eventId, onUpdated }: UseUpdateEventFormOpt
     isGame,
     isMeeting,
     isPractice,
+    teamId,
     handleSubmit,
   };
 };

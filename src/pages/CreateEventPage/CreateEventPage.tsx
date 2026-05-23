@@ -104,6 +104,7 @@ export function CreateEventPage({ onBack, onCreated, currentTeamId }: CreateEven
                 homeTeamName={formData.homeTeamName}
                 awayTeamName={formData.awayTeamName}
                 uniformColorId={formData.uniformColorId}
+                teamId={selectedTeamId}
                 onLeagueChange={(value) => updateField("leagueName", value)}
                 onHomeChange={(value) => updateField("homeTeamName", value)}
                 onAwayChange={(value) => updateField("awayTeamName", value)}
@@ -114,6 +115,7 @@ export function CreateEventPage({ onBack, onCreated, currentTeamId }: CreateEven
             {isPractice && (
               <PracticeExercisesSection
                 selectedExerciseIds={formData.selectedExerciseIds}
+                teamId={selectedTeamId}
                 onChange={(ids) => updateField("selectedExerciseIds", ids)}
               />
             )}

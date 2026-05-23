@@ -5,10 +5,12 @@ const API_BASE = process.env.REACT_APP_API_BASE || "";
 export interface CreateUniformColorRequest {
   name: string;
   imageUrl: string;
+  teamId: string;
 }
 
-export async function getUniformColors(): Promise<UniformColorDto[]> {
-  const res = await fetch(`${API_BASE}/api/uniform-colors`, {
+export async function getUniformColors(teamId: string): Promise<UniformColorDto[]> {
+  const query = new URLSearchParams({ teamId });
+  const res = await fetch(`${API_BASE}/api/uniform-colors?${query.toString()}`, {
     credentials: "include",
   });
 
@@ -45,9 +47,11 @@ export async function createUniformColorWithUpload(
   name: string,
   file: File,
   currentUserId: string,
+  teamId: string,
 ): Promise<UniformColorDto> {
   const formData = new FormData();
   formData.append("name", name);
+  formData.append("teamId", teamId);
   formData.append("file", file);
 
   const res = await fetch(

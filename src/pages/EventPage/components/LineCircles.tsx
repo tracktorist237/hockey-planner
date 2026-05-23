@@ -157,7 +157,7 @@ export const LineCircles = ({ members, onPlayerClick, avatarUrls }: LineCirclesP
             e.currentTarget.style.textDecoration = "underline";
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.color = "#333";
+            e.currentTarget.style.color = "var(--hp-text)";
             e.currentTarget.style.textDecoration = "none";
           }}
         >

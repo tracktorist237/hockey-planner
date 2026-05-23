@@ -5,6 +5,7 @@ interface GameFormProps {
   homeTeamName: string;
   awayTeamName: string;
   uniformColorId: string;
+  teamId: string | null;
   onLeagueChange: (value: string) => void;
   onHomeChange: (value: string) => void;
   onAwayChange: (value: string) => void;
@@ -16,6 +17,7 @@ export const GameForm = ({
   homeTeamName,
   awayTeamName,
   uniformColorId,
+  teamId,
   onLeagueChange,
   onHomeChange,
   onAwayChange,
@@ -117,7 +119,7 @@ export const GameForm = ({
         </div>
       </div>
 
-      <UniformColorSection selectedUniformColorId={uniformColorId} onChange={onUniformColorChange} />
+      <UniformColorSection selectedUniformColorId={uniformColorId} teamId={teamId} onChange={onUniformColorChange} />
 
       {homeTeamName && awayTeamName && (
         <div
