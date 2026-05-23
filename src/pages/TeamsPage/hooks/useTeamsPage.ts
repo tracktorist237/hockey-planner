@@ -78,7 +78,6 @@ export function useTeamsPage(currentUser: User | null) {
     }
 
     setLoading(true);
-    setLoaded(false);
     setError(null);
     try {
       const [loadedMyTeams, loadedPublicTeams] = await Promise.all([getMyTeams(currentUser.id), getPublicTeams()]);

@@ -8,6 +8,7 @@ import { HockeyInfoForm } from "src/pages/CreatePlayerFormPage/components/Hockey
 import { PersonalInfoForm } from "src/pages/CreatePlayerFormPage/components/PersonalInfoForm";
 import { PlayerFormActions } from "src/pages/CreatePlayerFormPage/components/PlayerFormActions";
 import { usePlayerForm } from "src/pages/CreatePlayerFormPage/hooks/usePlayerForm";
+import { normalizeSpbhlBirthDateForInput } from "src/utils/spbhl";
 import { getAdaptiveFontSize } from "src/utils/text";
 
 const getSpbhlAvatarUrl = (playerId: string, size: "M" | "O" = "O") =>
@@ -17,7 +18,7 @@ const isValidBirthYear = (value: string): boolean => /^\d{4}$/.test(value);
 
 export function CreatePlayerFormPage() {
   const navigate = useNavigate();
-  const { formData, errors, submitting, error, handleChange, handleSubmit, calculateAge, getFieldStatus } =
+  const { formData, errors, submitting, error, handleChange, setBirthDate, handleSubmit, calculateAge, getFieldStatus } =
     usePlayerForm({ onSuccess: () => navigate("/events") });
 
   const [spbhlPlayerId, setSpbhlPlayerId] = useState<string | null>(null);
@@ -85,7 +86,11 @@ export function CreatePlayerFormPage() {
   };
 
   const handleBindSpbhlPlayer = (player: SpbhlPlayerSearchItem) => {
+    const birthDate = normalizeSpbhlBirthDateForInput(player.birthDate);
     setSpbhlPlayerId(player.playerId);
+    if (birthDate) {
+      setBirthDate(birthDate);
+    }
     setPhotoUrl(player.photoLargeUrl || getSpbhlAvatarUrl(player.playerId, "O"));
     setLocalAvatarFile(null);
     if (localAvatarPreview) {

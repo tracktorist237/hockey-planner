@@ -1,11 +1,20 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getMyTeams } from "src/api/teams";
 import { BottomNav } from "src/components/BottomNav";
+import { LoadingIndicator } from "src/components/LoadingIndicator";
 import { CurrentPlayerHeader } from "src/CurrentPlayerHeader";
+import { EventsList as CalendarEventsList } from "src/pages/CalendarPage/components/EventsList";
+import { Legend } from "src/pages/CalendarPage/components/Legend";
+import { MonthView } from "src/pages/CalendarPage/components/MonthView";
+import { WeekView } from "src/pages/CalendarPage/components/WeekView";
+import { useCalendarNavigation } from "src/pages/CalendarPage/hooks/useCalendarNavigation";
+import { ViewMode } from "src/pages/CalendarPage/types";
+import { getPeriodLabel } from "src/pages/CalendarPage/utils";
+import { EventLookUpDto, EventType } from "src/types/events";
+import { TeamDto } from "src/types/teams";
 import { User } from "src/types/user";
 import { EventCard } from "./components/EventCard";
-import { TeamSwitcher } from "./components/TeamSwitcher";
 import { useEventsData } from "./hooks/useEventsData";
 
 interface EventsListPageProps {
@@ -15,27 +24,437 @@ interface EventsListPageProps {
   onTeamChange: (teamId: string | null, teamName?: string | null) => void;
 }
 
+type EventsView = "list" | "calendar";
+type QuickFilter = "unanswered" | "games" | "practices" | "today";
+
+interface AdvancedFilters {
+  dateFrom: string;
+  dateTo: string;
+}
+
+const emptyAdvancedFilters: AdvancedFilters = {
+  dateFrom: "",
+  dateTo: "",
+};
+
+const quickFilterItems: Array<{ key: QuickFilter; label: string }> = [
+  { key: "unanswered", label: "Без ответа" },
+  { key: "games", label: "Матчи" },
+  { key: "practices", label: "Тренировки" },
+  { key: "today", label: "Сегодня" },
+];
+
+const isSameLocalDay = (left: Date, right: Date) =>
+  left.getFullYear() === right.getFullYear() &&
+  left.getMonth() === right.getMonth() &&
+  left.getDate() === right.getDate();
+
+const isUnanswered = (event: EventLookUpDto) =>
+  event.attendanceStatus === 1 ||
+  event.attendanceStatus === null ||
+  event.attendanceStatus === undefined;
+
+const getActiveFiltersCount = (filters: AdvancedFilters) =>
+  [filters.dateFrom, filters.dateTo].filter(Boolean).length;
+
+interface EventsViewSwitcherProps {
+  activeView: EventsView;
+  onViewChange: (view: EventsView) => void;
+}
+
+function EventsViewSwitcher({ activeView, onViewChange }: EventsViewSwitcherProps) {
+  const renderButton = (view: EventsView, label: string) => {
+    const isActive = activeView === view;
+
+    return (
+      <button
+        type="button"
+        onClick={() => onViewChange(view)}
+        style={{
+          border: isActive ? "1px solid var(--hp-primary)" : "1px solid transparent",
+          borderRadius: "11px",
+          padding: "10px",
+          backgroundColor: isActive ? "var(--hp-surface)" : "transparent",
+          color: isActive ? "var(--hp-heading)" : "var(--hp-muted)",
+          boxShadow: isActive ? "var(--hp-shadow-sm)" : "none",
+          fontWeight: isActive ? 900 : 800,
+          cursor: isActive ? "default" : "pointer",
+        }}
+      >
+        {label}
+      </button>
+    );
+  };
+
+  return (
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "1fr 1fr",
+        gap: "4px",
+        padding: "4px",
+        marginTop: "12px",
+        borderRadius: "14px",
+        backgroundColor: "var(--hp-surface-soft)",
+        border: "1px solid var(--hp-border)",
+      }}
+    >
+      {renderButton("list", "Списком")}
+      {renderButton("calendar", "Календарём")}
+    </div>
+  );
+}
+
+interface EventsCalendarViewProps {
+  events: EventLookUpDto[];
+  onOpenEvent: (eventId: string) => void;
+}
+
+function EventsCalendarView({ events, onOpenEvent }: EventsCalendarViewProps) {
+  const { viewMode, setViewMode, currentDate, selectedDate, setSelectedDate, isMobile, goPrev, goNext, goToday, selectDate } = useCalendarNavigation();
+
+  useEffect(() => {
+    setSelectedDate((date) => date ?? new Date());
+  }, [setSelectedDate]);
+
+  const daysInMonth = useMemo(
+    () => new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate(),
+    [currentDate],
+  );
+
+  const firstDayOfMonth = useMemo(
+    () => new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).getDay(),
+    [currentDate],
+  );
+
+  const getEventsForDate = useCallback(
+    (date: Date): EventLookUpDto[] =>
+      events.filter((event) => {
+        const eventDate = new Date(event.startTime);
+        return (
+          eventDate.getDate() === date.getDate() &&
+          eventDate.getMonth() === date.getMonth() &&
+          eventDate.getFullYear() === date.getFullYear()
+        );
+      }),
+    [events],
+  );
+
+  const weekDays = useMemo(() => {
+    const weekStart = new Date(currentDate);
+    weekStart.setDate(currentDate.getDate() - currentDate.getDay() + 1);
+
+    return Array.from({ length: 7 }, (_, index) => {
+      const date = new Date(weekStart);
+      date.setDate(weekStart.getDate() + index);
+      return {
+        date,
+        events: getEventsForDate(date),
+      };
+    });
+  }, [currentDate, getEventsForDate]);
+
+  const selectedDateEvents = useMemo(
+    () => (selectedDate ? getEventsForDate(selectedDate) : []),
+    [getEventsForDate, selectedDate],
+  );
+
+  const renderModeButton = (mode: ViewMode, label: string) => {
+    const isActive = viewMode === mode;
+
+    return (
+      <button
+        type="button"
+        onClick={() => setViewMode(mode)}
+        style={{
+          padding: "10px 20px",
+          backgroundColor: isActive ? "var(--hp-primary)" : "var(--hp-surface-soft)",
+          color: isActive ? "white" : "var(--hp-text)",
+          border: "1px solid var(--hp-border)",
+          borderRadius: "10px",
+          fontSize: "15px",
+          fontWeight: isActive ? "600" : "500",
+          cursor: "pointer",
+          flex: isMobile ? 1 : "auto",
+        }}
+      >
+        {label}
+      </button>
+    );
+  };
+
+  return (
+    <>
+      <div style={{ backgroundColor: "var(--hp-surface)", borderRadius: "16px", padding: "20px", marginBottom: "20px", boxShadow: "var(--hp-shadow-sm)" }}>
+        <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", alignItems: "center", justifyContent: "space-between", gap: isMobile ? "16px" : "12px" }}>
+          <div style={{ display: "flex", gap: "8px", width: isMobile ? "100%" : "auto" }}>
+            {renderModeButton("month", "Месяц")}
+            {renderModeButton("week", "Неделя")}
+          </div>
+
+          <div style={{ display: "flex", gap: "8px", width: isMobile ? "100%" : "auto" }}>
+            <button type="button" onClick={goPrev} style={{ padding: "10px 16px", backgroundColor: "var(--hp-surface)", border: "1px solid var(--hp-border)", borderRadius: "10px", fontSize: "14px", cursor: "pointer", flex: isMobile ? 1 : "auto" }}>←</button>
+            <button type="button" onClick={goToday} style={{ padding: "10px 16px", backgroundColor: "var(--hp-primary)", color: "white", border: "none", borderRadius: "10px", fontSize: "14px", fontWeight: "500", cursor: "pointer", flex: isMobile ? 2 : "auto" }}>Сегодня</button>
+            <button type="button" onClick={goNext} style={{ padding: "10px 16px", backgroundColor: "var(--hp-surface)", border: "1px solid var(--hp-border)", borderRadius: "10px", fontSize: "14px", cursor: "pointer", flex: isMobile ? 1 : "auto" }}>→</button>
+          </div>
+        </div>
+
+        <div style={{ marginTop: "16px", textAlign: "center", fontSize: isMobile ? "18px" : "22px", fontWeight: "600", color: "var(--hp-heading)" }}>
+          {getPeriodLabel(viewMode, currentDate)}
+        </div>
+      </div>
+
+      <Legend />
+      <div style={{ backgroundColor: "var(--hp-surface)", borderRadius: "16px", padding: isMobile ? "12px" : "20px", marginBottom: "20px", boxShadow: "var(--hp-shadow-sm)" }}>
+        {viewMode === "month" ? (
+          <MonthView currentDate={currentDate} selectedDate={selectedDate} isMobile={isMobile} daysInMonth={daysInMonth} firstDayOfMonth={firstDayOfMonth} getEventsForDate={getEventsForDate} onDayClick={selectDate} />
+        ) : (
+          <WeekView weekDays={weekDays} selectedDate={selectedDate} isMobile={isMobile} onDayClick={selectDate} />
+        )}
+      </div>
+      <CalendarEventsList selectedDate={selectedDate} events={selectedDateEvents} onEventClick={onOpenEvent} />
+    </>
+  );
+}
+
+interface EventsFiltersProps {
+  activeQuickFilters: QuickFilter[];
+  onQuickFilterToggle: (filter: QuickFilter) => void;
+  onClearFilters: () => void;
+  advancedFilters: AdvancedFilters;
+  onAdvancedFiltersChange: (filters: AdvancedFilters) => void;
+  teams: TeamDto[];
+  currentTeamId: string | null;
+  onTeamChange: (teamId: string | null, teamName?: string | null) => void;
+}
+
+function EventsFilters({
+  activeQuickFilters,
+  onQuickFilterToggle,
+  onClearFilters,
+  advancedFilters,
+  onAdvancedFiltersChange,
+  teams,
+  currentTeamId,
+  onTeamChange,
+}: EventsFiltersProps) {
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const advancedCount = getActiveFiltersCount(advancedFilters);
+  const hasAdvancedFilters = advancedCount > 0 || Boolean(currentTeamId);
+  const orderedQuickFilters = useMemo(
+    () => [
+      ...quickFilterItems.filter((item) => activeQuickFilters.includes(item.key)),
+      ...quickFilterItems.filter((item) => !activeQuickFilters.includes(item.key)),
+    ],
+    [activeQuickFilters],
+  );
+
+  const isQuickActive = (filter: QuickFilter) => activeQuickFilters.includes(filter);
+  const chipStyle = (active: boolean) => ({
+    border: active ? "1px solid var(--hp-primary)" : "1px solid var(--hp-border)",
+    borderRadius: "999px",
+    padding: "9px 13px",
+    backgroundColor: active ? "var(--hp-primary)" : "var(--hp-surface)",
+    color: active ? "white" : "var(--hp-text)",
+    fontSize: "13px",
+    fontWeight: 800,
+    whiteSpace: "nowrap" as const,
+    cursor: "pointer",
+    boxShadow: active ? "var(--hp-shadow-sm)" : "none",
+    flexShrink: 0,
+  });
+
+  const updateAdvancedFilter = <K extends keyof AdvancedFilters>(key: K, value: AdvancedFilters[K]) => {
+    onAdvancedFiltersChange({ ...advancedFilters, [key]: value });
+  };
+
+  return (
+    <>
+      <div
+        style={{
+          display: "flex",
+          gap: "8px",
+          overflowX: "auto",
+          padding: "2px 0 4px",
+          marginTop: "12px",
+          scrollbarWidth: "none",
+        }}
+      >
+        <button type="button" onClick={onClearFilters} style={chipStyle(activeQuickFilters.length === 0 && !hasAdvancedFilters)}>
+          Все
+        </button>
+        {hasAdvancedFilters && (
+          <button
+            type="button"
+            onClick={() => setIsSheetOpen(true)}
+            style={{
+              ...chipStyle(false),
+              marginLeft: "2px",
+              backgroundColor: "var(--hp-primary-soft)",
+              borderColor: "var(--hp-primary)",
+              color: "var(--hp-primary-text)",
+              boxShadow: "var(--hp-shadow-sm)",
+            }}
+          >
+            Фильтры{advancedCount > 0 ? ` ${advancedCount}` : ""}
+          </button>
+        )}
+        {orderedQuickFilters.map((item) => (
+          <button key={item.key} type="button" onClick={() => onQuickFilterToggle(item.key)} style={chipStyle(isQuickActive(item.key))}>
+            {item.label}
+          </button>
+        ))}
+        {!hasAdvancedFilters && (
+          <button
+            type="button"
+            onClick={() => setIsSheetOpen(true)}
+            style={{
+              ...chipStyle(false),
+              marginLeft: "2px",
+              backgroundColor: "var(--hp-surface)",
+              borderColor: "var(--hp-border)",
+              color: "var(--hp-heading)",
+            }}
+          >
+            Фильтры
+          </button>
+        )}
+      </div>
+
+      {isSheetOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 300,
+            backgroundColor: "rgba(15, 23, 42, 0.42)",
+            display: "flex",
+            alignItems: "flex-end",
+          }}
+          onClick={() => setIsSheetOpen(false)}
+        >
+          <div
+            style={{
+              width: "100%",
+              maxWidth: "600px",
+              margin: "0 auto",
+              backgroundColor: "var(--hp-surface)",
+              borderRadius: "22px 22px 0 0",
+              padding: "12px 16px 24px",
+              boxShadow: "0 -18px 50px rgba(15, 23, 42, 0.25)",
+              border: "1px solid var(--hp-border)",
+            }}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div style={{ width: "42px", height: "4px", borderRadius: "999px", backgroundColor: "var(--hp-border)", margin: "0 auto 14px" }} />
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", marginBottom: "14px" }}>
+              <h2 style={{ margin: 0, fontSize: "18px", color: "var(--hp-heading)" }}>Фильтры</h2>
+              <button type="button" onClick={() => setIsSheetOpen(false)} style={{ border: "none", background: "transparent", color: "var(--hp-muted)", fontSize: "24px", cursor: "pointer", lineHeight: 1 }}>
+                ×
+              </button>
+            </div>
+
+            <div style={{ display: "grid", gap: "12px" }}>
+              <label style={{ display: "grid", gap: "6px", color: "var(--hp-heading)", fontSize: "13px", fontWeight: 800 }}>
+                Команда
+                <select
+                  value={currentTeamId ?? ""}
+                  onChange={(event) => {
+                    const nextTeamId = event.target.value || null;
+                    const selectedTeam = teams.find((team) => team.id === nextTeamId);
+                    onTeamChange(nextTeamId, selectedTeam?.name ?? null);
+                  }}
+                  style={{
+                    width: "100%",
+                    padding: "12px",
+                    borderRadius: "12px",
+                    border: "1px solid var(--hp-border)",
+                    backgroundColor: "var(--hp-input-bg)",
+                    color: "var(--hp-text)",
+                    fontSize: "14px",
+                    fontWeight: 700,
+                  }}
+                >
+                  <option value="">Все мероприятия</option>
+                  {teams.map((team) => (
+                    <option key={team.id} value={team.id}>
+                      {team.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                <label style={{ display: "grid", gap: "6px", color: "var(--hp-heading)", fontSize: "13px", fontWeight: 800 }}>
+                  С даты
+                  <input type="date" value={advancedFilters.dateFrom} onChange={(event) => updateAdvancedFilter("dateFrom", event.target.value)} style={{ padding: "12px", borderRadius: "12px", border: "1px solid var(--hp-border)", backgroundColor: "var(--hp-input-bg)", color: "var(--hp-text)" }} />
+                </label>
+                <label style={{ display: "grid", gap: "6px", color: "var(--hp-heading)", fontSize: "13px", fontWeight: 800 }}>
+                  По дату
+                  <input type="date" value={advancedFilters.dateTo} onChange={(event) => updateAdvancedFilter("dateTo", event.target.value)} style={{ padding: "12px", borderRadius: "12px", border: "1px solid var(--hp-border)", backgroundColor: "var(--hp-input-bg)", color: "var(--hp-text)" }} />
+                </label>
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginTop: "4px" }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onAdvancedFiltersChange(emptyAdvancedFilters);
+                    onTeamChange(null, null);
+                  }}
+                  style={{ padding: "13px", borderRadius: "12px", border: "1px solid var(--hp-border)", backgroundColor: "var(--hp-surface-soft)", color: "var(--hp-text)", fontWeight: 800, cursor: "pointer" }}
+                >
+                  Сбросить
+                </button>
+                <button type="button" onClick={() => setIsSheetOpen(false)} style={{ padding: "13px", borderRadius: "12px", border: "none", backgroundColor: "var(--hp-primary)", color: "white", fontWeight: 900, cursor: "pointer" }}>
+                  Готово
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
 export const EventsListPage = ({
   currentUser,
   currentTeamId,
-  currentTeamName,
   onTeamChange,
 }: EventsListPageProps) => {
   const navigate = useNavigate();
   const { events, loading, error, reloadEvents } = useEventsData(currentUser?.id, currentTeamId);
   const [canManageTeamEvents, setCanManageTeamEvents] = useState(false);
+  const [eventsView, setEventsView] = useState<EventsView>("list");
+  const [teams, setTeams] = useState<TeamDto[]>([]);
+  const [activeQuickFilters, setActiveQuickFilters] = useState<QuickFilter[]>([]);
+  const [advancedFilters, setAdvancedFilters] = useState<AdvancedFilters>(emptyAdvancedFilters);
   const canCreateEvents = canManageTeamEvents;
 
-  useEffect(() => {
+  const loadTeams = useCallback(async () => {
     if (!currentUser?.id) {
       setCanManageTeamEvents(false);
+      setTeams([]);
       return;
     }
 
-    void getMyTeams(currentUser.id)
-      .then((teams) => setCanManageTeamEvents(teams.some((team) => team.myRole === 1 || team.myRole === 2)))
-      .catch(() => setCanManageTeamEvents(false));
+    try {
+      const loadedTeams = await getMyTeams(currentUser.id);
+      setTeams(loadedTeams);
+      setCanManageTeamEvents(loadedTeams.some((team) => team.myRole === 1 || team.myRole === 2));
+    } catch (error) {
+      console.error(error);
+      setTeams([]);
+      setCanManageTeamEvents(false);
+    }
   }, [currentUser?.id]);
+
+  useEffect(() => {
+    void loadTeams();
+  }, [loadTeams]);
 
   const handleOpenEvent = useCallback(
     (eventId: string) => {
@@ -43,6 +462,66 @@ export const EventsListPage = ({
     },
     [navigate],
   );
+
+  const handleEventsViewChange = useCallback(
+    (view: EventsView) => {
+      if (view === eventsView) {
+        return;
+      }
+
+      setEventsView(view);
+    },
+    [eventsView],
+  );
+
+  const handleQuickFilterToggle = useCallback((filter: QuickFilter) => {
+    setActiveQuickFilters((filters) =>
+      filters.includes(filter)
+        ? filters.filter((item) => item !== filter)
+        : [...filters, filter],
+    );
+  }, []);
+
+  const filteredEvents = useMemo(() => {
+    const today = new Date();
+    const fromDate = advancedFilters.dateFrom ? new Date(`${advancedFilters.dateFrom}T00:00:00`) : null;
+    const toDate = advancedFilters.dateTo ? new Date(`${advancedFilters.dateTo}T23:59:59`) : null;
+
+    return events.filter((event) => {
+      const eventDate = new Date(event.startTime);
+
+      if (activeQuickFilters.includes("unanswered") && !isUnanswered(event)) {
+        return false;
+      }
+
+      if (activeQuickFilters.includes("games") && event.type !== EventType.Game) {
+        return false;
+      }
+
+      if (activeQuickFilters.includes("practices") && event.type !== EventType.Practice) {
+        return false;
+      }
+
+      if (activeQuickFilters.includes("today") && !isSameLocalDay(eventDate, today)) {
+        return false;
+      }
+
+      if (fromDate && eventDate < fromDate) {
+        return false;
+      }
+
+      if (toDate && eventDate > toDate) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [activeQuickFilters, advancedFilters, events]);
+
+  const hasAnyFilter =
+    activeQuickFilters.length > 0 ||
+    currentTeamId !== null ||
+    getActiveFiltersCount(advancedFilters) > 0;
 
   return (
     <div
@@ -108,41 +587,58 @@ export const EventsListPage = ({
         </div>
 
         <CurrentPlayerHeader />
-        <TeamSwitcher
-          currentUserId={currentUser?.id}
+        <EventsFilters
+          activeQuickFilters={activeQuickFilters}
+          onQuickFilterToggle={handleQuickFilterToggle}
+          onClearFilters={() => {
+            setActiveQuickFilters([]);
+            setAdvancedFilters(emptyAdvancedFilters);
+            onTeamChange(null, null);
+          }}
+          advancedFilters={advancedFilters}
+          onAdvancedFiltersChange={setAdvancedFilters}
+          teams={teams}
           currentTeamId={currentTeamId}
-          currentTeamName={currentTeamName}
           onTeamChange={onTeamChange}
-          filterOnly
         />
+
+        <EventsViewSwitcher activeView={eventsView} onViewChange={handleEventsViewChange} />
       </div>
 
-      <div style={{ padding: "16px" }}>
-        {loading ? (
-          <div style={{ padding: "48px 16px", textAlign: "center", color: "var(--hp-muted)" }}>
+      <div style={{ padding: "16px", overflowAnchor: "none" }}>
+        {eventsView === "calendar" ? (
+          loading ? (
+            <LoadingIndicator text="Загрузка календаря..." block />
+          ) : error ? (
             <div
               style={{
-                width: "32px",
-                height: "32px",
-                border: "3px solid var(--hp-border)",
-                borderTopColor: "var(--hp-primary)",
-                borderRadius: "50%",
-                animation: "spin 1s linear infinite",
-                margin: "0 auto 16px auto",
+                backgroundColor: "var(--hp-danger-soft)",
+                color: "var(--hp-danger)",
+                padding: "16px",
+                borderRadius: "12px",
+                fontSize: "15px",
+                border: "1px solid var(--hp-danger-border)",
+                borderLeft: "4px solid var(--hp-danger)",
               }}
-            />
-            <div style={{ fontSize: "16px", fontWeight: "500" }}>Загрузка мероприятий...</div>
-          </div>
+            >
+              {error}
+            </div>
+          ) : (
+            <EventsCalendarView events={filteredEvents} onOpenEvent={handleOpenEvent} />
+          )
+        ) : loading ? (
+          <LoadingIndicator text="Загрузка мероприятий..." block />
         ) : error ? (
           <div
             style={{
-              backgroundColor: "#ffebee",
-              color: "#c62828",
+              backgroundColor: "var(--hp-danger-soft)",
+              color: "var(--hp-danger)",
               padding: "16px",
               borderRadius: "12px",
               marginBottom: "20px",
               fontSize: "15px",
-              borderLeft: "4px solid #c62828",
+              border: "1px solid var(--hp-danger-border)",
+              borderLeft: "4px solid var(--hp-danger)",
             }}
           >
             <div style={{ marginBottom: "12px" }}>⚠️ {error}</div>
@@ -152,9 +648,9 @@ export const EventsListPage = ({
               style={{
                 padding: "10px 14px",
                 borderRadius: "10px",
-                border: "1px solid #ef9a9a",
-                backgroundColor: loading ? "#ffcdd2" : "var(--hp-surface)",
-                color: "#b71c1c",
+                border: "1px solid var(--hp-danger-border)",
+                backgroundColor: loading ? "var(--hp-danger-border)" : "var(--hp-surface)",
+                color: "var(--hp-danger)",
                 fontWeight: "600",
                 cursor: loading ? "wait" : "pointer",
               }}
@@ -162,7 +658,7 @@ export const EventsListPage = ({
               {loading ? "Обновление..." : "Обновить"}
             </button>
           </div>
-        ) : events.length > 0 ? (
+        ) : filteredEvents.length > 0 ? (
           <div>
             <div
               style={{
@@ -184,11 +680,11 @@ export const EventsListPage = ({
                   borderRadius: "12px",
                 }}
               >
-                {events.length}
+                {filteredEvents.length}
               </div>
             </div>
 
-            {events.map((event) => (
+            {filteredEvents.map((event) => (
               <EventCard key={event.id} event={event} onOpen={handleOpenEvent} />
             ))}
           </div>
@@ -205,12 +701,35 @@ export const EventsListPage = ({
           >
             <div style={{ fontSize: "64px", marginBottom: "16px", opacity: 0.3 }}>🗓️</div>
             <h3 style={{ margin: "0 0 8px 0", fontSize: "20px", fontWeight: "600", color: "var(--hp-text)" }}>
-              Нет предстоящих мероприятий
+              {hasAnyFilter ? "Ничего не найдено" : "Нет предстоящих мероприятий"}
             </h3>
             <p style={{ margin: "0 0 24px 0", fontSize: "15px", color: "var(--hp-muted)", lineHeight: "1.5" }}>
-              Здесь будут отображаться предстоящие тренировки, матчи и встречи
+              {hasAnyFilter
+                ? "Попробуйте убрать часть фильтров или выбрать другую команду."
+                : "Здесь будут отображаться предстоящие тренировки, матчи и встречи"}
             </p>
-            {canCreateEvents && (
+            {hasAnyFilter ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveQuickFilters([]);
+                  setAdvancedFilters(emptyAdvancedFilters);
+                  onTeamChange(null, null);
+                }}
+                style={{
+                  padding: "14px 24px",
+                  backgroundColor: "var(--hp-surface-soft)",
+                  color: "var(--hp-heading)",
+                  border: "1px solid var(--hp-border)",
+                  borderRadius: "12px",
+                  fontSize: "16px",
+                  fontWeight: "700",
+                  cursor: "pointer",
+                }}
+              >
+                Сбросить фильтры
+              </button>
+            ) : canCreateEvents && (
               <button
                 onClick={() => navigate("/events/create")}
                 style={{

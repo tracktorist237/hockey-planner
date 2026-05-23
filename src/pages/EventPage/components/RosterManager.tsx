@@ -337,6 +337,38 @@ export const RosterManager = ({
             </button>
           </div>
 
+          {editingLineIndex === null && (
+            <label
+              style={{
+                display: "grid",
+                gap: "6px",
+                marginBottom: "16px",
+                color: "var(--hp-heading)",
+                fontSize: "13px",
+                fontWeight: 800,
+              }}
+            >
+              Название звена
+              <input
+                type="text"
+                value={newLineName}
+                onChange={(event) => setNewLineName(event.target.value)}
+                placeholder="Например: Первое звено"
+                style={{
+                  width: "100%",
+                  boxSizing: "border-box",
+                  padding: "11px 12px",
+                  border: "1px solid var(--hp-border)",
+                  borderRadius: "10px",
+                  backgroundColor: "var(--hp-input-bg)",
+                  color: "var(--hp-text)",
+                  fontSize: "15px",
+                  fontWeight: 700,
+                }}
+              />
+            </label>
+          )}
+
           <div style={{ display: "flex", gap: "12px", justifyContent: "center", marginBottom: "16px", flexWrap: "wrap" }}>
             {(["LW", "C", "RW"] as Slot[]).map((slot) =>
               renderEditableSlot(slot, lineSlots, activeSlot, setActiveSlot, onPlayerClick, clearSlot, avatarUrls),

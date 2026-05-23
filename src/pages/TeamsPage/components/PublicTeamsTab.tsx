@@ -1,4 +1,5 @@
 import { TeamDto } from "src/types/teams";
+import { LoadingIndicator } from "src/components/LoadingIndicator";
 import { TeamCard } from "./TeamCard";
 
 interface PublicTeamsTabProps {
@@ -16,7 +17,7 @@ export function PublicTeamsTab({ teams, loading, onOpenTeam }: PublicTeamsTabPro
       </p>
 
       <div style={{ display: "grid", gap: 10, maxHeight: 390, overflowY: "auto", paddingRight: 4 }}>
-        {loading && <div style={{ color: "var(--hp-muted)" }}>Загружаем...</div>}
+        {loading && <LoadingIndicator text="Загружаем..." />}
         {!loading && teams.length === 0 && <div style={{ color: "var(--hp-muted)" }}>Публичных команд для вступления пока нет.</div>}
         {teams.map((team) => (
           <TeamCard

@@ -70,6 +70,12 @@ export const usePlayerForm = ({ onSuccess }: UsePlayerFormOptions = {}) => {
     updateFieldError(name, value);
   }, [updateFieldError]);
 
+  const setBirthDate = useCallback((birthDate: string) => {
+    setFormData((previous) => ({ ...previous, birthDate }));
+    setErrors((previous) => ({ ...previous, birthDate: undefined }));
+    updateFieldError("birthDate", birthDate);
+  }, [updateFieldError]);
+
   const validateForm = useCallback((): boolean => {
     const newErrors: ValidationErrors = {};
 
@@ -169,6 +175,7 @@ export const usePlayerForm = ({ onSuccess }: UsePlayerFormOptions = {}) => {
     submitting,
     error,
     handleChange,
+    setBirthDate,
     handleSubmit,
     calculateAge,
     getFieldStatus: resolveFieldStatus,

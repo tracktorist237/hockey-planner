@@ -35,11 +35,14 @@ export function MonthView({ currentDate, selectedDate, isMobile, daysInMonth, fi
           const isToday = isSameDay(date, new Date());
           const isSelected = selectedDate ? isSameDay(date, selectedDate) : false;
           const eventColors = getUniqueEventColors(dayEvents);
+          const dayBackground = isSelected ? "var(--hp-primary)" : isToday ? "var(--hp-primary-soft)" : "var(--hp-surface)";
+          const dayBorder = isSelected ? "var(--hp-primary)" : isToday ? "var(--hp-primary)" : "var(--hp-border)";
+          const dayTextColor = isSelected ? "white" : isToday ? "var(--hp-primary)" : "var(--hp-text)";
 
           return (
-            <div key={day} onClick={() => onDayClick(date)} style={{ aspectRatio: "1", padding: isMobile ? "4px" : "8px", backgroundColor: isSelected ? "var(--hp-primary-soft)" : isToday ? "var(--hp-primary-soft)" : "var(--hp-surface)", border: `2px solid ${isSelected || isToday ? "var(--hp-primary)" : "var(--hp-border)"}`, borderRadius: "8px", display: "flex", flexDirection: "column", cursor: "pointer", transition: "all 0.2s ease", position: "relative" }}>
+            <div key={day} onClick={() => onDayClick(date)} style={{ aspectRatio: "1", padding: isMobile ? "4px" : "8px", backgroundColor: dayBackground, border: `2px solid ${dayBorder}`, borderRadius: "8px", display: "flex", flexDirection: "column", cursor: "pointer", transition: "all 0.2s ease", position: "relative", boxShadow: isSelected ? "var(--hp-shadow-sm)" : "none" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: isMobile ? "2px" : "4px" }}>
-                <span style={{ fontSize: isMobile ? "14px" : "16px", fontWeight: isToday || isSelected ? "700" : "500", color: isToday || isSelected ? "var(--hp-primary)" : "var(--hp-text)" }}>{day}</span>
+                <span style={{ fontSize: isMobile ? "14px" : "16px", fontWeight: isToday || isSelected ? "700" : "500", color: dayTextColor }}>{day}</span>
               </div>
 
               {isMobile ? (
@@ -47,7 +50,7 @@ export function MonthView({ currentDate, selectedDate, isMobile, daysInMonth, fi
                   {eventColors.slice(0, 3).map((color, colorIndex) => (
                     <div key={colorIndex} style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: color, display: "inline-block" }} />
                   ))}
-                  {eventColors.length > 3 && <span style={{ fontSize: "8px", color: "var(--hp-muted)" }}>+{eventColors.length - 3}</span>}
+                  {eventColors.length > 3 && <span style={{ fontSize: "8px", color: isSelected ? "white" : "var(--hp-muted)" }}>+{eventColors.length - 3}</span>}
                 </div>
               ) : (
                 <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
@@ -56,7 +59,7 @@ export function MonthView({ currentDate, selectedDate, isMobile, daysInMonth, fi
                       {formatTime(event.startTime)} {event.title}
                     </div>
                   ))}
-                  {dayEvents.length > 3 && <div style={{ fontSize: "10px", color: "var(--hp-muted)", paddingLeft: "4px" }}>+{dayEvents.length - 3} событий</div>}
+                  {dayEvents.length > 3 && <div style={{ fontSize: "10px", color: isSelected ? "white" : "var(--hp-muted)", paddingLeft: "4px" }}>+{dayEvents.length - 3} событий</div>}
                 </div>
               )}
 

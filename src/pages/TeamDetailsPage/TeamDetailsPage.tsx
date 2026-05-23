@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { BottomNav } from "src/components/BottomNav";
+import { LoadingIndicator } from "src/components/LoadingIndicator";
 import { PlayerAvatar } from "src/components/PlayerAvatar";
 import { getEvents } from "src/api/events";
 import { createTeamNews, getTeam, getTeamMembers, getTeamNews, joinPublicTeam, leaveTeam } from "src/api/teams";
@@ -392,7 +393,7 @@ export function TeamDetailsPage({ currentUser, currentTeamId, onTeamChange }: Te
         {error && <div style={{ marginBottom: 12, background: "var(--hp-danger-soft)", color: "var(--hp-danger)", borderRadius: 14, padding: "12px 14px" }}>{error}</div>}
         {message && <div style={{ marginBottom: 12, background: "var(--hp-success-soft)", color: "var(--hp-success)", borderRadius: 14, padding: "12px 14px", fontWeight: 800 }}>{message}</div>}
 
-        {loading && <section style={cardStyle}>Загружаем команду...</section>}
+        {loading && <section style={cardStyle}><LoadingIndicator text="Загружаем команду..." /></section>}
 
         {!loading && team && (
           <>
@@ -586,7 +587,7 @@ export function TeamDetailsPage({ currentUser, currentTeamId, onTeamChange }: Te
                     </div>
                   )}
 
-                  {newsLoading && <div style={{ color: "var(--hp-muted)" }}>Загружаем новости...</div>}
+                  {newsLoading && <LoadingIndicator text="Загружаем новости..." />}
                   {!newsLoading && news.length === 0 && (
                     <div style={{ border: "1px dashed var(--hp-border)", borderRadius: 16, padding: 16, color: "var(--hp-muted)", lineHeight: 1.45, background: "var(--hp-surface-soft)" }}>
                       <div style={{ fontWeight: 900, color: "var(--hp-text-strong)", marginBottom: 6 }}>Новостей пока нет</div>
@@ -608,7 +609,7 @@ export function TeamDetailsPage({ currentUser, currentTeamId, onTeamChange }: Te
 
               {activeTab === "members" && (
                 <div style={{ display: "grid", gap: 8 }}>
-                  {membersLoading && <div style={{ color: "var(--hp-muted)" }}>Загружаем участников...</div>}
+                  {membersLoading && <LoadingIndicator text="Загружаем участников..." />}
                   {!membersLoading && sortedMembers.length === 0 && <div style={{ color: "var(--hp-muted)" }}>Участников пока нет.</div>}
                   {!membersLoading &&
                     sortedMembers.map((member) => (
@@ -684,7 +685,7 @@ export function TeamDetailsPage({ currentUser, currentTeamId, onTeamChange }: Te
                       + Добавить мероприятие
                     </button>
                   )}
-                  {eventsLoading && <div style={{ color: "var(--hp-muted)" }}>Загружаем мероприятия...</div>}
+                  {eventsLoading && <LoadingIndicator text="Загружаем мероприятия..." />}
                   {!eventsLoading && sortedEvents.length === 0 && <div style={{ color: "var(--hp-muted)" }}>Мероприятий этой команды пока нет.</div>}
                   {!eventsLoading && sortedEvents.map((event) => <TeamEventCard key={event.id} event={event} onOpen={(eventId) => navigate(`/events/${eventId}`)} />)}
                 </div>

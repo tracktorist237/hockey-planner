@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { getUsers, User as ApiUser } from "src/api/users";
+import { LoadingIndicator } from "src/components/LoadingIndicator";
 import { useAuth } from "src/hooks/useAuth";
 import { markOnboardingCompleted } from "src/utils/onboarding";
 
@@ -167,7 +168,7 @@ export function LinkPlayerPage() {
             paddingRight: 4,
           }}
         >
-          {loading && <div style={{ color: "var(--hp-muted)" }}>Загружаем игроков...</div>}
+          {loading && <LoadingIndicator text="Загружаем игроков..." />}
           {!loading &&
             filteredPlayers.map((player) => {
               const isLinked = Boolean(player.email);
@@ -247,8 +248,20 @@ export function LinkPlayerPage() {
             fontSize: 16,
             fontWeight: 800,
             cursor: "pointer",
-            background: "#f8fafc",
-            color: "var(--hp-text)",
+            background: "var(--hp-surface-soft)",
+            color: "var(--hp-heading)",
+            boxShadow: "var(--hp-shadow-sm)",
+            transition: "background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease",
+          }}
+          onMouseEnter={(event) => {
+            event.currentTarget.style.backgroundColor = "var(--hp-surface-hover)";
+            event.currentTarget.style.borderColor = "var(--hp-primary)";
+            event.currentTarget.style.transform = "translateY(-1px)";
+          }}
+          onMouseLeave={(event) => {
+            event.currentTarget.style.backgroundColor = "var(--hp-surface-soft)";
+            event.currentTarget.style.borderColor = "var(--hp-border)";
+            event.currentTarget.style.transform = "translateY(0)";
           }}
         >
           Меня нет в списке, заполнить профиль

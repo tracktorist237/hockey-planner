@@ -11,6 +11,7 @@ import {
   updateGoalieApplicationStatus,
   upsertGoalieRequest,
 } from "src/api/goalies";
+import { LoadingIndicator } from "src/components/LoadingIndicator";
 import { PlayerAvatar } from "src/components/PlayerAvatar";
 
 interface GoaliesPanelProps {
@@ -152,7 +153,7 @@ export const GoaliesPanel = ({ eventId, currentUserId }: GoaliesPanelProps) => {
         <span>Вратари</span>
       </h3>
 
-      {loading && <div style={{ color: "var(--hp-muted)" }}>Загружаем вкладку вратарей...</div>}
+      {loading && <LoadingIndicator text="Загружаем вкладку вратарей..." />}
       {error && <div style={{ marginBottom: 12, padding: 12, borderRadius: 12, background: "var(--hp-danger-soft)", color: "var(--hp-danger)" }}>{error}</div>}
       {message && <div style={{ marginBottom: 12, padding: 12, borderRadius: 12, background: "var(--hp-success-soft)", color: "var(--hp-success)", fontWeight: 700 }}>{message}</div>}
 

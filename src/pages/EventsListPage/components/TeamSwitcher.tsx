@@ -163,31 +163,47 @@ export function TeamSwitcher({
     [currentUserId, filterOnly, onTeamChange, options, showMessage],
   );
 
-  return (
-    <div
-      style={{
+  const containerStyle = filterOnly
+    ? {
+        backgroundColor: "transparent",
+        padding: "0",
+        marginBottom: "12px",
+      }
+    : {
         border: "1px solid var(--hp-border)",
         borderRadius: "12px",
         backgroundColor: "var(--hp-surface-soft)",
         padding: "12px",
         marginBottom: "12px",
-      }}
-    >
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-        <strong style={{ color: "var(--hp-heading)", fontSize: "14px" }}>Команда</strong>
+      };
+
+  return (
+    <div style={containerStyle}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: filterOnly ? "6px" : "8px" }}>
+        <strong style={{ color: "var(--hp-heading)", fontSize: filterOnly ? "13px" : "14px" }}>Команда</strong>
         <button
+          type="button"
           onClick={() => void loadTeams()}
           disabled={loading}
+          title={loading ? "Обновляем команды" : "Обновить команды"}
           style={{
-            border: "none",
-            background: "transparent",
+            minWidth: filterOnly ? "30px" : "auto",
+            height: filterOnly ? "30px" : "auto",
+            border: filterOnly ? "1px solid var(--hp-border)" : "none",
+            borderRadius: filterOnly ? "10px" : 0,
+            padding: filterOnly ? "0" : 0,
+            background: filterOnly ? "var(--hp-surface)" : "transparent",
             color: "var(--hp-primary)",
             cursor: loading ? "wait" : "pointer",
-            fontSize: "12px",
-            fontWeight: 600,
+            fontSize: filterOnly ? "16px" : "12px",
+            fontWeight: filterOnly ? 900 : 600,
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            boxShadow: filterOnly ? "var(--hp-shadow-sm)" : "none",
           }}
         >
-          {loading ? "Обновление..." : "Обновить"}
+          {filterOnly ? (loading ? "…" : "↻") : loading ? "Обновление..." : "Обновить"}
         </button>
       </div>
 
@@ -210,12 +226,17 @@ export function TeamSwitcher({
             onChange={(event) => void handleTeamChange(event.target.value)}
             style={{
               width: "100%",
-              padding: "10px 12px",
-              borderRadius: "10px",
+              padding: filterOnly ? "11px 36px 11px 12px" : "10px 12px",
+              borderRadius: filterOnly ? "12px" : "10px",
               border: "1px solid var(--hp-border)",
-              marginBottom: "10px",
+              marginBottom: filterOnly ? 0 : "10px",
               backgroundColor: "var(--hp-input-bg)",
               color: "var(--hp-text)",
+              boxShadow: filterOnly ? "var(--hp-shadow-sm)" : "none",
+              fontSize: "14px",
+              fontWeight: 700,
+              cursor: "pointer",
+              outline: "none",
             }}
           >
             <option value="">Все мероприятия</option>

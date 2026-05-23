@@ -228,9 +228,9 @@ export function ProfilePage() {
               width: "100%",
               padding: "12px 14px",
               borderRadius: "12px",
-              border: "1px solid var(--hp-warning-border)",
-              backgroundColor: "var(--hp-surface)",
-              color: "var(--hp-warning)",
+              border: "1px solid var(--hp-warning)",
+              backgroundColor: "var(--hp-warning-border)",
+              color: "var(--hp-text-strong)",
               fontWeight: 800,
               cursor: resendLoading ? "default" : "pointer",
               opacity: resendLoading ? 0.7 : 1,
@@ -537,7 +537,7 @@ export function ProfilePage() {
         <button
           onClick={async () => {
             await logout();
-            navigate("/start-search", { replace: true });
+            navigate("/login", { replace: true });
           }}
           style={{
             width: "100%",

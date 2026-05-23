@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { LoadingIndicator } from "src/components/LoadingIndicator";
 import { TeamDto, TeamMemberDto } from "src/types/teams";
 import { cardStyle } from "./styles";
 
@@ -174,7 +175,7 @@ export function TeamMembersSection({ team, members, loading, savingUserId, onSav
       </div>
 
       <div style={{ display: "grid", gap: 10, maxHeight: 520, overflowY: "auto", paddingRight: 4 }}>
-        {loading && <div style={{ color: "var(--hp-muted)" }}>Загружаем участников...</div>}
+        {loading && <LoadingIndicator text="Загружаем участников..." />}
         {!loading && members.length === 0 && <div style={{ color: "var(--hp-muted)" }}>Участников пока нет.</div>}
         {!loading &&
           members.map((member) => (

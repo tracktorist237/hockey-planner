@@ -52,6 +52,7 @@ const mapAuthUser = (user: AuthUserDto): User => ({
   photoUrl: user.photoUrl ?? null,
   spbhlPlayerId: user.spbhlPlayerId ?? null,
   primaryPosition: user.primaryPosition ?? null,
+  birthDate: user.birthDate ?? null,
   email: user.email ?? null,
   emailConfirmed: Boolean(user.emailConfirmed),
 });

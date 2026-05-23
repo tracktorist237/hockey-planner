@@ -1,4 +1,5 @@
 import { TeamDto } from "src/types/teams";
+import { LoadingIndicator } from "src/components/LoadingIndicator";
 import { TeamCard } from "./TeamCard";
 
 interface MyTeamsTabProps {
@@ -20,7 +21,7 @@ export function MyTeamsTab({ teams, loading, onGoPublic, onGoCode, onOpenTeam, p
       </p>
 
       <div style={{ display: "grid", gap: 10 }}>
-        {loading && <div style={{ color: "var(--hp-muted)" }}>Загружаем...</div>}
+        {loading && <LoadingIndicator text="Загружаем..." />}
         {!loading && teams.length === 0 && (
           <div style={{ border: "1px dashed var(--hp-border)", borderRadius: 16, padding: 16, color: "var(--hp-muted)", background: "var(--hp-surface-soft)" }}>
             <div style={{ fontWeight: 900, color: "var(--hp-text-strong)", marginBottom: 8 }}>Вы пока не состоите ни в одной команде</div>
@@ -28,10 +29,32 @@ export function MyTeamsTab({ teams, loading, onGoPublic, onGoCode, onOpenTeam, p
               Можно найти публичную команду или вступить в закрытую по коду приглашения.
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-              <button type="button" onClick={onGoPublic} style={{ border: 0, borderRadius: 12, padding: "11px 10px", background: "#dbeafe", color: "#1d4ed8", fontWeight: 800 }}>
+              <button
+                type="button"
+                onClick={onGoPublic}
+                style={{
+                  border: "1px solid var(--hp-info-border)",
+                  borderRadius: 12,
+                  padding: "11px 10px",
+                  background: "var(--hp-primary-soft)",
+                  color: "var(--hp-primary-text)",
+                  fontWeight: 800,
+                }}
+              >
                 Найти
               </button>
-              <button type="button" onClick={onGoCode} style={{ border: 0, borderRadius: 12, padding: "11px 10px", background: "#f1f5f9", color: "#334155", fontWeight: 800 }}>
+              <button
+                type="button"
+                onClick={onGoCode}
+                style={{
+                  border: "1px solid var(--hp-border)",
+                  borderRadius: 12,
+                  padding: "11px 10px",
+                  background: "var(--hp-surface-muted)",
+                  color: "var(--hp-text)",
+                  fontWeight: 800,
+                }}
+              >
                 Ввести код
               </button>
             </div>

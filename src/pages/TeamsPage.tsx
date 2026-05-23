@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { BottomNav } from "src/components/BottomNav";
+import { CurrentPlayerHeader } from "src/CurrentPlayerHeader";
 import { TeamDto } from "src/types/teams";
 import { User } from "src/types/user";
 import { CreateTeamTab } from "./TeamsPage/components/CreateTeamTab";
@@ -22,6 +23,7 @@ export function TeamsPage({ currentUser, currentTeamId, onTeamChange }: TeamsPag
   const navigate = useNavigate();
   const teamsPage = useTeamsPage(currentUser);
   const { reloadTeams } = teamsPage;
+  const initialTeamsLoading = !teamsPage.loaded;
 
   useEffect(() => {
     void reloadTeams();
@@ -42,36 +44,26 @@ export function TeamsPage({ currentUser, currentTeamId, onTeamChange }: TeamsPag
     <div
       style={{
         minHeight: "100vh",
-        padding: "16px",
-        paddingBottom: "120px",
         background: "var(--hp-bg-gradient)",
         color: "var(--hp-text)",
         boxSizing: "border-box",
       }}
     >
-      <main style={{ maxWidth: 560, margin: "0 auto" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
-          <button
-            onClick={() => navigate("/events")}
-            style={{
-              borderRadius: 12,
-              border: "1px solid var(--hp-border)",
-              background: "var(--hp-surface)",
-              color: "var(--hp-text)",
-              width: 42,
-              height: 42,
-              cursor: "pointer",
-              fontSize: 20,
-            }}
-            aria-label="Назад"
-          >
-            ←
-          </button>
-          <div>
-            <h1 style={{ margin: 0, fontSize: 26, color: "var(--hp-heading)" }}>Команды</h1>
-            <div style={{ color: "var(--hp-muted)", fontSize: 14 }}>Список, поиск и создание команд</div>
-          </div>
-        </div>
+      <div
+        style={{
+          backgroundColor: "var(--hp-surface)",
+          padding: "16px",
+          borderBottom: "1px solid var(--hp-border)",
+          boxShadow: "var(--hp-shadow-sm)",
+        }}
+      >
+        <h1 style={{ margin: "0 0 12px", fontSize: "20px", fontWeight: 700, color: "var(--hp-heading)" }}>
+          Команды
+        </h1>
+        <CurrentPlayerHeader />
+      </div>
+
+      <main style={{ maxWidth: 560, margin: "0 auto", padding: "16px", paddingBottom: "120px" }}>
 
         {teamsPage.error && (
           <div style={{ marginBottom: 12, background: "#fee2e2", color: "#991b1b", borderRadius: 14, padding: "12px 14px" }}>
@@ -92,7 +84,7 @@ export function TeamsPage({ currentUser, currentTeamId, onTeamChange }: TeamsPag
             {teamsPage.activeTab === "my" && (
               <MyTeamsTab
                 teams={teamsPage.myTeams}
-                loading={teamsPage.loading}
+                loading={initialTeamsLoading}
                 onGoPublic={() => teamsPage.setActiveTab("public")}
                 onGoCode={() => teamsPage.setActiveTab("code")}
                 onOpenTeam={(team) => navigate(`/teams/${team.id}`)}
@@ -104,7 +96,7 @@ export function TeamsPage({ currentUser, currentTeamId, onTeamChange }: TeamsPag
             {teamsPage.activeTab === "public" && (
               <PublicTeamsTab
                 teams={teamsPage.availablePublicTeams}
-                loading={teamsPage.loading}
+                loading={initialTeamsLoading}
                 onOpenTeam={(team) => navigate(`/teams/${team.id}`)}
               />
             )}

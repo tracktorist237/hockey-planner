@@ -9,6 +9,7 @@ import {
   UpdateUserData,
 } from "src/api/users";
 import { normalizeRole } from "src/constants/roles";
+import { LoadingIndicator } from "src/components/LoadingIndicator";
 import { useAuth } from "src/hooks/useAuth";
 import { ErrorMessage } from "src/pages/CreatePlayerFormPage/components/ErrorMessage";
 import { FormHeader } from "src/pages/CreatePlayerFormPage/components/FormHeader";
@@ -25,6 +26,7 @@ import {
   validateField,
 } from "src/pages/CreatePlayerFormPage/validation";
 import { User as AuthUser } from "src/types/user";
+import { normalizeSpbhlBirthDateForInput } from "src/utils/spbhl";
 import { getAdaptiveFontSize } from "src/utils/text";
 import { markOnboardingCompleted } from "src/utils/onboarding";
 
@@ -42,6 +44,9 @@ const INITIAL_FORM_DATA: UserFormData = {
   weight: null,
   birthDate: null,
 };
+
+const isTechnicalAuthName = (firstName?: string | null, lastName?: string | null): boolean =>
+  firstName?.trim().toLowerCase() === "новый" && lastName?.trim().toLowerCase() === "игрок";
 
 const normalizeDateForInput = (value?: string | null): string | null => {
   if (!value) {
@@ -136,9 +141,13 @@ export function UpdateUserPage() {
 
     getUserById(id)
       .then((user) => {
+        const shouldClearTechnicalName = isTechnicalAuthName(user.firstName, user.lastName);
+        const firstName = shouldClearTechnicalName ? "" : user.firstName ?? "";
+        const lastName = shouldClearTechnicalName ? "" : user.lastName ?? "";
+
         setFormData({
-          firstName: user.firstName ?? "",
-          lastName: user.lastName ?? "",
+          firstName,
+          lastName,
           jerseyNumber: user.jerseyNumber ?? null,
           primaryPosition: user.primaryPosition ?? 3,
           handedness: user.handedness ?? 2,
@@ -148,7 +157,7 @@ export function UpdateUserPage() {
         });
         setPhotoUrl(user.photoUrl ?? null);
         setSpbhlPlayerId(user.spbhlPlayerId ?? null);
-        setSpbhlSearchName((user.lastName ?? "").trim());
+        setSpbhlSearchName(lastName.trim());
       })
       .catch((requestError) => {
         console.error(requestError);
@@ -323,7 +332,12 @@ export function UpdateUserPage() {
   }, [formData.lastName, runSpbhlSearch, spbhlSearchName]);
 
   const handleBindSpbhlPlayer = useCallback((player: SpbhlPlayerSearchItem) => {
+    const birthDate = normalizeSpbhlBirthDateForInput(player.birthDate);
     setSpbhlPlayerId(player.playerId);
+    if (birthDate) {
+      setFormData((previous) => ({ ...previous, birthDate }));
+      setErrors((previous) => ({ ...previous, birthDate: undefined }));
+    }
     setIsSpbhlModalOpen(false);
     setSuccessMessage(`Профиль СПБХЛ привязан: ${player.fullName}`);
   }, []);
@@ -432,7 +446,7 @@ export function UpdateUserPage() {
   if (loadingInitial) {
     return (
       <div style={{ padding: "24px", textAlign: "center", color: "var(--hp-muted)" }}>
-        Загрузка данных пользователя...
+        <LoadingIndicator text="Загрузка данных пользователя..." block />
       </div>
     );
   }

@@ -21,7 +21,7 @@ export function CurrentPlayerHeader({ onBack }: CurrentPlayerHeaderProps) {
       onBack();
       return;
     }
-    navigate("/start-search");
+    navigate("/login");
   };
 
   const displayName = currentUser

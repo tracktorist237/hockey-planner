@@ -65,6 +65,12 @@ export const useLineManagement = ({
     return [...(event?.roster ?? [])].sort((a, b) => (a.order || 0) - (b.order || 0));
   }, [event?.roster]);
 
+  const getDefaultLineName = useCallback(() => {
+    const nextOrder =
+      sortedRoster.length > 0 ? Math.max(...sortedRoster.map((line) => line.order || 0)) + 1 : 1;
+    return `Звено ${nextOrder}`;
+  }, [sortedRoster]);
+
   const editingLineId = useMemo(() => {
     if (editingLineIndex === null) {
       return null;
@@ -109,7 +115,23 @@ export const useLineManagement = ({
     setEditingLineIndex(null);
     setLineSlots(cloneEmptySlots());
     setActiveSlotState(null);
+    setNewLineNameState("");
   }, []);
+
+  const setCreatingLine = useCallback(
+    (value: boolean) => {
+      setCreatingLineState(value);
+      if (value) {
+        setEditingLineIndex(null);
+        setLineSlots(cloneEmptySlots());
+        setActiveSlotState(null);
+        setNewLineNameState(getDefaultLineName());
+      } else {
+        resetLineEditor();
+      }
+    },
+    [getDefaultLineName, resetLineEditor],
+  );
 
   const setError = useCallback(
     (message: string) => {
@@ -164,12 +186,13 @@ export const useLineManagement = ({
 
     const nextOrder =
       sortedRoster.length > 0 ? Math.max(...sortedRoster.map((line) => line.order || 0)) + 1 : 1;
+    const lineName = newLineName.trim() || `Звено ${nextOrder}`;
 
     const body: CreateUpdateRosterRequest = {
       eventId: event.id,
       lines: [
         {
-          name: `Звено ${nextOrder}`,
+          name: lineName,
           order: nextOrder,
           players,
         },
@@ -184,7 +207,7 @@ export const useLineManagement = ({
       const message = err instanceof Error ? err.message : "Ошибка при создании звена";
       setError(message);
     }
-  }, [currentUserId, ensureAuthorized, event, lineSlots, reloadEvent, resetLineEditor, setError, sortedRoster]);
+  }, [currentUserId, ensureAuthorized, event, lineSlots, newLineName, reloadEvent, resetLineEditor, setError, sortedRoster]);
 
   const deleteLine = useCallback(async (lineId: string) => {
     if (!event?.roster || !ensureAuthorized() || !currentUserId) {
@@ -247,6 +270,7 @@ export const useLineManagement = ({
     setLineSlots(slots);
     setCreatingLineState(true);
     setEditingLineIndex(index);
+    setNewLineNameState("");
   }, [sortedRoster]);
 
   const saveEditedLine = useCallback(async () => {
@@ -403,7 +427,7 @@ export const useLineManagement = ({
   return {
     sortedRoster,
     creatingLine,
-    setCreatingLine: setCreatingLineState,
+    setCreatingLine,
     editingLineIndex,
     lineSlots,
     activeSlot,

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { getEventGoalies } from "src/api/goalies";
 import { getMyTeams } from "src/api/teams";
 import { getUsers } from "src/api/users";
+import { LoadingIndicator } from "src/components/LoadingIndicator";
 import { CurrentPlayerHeader } from "src/CurrentPlayerHeader";
 import { ActionMenu } from "src/pages/EventPage/components/ActionMenu";
 import { AttendanceList } from "src/pages/EventPage/components/AttendanceList";
@@ -244,7 +245,7 @@ export function EventPage({ eventId, onBack, currentUser }: EventPageProps) {
         <EventAdditionalInfo event={event} />
         {currentUserPrimaryPosition === undefined || resolvedGoalieStatus === undefined ? (
           <div style={{ backgroundColor: "var(--hp-surface)", borderRadius: "16px", padding: "20px", marginBottom: "20px", boxShadow: "var(--hp-shadow-sm)", color: "var(--hp-muted)" }}>
-            Загружаем профиль игрока...
+            <LoadingIndicator text="Загружаем профиль игрока..." />
           </div>
         ) : !isCurrentUserGoalie ? (
           <AttendanceResponseCard {...attendance} />

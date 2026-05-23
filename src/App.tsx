@@ -20,13 +20,15 @@ import { ConfirmEmailPage } from "src/pages/ConfirmEmailPage";
 import { EventPage } from "src/pages/EventPage/EventPage";
 import { EventsListPage } from "src/pages/EventsListPage/EventsListPage";
 import { LinkPlayerPage } from "src/pages/LinkPlayerPage";
+import { NewsPage } from "src/pages/NewsPage";
 import { TeamDetailsPage } from "src/pages/TeamDetailsPage/TeamDetailsPage";
 import { TeamManagePage } from "src/pages/TeamDetailsPage/TeamManagePage";
 import { TeamsPage } from "src/pages/TeamsPage";
 import { ProfilePage } from "src/pages/ProfilePage";
-import StartSearchPage from "src/pages/StartSearchPage/StartSearchPage";
 import { DebugOverlay } from "src/components/DebugOverlay";
+import { LoadingIndicator } from "src/components/LoadingIndicator";
 import { PermissionDenied } from "src/components/PermissionDenied";
+import { PwaInstallPrompt } from "src/components/PwaInstallPrompt";
 import { useCurrentTeam } from "src/hooks/useCurrentTeam";
 import { useAuth } from "src/hooks/useAuth";
 import { AuthProvider } from "src/context/AuthContext";
@@ -63,7 +65,7 @@ function RequireAuth({ children }: { children: ReactElement }) {
   const { authLoading, isAuthenticated } = useAuth();
 
   if (authLoading) {
-    return <div style={{ padding: 24 }}>Загрузка...</div>;
+    return <LoadingIndicator text="Загрузка..." block />;
   }
 
   if (!isAuthenticated) {
@@ -141,10 +143,9 @@ function RequireOwnProfile({ children }: { children: ReactElement }) {
 }
 
 function AppRoutes() {
-  const { currentUser, isAuthenticated, login } = useAuth();
+  const { currentUser, isAuthenticated } = useAuth();
   const { teamId: currentTeamId, teamName: currentTeamName, setCurrentTeam } = useCurrentTeam(currentUser?.id ?? null);
   const [isDebugOpen, setIsDebugOpen] = useState(false);
-  const navigate = useNavigate();
   const homePath = isAuthenticated
     ? shouldRunOnboarding(currentUser)
       ? "/onboarding/link-player"
@@ -175,22 +176,6 @@ function AppRoutes() {
             <RequireAuth>
               <LinkPlayerPage />
             </RequireAuth>
-          }
-        />
-
-        <Route
-          path="/start-search"
-          element={
-            isAuthenticated ? (
-              <Navigate to="/events" replace />
-            ) : (
-              <StartSearchPage
-                onSelect={async (user) => {
-                  await login(user);
-                  navigate("/events", { replace: true });
-                }}
-              />
-            )
           }
         />
 
@@ -291,6 +276,18 @@ function AppRoutes() {
           }
         />
 
+
+        <Route
+          path="/news"
+          element={
+            <RequireAuth>
+              <RequireOnboardingComplete>
+                <NewsPage />
+              </RequireOnboardingComplete>
+            </RequireAuth>
+          }
+        />
+
         <Route
           path="/settings"
           element={
@@ -357,6 +354,7 @@ function AppRoutes() {
       </Routes>
 
       <DebugOverlay isOpen={isDebugOpen} onClose={() => setIsDebugOpen(false)} />
+      <PwaInstallPrompt isAuthenticated={isAuthenticated} />
     </>
   );
 }

@@ -250,63 +250,15 @@ export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
           padding: "16px",
           borderBottom: "1px solid var(--hp-border)",
           boxShadow: "var(--hp-shadow-sm)",
-          position: "sticky",
-          top: 0,
-          zIndex: 100,
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", marginBottom: "12px" }}>
-          <button
-            onClick={() => navigate("/events")}
-            style={{
-              width: "44px",
-              height: "44px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              border: "1px solid var(--hp-border)",
-              background: "var(--hp-surface)",
-              color: "var(--hp-text)",
-              fontSize: "20px",
-              cursor: "pointer",
-              borderRadius: "10px",
-              marginRight: "12px",
-              flexShrink: 0,
-              transition: "all 0.2s ease",
-            }}
-            onMouseEnter={(event) => {
-              event.currentTarget.style.backgroundColor = "var(--hp-surface-hover)";
-              event.currentTarget.style.borderColor = "var(--hp-primary)";
-            }}
-            onMouseLeave={(event) => {
-              event.currentTarget.style.backgroundColor = "var(--hp-surface)";
-              event.currentTarget.style.borderColor = "var(--hp-border)";
-            }}
-            aria-label="Назад к событиям"
-          >
-            ←
-          </button>
-          <div style={{ flex: 1 }}>
-            <CurrentPlayerHeader />
-          </div>
-        </div>
+        <h1 style={{ margin: "0 0 12px", fontSize: "20px", fontWeight: 700, color: "var(--hp-heading)" }}>
+          Настройки
+        </h1>
+        <CurrentPlayerHeader />
       </div>
 
       <div style={{ padding: "16px", paddingBottom: "120px" }}>
-        <div
-          style={{
-            backgroundColor: "var(--hp-surface)",
-            borderRadius: "16px",
-            padding: "20px",
-            marginBottom: "20px",
-            boxShadow: "var(--hp-shadow-sm)",
-          }}
-        >
-          <h1 style={{ margin: "0 0 8px 0", fontSize: "22px", fontWeight: "700", color: "var(--hp-heading)" }}>
-            Настройки приложения
-          </h1>
-        </div>
-
         <div
           style={{
             backgroundColor: "var(--hp-surface)",

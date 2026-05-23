@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { createExercise, getExercises } from "src/api/exercises";
+import { LoadingIndicator } from "src/components/LoadingIndicator";
 import { ExerciseDto } from "src/types/events";
 
 interface PracticeExercisesSectionProps {
@@ -142,7 +143,7 @@ export function PracticeExercisesSection({ selectedExerciseIds, onChange }: Prac
 
       {isListExpanded && (
         loading ? (
-          <div style={{ fontSize: "14px", color: "var(--hp-muted)" }}>Загрузка упражнений...</div>
+          <LoadingIndicator text="Загрузка упражнений..." />
         ) : items.length === 0 ? (
           <div style={{ fontSize: "14px", color: "var(--hp-muted)" }}>Банк упражнений пока пуст</div>
         ) : (

@@ -6,6 +6,7 @@ import {
   GoalieApplicationStatus,
   updateGoalieApplicationStatus,
 } from "src/api/goalies";
+import { LoadingIndicator } from "src/components/LoadingIndicator";
 
 interface GoalieResponseCardProps {
   eventId: string;
@@ -102,7 +103,7 @@ export const GoalieResponseCard = ({ eventId, currentUserId }: GoalieResponseCar
         <span>Твой ответ как вратаря</span>
       </h3>
 
-      {loading && <div style={{ color: "var(--hp-muted)" }}>Загружаем...</div>}
+      {loading && <LoadingIndicator text="Загружаем..." />}
       {error && <div style={{ marginBottom: 12, padding: 12, borderRadius: 12, background: "var(--hp-danger-soft)", color: "var(--hp-danger)" }}>{error}</div>}
 
       {!loading && data && (

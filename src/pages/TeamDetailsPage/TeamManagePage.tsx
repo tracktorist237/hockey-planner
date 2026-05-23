@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { LoadingIndicator } from "src/components/LoadingIndicator";
 import { BottomNav } from "src/components/BottomNav";
 import { getTeam, getTeamMembers, updateTeam, updateTeamMember } from "src/api/teams";
 import { TeamContactItem, TeamDto, TeamMemberDto, TeamVisibility } from "src/types/teams";
@@ -264,7 +265,7 @@ export function TeamManagePage({ currentUser }: TeamManagePageProps) {
 
         {error && <div style={{ marginBottom: 12, background: "var(--hp-danger-soft)", color: "var(--hp-danger)", borderRadius: 14, padding: "12px 14px" }}>{error}</div>}
         {message && <div style={{ marginBottom: 12, background: "var(--hp-success-soft)", color: "var(--hp-success)", borderRadius: 14, padding: "12px 14px", fontWeight: 800 }}>{message}</div>}
-        {loading && <section style={cardStyle}>Загружаем настройки...</section>}
+        {loading && <section style={cardStyle}><LoadingIndicator text="Загружаем настройки..." /></section>}
 
         {isDenied && (
           <section style={cardStyle}>

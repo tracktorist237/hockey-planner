@@ -1,4 +1,5 @@
 import { useNavigate, useParams } from "react-router-dom";
+import { LoadingIndicator } from "src/components/LoadingIndicator";
 import { useScrollVisibility } from "src/hooks/useScrollVisibility";
 import "src/pages/CreateEventPage/CreateEventPage.css";
 import { ErrorMessage } from "src/pages/CreateEventPage/components/ErrorMessage";
@@ -23,7 +24,7 @@ export function UpdateEventPage() {
     return <div style={{ padding: "24px", textAlign: "center" }}>Некорректный ID события</div>;
   }
   if (loadingInitial) {
-    return <div style={{ padding: "24px", textAlign: "center" }}>Загрузка данных события...</div>;
+    return <LoadingIndicator text="Загрузка данных события..." block />;
   }
 
   return (

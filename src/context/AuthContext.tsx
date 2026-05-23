@@ -61,6 +61,7 @@ const mapStoredUser = (raw: StoredUser): User | null => {
     fullName: raw.fullName,
     photoUrl: raw.photoUrl ?? null,
     spbhlPlayerId: raw.spbhlPlayerId ?? null,
+    birthDate: raw.birthDate ?? null,
     email: raw.email ?? null,
     emailConfirmed: Boolean(raw.emailConfirmed),
     role: normalizeRole(raw.role),
