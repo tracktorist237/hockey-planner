@@ -113,8 +113,10 @@ export async function updateAttendance(
   userId: string,
   status: number,
   notes?: string | null,
+  currentUserId?: string | null,
 ): Promise<void> {
-  const res = await fetch(`${API_BASE}/api/events/${eventId}/attendance/${userId}`, {
+  const query = currentUserId ? `?currentUserId=${encodeURIComponent(currentUserId)}` : "";
+  const res = await fetch(`${API_BASE}/api/events/${eventId}/attendance/${userId}${query}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({

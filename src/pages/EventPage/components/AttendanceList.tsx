@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { PlayerAvatar } from "src/components/PlayerAvatar";
 import { AttendanceLookUpDto } from "src/types/events";
 import { getAdaptiveFontSize } from "src/utils/text";
@@ -7,30 +8,32 @@ interface AttendanceListProps {
   onPlayerClick: (userId: string) => void;
   avatarUrls?: Record<string, string>;
   eventCreatedAt?: string;
+  canManage?: boolean;
+  onStatusChange?: (userId: string, status: number, notes?: string | null) => Promise<void>;
 }
 
 const DEFAULT_RESPONSE_TOLERANCE_MS = 5000;
 
+const attendanceStatusOptions = [
+  { value: 1, label: "Ожидает" },
+  { value: 2, label: "Сможет" },
+  { value: 3, label: "Не сможет" },
+];
+
 const isSameMoment = (left?: string, right?: string): boolean => {
-  if (!left || !right) {
-    return false;
-  }
+  if (!left || !right) return false;
 
   const leftTime = new Date(left).getTime();
   const rightTime = new Date(right).getTime();
 
-  if (Number.isNaN(leftTime) || Number.isNaN(rightTime)) {
-    return false;
-  }
+  if (Number.isNaN(leftTime) || Number.isNaN(rightTime)) return false;
 
   return Math.abs(leftTime - rightTime) <= DEFAULT_RESPONSE_TOLERANCE_MS;
 };
 
 const formatResponseTime = (value: string): string => {
   const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) {
-    return "";
-  }
+  if (Number.isNaN(parsed.getTime())) return "";
 
   return parsed.toLocaleString("ru-RU", {
     day: "2-digit",
@@ -40,7 +43,29 @@ const formatResponseTime = (value: string): string => {
   });
 };
 
-export const AttendanceList = ({ attendances, onPlayerClick, avatarUrls, eventCreatedAt }: AttendanceListProps) => {
+export const AttendanceList = ({
+  attendances,
+  onPlayerClick,
+  avatarUrls,
+  eventCreatedAt,
+  canManage = false,
+  onStatusChange,
+}: AttendanceListProps) => {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isEditingStatuses, setIsEditingStatuses] = useState(false);
+  const [savingUserId, setSavingUserId] = useState<string | null>(null);
+
+  const handleStatusChange = async (attendance: AttendanceLookUpDto, status: number) => {
+    if (!onStatusChange || status === attendance.status) return;
+
+    setSavingUserId(attendance.userId);
+    try {
+      await onStatusChange(attendance.userId, status, attendance.notes ?? null);
+    } finally {
+      setSavingUserId(null);
+    }
+  };
+
   return (
     <div
       style={{
@@ -51,78 +76,105 @@ export const AttendanceList = ({ attendances, onPlayerClick, avatarUrls, eventCr
         boxShadow: "var(--hp-shadow-sm)",
       }}
     >
-      <h3
-        style={{
-          margin: "0 0 16px 0",
-          fontSize: "18px",
-          fontWeight: "600",
-          color: "var(--hp-heading)",
-          display: "flex",
-          alignItems: "center",
-          gap: "8px",
-        }}
-      >
-        <span>👥</span>
-        <span>Явка игроков ({attendances?.length || 0})</span>
-      </h3>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", marginBottom: "16px" }}>
+        <h3
+          style={{
+            margin: 0,
+            fontSize: "18px",
+            fontWeight: "600",
+            color: "var(--hp-heading)",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+          }}
+        >
+          <span>👥</span>
+          <span>Явка игроков ({attendances?.length || 0})</span>
+        </h3>
+
+        {canManage && (
+          <div style={{ position: "relative", flexShrink: 0 }}>
+            <button
+              type="button"
+              onClick={() => setIsMenuOpen((value) => !value)}
+              style={{
+                width: "36px",
+                height: "36px",
+                padding: 0,
+                border: "1px solid var(--hp-border)",
+                borderRadius: "10px",
+                backgroundColor: "var(--hp-surface-soft)",
+                color: "var(--hp-heading)",
+                cursor: "pointer",
+                fontSize: "18px",
+                fontWeight: 900,
+                lineHeight: 1,
+              }}
+              title="Настройки явки"
+              aria-label="Настройки явки"
+            >
+              ...
+            </button>
+            {isMenuOpen && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: "42px",
+                  right: 0,
+                  zIndex: 20,
+                  minWidth: "210px",
+                  padding: "6px",
+                  border: "1px solid var(--hp-border)",
+                  borderRadius: "12px",
+                  backgroundColor: "var(--hp-surface)",
+                  boxShadow: "var(--hp-shadow-md)",
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsEditingStatuses((value) => !value);
+                    setIsMenuOpen(false);
+                  }}
+                  style={{
+                    width: "100%",
+                    padding: "10px 12px",
+                    border: "none",
+                    borderRadius: "9px",
+                    backgroundColor: "transparent",
+                    color: "var(--hp-heading)",
+                    cursor: "pointer",
+                    fontSize: "13px",
+                    fontWeight: 800,
+                    textAlign: "left",
+                  }}
+                >
+                  {isEditingStatuses ? "Скрыть изменение явки" : "Изменить статус явки"}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
       <div style={{ marginBottom: "16px" }}>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            marginBottom: "8px",
-            fontSize: "14px",
-            color: "var(--hp-muted)",
-          }}
-        >
+        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px", fontSize: "14px", color: "var(--hp-muted)" }}>
           <span>Готовы:</span>
-          <span style={{ fontWeight: "600", color: "var(--hp-success)" }}>
-            {attendances?.filter((attendance) => attendance.status === 2).length || 0}
-          </span>
+          <span style={{ fontWeight: "600", color: "var(--hp-success)" }}>{attendances?.filter((attendance) => attendance.status === 2).length || 0}</span>
         </div>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            marginBottom: "8px",
-            fontSize: "14px",
-            color: "var(--hp-muted)",
-          }}
-        >
+        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px", fontSize: "14px", color: "var(--hp-muted)" }}>
           <span>Не готовы:</span>
-          <span style={{ fontWeight: "600", color: "var(--hp-danger)" }}>
-            {attendances?.filter((attendance) => attendance.status === 3).length || 0}
-          </span>
+          <span style={{ fontWeight: "600", color: "var(--hp-danger)" }}>{attendances?.filter((attendance) => attendance.status === 3).length || 0}</span>
         </div>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            fontSize: "14px",
-            color: "var(--hp-muted)",
-          }}
-        >
+        <div style={{ display: "flex", justifyContent: "space-between", fontSize: "14px", color: "var(--hp-muted)" }}>
           <span>Не ответили:</span>
-          <span style={{ fontWeight: "600", color: "#ff9800" }}>
-            {attendances?.filter((attendance) => attendance.status === 1).length || 0}
-          </span>
+          <span style={{ fontWeight: "600", color: "var(--hp-warning)" }}>{attendances?.filter((attendance) => attendance.status === 1).length || 0}</span>
         </div>
       </div>
 
-      <div
-        style={{
-          maxHeight: "400px",
-          overflowY: "auto",
-          border: "1px solid var(--hp-border)",
-          borderRadius: "10px",
-          padding: "8px",
-        }}
-      >
+      <div style={{ maxHeight: "400px", overflowY: "auto", border: "1px solid var(--hp-border)", borderRadius: "10px", padding: "8px" }}>
         {attendances?.map((attendance) => {
-          const showResponseTime =
-            Boolean(attendance.respondedAt) &&
-            !isSameMoment(attendance.respondedAt, eventCreatedAt);
+          const showResponseTime = Boolean(attendance.respondedAt) && !isSameMoment(attendance.respondedAt, eventCreatedAt);
           const formattedResponseTime = showResponseTime ? formatResponseTime(attendance.respondedAt) : "";
 
           return (
@@ -134,19 +186,21 @@ export const AttendanceList = ({ attendances, onPlayerClick, avatarUrls, eventCr
                 display: "flex",
                 flexDirection: "column",
                 gap: "4px",
-                cursor: "pointer",
+                cursor: isEditingStatuses ? "default" : "pointer",
                 transition: "background-color 0.2s ease",
               }}
-              onClick={() => onPlayerClick(attendance.userId)}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = "var(--hp-surface-soft)";
+              onClick={() => {
+                if (!isEditingStatuses) onPlayerClick(attendance.userId);
               }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "transparent";
+              onMouseEnter={(event) => {
+                event.currentTarget.style.backgroundColor = "var(--hp-surface-soft)";
+              }}
+              onMouseLeave={(event) => {
+                event.currentTarget.style.backgroundColor = "transparent";
               }}
             >
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "12px", minWidth: 0 }}>
                   <PlayerAvatar
                     size={32}
                     shape="rounded"
@@ -155,22 +209,10 @@ export const AttendanceList = ({ attendances, onPlayerClick, avatarUrls, eventCr
                     fallbackPrefix="#"
                     badgePrefix="#"
                     fontSize={12}
-                    fallbackBg={
-                      attendance.status === 2
-                        ? "var(--hp-success-soft)"
-                        : attendance.status === 3
-                          ? "var(--hp-danger-soft)"
-                          : "var(--hp-warning-soft)"
-                    }
-                    fallbackColor={
-                      attendance.status === 2
-                        ? "var(--hp-success)"
-                        : attendance.status === 3
-                          ? "var(--hp-danger)"
-                          : "var(--hp-warning)"
-                    }
+                    fallbackBg={attendance.status === 2 ? "var(--hp-success-soft)" : attendance.status === 3 ? "var(--hp-danger-soft)" : "var(--hp-warning-soft)"}
+                    fallbackColor={attendance.status === 2 ? "var(--hp-success)" : attendance.status === 3 ? "var(--hp-danger)" : "var(--hp-warning)"}
                   />
-                  <div>
+                  <div style={{ minWidth: 0 }}>
                     <div
                       style={{
                         fontWeight: "500",
@@ -183,42 +225,56 @@ export const AttendanceList = ({ attendances, onPlayerClick, avatarUrls, eventCr
                         color: "var(--hp-heading)",
                         transition: "color 0.2s ease",
                         whiteSpace: "nowrap",
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.color = "var(--hp-primary)";
-                        e.currentTarget.style.textDecoration = "underline";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.color = "var(--hp-heading)";
-                        e.currentTarget.style.textDecoration = "none";
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
                       }}
                     >
                       {attendance.firstName} {attendance.lastName}
                     </div>
-                    {formattedResponseTime && (
-                      <div style={{ marginTop: "2px", fontSize: "12px", color: "var(--hp-muted)" }}>
-                        Ответ: {formattedResponseTime}
-                      </div>
-                    )}
+                    {formattedResponseTime && <div style={{ marginTop: "2px", fontSize: "12px", color: "var(--hp-muted)" }}>Ответ: {formattedResponseTime}</div>}
                   </div>
                 </div>
-                <div
-                  style={{
-                    fontSize: "13px",
-                    color:
-                      attendance.status === 2
-                        ? "var(--hp-success)"
-                        : attendance.status === 3
-                          ? "var(--hp-danger)"
-                          : "#ff9800",
-                    fontWeight: "500",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "4px",
-                  }}
-                >
-                  {attendance.status === 2 ? "✅" : attendance.status === 3 ? "❌" : "⏳"}
-                </div>
+
+                {isEditingStatuses && canManage ? (
+                  <select
+                    value={attendance.status}
+                    disabled={savingUserId === attendance.userId}
+                    onClick={(event) => event.stopPropagation()}
+                    onChange={(event) => {
+                      void handleStatusChange(attendance, Number(event.target.value));
+                    }}
+                    style={{
+                      minWidth: "118px",
+                      padding: "8px 10px",
+                      border: "1px solid var(--hp-border)",
+                      borderRadius: "10px",
+                      backgroundColor: "var(--hp-input-bg)",
+                      color: "var(--hp-text)",
+                      fontSize: "13px",
+                      fontWeight: 800,
+                      cursor: savingUserId === attendance.userId ? "wait" : "pointer",
+                    }}
+                  >
+                    {attendanceStatusOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <div
+                    style={{
+                      fontSize: "13px",
+                      color: attendance.status === 2 ? "var(--hp-success)" : attendance.status === 3 ? "var(--hp-danger)" : "var(--hp-warning)",
+                      fontWeight: "500",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "4px",
+                    }}
+                  >
+                    {attendance.status === 2 ? "✓" : attendance.status === 3 ? "×" : "…"}
+                  </div>
+                )}
               </div>
 
               {attendance.notes && (
@@ -247,4 +303,3 @@ export const AttendanceList = ({ attendances, onPlayerClick, avatarUrls, eventCr
     </div>
   );
 };
-

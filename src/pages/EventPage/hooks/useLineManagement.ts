@@ -1,5 +1,5 @@
-import { useCallback, useMemo, useState } from "react";
-import { createLineRoster, updateLineRoster } from "src/api/lines";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { updateLineRoster } from "src/api/lines";
 import { AttendanceLookUpDto, EventDto, LineDto } from "src/types/events";
 import { CreateUpdateLineData, CreateUpdateRosterRequest, PlayerRole } from "src/types/lines";
 import { Slot, cloneEmptySlots, roleToSlot, slotToRole } from "src/pages/EventPage/types";
@@ -24,6 +24,10 @@ interface UseLineManagementResult {
   newLineName: string;
   setNewLineName: (value: string) => void;
   availablePlayers: AttendanceLookUpDto[];
+  hasUnsavedRosterChanges: boolean;
+  savingRoster: boolean;
+  rosterSaveError: string | null;
+  saveRosterChanges: () => Promise<void>;
   saveLine: () => Promise<void>;
   saveEditedLine: () => Promise<void>;
   deleteLine: (lineId: string) => Promise<void>;
@@ -38,14 +42,14 @@ interface UseLineManagementResult {
   cancelLineEditor: () => void;
 }
 
-const buildPlayersPayload = (line: LineDto): NonNullable<CreateUpdateLineData["players"]> => {
-  return (
-    line.members?.map((player) => ({
-      userId: player.userId,
-      role: player.role,
-    })) ?? []
-  );
-};
+const GOALIE_POSITION = 1;
+
+const buildPlayersPayload = (line: LineDto): NonNullable<CreateUpdateLineData["players"]> => (
+  line.members?.map((player) => ({
+    userId: player.userId,
+    role: player.role,
+  })) ?? []
+);
 
 const buildLinePayload = (line: LineDto, order = line.order): CreateUpdateLineData => ({
   name: line.name,
@@ -54,7 +58,24 @@ const buildLinePayload = (line: LineDto, order = line.order): CreateUpdateLineDa
   players: buildPlayersPayload(line),
 });
 
-const GOALIE_POSITION = 1;
+const cloneRoster = (roster?: LineDto[]): LineDto[] => (
+  [...(roster ?? [])]
+    .sort((a, b) => (a.order || 0) - (b.order || 0))
+    .map((line) => ({
+      ...line,
+      members: [...(line.members ?? [])],
+    }))
+);
+
+const buildMemberFromAttendance = (slot: Slot, player: AttendanceLookUpDto) => ({
+  userId: player.userId,
+  playerId: player.userId,
+  jerseyNumber: player.jerseyNumber,
+  firstName: player.firstName,
+  lastName: player.lastName,
+  photoUrl: player.photoUrl ?? null,
+  role: slotToRole[slot],
+});
 
 export const useLineManagement = ({
   event,
@@ -62,6 +83,10 @@ export const useLineManagement = ({
   reloadEvent,
   onError,
 }: UseLineManagementOptions): UseLineManagementResult => {
+  const [draftRoster, setDraftRoster] = useState<LineDto[]>([]);
+  const [hasUnsavedRosterChanges, setHasUnsavedRosterChanges] = useState(false);
+  const [savingRoster, setSavingRoster] = useState(false);
+  const [rosterSaveError, setRosterSaveError] = useState<string | null>(null);
   const [creatingLine, setCreatingLineState] = useState(false);
   const [activeSlot, setActiveSlotState] = useState<Slot | null>(null);
   const [editingLineIndex, setEditingLineIndex] = useState<number | null>(null);
@@ -69,13 +94,40 @@ export const useLineManagement = ({
   const [newLineName, setNewLineNameState] = useState("");
   const [lineSlots, setLineSlots] = useState<Record<Slot, AttendanceLookUpDto | null>>(cloneEmptySlots());
 
+  useEffect(() => {
+    if (!hasUnsavedRosterChanges) {
+      setDraftRoster(cloneRoster(event?.roster));
+    }
+  }, [event?.roster, hasUnsavedRosterChanges]);
+
   const sortedRoster = useMemo(() => {
-    return [...(event?.roster ?? [])].sort((a, b) => (a.order || 0) - (b.order || 0));
-  }, [event?.roster]);
+    return [...draftRoster].sort((a, b) => (a.order || 0) - (b.order || 0));
+  }, [draftRoster]);
+
+  const setError = useCallback(
+    (message: string) => {
+      onError?.(message);
+    },
+    [onError],
+  );
+
+  const ensureAuthorized = useCallback((): boolean => {
+    if (!currentUserId) {
+      setError("Необходимо авторизоваться");
+      return false;
+    }
+
+    return true;
+  }, [currentUserId, setError]);
+
+  const markRosterChanged = useCallback((updater: (current: LineDto[]) => LineDto[]) => {
+    setDraftRoster((current) => updater(current).map((line, index) => ({ ...line, order: index + 1 })));
+    setHasUnsavedRosterChanges(true);
+    setRosterSaveError(null);
+  }, []);
 
   const getDefaultLineName = useCallback(() => {
-    const nextOrder =
-      sortedRoster.length > 0 ? Math.max(...sortedRoster.map((line) => line.order || 0)) + 1 : 1;
+    const nextOrder = sortedRoster.length > 0 ? Math.max(...sortedRoster.map((line) => line.order || 0)) + 1 : 1;
     return `Звено ${nextOrder}`;
   }, [sortedRoster]);
 
@@ -90,7 +142,7 @@ export const useLineManagement = ({
   const usedUserIds = useMemo(() => {
     const ids = new Set<string>();
 
-    event?.roster?.forEach((line) => {
+    sortedRoster.forEach((line) => {
       if (editingLineId && line.id === editingLineId) {
         return;
       }
@@ -105,7 +157,7 @@ export const useLineManagement = ({
     });
 
     return ids;
-  }, [editingLineId, event?.roster, lineSlots]);
+  }, [editingLineId, lineSlots, sortedRoster]);
 
   const availablePlayers = useMemo(() => {
     return (
@@ -141,22 +193,6 @@ export const useLineManagement = ({
     [getDefaultLineName, resetLineEditor],
   );
 
-  const setError = useCallback(
-    (message: string) => {
-      onError?.(message);
-    },
-    [onError],
-  );
-
-  const ensureAuthorized = useCallback((): boolean => {
-    if (!currentUserId) {
-      setError("Необходимо авторизоваться");
-      return false;
-    }
-
-    return true;
-  }, [currentUserId, setError]);
-
   const selectForSlot = useCallback((player: AttendanceLookUpDto) => {
     setLineSlots((prev) => {
       const slot = activeSlot;
@@ -181,71 +217,35 @@ export const useLineManagement = ({
   }, []);
 
   const saveLine = useCallback(async () => {
-    if (!event || !ensureAuthorized() || !currentUserId) {
+    if (!event || !ensureAuthorized()) {
       return;
     }
 
-    const players = Object.entries(lineSlots)
-      .filter((entry): entry is [Slot, AttendanceLookUpDto] => entry[1] !== null)
-      .map(([slot, player]) => ({
-        userId: player.userId,
-        role: slotToRole[slot],
-      }));
-
-    const nextOrder =
-      sortedRoster.length > 0 ? Math.max(...sortedRoster.map((line) => line.order || 0)) + 1 : 1;
+    const nextOrder = sortedRoster.length > 0 ? Math.max(...sortedRoster.map((line) => line.order || 0)) + 1 : 1;
     const lineName = newLineName.trim() || `Звено ${nextOrder}`;
+    const members = Object.entries(lineSlots)
+      .filter((entry): entry is [Slot, AttendanceLookUpDto] => entry[1] !== null)
+      .map(([slot, player]) => buildMemberFromAttendance(slot, player));
 
-    const body: CreateUpdateRosterRequest = {
-      eventId: event.id,
-      lines: [
-        {
-          name: lineName,
-          order: nextOrder,
-          players,
-        },
-      ],
-    };
-
-    try {
-      await createLineRoster(body, currentUserId);
-      await reloadEvent();
-      resetLineEditor();
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Ошибка при создании звена";
-      setError(message);
-    }
-  }, [currentUserId, ensureAuthorized, event, lineSlots, newLineName, reloadEvent, resetLineEditor, setError, sortedRoster]);
+    markRosterChanged((current) => [
+      ...current,
+      {
+        id: `draft-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        name: lineName,
+        order: nextOrder,
+        members,
+      },
+    ]);
+    resetLineEditor();
+  }, [ensureAuthorized, event, lineSlots, markRosterChanged, newLineName, resetLineEditor, sortedRoster]);
 
   const deleteLine = useCallback(async (lineId: string) => {
-    if (!event?.roster || !ensureAuthorized() || !currentUserId) {
+    if (!ensureAuthorized()) {
       return;
     }
 
-    const currentSorted = [...event.roster].sort((a, b) => (a.order || 0) - (b.order || 0));
-
-    const newLines = currentSorted
-      .filter((line) => line.id !== lineId)
-      .map((line, index) => ({
-        name: line.name,
-        order: index + 1,
-        uniformColorId: line.uniformColorId ?? null,
-        players: buildPlayersPayload(line),
-      }));
-
-    const body: CreateUpdateRosterRequest = {
-      eventId: event.id,
-      lines: newLines,
-    };
-
-    try {
-      await updateLineRoster(body, currentUserId);
-      await reloadEvent();
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Ошибка при удалении звена";
-      setError(message);
-    }
-  }, [currentUserId, ensureAuthorized, event, reloadEvent, setError]);
+    markRosterChanged((current) => current.filter((line) => line.id !== lineId));
+  }, [ensureAuthorized, markRosterChanged]);
 
   const startEditLine = useCallback((index: number) => {
     if (index < 0 || index >= sortedRoster.length) {
@@ -283,44 +283,26 @@ export const useLineManagement = ({
   }, [sortedRoster]);
 
   const saveEditedLine = useCallback(async () => {
-    if (!event || editingLineIndex === null || !ensureAuthorized() || !currentUserId) {
+    if (editingLineIndex === null || !ensureAuthorized()) {
       return;
     }
 
-    const newPlayers = Object.entries(lineSlots)
+    const newMembers = Object.entries(lineSlots)
       .filter((entry): entry is [Slot, AttendanceLookUpDto] => entry[1] !== null)
-      .map(([slot, player]) => ({
-        userId: player.userId,
-        role: slotToRole[slot],
-      }));
+      .map(([slot, player]) => buildMemberFromAttendance(slot, player));
 
-    const linesForPut = sortedRoster.map((line, index) => {
-      if (index === editingLineIndex) {
-        return {
-          name: line.name,
-          order: line.order,
-          uniformColorId: line.uniformColorId ?? null,
-          players: newPlayers,
-        };
-      }
-
-      return buildLinePayload(line);
-    });
-
-    const body: CreateUpdateRosterRequest = {
-      eventId: event.id,
-      lines: linesForPut,
-    };
-
-    try {
-      await updateLineRoster(body, currentUserId);
-      await reloadEvent();
-      resetLineEditor();
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Ошибка обновления звена";
-      setError(message);
-    }
-  }, [currentUserId, editingLineIndex, ensureAuthorized, event, lineSlots, reloadEvent, resetLineEditor, setError, sortedRoster]);
+    markRosterChanged((current) =>
+      current.map((line, index) =>
+        index === editingLineIndex
+          ? {
+              ...line,
+              members: newMembers,
+            }
+          : line,
+      ),
+    );
+    resetLineEditor();
+  }, [editingLineIndex, ensureAuthorized, lineSlots, markRosterChanged, resetLineEditor]);
 
   const startRenameLine = useCallback((lineId: string, currentName: string) => {
     setRenamingLineId(lineId);
@@ -328,130 +310,100 @@ export const useLineManagement = ({
   }, []);
 
   const saveRenamedLine = useCallback(async () => {
-    if (!event || !renamingLineId || !ensureAuthorized() || !currentUserId) {
+    if (!renamingLineId || !ensureAuthorized()) {
       return;
     }
 
-    const linesForPut = sortedRoster.map((line) => {
-      if (line.id === renamingLineId) {
-        return {
-          name: newLineName || line.name,
-          order: line.order,
-          uniformColorId: line.uniformColorId ?? null,
-          players: buildPlayersPayload(line),
-        };
-      }
-
-      return buildLinePayload(line);
-    });
-
-    const body: CreateUpdateRosterRequest = {
-      eventId: event.id,
-      lines: linesForPut,
-    };
-
-    try {
-      await updateLineRoster(body, currentUserId);
-      await reloadEvent();
-      setRenamingLineId(null);
-      setNewLineNameState("");
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Ошибка переименования звена";
-      setError(message);
-    }
-  }, [currentUserId, ensureAuthorized, event, newLineName, reloadEvent, renamingLineId, setError, sortedRoster]);
+    markRosterChanged((current) =>
+      current.map((line) =>
+        line.id === renamingLineId
+          ? {
+              ...line,
+              name: newLineName.trim() || line.name,
+            }
+          : line,
+      ),
+    );
+    setRenamingLineId(null);
+    setNewLineNameState("");
+  }, [ensureAuthorized, markRosterChanged, newLineName, renamingLineId]);
 
   const moveLineUp = useCallback(async (index: number) => {
-    if (!event || index <= 0 || index >= sortedRoster.length || !ensureAuthorized() || !currentUserId) {
+    if (index <= 0 || index >= sortedRoster.length || !ensureAuthorized()) {
       return;
     }
 
-    const newRoster = [...sortedRoster];
-    const temp = newRoster[index];
-    newRoster[index] = newRoster[index - 1];
-    newRoster[index - 1] = temp;
-
-    const linesForPut = newRoster.map((line, idx) => ({
-      name: line.name,
-      order: idx + 1,
-      uniformColorId: line.uniformColorId ?? null,
-      players: buildPlayersPayload(line),
-    }));
-
-    const body: CreateUpdateRosterRequest = {
-      eventId: event.id,
-      lines: linesForPut,
-    };
-
-    try {
-      await updateLineRoster(body, currentUserId);
-      await reloadEvent();
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Ошибка изменения порядка звеньев";
-      setError(message);
-    }
-  }, [currentUserId, ensureAuthorized, event, reloadEvent, setError, sortedRoster]);
+    markRosterChanged((current) => {
+      const next = [...current].sort((a, b) => (a.order || 0) - (b.order || 0));
+      const temp = next[index];
+      next[index] = next[index - 1];
+      next[index - 1] = temp;
+      return next;
+    });
+  }, [ensureAuthorized, markRosterChanged, sortedRoster.length]);
 
   const moveLineDown = useCallback(async (index: number) => {
-    if (
-      !event ||
-      index < 0 ||
-      index >= sortedRoster.length - 1 ||
-      !ensureAuthorized() ||
-      !currentUserId
-    ) {
+    if (index < 0 || index >= sortedRoster.length - 1 || !ensureAuthorized()) {
       return;
     }
 
-    const newRoster = [...sortedRoster];
-    const temp = newRoster[index];
-    newRoster[index] = newRoster[index + 1];
-    newRoster[index + 1] = temp;
-
-    const linesForPut = newRoster.map((line, idx) => ({
-      name: line.name,
-      order: idx + 1,
-      uniformColorId: line.uniformColorId ?? null,
-      players: buildPlayersPayload(line),
-    }));
-
-    const body: CreateUpdateRosterRequest = {
-      eventId: event.id,
-      lines: linesForPut,
-    };
-
-    try {
-      await updateLineRoster(body, currentUserId);
-      await reloadEvent();
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Ошибка изменения порядка звеньев";
-      setError(message);
-    }
-  }, [currentUserId, ensureAuthorized, event, reloadEvent, setError, sortedRoster]);
+    markRosterChanged((current) => {
+      const next = [...current].sort((a, b) => (a.order || 0) - (b.order || 0));
+      const temp = next[index];
+      next[index] = next[index + 1];
+      next[index + 1] = temp;
+      return next;
+    });
+  }, [ensureAuthorized, markRosterChanged, sortedRoster.length]);
 
   const assignLineUniformColor = useCallback(async (lineId: string, uniformColorId: string | null) => {
-    if (!event || !ensureAuthorized() || !currentUserId) {
+    if (!ensureAuthorized()) {
       return;
     }
 
-    const linesForPut = sortedRoster.map((line) => ({
-      ...buildLinePayload(line),
-      uniformColorId: line.id === lineId ? uniformColorId : line.uniformColorId ?? null,
-    }));
+    markRosterChanged((current) =>
+      current.map((line) =>
+        line.id === lineId
+          ? {
+              ...line,
+              uniformColorId,
+              uniformColor: uniformColorId === line.uniformColor?.id ? line.uniformColor : null,
+            }
+          : line,
+      ),
+    );
+  }, [ensureAuthorized, markRosterChanged]);
+
+  const saveRosterChanges = useCallback(async () => {
+    if (!event || !ensureAuthorized() || !currentUserId || savingRoster) {
+      return;
+    }
 
     const body: CreateUpdateRosterRequest = {
       eventId: event.id,
-      lines: linesForPut,
+      lines: sortedRoster.map((line, index) => buildLinePayload(line, index + 1)),
     };
 
+    setSavingRoster(true);
+    setRosterSaveError(null);
     try {
       await updateLineRoster(body, currentUserId);
-      await reloadEvent();
+      const refreshedEvent = await reloadEvent();
+      if (refreshedEvent) {
+        setDraftRoster(cloneRoster(refreshedEvent.roster));
+        setHasUnsavedRosterChanges(false);
+        setRosterSaveError(null);
+        resetLineEditor();
+      } else {
+        setRosterSaveError("Код 0: состав отправлен, но не удалось обновить данные. Проверьте интернет и попробуйте сохранить ещё раз.");
+      }
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Ошибка назначения цвета формы звену";
-      setError(message);
+      const message = err instanceof Error ? err.message : "Не удалось сохранить состав. Проверьте интернет и попробуйте ещё раз.";
+      setRosterSaveError(message);
+    } finally {
+      setSavingRoster(false);
     }
-  }, [currentUserId, ensureAuthorized, event, reloadEvent, setError, sortedRoster]);
+  }, [currentUserId, ensureAuthorized, event, reloadEvent, resetLineEditor, savingRoster, sortedRoster]);
 
   return {
     sortedRoster,
@@ -466,6 +418,10 @@ export const useLineManagement = ({
     newLineName,
     setNewLineName: setNewLineNameState,
     availablePlayers,
+    hasUnsavedRosterChanges,
+    savingRoster,
+    rosterSaveError,
+    saveRosterChanges,
     saveLine,
     saveEditedLine,
     deleteLine,

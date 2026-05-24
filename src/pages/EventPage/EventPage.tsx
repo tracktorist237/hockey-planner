@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { updateAttendance } from "src/api/events";
 import { getEventGoalies } from "src/api/goalies";
 import { getMyTeams } from "src/api/teams";
 import { getUsers } from "src/api/users";
@@ -59,6 +60,19 @@ export function EventPage({ eventId, onBack, currentUser }: EventPageProps) {
   );
 
   const reportError = (message: string) => setError(message ? message : null);
+
+  const handleManagedAttendanceStatus = async (userId: string, status: number, notes?: string | null) => {
+    if (!event || !selectedUserId || !canManageEvent) {
+      return;
+    }
+
+    try {
+      await updateAttendance(event.id, userId, status, notes, selectedUserId);
+      await reloadEvent();
+    } catch (err) {
+      reportError(err instanceof Error ? err.message : "Ошибка обновления явки");
+    }
+  };
 
   const attendance = useAttendance({ event, selectedUserId, reloadEvent, onError: reportError });
   const lineManagement = useLineManagement({ event, currentUserId: selectedUserId, reloadEvent, onError: reportError });
@@ -202,7 +216,7 @@ export function EventPage({ eventId, onBack, currentUser }: EventPageProps) {
     return <LoadingState />;
   }
 
-  if (error) {
+  if (error && !event) {
     return <ErrorState error={error} onBack={onBack} />;
   }
 
@@ -236,6 +250,23 @@ export function EventPage({ eventId, onBack, currentUser }: EventPageProps) {
 
       <div style={{ padding: "16px", paddingBottom: "100px" }}>
         <EventInfoCard event={event} copySuccess={copySuccess} copyEventLink={copyEventLink} />
+
+        {error && (
+          <div
+            style={{
+              margin: "16px",
+              padding: "12px 14px",
+              borderRadius: "12px",
+              border: "1px solid var(--hp-danger-border)",
+              backgroundColor: "var(--hp-danger-soft)",
+              color: "var(--hp-danger)",
+              fontSize: "14px",
+              fontWeight: 800,
+            }}
+          >
+            {error}
+          </div>
+        )}
         <ActionMenu
           eventId={event.id}
           isOpen={isActionsOpen}
@@ -284,6 +315,8 @@ export function EventPage({ eventId, onBack, currentUser }: EventPageProps) {
             onPlayerClick={playerModal.handleOpenPlayerInfo}
             avatarUrls={avatarUrls}
             eventCreatedAt={event.createdAt}
+            canManage={canManageEvent}
+            onStatusChange={handleManagedAttendanceStatus}
           />
         )}
         {activeTab === "roster" && (

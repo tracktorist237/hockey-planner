@@ -63,7 +63,7 @@ export const useAttendance = ({
       onError?.("");
 
       try {
-        await updateAttendance(event.id, selectedUserId, status, notes);
+        await updateAttendance(event.id, selectedUserId, status, notes, selectedUserId);
         await reloadEvent();
         setShowNoteInput(false);
         setIsEditingNote(false);

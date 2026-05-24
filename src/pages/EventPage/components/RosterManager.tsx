@@ -20,6 +20,10 @@ interface RosterManagerProps {
   newLineName: string;
   setNewLineName: (value: string) => void;
   availablePlayers: AttendanceLookUpDto[];
+  hasUnsavedRosterChanges: boolean;
+  savingRoster: boolean;
+  rosterSaveError: string | null;
+  saveRosterChanges: () => Promise<void>;
   saveLine: () => Promise<void>;
   saveEditedLine: () => Promise<void>;
   deleteLine: (lineId: string) => Promise<void>;
@@ -229,6 +233,10 @@ export const RosterManager = ({
   newLineName,
   setNewLineName,
   availablePlayers,
+  hasUnsavedRosterChanges,
+  savingRoster,
+  rosterSaveError,
+  saveRosterChanges,
   saveLine,
   saveEditedLine,
   deleteLine,
@@ -280,6 +288,10 @@ export const RosterManager = ({
       active = false;
     };
   }, [canAssignLineUniformColors, showRosterSettings, teamId]);
+
+  const getLineUniformColorName = (line: LineDto): string | null => {
+    return line.uniformColor?.name ?? uniformColors.find((color) => color.id === line.uniformColorId)?.name ?? null;
+  };
 
   return (
     <div
@@ -360,6 +372,50 @@ export const RosterManager = ({
           </button>
         </div>
       </div>
+
+      {canManage && (hasUnsavedRosterChanges || rosterSaveError) && (
+        <div
+          style={{
+            marginBottom: "16px",
+            padding: "12px",
+            borderRadius: "12px",
+            border: `1px solid ${rosterSaveError ? "var(--hp-danger-border)" : "var(--hp-warning-border)"}`,
+            backgroundColor: rosterSaveError ? "var(--hp-danger-soft)" : "var(--hp-warning-soft)",
+            display: "grid",
+            gap: "10px",
+          }}
+        >
+          <div style={{ color: "var(--hp-warning)", fontSize: "13px", fontWeight: 900 }}>
+            Есть несохранённые изменения
+          </div>
+          {rosterSaveError && (
+            <div style={{ color: "var(--hp-danger)", fontSize: "13px", lineHeight: 1.45, fontWeight: 700 }}>
+              {rosterSaveError}
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={() => {
+              void saveRosterChanges();
+            }}
+            disabled={savingRoster || !hasUnsavedRosterChanges}
+            style={{
+              width: "100%",
+              padding: "11px 12px",
+              border: "none",
+              borderRadius: "10px",
+              backgroundColor: "var(--hp-primary)",
+              color: "white",
+              cursor: savingRoster ? "wait" : hasUnsavedRosterChanges ? "pointer" : "not-allowed",
+              fontSize: "14px",
+              fontWeight: 900,
+              opacity: savingRoster || !hasUnsavedRosterChanges ? 0.75 : 1,
+            }}
+          >
+            {savingRoster ? "Сохранение..." : "Сохранить состав"}
+          </button>
+        </div>
+      )}
 
       {canAssignLineUniformColors && showRosterSettings && (
         <div
@@ -589,8 +645,7 @@ export const RosterManager = ({
               e.currentTarget.style.transform = "translateY(0)";
             }}
           >
-            <span>💾</span>
-            <span>{editingLineIndex === null ? "Добавить звено" : "Сохранить изменения"}</span>
+            <span>{editingLineIndex === null ? "+ Добавить звено" : "✓ Зафиксировать изменения"}</span>
           </button>
         </div>
       )}
@@ -732,7 +787,7 @@ export const RosterManager = ({
               </div>
             </div>
 
-            {line.uniformColor?.name && (
+            {getLineUniformColorName(line) && (
               <div style={{ marginBottom: "12px" }}>
                 <span
                   style={{
@@ -750,7 +805,7 @@ export const RosterManager = ({
                     fontWeight: 800,
                   }}
                 >
-                  Цвет формы: {line.uniformColor.name}
+                  Цвет формы: {getLineUniformColorName(line)}
                 </span>
               </div>
             )}
