@@ -44,6 +44,8 @@ export interface PlayerLookUpDto {
   lastName?: string;
   photoUrl?: string | null;
   role: number;
+  isGuest?: boolean;
+  invitedByUserId?: string | null;
 }
 
 export interface AttendanceLookUpDto {
@@ -52,11 +54,13 @@ export interface AttendanceLookUpDto {
   firstName?: string;
   lastName?: string;
   photoUrl?: string | null;
-  primaryPosition: number;
-  handedness: number;
+  primaryPosition?: number | null;
+  handedness?: number | null;
   status: number;
   respondedAt: string;
   notes?: string;
+  isGuest?: boolean;
+  invitedByUserId?: string | null;
 }
 
 export interface EventDto {

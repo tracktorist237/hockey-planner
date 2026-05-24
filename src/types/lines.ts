@@ -1,6 +1,7 @@
 export interface CreateUpdatePlayerData {
   userId: string;
   role: PlayerRole;
+  isGuest?: boolean;
 }
 
 export interface CreateUpdateLineData {

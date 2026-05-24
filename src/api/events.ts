@@ -1,4 +1,4 @@
-import { CreateEventDto, EventDto, EventListDto } from "../types/events";
+import { AttendanceLookUpDto, CreateEventDto, EventDto, EventListDto } from "../types/events";
 
 const API_BASE = process.env.REACT_APP_API_BASE || "";
 
@@ -128,5 +128,57 @@ export async function updateAttendance(
   if (!res.ok) {
     const text = await res.text();
     throw new Error(text || "Ошибка обновления явки");
+  }
+}
+
+export interface CreateEventGuestDto {
+  firstName: string;
+  lastName: string;
+  handedness?: number | null;
+  jerseyNumber?: number | null;
+}
+
+export async function createEventGuest(
+  eventId: string,
+  data: CreateEventGuestDto,
+  currentUserId?: string | null,
+): Promise<AttendanceLookUpDto> {
+  const userId = resolveCurrentUserId(currentUserId ?? undefined);
+  const res = await fetch(`${API_BASE}/api/events/${eventId}/guests?currentUserId=${encodeURIComponent(userId)}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify(data),
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => null);
+    throw new Error(errorData?.error || errorData?.message || `Ошибка добавления гостя: ${res.status}`);
+  }
+
+  return res.json();
+}
+
+export async function updateEventGuestAttendance(
+  eventId: string,
+  guestId: string,
+  status: number,
+  notes?: string | null,
+  currentUserId?: string | null,
+): Promise<void> {
+  const userId = resolveCurrentUserId(currentUserId ?? undefined);
+  const res = await fetch(`${API_BASE}/api/events/${eventId}/guests/${guestId}/attendance?currentUserId=${encodeURIComponent(userId)}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({
+      status,
+      notes: notes ?? null,
+    }),
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => null);
+    throw new Error(errorData?.error || errorData?.message || `Ошибка обновления явки гостя: ${res.status}`);
   }
 }

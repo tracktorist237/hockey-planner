@@ -48,6 +48,7 @@ const buildPlayersPayload = (line: LineDto): NonNullable<CreateUpdateLineData["p
   line.members?.map((player) => ({
     userId: player.userId,
     role: player.role,
+    isGuest: Boolean(player.isGuest),
   })) ?? []
 );
 
@@ -75,6 +76,8 @@ const buildMemberFromAttendance = (slot: Slot, player: AttendanceLookUpDto) => (
   lastName: player.lastName,
   photoUrl: player.photoUrl ?? null,
   role: slotToRole[slot],
+  isGuest: Boolean(player.isGuest),
+  invitedByUserId: player.invitedByUserId ?? null,
 });
 
 export const useLineManagement = ({
@@ -270,9 +273,11 @@ export const useLineManagement = ({
         lastName: member.lastName,
         photoUrl: member.photoUrl ?? null,
         primaryPosition: 0,
-        handedness: 0,
+        handedness: null,
         status: 2,
         respondedAt: new Date().toISOString(),
+        isGuest: Boolean(member.isGuest),
+        invitedByUserId: member.invitedByUserId ?? null,
       } as AttendanceLookUpDto;
     });
 

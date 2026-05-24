@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { updateAttendance } from "src/api/events";
+import { createEventGuest, updateAttendance, updateEventGuestAttendance } from "src/api/events";
 import { getEventGoalies } from "src/api/goalies";
 import { getMyTeams } from "src/api/teams";
 import { getUsers } from "src/api/users";
@@ -20,6 +20,7 @@ import { useEventData } from "src/pages/EventPage/hooks/useEventData";
 import { useLineManagement } from "src/pages/EventPage/hooks/useLineManagement";
 import { usePlayerModal } from "src/pages/EventPage/hooks/usePlayerModal";
 import { EventPageProps } from "src/pages/EventPage/types";
+import { AttendanceLookUpDto } from "src/types/events";
 
 const GOALIE_POSITION = 1;
 
@@ -61,17 +62,33 @@ export function EventPage({ eventId, onBack, currentUser }: EventPageProps) {
 
   const reportError = (message: string) => setError(message ? message : null);
 
-  const handleManagedAttendanceStatus = async (userId: string, status: number, notes?: string | null) => {
-    if (!event || !selectedUserId || !canManageEvent) {
+  const handleManagedAttendanceStatus = async (attendanceItem: AttendanceLookUpDto, status: number, notes?: string | null) => {
+    if (!event || !selectedUserId) {
       return;
     }
 
     try {
-      await updateAttendance(event.id, userId, status, notes, selectedUserId);
+      if (attendanceItem.isGuest) {
+        await updateEventGuestAttendance(event.id, attendanceItem.userId, status, notes, selectedUserId);
+      } else {
+        if (!canManageEvent) {
+          return;
+        }
+        await updateAttendance(event.id, attendanceItem.userId, status, notes, selectedUserId);
+      }
       await reloadEvent();
     } catch (err) {
       reportError(err instanceof Error ? err.message : "Ошибка обновления явки");
     }
+  };
+
+  const handleAddGuest = async (guest: { firstName: string; lastName: string; handedness?: number | null; jerseyNumber?: number | null }) => {
+    if (!event || !selectedUserId) {
+      throw new Error("Необходимо авторизоваться");
+    }
+
+    await createEventGuest(event.id, guest, selectedUserId);
+    await reloadEvent();
   };
 
   const attendance = useAttendance({ event, selectedUserId, reloadEvent, onError: reportError });
@@ -163,6 +180,9 @@ export function EventPage({ eventId, onBack, currentUser }: EventPageProps) {
       const knownPhotos: Record<string, string> = {};
 
       event.attendances?.forEach((attendanceItem) => {
+        if (attendanceItem.isGuest) {
+          return;
+        }
         userIds.add(attendanceItem.userId);
         if (attendanceItem.photoUrl) {
           knownPhotos[attendanceItem.userId] = attendanceItem.photoUrl;
@@ -171,6 +191,9 @@ export function EventPage({ eventId, onBack, currentUser }: EventPageProps) {
 
       event.roster?.forEach((line) => {
         line.members?.forEach((member) => {
+          if (member.isGuest) {
+            return;
+          }
           userIds.add(member.userId);
           if (member.photoUrl) {
             knownPhotos[member.userId] = member.photoUrl;
@@ -316,7 +339,9 @@ export function EventPage({ eventId, onBack, currentUser }: EventPageProps) {
             avatarUrls={avatarUrls}
             eventCreatedAt={event.createdAt}
             canManage={canManageEvent}
+            currentUserId={selectedUserId}
             onStatusChange={handleManagedAttendanceStatus}
+            onAddGuest={handleAddGuest}
           />
         )}
         {activeTab === "roster" && (

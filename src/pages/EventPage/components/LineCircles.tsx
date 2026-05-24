@@ -49,7 +49,7 @@ export const LineCircles = ({ members, onPlayerClick, avatarUrls }: LineCirclesP
       <div
         onClick={() => {
           const player = slots[slot];
-          if (player) {
+          if (player && !player.isGuest) {
             onPlayerClick(player.userId);
           }
         }}
@@ -66,18 +66,18 @@ export const LineCircles = ({ members, onPlayerClick, avatarUrls }: LineCirclesP
           fontSize: "20px",
           fontWeight: "600",
           color: "var(--hp-heading)",
-          cursor: slots[slot] ? "pointer" : "default",
+          cursor: slots[slot] && !slots[slot]!.isGuest ? "pointer" : "default",
           transition: "all 0.2s ease",
           position: "relative",
         }}
         onMouseEnter={(e) => {
-          if (slots[slot]) {
+          if (slots[slot] && !slots[slot]!.isGuest) {
             e.currentTarget.style.backgroundColor = "var(--hp-info-border)";
             e.currentTarget.style.transform = "scale(1.05)";
           }
         }}
         onMouseLeave={(e) => {
-          if (slots[slot]) {
+          if (slots[slot] && !slots[slot]!.isGuest) {
             e.currentTarget.style.backgroundColor = "var(--hp-primary-soft)";
             e.currentTarget.style.transform = "scale(1)";
           }
@@ -148,15 +148,19 @@ export const LineCircles = ({ members, onPlayerClick, avatarUrls }: LineCirclesP
             lineHeight: "1.2",
             minHeight: "26px",
             whiteSpace: "nowrap",
-            cursor: "pointer",
+            cursor: slots[slot]!.isGuest ? "default" : "pointer",
             transition: "color 0.2s ease",
           }}
-          onClick={() => onPlayerClick(slots[slot]!.userId)}
+          onClick={() => {
+            if (!slots[slot]!.isGuest) onPlayerClick(slots[slot]!.userId);
+          }}
           onMouseEnter={(e) => {
+            if (slots[slot]!.isGuest) return;
             e.currentTarget.style.color = "var(--hp-primary)";
             e.currentTarget.style.textDecoration = "underline";
           }}
           onMouseLeave={(e) => {
+            if (slots[slot]!.isGuest) return;
             e.currentTarget.style.color = "var(--hp-text)";
             e.currentTarget.style.textDecoration = "none";
           }}

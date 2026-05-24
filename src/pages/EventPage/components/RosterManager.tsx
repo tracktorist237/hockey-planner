@@ -97,7 +97,7 @@ const renderEditableSlot = (
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          cursor: "pointer",
+            cursor: "pointer",
           backgroundColor: lineSlots[slot] ? "var(--hp-primary-soft)" : "var(--hp-surface)",
           margin: "0 auto 4px auto",
           fontSize: "20px",
@@ -182,13 +182,15 @@ const renderEditableSlot = (
             }}
             onClick={(e) => {
               e.stopPropagation();
-              onPlayerClick(lineSlots[slot]!.userId);
+              if (!lineSlots[slot]!.isGuest) onPlayerClick(lineSlots[slot]!.userId);
             }}
             onMouseEnter={(e) => {
+              if (lineSlots[slot]!.isGuest) return;
               e.currentTarget.style.color = "var(--hp-primary)";
               e.currentTarget.style.textDecoration = "underline";
             }}
             onMouseLeave={(e) => {
+              if (lineSlots[slot]!.isGuest) return;
               e.currentTarget.style.color = "var(--hp-text)";
               e.currentTarget.style.textDecoration = "none";
             }}

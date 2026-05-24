@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { PlayerAvatar } from "src/components/PlayerAvatar";
 import { AttendanceLookUpDto } from "src/types/events";
 import { getAdaptiveFontSize } from "src/utils/text";
@@ -9,7 +9,14 @@ interface AttendanceListProps {
   avatarUrls?: Record<string, string>;
   eventCreatedAt?: string;
   canManage?: boolean;
-  onStatusChange?: (userId: string, status: number, notes?: string | null) => Promise<void>;
+  currentUserId?: string | null;
+  onStatusChange?: (attendance: AttendanceLookUpDto, status: number, notes?: string | null) => Promise<void>;
+  onAddGuest?: (guest: {
+    firstName: string;
+    lastName: string;
+    handedness?: number | null;
+    jerseyNumber?: number | null;
+  }) => Promise<void>;
 }
 
 const DEFAULT_RESPONSE_TOLERANCE_MS = 5000;
@@ -49,18 +56,79 @@ export const AttendanceList = ({
   avatarUrls,
   eventCreatedAt,
   canManage = false,
+  currentUserId,
   onStatusChange,
+  onAddGuest,
 }: AttendanceListProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isEditingStatuses, setIsEditingStatuses] = useState(false);
+  const [isAddingGuest, setIsAddingGuest] = useState(false);
   const [savingUserId, setSavingUserId] = useState<string | null>(null);
+  const [guestFirstName, setGuestFirstName] = useState("");
+  const [guestLastName, setGuestLastName] = useState("");
+  const [guestHandedness, setGuestHandedness] = useState("");
+  const [guestJerseyNumber, setGuestJerseyNumber] = useState("");
+  const [guestError, setGuestError] = useState<string | null>(null);
+
+  const editableStatusCount = useMemo(
+    () =>
+      attendances?.filter(
+        (attendance) =>
+          canManage ||
+          (Boolean(attendance.isGuest) && Boolean(currentUserId) && attendance.invitedByUserId === currentUserId),
+      ).length ?? 0,
+    [attendances, canManage, currentUserId],
+  );
+
+  const canEditAttendance = (attendance: AttendanceLookUpDto): boolean => (
+    canManage ||
+    (Boolean(attendance.isGuest) && Boolean(currentUserId) && attendance.invitedByUserId === currentUserId)
+  );
 
   const handleStatusChange = async (attendance: AttendanceLookUpDto, status: number) => {
-    if (!onStatusChange || status === attendance.status) return;
+    if (!onStatusChange || status === attendance.status || !canEditAttendance(attendance)) return;
 
     setSavingUserId(attendance.userId);
     try {
-      await onStatusChange(attendance.userId, status, attendance.notes ?? null);
+      await onStatusChange(attendance, status, attendance.notes ?? null);
+    } finally {
+      setSavingUserId(null);
+    }
+  };
+
+  const handleAddGuest = async () => {
+    if (!onAddGuest) return;
+
+    const firstName = guestFirstName.trim();
+    const lastName = guestLastName.trim();
+
+    if (!lastName || !firstName) {
+      setGuestError("Заполните фамилию и имя гостя");
+      return;
+    }
+
+    const jerseyNumber = guestJerseyNumber.trim() ? Number(guestJerseyNumber) : null;
+    if (jerseyNumber !== null && (!Number.isInteger(jerseyNumber) || jerseyNumber < 0 || jerseyNumber > 99)) {
+      setGuestError("Номер джерси должен быть от 0 до 99");
+      return;
+    }
+
+    setSavingUserId("guest");
+    setGuestError(null);
+    try {
+      await onAddGuest({
+        firstName,
+        lastName,
+        handedness: guestHandedness ? Number(guestHandedness) : null,
+        jerseyNumber,
+      });
+      setGuestFirstName("");
+      setGuestLastName("");
+      setGuestHandedness("");
+      setGuestJerseyNumber("");
+      setIsAddingGuest(false);
+    } catch (error) {
+      setGuestError(error instanceof Error ? error.message : "Не удалось добавить гостя");
     } finally {
       setSavingUserId(null);
     }
@@ -92,70 +160,166 @@ export const AttendanceList = ({
           <span>Явка игроков ({attendances?.length || 0})</span>
         </h3>
 
-        {canManage && (
-          <div style={{ position: "relative", flexShrink: 0 }}>
-            <button
-              type="button"
-              onClick={() => setIsMenuOpen((value) => !value)}
+        <div style={{ position: "relative", flexShrink: 0 }}>
+          <button
+            type="button"
+            onClick={() => setIsMenuOpen((value) => !value)}
+            style={{
+              width: "36px",
+              height: "36px",
+              padding: 0,
+              border: "1px solid var(--hp-border)",
+              borderRadius: "10px",
+              backgroundColor: "var(--hp-surface-soft)",
+              color: "var(--hp-heading)",
+              cursor: "pointer",
+              fontSize: "18px",
+              fontWeight: 900,
+              lineHeight: 1,
+            }}
+            title="Настройки явки"
+            aria-label="Настройки явки"
+          >
+            ...
+          </button>
+          {isMenuOpen && (
+            <div
               style={{
-                width: "36px",
-                height: "36px",
-                padding: 0,
+                position: "absolute",
+                top: "42px",
+                right: 0,
+                zIndex: 20,
+                minWidth: "230px",
+                padding: "6px",
                 border: "1px solid var(--hp-border)",
-                borderRadius: "10px",
-                backgroundColor: "var(--hp-surface-soft)",
-                color: "var(--hp-heading)",
-                cursor: "pointer",
-                fontSize: "18px",
-                fontWeight: 900,
-                lineHeight: 1,
+                borderRadius: "12px",
+                backgroundColor: "var(--hp-surface)",
+                boxShadow: "var(--hp-shadow-md)",
               }}
-              title="Настройки явки"
-              aria-label="Настройки явки"
             >
-              ...
-            </button>
-            {isMenuOpen && (
-              <div
+              <button
+                type="button"
+                onClick={() => {
+                  setIsAddingGuest((value) => !value);
+                  setIsMenuOpen(false);
+                  setIsEditingStatuses(false);
+                }}
                 style={{
-                  position: "absolute",
-                  top: "42px",
-                  right: 0,
-                  zIndex: 20,
-                  minWidth: "210px",
-                  padding: "6px",
-                  border: "1px solid var(--hp-border)",
-                  borderRadius: "12px",
-                  backgroundColor: "var(--hp-surface)",
-                  boxShadow: "var(--hp-shadow-md)",
+                  width: "100%",
+                  padding: "10px 12px",
+                  border: "none",
+                  borderRadius: "9px",
+                  backgroundColor: "transparent",
+                  color: "var(--hp-heading)",
+                  cursor: "pointer",
+                  fontSize: "13px",
+                  fontWeight: 800,
+                  textAlign: "left",
                 }}
               >
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsEditingStatuses((value) => !value);
-                    setIsMenuOpen(false);
-                  }}
-                  style={{
-                    width: "100%",
-                    padding: "10px 12px",
-                    border: "none",
-                    borderRadius: "9px",
-                    backgroundColor: "transparent",
-                    color: "var(--hp-heading)",
-                    cursor: "pointer",
-                    fontSize: "13px",
-                    fontWeight: 800,
-                    textAlign: "left",
-                  }}
-                >
-                  {isEditingStatuses ? "Скрыть изменение явки" : "Изменить статус явки"}
-                </button>
-              </div>
-            )}
-          </div>
-        )}
+                Добавить гостя
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsEditingStatuses((value) => !value);
+                  setIsMenuOpen(false);
+                  setIsAddingGuest(false);
+                }}
+                disabled={editableStatusCount === 0}
+                style={{
+                  width: "100%",
+                  padding: "10px 12px",
+                  border: "none",
+                  borderRadius: "9px",
+                  backgroundColor: "transparent",
+                  color: editableStatusCount === 0 ? "var(--hp-muted)" : "var(--hp-heading)",
+                  cursor: editableStatusCount === 0 ? "not-allowed" : "pointer",
+                  fontSize: "13px",
+                  fontWeight: 800,
+                  textAlign: "left",
+                  opacity: editableStatusCount === 0 ? 0.7 : 1,
+                }}
+              >
+                {isEditingStatuses ? "Скрыть изменение явки" : "Изменить статус явки"}
+              </button>
+            </div>
+          )}
+        </div>
       </div>
+
+      {isAddingGuest && (
+        <div
+          style={{
+            marginBottom: "16px",
+            padding: "12px",
+            border: "1px solid var(--hp-border)",
+            borderRadius: "12px",
+            backgroundColor: "var(--hp-surface-soft)",
+            display: "grid",
+            gap: "10px",
+          }}
+        >
+          <div style={{ color: "var(--hp-heading)", fontSize: "14px", fontWeight: 900 }}>Гость на это мероприятие</div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+            <input
+              value={guestLastName}
+              onChange={(event) => setGuestLastName(event.target.value)}
+              placeholder="Фамилия"
+              style={{ minWidth: 0, padding: "10px 11px", borderRadius: "10px", border: "1px solid var(--hp-border)", backgroundColor: "var(--hp-input-bg)", color: "var(--hp-text)", fontWeight: 700 }}
+            />
+            <input
+              value={guestFirstName}
+              onChange={(event) => setGuestFirstName(event.target.value)}
+              placeholder="Имя"
+              style={{ minWidth: 0, padding: "10px 11px", borderRadius: "10px", border: "1px solid var(--hp-border)", backgroundColor: "var(--hp-input-bg)", color: "var(--hp-text)", fontWeight: 700 }}
+            />
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+            <select
+              value={guestHandedness}
+              onChange={(event) => setGuestHandedness(event.target.value)}
+              style={{ minWidth: 0, padding: "10px 11px", borderRadius: "10px", border: "1px solid var(--hp-border)", backgroundColor: "var(--hp-input-bg)", color: "var(--hp-text)", fontWeight: 700 }}
+            >
+              <option value="">Хват</option>
+              <option value="1">Левый</option>
+              <option value="2">Правый</option>
+            </select>
+            <input
+              type="number"
+              min={0}
+              max={99}
+              value={guestJerseyNumber}
+              onChange={(event) => setGuestJerseyNumber(event.target.value)}
+              placeholder="Номер"
+              style={{ minWidth: 0, padding: "10px 11px", borderRadius: "10px", border: "1px solid var(--hp-border)", backgroundColor: "var(--hp-input-bg)", color: "var(--hp-text)", fontWeight: 700 }}
+            />
+          </div>
+          {guestError && <div style={{ color: "var(--hp-danger)", fontSize: "13px", fontWeight: 800 }}>{guestError}</div>}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+            <button
+              type="button"
+              onClick={() => {
+                setIsAddingGuest(false);
+                setGuestError(null);
+              }}
+              style={{ padding: "11px", borderRadius: "10px", border: "1px solid var(--hp-border)", backgroundColor: "var(--hp-surface)", color: "var(--hp-text)", fontWeight: 800, cursor: "pointer" }}
+            >
+              Отмена
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                void handleAddGuest();
+              }}
+              disabled={savingUserId === "guest"}
+              style={{ padding: "11px", borderRadius: "10px", border: "none", backgroundColor: "var(--hp-primary)", color: "white", fontWeight: 900, cursor: savingUserId === "guest" ? "wait" : "pointer", opacity: savingUserId === "guest" ? 0.75 : 1 }}
+            >
+              {savingUserId === "guest" ? "Добавляем..." : "Добавить"}
+            </button>
+          </div>
+        </div>
+      )}
 
       <div style={{ marginBottom: "16px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px", fontSize: "14px", color: "var(--hp-muted)" }}>
@@ -176,6 +340,7 @@ export const AttendanceList = ({
         {attendances?.map((attendance) => {
           const showResponseTime = Boolean(attendance.respondedAt) && !isSameMoment(attendance.respondedAt, eventCreatedAt);
           const formattedResponseTime = showResponseTime ? formatResponseTime(attendance.respondedAt) : "";
+          const canEditThisAttendance = canEditAttendance(attendance);
 
           return (
             <div
@@ -186,11 +351,11 @@ export const AttendanceList = ({
                 display: "flex",
                 flexDirection: "column",
                 gap: "4px",
-                cursor: isEditingStatuses ? "default" : "pointer",
+                cursor: isEditingStatuses || attendance.isGuest ? "default" : "pointer",
                 transition: "background-color 0.2s ease",
               }}
               onClick={() => {
-                if (!isEditingStatuses) onPlayerClick(attendance.userId);
+                if (!isEditingStatuses && !attendance.isGuest) onPlayerClick(attendance.userId);
               }}
               onMouseEnter={(event) => {
                 event.currentTarget.style.backgroundColor = "var(--hp-surface-soft)";
@@ -206,7 +371,7 @@ export const AttendanceList = ({
                     shape="rounded"
                     photoUrl={attendance.photoUrl ?? avatarUrls?.[attendance.userId]}
                     jerseyNumber={attendance.jerseyNumber}
-                    fallbackPrefix="#"
+                    fallbackPrefix={attendance.isGuest ? "" : "#"}
                     badgePrefix="#"
                     fontSize={12}
                     fallbackBg={attendance.status === 2 ? "var(--hp-success-soft)" : attendance.status === 3 ? "var(--hp-danger-soft)" : "var(--hp-warning-soft)"}
@@ -231,11 +396,14 @@ export const AttendanceList = ({
                     >
                       {attendance.firstName} {attendance.lastName}
                     </div>
-                    {formattedResponseTime && <div style={{ marginTop: "2px", fontSize: "12px", color: "var(--hp-muted)" }}>Ответ: {formattedResponseTime}</div>}
+                    <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", alignItems: "center" }}>
+                      {attendance.isGuest && <span style={{ marginTop: "2px", fontSize: "12px", color: "var(--hp-primary)", fontWeight: 900 }}>Гость</span>}
+                      {formattedResponseTime && <span style={{ marginTop: "2px", fontSize: "12px", color: "var(--hp-muted)" }}>Ответ: {formattedResponseTime}</span>}
+                    </div>
                   </div>
                 </div>
 
-                {isEditingStatuses && canManage ? (
+                {isEditingStatuses && canEditThisAttendance ? (
                   <select
                     value={attendance.status}
                     disabled={savingUserId === attendance.userId}
