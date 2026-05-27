@@ -282,7 +282,7 @@ export function CreatePlayerFormPage() {
 
             <div style={{ borderTop: "1px solid #eceff1", padding: "10px 16px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px" }}>
               <button type="button" onClick={() => void runSpbhlSearch(Math.max(1, spbhlPage - 1))} disabled={spbhlLoading || spbhlPage <= 1} style={{ padding: "8px 12px", borderRadius: "8px", border: "1px solid var(--hp-border)", backgroundColor: "var(--hp-surface)", color: spbhlPage <= 1 ? "var(--hp-muted)" : "var(--hp-text)", cursor: spbhlPage <= 1 ? "not-allowed" : "pointer" }}>
-                ← Назад
+                ←
               </button>
               <div style={{ fontSize: "13px", color: "#546e7a" }}>Страница {spbhlPage} из {spbhlTotalPages}</div>
               <button type="button" onClick={() => void runSpbhlSearch(Math.min(spbhlTotalPages, spbhlPage + 1))} disabled={spbhlLoading || spbhlPage >= spbhlTotalPages} style={{ padding: "8px 12px", borderRadius: "8px", border: "1px solid var(--hp-border)", backgroundColor: "var(--hp-surface)", color: spbhlPage >= spbhlTotalPages ? "var(--hp-muted)" : "var(--hp-text)", cursor: spbhlPage >= spbhlTotalPages ? "not-allowed" : "pointer" }}>

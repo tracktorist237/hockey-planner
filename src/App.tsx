@@ -21,6 +21,7 @@ import { EventPage } from "src/pages/EventPage/EventPage";
 import { EventsListPage } from "src/pages/EventsListPage/EventsListPage";
 import { LinkPlayerPage } from "src/pages/LinkPlayerPage";
 import { NewsPage } from "src/pages/NewsPage";
+import { NotificationSettingsPage } from "src/pages/NotificationSettingsPage";
 import { TeamDetailsPage } from "src/pages/TeamDetailsPage/TeamDetailsPage";
 import { TeamManagePage } from "src/pages/TeamDetailsPage/TeamManagePage";
 import { TeamsPage } from "src/pages/TeamsPage";
@@ -294,6 +295,17 @@ function AppRoutes() {
             <RequireAuth>
               <RequireOnboardingComplete>
                 <SettingsPage onOpenDebug={() => setIsDebugOpen(true)} />
+              </RequireOnboardingComplete>
+            </RequireAuth>
+          }
+        />
+
+        <Route
+          path="/settings/notifications"
+          element={
+            <RequireAuth>
+              <RequireOnboardingComplete>
+                <NotificationSettingsPage />
               </RequireOnboardingComplete>
             </RequireAuth>
           }

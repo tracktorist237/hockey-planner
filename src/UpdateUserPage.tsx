@@ -964,7 +964,7 @@ export function UpdateUserPage() {
                   cursor: spbhlPage <= 1 ? "not-allowed" : "pointer",
                 }}
               >
-                ← Назад
+                ←
               </button>
 
               <div style={{ fontSize: "13px", color: "var(--hp-muted)" }}>

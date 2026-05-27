@@ -69,21 +69,35 @@ self.addEventListener("push", (event) => {
     };
 
     event.waitUntil(
-      self.registration.showNotification(payload.title || "Уведомление", {
-        body: payload.body || "",
-        icon: "/logo192.png",
-        badge: "/logo192.png",
-        data: { url: payload.url || "/events" },
-      }),
+      Promise.all([
+        self.registration.showNotification(payload.title || "Уведомление", {
+          body: payload.body || "",
+          icon: "/logo192.png",
+          badge: "/logo192.png",
+          data: { url: payload.url || "/events" },
+        }),
+        self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
+          clientList.forEach((client) => {
+            client.postMessage({ type: "HP_NOTIFICATION_RECEIVED" });
+          });
+        }),
+      ]),
     );
   } catch {
     event.waitUntil(
-      self.registration.showNotification("Уведомление", {
-        body: event.data.text(),
-        icon: "/logo192.png",
-        badge: "/logo192.png",
-        data: { url: "/events" },
-      }),
+      Promise.all([
+        self.registration.showNotification("Уведомление", {
+          body: event.data.text(),
+          icon: "/logo192.png",
+          badge: "/logo192.png",
+          data: { url: "/events" },
+        }),
+        self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
+          clientList.forEach((client) => {
+            client.postMessage({ type: "HP_NOTIFICATION_RECEIVED" });
+          });
+        }),
+      ]),
     );
   }
 });

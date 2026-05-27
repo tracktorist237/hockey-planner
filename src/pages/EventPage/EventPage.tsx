@@ -34,6 +34,13 @@ export function EventPage({ eventId, onBack, currentUser }: EventPageProps) {
   const selectedUserId = useMemo(() => currentUser?.id ?? null, [currentUser?.id]);
   const currentUserPrimaryPosition = currentUser?.primaryPosition ?? resolvedCurrentUserPosition;
   const { event, loading, error, copySuccess, copyEventLink, reloadEvent, setError } = useEventData(eventId);
+
+  useEffect(() => {
+    const tab = new URLSearchParams(window.location.search).get("tab");
+    if (tab === "roster" || tab === "goalies" || tab === "attendance") {
+      setActiveTab(tab);
+    }
+  }, [eventId]);
   const canManageEvent = useMemo(
     () => Boolean(event?.teamId && manageableTeamIds.has(event.teamId)),
     [event?.teamId, manageableTeamIds],

@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getMyTeams } from "src/api/teams";
 import { BottomNav } from "src/components/BottomNav";
 import { LoadingIndicator } from "src/components/LoadingIndicator";
+import { NotificationBell } from "src/components/NotificationBell";
 import { CurrentPlayerHeader } from "src/CurrentPlayerHeader";
 import { EventsList as CalendarEventsList } from "src/pages/CalendarPage/components/EventsList";
 import { Legend } from "src/pages/CalendarPage/components/Legend";
@@ -432,6 +433,8 @@ export const EventsListPage = ({
   const [teams, setTeams] = useState<TeamDto[]>([]);
   const [activeQuickFilters, setActiveQuickFilters] = useState<QuickFilter[]>([]);
   const [advancedFilters, setAdvancedFilters] = useState<AdvancedFilters>(emptyAdvancedFilters);
+  const [isCreateFabVisible, setIsCreateFabVisible] = useState(true);
+  const lastScrollYRef = useRef(0);
   const canCreateEvents = canManageTeamEvents;
 
   const loadTeams = useCallback(async () => {
@@ -455,6 +458,35 @@ export const EventsListPage = ({
   useEffect(() => {
     void loadTeams();
   }, [loadTeams]);
+
+  useEffect(() => {
+    if (!canCreateEvents) {
+      return;
+    }
+
+    lastScrollYRef.current = window.scrollY;
+
+    const handleScroll = () => {
+      const nextScrollY = window.scrollY;
+      const delta = nextScrollY - lastScrollYRef.current;
+
+      if (nextScrollY < 40) {
+        setIsCreateFabVisible(true);
+      } else if (delta > 8) {
+        setIsCreateFabVisible(false);
+      } else if (delta < -8) {
+        setIsCreateFabVisible(true);
+      }
+
+      lastScrollYRef.current = Math.max(nextScrollY, 0);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, [canCreateEvents]);
 
   const handleOpenEvent = useCallback(
     (eventId: string) => {
@@ -542,14 +574,7 @@ export const EventsListPage = ({
           boxShadow: "var(--hp-shadow-sm)",
         }}
       >
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: "12px",
-          }}
-        >
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", marginBottom: "12px" }}>
           <h1
             style={{
               margin: "0",
@@ -560,30 +585,7 @@ export const EventsListPage = ({
           >
             Мероприятия
           </h1>
-          <div style={{ display: "flex", gap: "8px" }}>
-            {canCreateEvents && (
-              <button
-                onClick={() => navigate("/events/create")}
-                style={{
-                  padding: "10px 16px",
-                  backgroundColor: "var(--hp-primary)",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "10px",
-                  fontSize: "14px",
-                  fontWeight: "500",
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  transition: "all 0.2s ease",
-                }}
-              >
-                <span style={{ fontSize: "20px" }}>+</span>
-                <span>Добавить</span>
-              </button>
-            )}
-          </div>
+          <NotificationBell currentUserId={currentUser?.id} />
         </div>
 
         <CurrentPlayerHeader />
@@ -751,6 +753,47 @@ export const EventsListPage = ({
       </div>
 
       <BottomNav activeTab="events" />
+      {canCreateEvents && (
+        <button
+          type="button"
+          aria-label="Добавить мероприятие"
+          onClick={() => navigate("/events/create")}
+          style={{
+            position: "fixed",
+            right: "max(20px, calc((100vw - 600px) / 2 + 20px))",
+            bottom: "106px",
+            zIndex: 130,
+            width: "64px",
+            height: "64px",
+            borderRadius: "50%",
+            border: "1px solid rgba(255, 255, 255, 0.32)",
+            background: "linear-gradient(180deg, var(--hp-primary), var(--hp-primary-hover))",
+            color: "white",
+            boxShadow: "0 14px 34px rgba(18, 87, 207, 0.35)",
+            cursor: "pointer",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "1px",
+            transform: isCreateFabVisible ? "translateY(0) scale(1)" : "translateY(62px) scale(0.92)",
+            opacity: isCreateFabVisible ? 1 : 0,
+            pointerEvents: isCreateFabVisible ? "auto" : "none",
+            transition: "transform 0.22s ease, opacity 0.18s ease, box-shadow 0.2s ease",
+          }}
+          onMouseEnter={(event) => {
+            event.currentTarget.style.boxShadow = "0 18px 40px rgba(18, 87, 207, 0.42)";
+            event.currentTarget.style.transform = isCreateFabVisible ? "translateY(-2px) scale(1.02)" : "translateY(62px) scale(0.92)";
+          }}
+          onMouseLeave={(event) => {
+            event.currentTarget.style.boxShadow = "0 14px 34px rgba(18, 87, 207, 0.35)";
+            event.currentTarget.style.transform = isCreateFabVisible ? "translateY(0) scale(1)" : "translateY(62px) scale(0.92)";
+          }}
+        >
+          <span style={{ fontSize: "32px", lineHeight: 0.78, fontWeight: 500 }}>+</span>
+          <span style={{ fontSize: "9px", lineHeight: 1, fontWeight: 900, letterSpacing: 0 }}>Добавить</span>
+        </button>
+      )}
       <div style={{ height: "110px" }} />
       <style>
         {`

@@ -1,7 +1,11 @@
 import { BottomNav } from "src/components/BottomNav";
+import { NotificationBell } from "src/components/NotificationBell";
 import { CurrentPlayerHeader } from "src/CurrentPlayerHeader";
+import { useAuth } from "src/hooks/useAuth";
 
 export function NewsPage() {
+  const { currentUser } = useAuth();
+
   return (
     <div
       style={{
@@ -20,9 +24,12 @@ export function NewsPage() {
           boxShadow: "var(--hp-shadow-sm)",
         }}
       >
-        <h1 style={{ margin: "0 0 12px", fontSize: "20px", fontWeight: 700, color: "var(--hp-heading)" }}>
-          Новости
-        </h1>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", marginBottom: "12px" }}>
+          <h1 style={{ margin: 0, fontSize: "20px", fontWeight: 700, color: "var(--hp-heading)" }}>
+            Новости
+          </h1>
+          <NotificationBell currentUserId={currentUser?.id} />
+        </div>
         <CurrentPlayerHeader />
       </div>
 

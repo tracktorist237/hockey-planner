@@ -48,6 +48,7 @@ export interface TeamNewsDto {
 export interface CreateTeamNewsRequest {
   title: string;
   body: string;
+  sendNotification?: boolean;
 }
 
 export interface CreateTeamRequest {

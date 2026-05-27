@@ -3,27 +3,14 @@ import { useNavigate } from "react-router-dom";
 import { CurrentPlayerHeader } from "./CurrentPlayerHeader";
 import { APP_VERSION } from "./config/version";
 import { getVersionInfo } from "src/api/version";
-import { getPushPublicKey, subscribePush } from "src/api/push";
 import { BottomNav } from "src/components/BottomNav";
+import { NotificationBell } from "src/components/NotificationBell";
 import { useAuth } from "src/hooks/useAuth";
 import { ThemePreference, useTheme } from "src/context/ThemeContext";
 
 interface SettingsPageProps {
   onOpenDebug?: () => void;
 }
-
-const base64UrlToUint8Array = (value: string): Uint8Array => {
-  const padding = "=".repeat((4 - (value.length % 4)) % 4);
-  const base64 = (value + padding).replace(/-/g, "+").replace(/_/g, "/");
-  const raw = window.atob(base64);
-  const output = new Uint8Array(raw.length);
-
-  for (let index = 0; index < raw.length; index += 1) {
-    output[index] = raw.charCodeAt(index);
-  }
-
-  return output;
-};
 
 export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
   const navigate = useNavigate();
@@ -32,10 +19,6 @@ export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
   const [isUpdating, setIsUpdating] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [isClearing, setIsClearing] = useState(false);
-  const [isPushSubscribing, setIsPushSubscribing] = useState(false);
-  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission | "unsupported">(
-    typeof window !== "undefined" && "Notification" in window ? Notification.permission : "unsupported",
-  );
 
   const currentUserId = currentUser?.id ?? null;
 
@@ -160,71 +143,7 @@ export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
     }
   };
 
-  const handleEnableBirthdayNotifications = async () => {
-    if (!("Notification" in window)) {
-      setNotificationPermission("unsupported");
-      setMessage("❌ Браузер не поддерживает push-уведомления");
-      return;
-    }
-
-    if (!("serviceWorker" in navigator)) {
-      setMessage("❌ Service Worker не поддерживается");
-      return;
-    }
-
-    setIsPushSubscribing(true);
-
-    try {
-      const permission = await Notification.requestPermission();
-      setNotificationPermission(permission);
-
-      if (permission === "granted") {
-        const vapidPublicKey = await getPushPublicKey();
-
-        let registration = await navigator.serviceWorker.getRegistration();
-        if (!registration) {
-          registration = await navigator.serviceWorker.register(`${process.env.PUBLIC_URL}/service-worker.js`);
-        }
-
-        const existingSubscription = await registration.pushManager.getSubscription();
-        const subscription =
-          existingSubscription ||
-          (await registration.pushManager.subscribe({
-            userVisibleOnly: true,
-            applicationServerKey: base64UrlToUint8Array(vapidPublicKey),
-          }));
-
-        const subscriptionJson = subscription.toJSON();
-        const p256dh = subscriptionJson.keys?.p256dh;
-        const auth = subscriptionJson.keys?.auth;
-
-        if (!p256dh || !auth) {
-          throw new Error("Push subscription keys are missing.");
-        }
-
-        await subscribePush({
-          endpoint: subscription.endpoint,
-          keys: { p256dh, auth },
-          userId: currentUserId,
-          userAgent: navigator.userAgent,
-        });
-
-        setMessage("✅ Push-уведомления о днях рождения включены");
-      } else if (permission === "denied") {
-        setMessage("❌ Уведомления заблокированы в браузере");
-      } else {
-        setMessage("ℹ️ Разрешение на уведомления не выдано");
-      }
-    } catch (error) {
-      console.error("Ошибка запроса разрешения уведомлений:", error);
-      setMessage("❌ Не удалось включить push-уведомления");
-    } finally {
-      setIsPushSubscribing(false);
-      setTimeout(() => setMessage(null), 4000);
-    }
-  };
-
-  const isBusy = isUpdating || isClearing || isPushSubscribing;
+  const isBusy = isUpdating || isClearing;
   const messageType: "success" | "error" | "info" =
     message?.startsWith("✅") ? "success" : message?.startsWith("❌") ? "error" : "info";
   const themeOptions: Array<{ value: ThemePreference; label: string; description: string }> = [
@@ -252,9 +171,12 @@ export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
           boxShadow: "var(--hp-shadow-sm)",
         }}
       >
-        <h1 style={{ margin: "0 0 12px", fontSize: "20px", fontWeight: 700, color: "var(--hp-heading)" }}>
-          Настройки
-        </h1>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", marginBottom: "12px" }}>
+          <h1 style={{ margin: 0, fontSize: "20px", fontWeight: 700, color: "var(--hp-heading)" }}>
+            Настройки
+          </h1>
+          <NotificationBell currentUserId={currentUser?.id} />
+        </div>
         <CurrentPlayerHeader />
       </div>
 
@@ -318,6 +240,7 @@ export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
             })}
           </div>
         </div>
+
         <div
           style={{
             backgroundColor: "var(--hp-surface)",
@@ -347,47 +270,34 @@ export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
 
           <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
             <button
-              onClick={handleEnableBirthdayNotifications}
-              disabled={isBusy}
+              onClick={() => navigate("/settings/notifications")}
               style={{
                 width: "100%",
                 padding: "16px",
-                backgroundColor: notificationPermission === "granted" ? "var(--hp-success-soft)" : "var(--hp-warning-soft)",
-                color: notificationPermission === "granted" ? "var(--hp-success)" : "var(--hp-warning)",
-                border: `1px solid ${notificationPermission === "granted" ? "var(--hp-success-border)" : "var(--hp-warning-border)"}`,
+                backgroundColor: "var(--hp-primary-soft)",
+                color: "var(--hp-primary)",
+                border: "1px solid var(--hp-primary)",
                 borderRadius: "12px",
                 fontSize: "16px",
                 fontWeight: "600",
-                cursor: isPushSubscribing ? "default" : "pointer",
+                cursor: "pointer",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 gap: "8px",
                 transition: "all 0.2s ease",
-                opacity: isBusy ? 0.7 : 1,
               }}
               onMouseEnter={(event) => {
-                if (!isBusy) {
-                  event.currentTarget.style.backgroundColor = "var(--hp-warning-soft)";
-                  event.currentTarget.style.transform = "translateY(-1px)";
-                }
+                event.currentTarget.style.backgroundColor = "var(--hp-surface-soft)";
+                event.currentTarget.style.transform = "translateY(-1px)";
               }}
               onMouseLeave={(event) => {
-                if (!isBusy) {
-                  event.currentTarget.style.backgroundColor =
-                    notificationPermission === "granted" ? "var(--hp-success-soft)" : "var(--hp-warning-soft)";
-                  event.currentTarget.style.transform = "translateY(0)";
-                }
+                event.currentTarget.style.backgroundColor = "var(--hp-primary-soft)";
+                event.currentTarget.style.transform = "translateY(0)";
               }}
             >
               <span style={{ fontSize: "20px" }}>🔔</span>
-              <span>
-                {isPushSubscribing
-                  ? "Подписка на push-уведомления..."
-                  : notificationPermission === "granted"
-                    ? "Уведомления о днях рождения включены"
-                    : "Включить уведомления о днях рождения"}
-              </span>
+              <span>Настройки уведомлений</span>
             </button>
 
             <button

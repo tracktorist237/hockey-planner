@@ -8,6 +8,8 @@ export interface PushSubscriptionPayload {
   };
   userId?: string | null;
   userAgent?: string;
+  platform?: string;
+  deviceName?: string;
 }
 
 export interface PushBroadcastPayload {

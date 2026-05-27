@@ -163,6 +163,7 @@ export function TeamDetailsPage({ currentUser, currentTeamId, onTeamChange }: Te
   const [newsSaving, setNewsSaving] = useState(false);
   const [newsTitle, setNewsTitle] = useState("");
   const [newsBody, setNewsBody] = useState("");
+  const [newsSendNotification, setNewsSendNotification] = useState(false);
   const [joining, setJoining] = useState(false);
   const [leaving, setLeaving] = useState(false);
   const [confirmJoin, setConfirmJoin] = useState(false);
@@ -344,10 +345,11 @@ export function TeamDetailsPage({ currentUser, currentTeamId, onTeamChange }: Te
     setError(null);
     setMessage(null);
     try {
-      const created = await createTeamNews(team.id, { title: newsTitle.trim(), body: newsBody.trim() }, currentUser.id);
+      const created = await createTeamNews(team.id, { title: newsTitle.trim(), body: newsBody.trim(), sendNotification: newsSendNotification }, currentUser.id);
       setNews((previous) => [created, ...previous]);
       setNewsTitle("");
       setNewsBody("");
+      setNewsSendNotification(false);
       setMessage("Новость добавлена.");
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Не удалось добавить новость.");
@@ -576,6 +578,15 @@ export function TeamDetailsPage({ currentUser, currentTeamId, onTeamChange }: Te
                         maxLength={2000}
                         style={{ border: "1px solid var(--hp-info-border)", borderRadius: 12, padding: "10px 12px", minHeight: 82, resize: "vertical", fontFamily: "inherit" }}
                       />
+                      <label style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, color: "var(--hp-heading)", fontWeight: 800 }}>
+                        <span>Отправить уведомление</span>
+                        <input
+                          type="checkbox"
+                          checked={newsSendNotification}
+                          onChange={(event) => setNewsSendNotification(event.target.checked)}
+                          style={{ width: 20, height: 20, accentColor: "var(--hp-primary)" }}
+                        />
+                      </label>
                       <button
                         type="button"
                         onClick={() => void handleCreateNews()}
