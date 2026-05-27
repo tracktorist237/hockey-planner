@@ -67,6 +67,37 @@ export const EventInfoCard = ({ event, copySuccess, copyEventLink }: EventInfoCa
             🕒 {formatRuDateLabel(event.startTime)}
           </span>
 
+          {event.teamName && (
+            <span
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                maxWidth: "100%",
+                padding: "4px 10px",
+                borderRadius: "999px",
+                background: "var(--hp-surface-soft)",
+                color: "var(--hp-muted)",
+                border: "1px solid var(--hp-border)",
+                fontSize: "12px",
+                fontWeight: 800,
+              }}
+              title={event.teamName}
+            >
+              <span style={{ color: "var(--hp-primary)", fontSize: "11px" }}>●</span>
+              <span
+                style={{
+                  minWidth: 0,
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {event.teamName}
+              </span>
+            </span>
+          )}
+
           {event.type === EventType.Game && event.leagueName && (
             <div
               style={{

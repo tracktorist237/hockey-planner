@@ -38,17 +38,25 @@ export interface TeamMemberDto {
 export interface TeamNewsDto {
   id: string;
   teamId: string;
+  teamName?: string | null;
   title: string;
   body: string;
   authorUserId: string;
   authorName: string;
   createdAt: string;
+  updatedAt?: string | null;
+  canManage?: boolean;
 }
 
 export interface CreateTeamNewsRequest {
   title: string;
   body: string;
   sendNotification?: boolean;
+}
+
+export interface UpdateTeamNewsRequest {
+  title: string;
+  body: string;
 }
 
 export interface CreateTeamRequest {

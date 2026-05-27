@@ -35,12 +35,16 @@ interface EditableMemberRowProps {
   member: TeamMemberDto;
   canEditBadge: boolean;
   canEditRole: boolean;
+  canRemove: boolean;
   saving: boolean;
+  removing: boolean;
   onSave: (member: TeamMemberDto, role: number, badgeTitle: string) => void;
+  onRemove: (member: TeamMemberDto) => void;
 }
 
-function EditableMemberRow({ member, canEditBadge, canEditRole, saving, onSave }: EditableMemberRowProps) {
+function EditableMemberRow({ member, canEditBadge, canEditRole, canRemove, saving, removing, onSave, onRemove }: EditableMemberRowProps) {
   const [isEditing, setIsEditing] = useState(false);
+  const [isActionsOpen, setIsActionsOpen] = useState(false);
   const [role, setRole] = useState(member.role);
   const [badgeTitle, setBadgeTitle] = useState(member.badgeTitle ?? "");
 
@@ -64,6 +68,8 @@ function EditableMemberRow({ member, canEditBadge, canEditRole, saving, onSave }
     setIsEditing(false);
   };
 
+  const hasActions = canEditBadge || canEditRole || canRemove;
+
   return (
     <div style={{ border: "1px solid var(--hp-border)", borderRadius: 14, padding: 12, background: "var(--hp-surface)" }}>
       <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "flex-start" }}>
@@ -83,14 +89,61 @@ function EditableMemberRow({ member, canEditBadge, canEditRole, saving, onSave }
           </div>
         </div>
 
-        {(canEditBadge || canEditRole) && (
-          <button
-            type="button"
-            onClick={() => setIsEditing((value) => !value)}
-              style={{ border: 0, borderRadius: 999, padding: "7px 10px", background: isEditing ? "#fee2e2" : "var(--hp-surface-muted)", color: isEditing ? "#991b1b" : "var(--hp-text)", fontWeight: 900, cursor: "pointer", whiteSpace: "nowrap" }}
-          >
-            {isEditing ? "Скрыть" : "Изменить"}
-          </button>
+        {hasActions && (
+          <div style={{ position: "relative", flexShrink: 0 }}>
+            <button
+              type="button"
+              onClick={() => setIsActionsOpen((value) => !value)}
+              aria-label="Действия с участником"
+              style={{ border: "1px solid var(--hp-border)", borderRadius: 999, padding: "6px 10px", background: "var(--hp-surface-muted)", color: "var(--hp-text)", fontWeight: 900, cursor: "pointer", lineHeight: 1 }}
+            >
+              ...
+            </button>
+            {isActionsOpen && (
+              <div
+                style={{
+                  position: "absolute",
+                  right: 0,
+                  top: "34px",
+                  zIndex: 20,
+                  minWidth: 132,
+                  border: "1px solid var(--hp-border)",
+                  borderRadius: 12,
+                  background: "var(--hp-surface)",
+                  boxShadow: "var(--hp-shadow-md)",
+                  padding: 4,
+                  display: "grid",
+                  gap: 2,
+                }}
+              >
+                {(canEditBadge || canEditRole) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsEditing((value) => !value);
+                      setIsActionsOpen(false);
+                    }}
+                    style={{ border: 0, borderRadius: 9, padding: "9px 10px", background: "transparent", color: "var(--hp-heading)", fontWeight: 900, cursor: "pointer", textAlign: "left" }}
+                  >
+                    {isEditing ? "Скрыть" : "Изменить"}
+                  </button>
+                )}
+                {canRemove && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsActionsOpen(false);
+                      onRemove(member);
+                    }}
+                    disabled={removing}
+                    style={{ border: 0, borderRadius: 9, padding: "9px 10px", background: "transparent", color: "var(--hp-danger)", fontWeight: 900, cursor: removing ? "wait" : "pointer", opacity: removing ? 0.7 : 1, textAlign: "left" }}
+                  >
+                    {removing ? "Удаляем..." : "Удалить"}
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
         )}
       </div>
 
@@ -160,12 +213,25 @@ interface TeamMembersSectionProps {
   members: TeamMemberDto[];
   loading: boolean;
   savingUserId: string | null;
+  removingUserId?: string | null;
   onSave: (member: TeamMemberDto, role: number, badgeTitle: string) => void;
+  onRemove?: (member: TeamMemberDto) => void;
 }
 
-export function TeamMembersSection({ team, members, loading, savingUserId, onSave }: TeamMembersSectionProps) {
+export function TeamMembersSection({ team, members, loading, savingUserId, removingUserId = null, onSave, onRemove }: TeamMembersSectionProps) {
   const canEditBadge = team.myRole === TeamRole.Owner || team.myRole === TeamRole.Admin;
   const canEditRole = team.myRole === TeamRole.Owner;
+  const canRemoveMember = (member: TeamMemberDto) => {
+    if (!onRemove || member.role === TeamRole.Owner) {
+      return false;
+    }
+
+    if (team.myRole === TeamRole.Owner) {
+      return true;
+    }
+
+    return team.myRole === TeamRole.Admin && member.role === TeamRole.Member;
+  };
 
   return (
     <section style={{ ...cardStyle, marginTop: 14 }}>
@@ -184,8 +250,11 @@ export function TeamMembersSection({ team, members, loading, savingUserId, onSav
               member={member}
               canEditBadge={canEditBadge}
               canEditRole={canEditRole}
+              canRemove={canRemoveMember(member)}
               saving={savingUserId === member.userId}
+              removing={removingUserId === member.userId}
               onSave={onSave}
+              onRemove={(target) => onRemove?.(target)}
             />
           ))}
       </div>

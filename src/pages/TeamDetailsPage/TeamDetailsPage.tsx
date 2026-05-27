@@ -4,7 +4,7 @@ import { BottomNav } from "src/components/BottomNav";
 import { LoadingIndicator } from "src/components/LoadingIndicator";
 import { PlayerAvatar } from "src/components/PlayerAvatar";
 import { getEvents } from "src/api/events";
-import { createTeamNews, getTeam, getTeamMembers, getTeamNews, joinPublicTeam, leaveTeam } from "src/api/teams";
+import { createTeamNews, deleteTeamNews, getTeam, getTeamMembers, getTeamNews, joinPublicTeam, leaveTeam, updateTeamNews } from "src/api/teams";
 import { EventLookUpDto, EventType } from "src/types/events";
 import { TeamContactItem, TeamDto, TeamMemberDto, TeamNewsDto, TeamVisibility } from "src/types/teams";
 import { User } from "src/types/user";
@@ -164,6 +164,10 @@ export function TeamDetailsPage({ currentUser, currentTeamId, onTeamChange }: Te
   const [newsTitle, setNewsTitle] = useState("");
   const [newsBody, setNewsBody] = useState("");
   const [newsSendNotification, setNewsSendNotification] = useState(false);
+  const [editingNewsId, setEditingNewsId] = useState<string | null>(null);
+  const [editingNewsTitle, setEditingNewsTitle] = useState("");
+  const [editingNewsBody, setEditingNewsBody] = useState("");
+  const [newsDeletingId, setNewsDeletingId] = useState<string | null>(null);
   const [joining, setJoining] = useState(false);
   const [leaving, setLeaving] = useState(false);
   const [confirmJoin, setConfirmJoin] = useState(false);
@@ -237,13 +241,13 @@ export function TeamDetailsPage({ currentUser, currentTeamId, onTeamChange }: Te
 
     setNewsLoading(true);
     try {
-      setNews(await getTeamNews(id));
+      setNews(await getTeamNews(id, currentUser?.id));
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Не удалось загрузить новости команды.");
     } finally {
       setNewsLoading(false);
     }
-  }, [id]);
+  }, [currentUser?.id, id]);
 
   useEffect(() => {
     void loadTeam();
@@ -355,6 +359,68 @@ export function TeamDetailsPage({ currentUser, currentTeamId, onTeamChange }: Te
       setError(requestError instanceof Error ? requestError.message : "Не удалось добавить новость.");
     } finally {
       setNewsSaving(false);
+    }
+  };
+
+  const startEditNews = (item: TeamNewsDto) => {
+    setEditingNewsId(item.id);
+    setEditingNewsTitle(item.title);
+    setEditingNewsBody(item.body);
+    setError(null);
+    setMessage(null);
+  };
+
+  const cancelEditNews = () => {
+    setEditingNewsId(null);
+    setEditingNewsTitle("");
+    setEditingNewsBody("");
+  };
+
+  const handleUpdateNews = async (item: TeamNewsDto) => {
+    if (!team || !currentUser?.id) {
+      return;
+    }
+
+    if (!editingNewsTitle.trim() || !editingNewsBody.trim()) {
+      setError("У новости должны быть название и текст.");
+      return;
+    }
+
+    setNewsSaving(true);
+    setError(null);
+    setMessage(null);
+    try {
+      const updated = await updateTeamNews(team.id, item.id, { title: editingNewsTitle.trim(), body: editingNewsBody.trim() }, currentUser.id);
+      setNews((previous) => previous.map((value) => value.id === item.id ? updated : value));
+      cancelEditNews();
+      setMessage("Новость обновлена.");
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Не удалось обновить новость.");
+    } finally {
+      setNewsSaving(false);
+    }
+  };
+
+  const handleDeleteNews = async (item: TeamNewsDto) => {
+    if (!team || !currentUser?.id) {
+      return;
+    }
+
+    if (!window.confirm("Удалить эту новость?")) {
+      return;
+    }
+
+    setNewsDeletingId(item.id);
+    setError(null);
+    setMessage(null);
+    try {
+      await deleteTeamNews(team.id, item.id, currentUser.id);
+      setNews((previous) => previous.filter((value) => value.id !== item.id));
+      setMessage("Новость удалена.");
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Не удалось удалить новость.");
+    } finally {
+      setNewsDeletingId(null);
     }
   };
 
@@ -578,15 +644,54 @@ export function TeamDetailsPage({ currentUser, currentTeamId, onTeamChange }: Te
                         maxLength={2000}
                         style={{ border: "1px solid var(--hp-info-border)", borderRadius: 12, padding: "10px 12px", minHeight: 82, resize: "vertical", fontFamily: "inherit" }}
                       />
-                      <label style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, color: "var(--hp-heading)", fontWeight: 800 }}>
+                      <button
+                        type="button"
+                        onClick={() => setNewsSendNotification((value) => !value)}
+                        aria-pressed={newsSendNotification}
+                        style={{
+                          border: "1px solid var(--hp-info-border)",
+                          borderRadius: 12,
+                          padding: "10px 12px",
+                          background: "var(--hp-surface)",
+                          color: "var(--hp-heading)",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          gap: 12,
+                          fontWeight: 800,
+                          cursor: "pointer",
+                          textAlign: "left",
+                        }}
+                      >
                         <span>Отправить уведомление</span>
-                        <input
-                          type="checkbox"
-                          checked={newsSendNotification}
-                          onChange={(event) => setNewsSendNotification(event.target.checked)}
-                          style={{ width: 20, height: 20, accentColor: "var(--hp-primary)" }}
-                        />
-                      </label>
+                        <span
+                          aria-hidden="true"
+                          style={{
+                            width: 46,
+                            height: 26,
+                            borderRadius: 999,
+                            padding: 2,
+                            border: newsSendNotification ? "1px solid var(--hp-primary)" : "1px solid var(--hp-border)",
+                            background: newsSendNotification ? "var(--hp-primary)" : "var(--hp-surface-soft)",
+                            boxSizing: "border-box",
+                            flexShrink: 0,
+                            transition: "all 0.18s ease",
+                          }}
+                        >
+                          <span
+                            style={{
+                              display: "block",
+                              width: 20,
+                              height: 20,
+                              borderRadius: "50%",
+                              background: newsSendNotification ? "white" : "var(--hp-muted)",
+                              transform: newsSendNotification ? "translateX(20px)" : "translateX(0)",
+                              transition: "all 0.18s ease",
+                              boxShadow: "var(--hp-shadow-sm)",
+                            }}
+                          />
+                        </span>
+                      </button>
                       <button
                         type="button"
                         onClick={() => void handleCreateNews()}
@@ -608,11 +713,53 @@ export function TeamDetailsPage({ currentUser, currentTeamId, onTeamChange }: Te
                   {!newsLoading &&
                     news.map((item) => (
                       <article key={item.id} style={{ border: "1px solid var(--hp-border)", borderRadius: 16, padding: 14, background: "var(--hp-surface)" }}>
-                        <h3 style={{ margin: "0 0 7px", color: "var(--hp-text-strong)", fontSize: 17 }}>{item.title}</h3>
-                        <div style={{ color: "var(--hp-muted)", fontSize: 12, fontWeight: 800, marginBottom: 8 }}>
-                          {item.authorName || "Команда"} · {formatNewsDate(item.createdAt)}
-                        </div>
-                        <div style={{ color: "var(--hp-muted)", lineHeight: 1.45, whiteSpace: "pre-wrap" }}>{item.body}</div>
+                        {editingNewsId === item.id ? (
+                          <div style={{ display: "grid", gap: 8 }}>
+                            <input
+                              value={editingNewsTitle}
+                              onChange={(event) => setEditingNewsTitle(event.target.value)}
+                              maxLength={120}
+                              style={{ border: "1px solid var(--hp-border)", borderRadius: 12, padding: "10px 12px", background: "var(--hp-input-bg)", color: "var(--hp-text)", fontWeight: 800 }}
+                            />
+                            <textarea
+                              value={editingNewsBody}
+                              onChange={(event) => setEditingNewsBody(event.target.value)}
+                              maxLength={2000}
+                              style={{ border: "1px solid var(--hp-border)", borderRadius: 12, padding: "10px 12px", minHeight: 96, resize: "vertical", fontFamily: "inherit", background: "var(--hp-input-bg)", color: "var(--hp-text)" }}
+                            />
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                              <button type="button" onClick={cancelEditNews} style={{ border: "1px solid var(--hp-border)", borderRadius: 12, padding: "10px", background: "var(--hp-surface-soft)", color: "var(--hp-heading)", fontWeight: 900, cursor: "pointer" }}>
+                                Отмена
+                              </button>
+                              <button type="button" onClick={() => void handleUpdateNews(item)} disabled={newsSaving} style={{ border: 0, borderRadius: 12, padding: "10px", background: "var(--hp-primary)", color: "white", fontWeight: 900, cursor: newsSaving ? "wait" : "pointer", opacity: newsSaving ? 0.7 : 1 }}>
+                                {newsSaving ? "Сохраняем..." : "Сохранить"}
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "flex-start" }}>
+                              <div style={{ minWidth: 0 }}>
+                                <h3 style={{ margin: "0 0 7px", color: "var(--hp-text-strong)", fontSize: 17 }}>{item.title}</h3>
+                                <div style={{ color: "var(--hp-muted)", fontSize: 12, fontWeight: 800, marginBottom: 8 }}>
+                                  {item.authorName || "Команда"} · {formatNewsDate(item.createdAt)}
+                                  {item.updatedAt && item.updatedAt !== item.createdAt ? " · изменено" : ""}
+                                </div>
+                              </div>
+                              {canManage && (
+                                <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+                                  <button type="button" onClick={() => startEditNews(item)} style={{ border: "1px solid var(--hp-border)", borderRadius: 10, padding: "7px 9px", background: "var(--hp-surface-soft)", color: "var(--hp-heading)", fontWeight: 900, cursor: "pointer" }}>
+                                    ✎
+                                  </button>
+                                  <button type="button" onClick={() => void handleDeleteNews(item)} disabled={newsDeletingId === item.id} style={{ border: "1px solid var(--hp-danger-border)", borderRadius: 10, padding: "7px 9px", background: "var(--hp-danger-soft)", color: "var(--hp-danger)", fontWeight: 900, cursor: newsDeletingId === item.id ? "wait" : "pointer", opacity: newsDeletingId === item.id ? 0.7 : 1 }}>
+                                    ×
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                            <div style={{ color: "var(--hp-muted)", lineHeight: 1.45, whiteSpace: "pre-wrap" }}>{item.body}</div>
+                          </>
+                        )}
                       </article>
                     ))}
                 </div>

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { LoadingIndicator } from "src/components/LoadingIndicator";
 import { BottomNav } from "src/components/BottomNav";
-import { getTeam, getTeamMembers, updateTeam, updateTeamMember } from "src/api/teams";
+import { getTeam, getTeamMembers, removeTeamMember, updateTeam, updateTeamMember } from "src/api/teams";
 import { TeamContactItem, TeamDto, TeamMemberDto, TeamVisibility } from "src/types/teams";
 import { User } from "src/types/user";
 import { TeamMembersSection } from "src/pages/TeamsPage/components/TeamMembersSection";
@@ -28,6 +28,15 @@ interface TeamFormState {
   links: TeamContactItem[];
   addresses: TeamContactItem[];
 }
+
+type ManageTab = "profile" | "invite" | "members" | "privacy";
+
+const manageTabs: Array<{ key: ManageTab; label: string; hint: string }> = [
+  { key: "profile", label: "Профиль", hint: "Название, описание, контакты" },
+  { key: "invite", label: "Приглашение", hint: "Код для вступления" },
+  { key: "members", label: "Участники", hint: "Роли и бейджи" },
+  { key: "privacy", label: "Доступ", hint: "Публичность команды" },
+];
 
 const canManageTeam = (team: TeamDto | null): boolean =>
   team?.myRole === TeamRole.Owner || team?.myRole === TeamRole.Admin;
@@ -110,7 +119,9 @@ export function TeamManagePage({ currentUser }: TeamManagePageProps) {
   const [teamSaving, setTeamSaving] = useState(false);
   const [privacySaving, setPrivacySaving] = useState(false);
   const [savingUserId, setSavingUserId] = useState<string | null>(null);
+  const [removingUserId, setRemovingUserId] = useState<string | null>(null);
   const [copySuccess, setCopySuccess] = useState(false);
+  const [activeTab, setActiveTab] = useState<ManageTab>("profile");
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -247,6 +258,31 @@ export function TeamManagePage({ currentUser }: TeamManagePageProps) {
     }
   };
 
+  const handleRemoveMember = async (member: TeamMemberDto) => {
+    if (!team || !currentUser?.id) {
+      return;
+    }
+
+    const memberName = getMemberName(member);
+    if (!window.confirm(`Удалить ${memberName} из команды?`)) {
+      return;
+    }
+
+    setRemovingUserId(member.userId);
+    setError(null);
+    setMessage(null);
+    try {
+      await removeTeamMember(team.id, member.userId, currentUser.id);
+      setMembers((previous) => previous.filter((value) => value.userId !== member.userId));
+      setMessage("Участник удалён из команды.");
+      await loadTeam();
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Не удалось удалить участника.");
+    } finally {
+      setRemovingUserId(null);
+    }
+  };
+
   const isDenied = !loading && team && !canManageTeam(team);
   const isPublic = form.visibility === TeamVisibility.Public;
 
@@ -276,81 +312,129 @@ export function TeamManagePage({ currentUser }: TeamManagePageProps) {
 
         {!loading && team && canManageTeam(team) && (
           <>
-            <section style={cardStyle}>
-              <h2 style={{ margin: "0 0 10px", fontSize: 20, color: "var(--hp-text-strong)" }}>Оформление сообщества</h2>
-              <div style={{ display: "grid", gap: 10 }}>
-                <input value={form.name} onChange={(event) => setForm((value) => ({ ...value, name: event.target.value }))} placeholder="Название команды" style={inputStyle} />
-                <textarea value={form.description} onChange={(event) => setForm((value) => ({ ...value, description: event.target.value }))} placeholder="Описание команды" style={{ ...inputStyle, minHeight: 82, resize: "vertical", fontFamily: "inherit" }} />
-                <input value={form.avatarUrl} onChange={(event) => setForm((value) => ({ ...value, avatarUrl: event.target.value }))} placeholder="Ссылка на аватарку команды" style={inputStyle} />
-                <input value={form.coverImageUrl} onChange={(event) => setForm((value) => ({ ...value, coverImageUrl: event.target.value }))} placeholder="Ссылка на обои / обложку" style={inputStyle} />
-                <ContactItemsEditor title="Телефоны" titlePlaceholder="Название: Капитан" valuePlaceholder="Телефон" items={form.phones} onChange={(phones) => setForm((value) => ({ ...value, phones }))} />
-                <ContactItemsEditor title="Ссылки" titlePlaceholder="Название: Чат команды" valuePlaceholder="Ссылка" items={form.links} onChange={(links) => setForm((value) => ({ ...value, links }))} />
-                <ContactItemsEditor title="Адреса" titlePlaceholder="Название: Домашняя арена" valuePlaceholder="Адрес" items={form.addresses} onChange={(addresses) => setForm((value) => ({ ...value, addresses }))} />
-                <button type="button" onClick={handleSaveTeam} disabled={teamSaving} style={{ border: 0, borderRadius: 14, padding: "13px 14px", background: "var(--hp-primary)", color: "white", fontWeight: 900, cursor: teamSaving ? "wait" : "pointer", opacity: teamSaving ? 0.72 : 1 }}>
-                  {teamSaving ? "Сохраняем..." : "Сохранить оформление"}
-                </button>
+            <section style={{ ...cardStyle, padding: 10 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 6 }}>
+                {manageTabs.map((tab) => {
+                  const isActive = activeTab === tab.key;
+                  return (
+                    <button
+                      key={tab.key}
+                      type="button"
+                      onClick={() => setActiveTab(tab.key)}
+                      title={tab.hint}
+                      style={{
+                        border: isActive ? "1px solid var(--hp-primary)" : "1px solid transparent",
+                        borderRadius: 12,
+                        padding: "10px 4px",
+                        background: isActive ? "var(--hp-surface)" : "transparent",
+                        color: isActive ? "var(--hp-heading)" : "var(--hp-muted)",
+                        boxShadow: isActive ? "var(--hp-shadow-sm)" : "none",
+                        fontWeight: 900,
+                        cursor: "pointer",
+                        fontSize: 13,
+                        minWidth: 0,
+                      }}
+                    >
+                      {tab.label}
+                    </button>
+                  );
+                })}
               </div>
             </section>
 
-            <section style={{ ...cardStyle, marginTop: 14 }}>
-              <h2 style={{ margin: "0 0 10px", fontSize: 20, color: "var(--hp-text-strong)" }}>Приглашение</h2>
-              {team.inviteCode ? (
-                <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 8, alignItems: "center" }}>
-                  <div style={{ background: "var(--hp-surface-soft)", border: "1px dashed var(--hp-border)", borderRadius: 14, padding: "10px 12px" }}>
-                    <div style={{ fontSize: 12, color: "var(--hp-muted)", fontWeight: 800 }}>Код приглашения</div>
-                    <div style={{ fontSize: 20, color: "var(--hp-text-strong)", fontWeight: 900, letterSpacing: 1 }}>{team.inviteCode}</div>
-                  </div>
-                  <button type="button" onClick={handleCopyInviteCode} style={{ border: 0, borderRadius: 14, padding: "14px 12px", background: copySuccess ? "var(--hp-success-soft)" : "var(--hp-primary-soft)", color: copySuccess ? "var(--hp-success)" : "var(--hp-info)", fontWeight: 900, cursor: "pointer" }}>
-                    {copySuccess ? "Скопировано" : "Копировать"}
+            {activeTab === "profile" && (
+              <section style={{ ...cardStyle, marginTop: 14 }}>
+                <h2 style={{ margin: "0 0 4px", fontSize: 20, color: "var(--hp-text-strong)" }}>Профиль команды</h2>
+                <div style={{ marginBottom: 12, color: "var(--hp-muted)", fontSize: 14, lineHeight: 1.4 }}>Видимая информация на странице команды.</div>
+                <div style={{ display: "grid", gap: 10 }}>
+                  <input value={form.name} onChange={(event) => setForm((value) => ({ ...value, name: event.target.value }))} placeholder="Название команды" style={inputStyle} />
+                  <textarea value={form.description} onChange={(event) => setForm((value) => ({ ...value, description: event.target.value }))} placeholder="Описание команды" style={{ ...inputStyle, minHeight: 82, resize: "vertical", fontFamily: "inherit" }} />
+                  <input value={form.avatarUrl} onChange={(event) => setForm((value) => ({ ...value, avatarUrl: event.target.value }))} placeholder="Ссылка на аватарку команды" style={inputStyle} />
+                  <input value={form.coverImageUrl} onChange={(event) => setForm((value) => ({ ...value, coverImageUrl: event.target.value }))} placeholder="Ссылка на обои / обложку" style={inputStyle} />
+                  <ContactItemsEditor title="Телефоны" titlePlaceholder="Название: Капитан" valuePlaceholder="Телефон" items={form.phones} onChange={(phones) => setForm((value) => ({ ...value, phones }))} />
+                  <ContactItemsEditor title="Ссылки" titlePlaceholder="Название: Чат команды" valuePlaceholder="Ссылка" items={form.links} onChange={(links) => setForm((value) => ({ ...value, links }))} />
+                  <ContactItemsEditor title="Адреса" titlePlaceholder="Название: Домашняя арена" valuePlaceholder="Адрес" items={form.addresses} onChange={(addresses) => setForm((value) => ({ ...value, addresses }))} />
+                  <button type="button" onClick={handleSaveTeam} disabled={teamSaving} style={{ border: 0, borderRadius: 14, padding: "13px 14px", background: "var(--hp-primary)", color: "white", fontWeight: 900, cursor: teamSaving ? "wait" : "pointer", opacity: teamSaving ? 0.72 : 1 }}>
+                    {teamSaving ? "Сохраняем..." : "Сохранить профиль"}
                   </button>
                 </div>
-              ) : (
-                <div style={{ color: "var(--hp-muted)" }}>Код приглашения недоступен.</div>
-              )}
-            </section>
+              </section>
+            )}
 
-            <TeamMembersSection team={team} members={sortedMembers} loading={membersLoading} savingUserId={savingUserId} onSave={handleSaveMember} />
-
-            <section style={{ ...cardStyle, marginTop: 14, borderColor: "var(--hp-danger-border)", background: "linear-gradient(180deg, var(--hp-surface) 0%, var(--hp-danger-soft) 100%)" }}>
-              <h2 style={{ margin: "0 0 8px", fontSize: 20, color: "var(--hp-danger)" }}>Опасная зона</h2>
-              <p style={{ margin: "0 0 12px", color: "var(--hp-danger)", lineHeight: 1.45 }}>
-                Эти настройки влияют на доступ к команде. Публичную команду видно в поиске, в неё можно вступить с подтверждением. Закрытая команда доступна только по коду приглашения.
-              </p>
-
-              <div style={{ display: "grid", gap: 10 }}>
-                <button
-                  type="button"
-                  onClick={() => setForm((value) => ({ ...value, visibility: isPublic ? TeamVisibility.Private : TeamVisibility.Public }))}
-                  style={{
-                    border: `2px solid ${isPublic ? "#16a34a" : "#f97316"}`,
-                    borderRadius: 16,
-                    padding: 12,
-                    background: isPublic ? "var(--hp-success-soft)" : "var(--hp-warning-soft)",
-                    color: isPublic ? "var(--hp-success)" : "var(--hp-warning)",
-                    cursor: "pointer",
-                    textAlign: "left",
-                  }}
-                >
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-                    <div>
-                      <div style={{ fontWeight: 900, fontSize: 16 }}>{isPublic ? "Команда публичная" : "Команда закрытая"}</div>
-                      <div style={{ marginTop: 3, fontSize: 13, fontWeight: 700 }}>{isPublic ? "Видна в поиске команд" : "Вступление только по коду"}</div>
+            {activeTab === "invite" && (
+              <section style={{ ...cardStyle, marginTop: 14 }}>
+                <h2 style={{ margin: "0 0 4px", fontSize: 20, color: "var(--hp-text-strong)" }}>Приглашение</h2>
+                <div style={{ marginBottom: 12, color: "var(--hp-muted)", fontSize: 14, lineHeight: 1.4 }}>Код можно отправить игроку, чтобы он вступил в закрытую команду.</div>
+                {team.inviteCode ? (
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 8, alignItems: "center" }}>
+                    <div style={{ background: "var(--hp-surface-soft)", border: "1px dashed var(--hp-border)", borderRadius: 14, padding: "10px 12px" }}>
+                      <div style={{ fontSize: 12, color: "var(--hp-muted)", fontWeight: 800 }}>Код приглашения</div>
+                      <div style={{ fontSize: 20, color: "var(--hp-text-strong)", fontWeight: 900, letterSpacing: 1 }}>{team.inviteCode}</div>
                     </div>
-                    <div style={{ width: 54, height: 30, borderRadius: 999, background: isPublic ? "#22c55e" : "#fb923c", padding: 3, boxSizing: "border-box", flexShrink: 0 }}>
-                      <div style={{ width: 24, height: 24, borderRadius: "50%", background: "var(--hp-surface)", transform: isPublic ? "translateX(24px)" : "translateX(0)", transition: "transform 0.15s ease" }} />
-                    </div>
+                    <button type="button" onClick={handleCopyInviteCode} style={{ border: 0, borderRadius: 14, padding: "14px 12px", background: copySuccess ? "var(--hp-success-soft)" : "var(--hp-primary-soft)", color: copySuccess ? "var(--hp-success)" : "var(--hp-info)", fontWeight: 900, cursor: "pointer" }}>
+                      {copySuccess ? "Скопировано" : "Копировать"}
+                    </button>
                   </div>
-                </button>
+                ) : (
+                  <div style={{ color: "var(--hp-muted)" }}>Код приглашения недоступен.</div>
+                )}
+              </section>
+            )}
 
-                <button type="button" onClick={handleSavePrivacy} disabled={privacySaving} style={{ border: "1px solid var(--hp-danger-border)", borderRadius: 14, padding: "13px 14px", background: "var(--hp-danger-soft)", color: "var(--hp-danger)", fontWeight: 900, cursor: privacySaving ? "wait" : "pointer", opacity: privacySaving ? 0.72 : 1 }}>
-                  {privacySaving ? "Сохраняем..." : "Сохранить приватность"}
-                </button>
+            {activeTab === "members" && (
+              <TeamMembersSection
+                team={team}
+                members={sortedMembers}
+                loading={membersLoading}
+                savingUserId={savingUserId}
+                removingUserId={removingUserId}
+                onSave={handleSaveMember}
+                onRemove={handleRemoveMember}
+              />
+            )}
 
-                <div style={{ borderTop: "1px solid var(--hp-danger-border)", paddingTop: 10, color: "var(--hp-danger)", fontSize: 14, lineHeight: 1.45 }}>
-                  Удаление команды пока недоступно: сначала нужно добавить безопасную передачу владения и подтверждение действия.
+            {activeTab === "privacy" && (
+              <section style={{ ...cardStyle, marginTop: 14, borderColor: "var(--hp-danger-border)", background: "linear-gradient(180deg, var(--hp-surface) 0%, var(--hp-danger-soft) 100%)" }}>
+                <h2 style={{ margin: "0 0 8px", fontSize: 20, color: "var(--hp-danger)" }}>Доступ</h2>
+                <p style={{ margin: "0 0 12px", color: "var(--hp-danger)", lineHeight: 1.45 }}>
+                  Эти настройки влияют на доступ к команде. Публичную команду видно в поиске, в неё можно вступить с подтверждением. Закрытая команда доступна только по коду приглашения.
+                </p>
+
+                <div style={{ display: "grid", gap: 10 }}>
+                  <button
+                    type="button"
+                    onClick={() => setForm((value) => ({ ...value, visibility: isPublic ? TeamVisibility.Private : TeamVisibility.Public }))}
+                    style={{
+                      border: `2px solid ${isPublic ? "#16a34a" : "#f97316"}`,
+                      borderRadius: 16,
+                      padding: 12,
+                      background: isPublic ? "var(--hp-success-soft)" : "var(--hp-warning-soft)",
+                      color: isPublic ? "var(--hp-success)" : "var(--hp-warning)",
+                      cursor: "pointer",
+                      textAlign: "left",
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+                      <div>
+                        <div style={{ fontWeight: 900, fontSize: 16 }}>{isPublic ? "Команда публичная" : "Команда закрытая"}</div>
+                        <div style={{ marginTop: 3, fontSize: 13, fontWeight: 700 }}>{isPublic ? "Видна в поиске команд" : "Вступление только по коду"}</div>
+                      </div>
+                      <div style={{ width: 54, height: 30, borderRadius: 999, background: isPublic ? "#22c55e" : "#fb923c", padding: 3, boxSizing: "border-box", flexShrink: 0 }}>
+                        <div style={{ width: 24, height: 24, borderRadius: "50%", background: "var(--hp-surface)", transform: isPublic ? "translateX(24px)" : "translateX(0)", transition: "transform 0.15s ease" }} />
+                      </div>
+                    </div>
+                  </button>
+
+                  <button type="button" onClick={handleSavePrivacy} disabled={privacySaving} style={{ border: "1px solid var(--hp-danger-border)", borderRadius: 14, padding: "13px 14px", background: "var(--hp-danger-soft)", color: "var(--hp-danger)", fontWeight: 900, cursor: privacySaving ? "wait" : "pointer", opacity: privacySaving ? 0.72 : 1 }}>
+                    {privacySaving ? "Сохраняем..." : "Сохранить доступ"}
+                  </button>
+
+                  <div style={{ borderTop: "1px solid var(--hp-danger-border)", paddingTop: 10, color: "var(--hp-danger)", fontSize: 14, lineHeight: 1.45 }}>
+                    Удаление команды пока недоступно: сначала нужно добавить безопасную передачу владения и подтверждение действия.
+                  </div>
                 </div>
-              </div>
-            </section>
+              </section>
+            )}
           </>
         )}
       </main>

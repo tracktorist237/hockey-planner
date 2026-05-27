@@ -134,6 +134,39 @@ const EventCardComponent = ({ event, onOpen }: EventCardProps) => {
         </div>
       </div>
 
+      {event.teamName && (
+        <div
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "5px",
+            maxWidth: "100%",
+            marginBottom: "8px",
+            padding: "3px 8px",
+            borderRadius: "999px",
+            background: "var(--hp-surface-soft)",
+            color: "var(--hp-muted)",
+            border: "1px solid var(--hp-border)",
+            fontSize: "11px",
+            fontWeight: 800,
+            lineHeight: 1.2,
+          }}
+          title={event.teamName}
+        >
+          <span style={{ color: "var(--hp-primary)", fontSize: "11px" }}>●</span>
+          <span
+            style={{
+              minWidth: 0,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {event.teamName}
+          </span>
+        </div>
+      )}
+
       <div
         style={{
           display: "flex",
