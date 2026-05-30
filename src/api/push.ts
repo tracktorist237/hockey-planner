@@ -1,3 +1,5 @@
+import { authFetch } from "src/api/auth";
+
 const API_BASE = process.env.REACT_APP_API_BASE || "";
 
 export interface PushSubscriptionPayload {
@@ -68,7 +70,7 @@ export const unsubscribePush = async (endpoint: string): Promise<void> => {
 export const broadcastPush = async (
   payload: PushBroadcastPayload,
 ): Promise<PushBroadcastResult> => {
-  const response = await fetch(`${API_BASE}/api/push/broadcast`, {
+  const response = await authFetch("/api/push/broadcast", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),

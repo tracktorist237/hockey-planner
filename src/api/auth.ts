@@ -1,4 +1,4 @@
-import { normalizeRole } from "src/constants/roles";
+import { normalizeAppRole, normalizeRole } from "src/constants/roles";
 import { User } from "src/types/user";
 
 const API_BASE = process.env.REACT_APP_API_BASE || "";
@@ -38,6 +38,7 @@ export interface ChangePasswordRequest {
 type AuthUserDto = Partial<User> & {
   id: string;
   role?: number | string | null;
+  appRole?: number | string | null;
   email?: string | null;
   emailConfirmed?: boolean;
 };
@@ -49,6 +50,7 @@ const mapAuthUser = (user: AuthUserDto): User => ({
   jerseyNumber: user.jerseyNumber ?? null,
   fullName: user.fullName ?? `${user.lastName ?? ""} ${user.firstName ?? ""}`.trim(),
   role: normalizeRole(user.role),
+  appRole: normalizeAppRole(user.appRole),
   photoUrl: user.photoUrl ?? null,
   spbhlPlayerId: user.spbhlPlayerId ?? null,
   primaryPosition: user.primaryPosition ?? null,

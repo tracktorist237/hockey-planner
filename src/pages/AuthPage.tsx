@@ -1,5 +1,6 @@
 import { CSSProperties, FormEvent, useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { ReportProblemDialog } from "src/components/ReportProblemDialog";
 import { useAuth } from "src/hooks/useAuth";
 import { markOnboardingRequired, shouldRunOnboarding } from "src/utils/onboarding";
 
@@ -94,6 +95,7 @@ export function AuthPage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isReportOpen, setIsReportOpen] = useState(false);
 
   useEffect(() => {
     if (legacyConfirmToken) {
@@ -359,8 +361,12 @@ export function AuthPage() {
               Вернуться ко входу
             </button>
           )}
+          <button type="button" style={mutedButtonStyle} onClick={() => setIsReportOpen(true)}>
+            Сообщить о проблеме
+          </button>
         </div>
       </form>
+      <ReportProblemDialog isOpen={isReportOpen} onClose={() => setIsReportOpen(false)} />
     </div>
   );
 }

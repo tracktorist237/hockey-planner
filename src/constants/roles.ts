@@ -5,6 +5,11 @@ export enum UserRole {
   Manager = "manager",
 }
 
+export enum AppRole {
+  User = "user",
+  SuperAdmin = "superAdmin",
+}
+
 export const roleToNumber: Record<UserRole, number> = {
   [UserRole.Coach]: 1,
   [UserRole.Captain]: 2,
@@ -36,4 +41,12 @@ export const normalizeRole = (role: number | string | UserRole | null | undefine
   }
 
   return UserRole.Player;
+};
+
+export const normalizeAppRole = (role: number | string | AppRole | null | undefined): AppRole => {
+  if (role === AppRole.SuperAdmin || role === "SuperAdmin" || role === "superAdmin" || role === 2) {
+    return AppRole.SuperAdmin;
+  }
+
+  return AppRole.User;
 };

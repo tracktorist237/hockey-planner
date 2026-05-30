@@ -14,7 +14,7 @@ import { DeleteEventPage } from "./DeleteEventPage";
 import { SettingsPage } from "./SettingsPage";
 import { UpdateEventPage } from "./UpdateEventPage";
 import { UpdateUserPage } from "./UpdateUserPage";
-import { AdminPushPage } from "src/pages/AdminPushPage";
+import { AdminPage } from "src/pages/AdminPage";
 import { AuthPage } from "src/pages/AuthPage";
 import { ConfirmEmailPage } from "src/pages/ConfirmEmailPage";
 import { EventPage } from "src/pages/EventPage/EventPage";
@@ -37,6 +37,7 @@ import { ThemeProvider } from "src/context/ThemeContext";
 import { shouldRunOnboarding } from "src/utils/onboarding";
 import { useEffect, useState } from "react";
 import { getMyTeams } from "src/api/teams";
+import { AppRole } from "src/constants/roles";
 
 function EventPageWrapper() {
   const { id } = useParams<{ id: string }>();
@@ -136,6 +137,25 @@ function RequireOwnProfile({ children }: { children: ReactElement }) {
       <PermissionDenied
         title="Недостаточно прав"
         message="Редактирование доступно только для вашего профиля."
+      />
+    );
+  }
+
+  return children;
+}
+
+function RequireSuperAdmin({ children }: { children: ReactElement }) {
+  const { currentUser } = useAuth();
+
+  if (!currentUser?.id) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (currentUser.appRole !== AppRole.SuperAdmin) {
+    return (
+      <PermissionDenied
+        title="Недостаточно прав"
+        message="Эта страница доступна только глобальному администратору приложения."
       />
     );
   }
@@ -312,12 +332,45 @@ function AppRoutes() {
         />
 
         <Route
+          path="/admin"
+          element={
+            <RequireAuth>
+              <RequireSuperAdmin>
+                <AdminPage />
+              </RequireSuperAdmin>
+            </RequireAuth>
+          }
+        />
+
+        <Route
+          path="/admin/reports"
+          element={
+            <RequireAuth>
+              <RequireSuperAdmin>
+                <AdminPage />
+              </RequireSuperAdmin>
+            </RequireAuth>
+          }
+        />
+
+        <Route
+          path="/admin/users"
+          element={
+            <RequireAuth>
+              <RequireSuperAdmin>
+                <AdminPage />
+              </RequireSuperAdmin>
+            </RequireAuth>
+          }
+        />
+
+        <Route
           path="/admin/push"
           element={
             <RequireAuth>
-              <RequireOnboardingComplete>
-                <AdminPushPage />
-              </RequireOnboardingComplete>
+              <RequireSuperAdmin>
+                <AdminPage />
+              </RequireSuperAdmin>
             </RequireAuth>
           }
         />

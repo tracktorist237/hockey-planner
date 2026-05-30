@@ -1,4 +1,4 @@
-import { UserRole } from "../constants/roles";
+import { AppRole, UserRole } from "../constants/roles";
 
 export interface User {
   id: string;
@@ -13,6 +13,7 @@ export interface User {
   email?: string | null;
   emailConfirmed?: boolean;
   role: UserRole;
+  appRole?: AppRole;
 }
 
 export interface ApiUser {
@@ -28,4 +29,5 @@ export interface ApiUser {
   email?: string | null;
   emailConfirmed?: boolean;
   role?: number | UserRole;
+  appRole?: number | string | AppRole | null;
 }

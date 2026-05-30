@@ -5,6 +5,8 @@ import { APP_VERSION } from "./config/version";
 import { getVersionInfo } from "src/api/version";
 import { BottomNav } from "src/components/BottomNav";
 import { NotificationBell } from "src/components/NotificationBell";
+import { ReportProblemDialog } from "src/components/ReportProblemDialog";
+import { AppRole } from "src/constants/roles";
 import { useAuth } from "src/hooks/useAuth";
 import { ThemePreference, useTheme } from "src/context/ThemeContext";
 
@@ -19,6 +21,7 @@ export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
   const [isUpdating, setIsUpdating] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [isClearing, setIsClearing] = useState(false);
+  const [isReportOpen, setIsReportOpen] = useState(false);
 
   const currentUserId = currentUser?.id ?? null;
 
@@ -269,6 +272,30 @@ export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+            {currentUser?.appRole === AppRole.SuperAdmin && (
+              <button
+                onClick={() => navigate("/admin")}
+                style={{
+                  width: "100%",
+                  padding: "16px",
+                  backgroundColor: "var(--hp-success-soft)",
+                  color: "var(--hp-success)",
+                  border: "1px solid var(--hp-success-border)",
+                  borderRadius: "12px",
+                  fontSize: "16px",
+                  fontWeight: "600",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "8px",
+                  transition: "all 0.2s ease",
+                }}
+              >
+                <span>Админ-панель</span>
+              </button>
+            )}
+
             <button
               onClick={() => navigate("/settings/notifications")}
               style={{
@@ -412,6 +439,28 @@ export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
             </button>
 
             <button
+              onClick={() => setIsReportOpen(true)}
+              style={{
+                width: "100%",
+                padding: "16px",
+                backgroundColor: "var(--hp-warning-soft)",
+                color: "var(--hp-warning)",
+                border: "1px solid var(--hp-warning-border)",
+                borderRadius: "12px",
+                fontSize: "16px",
+                fontWeight: "600",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "8px",
+                transition: "all 0.2s ease",
+              }}
+            >
+              <span>Сообщить о проблеме</span>
+            </button>
+
+            <button
               onClick={onOpenDebug}
               style={{
                 width: "100%",
@@ -496,6 +545,7 @@ export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
         </div>
       </div>
       <BottomNav activeTab="settings" />
+      <ReportProblemDialog isOpen={isReportOpen} onClose={() => setIsReportOpen(false)} />
 
       <style>
         {`
