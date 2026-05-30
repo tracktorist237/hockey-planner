@@ -10,6 +10,7 @@ export interface User {
   spbhlPlayerId?: string | null;
   primaryPosition?: number | null;
   birthDate?: string | null;
+  phone?: string | null;
   email?: string | null;
   emailConfirmed?: boolean;
   role: UserRole;
@@ -26,6 +27,7 @@ export interface ApiUser {
   spbhlPlayerId?: string | null;
   primaryPosition?: number | null;
   birthDate?: string | null;
+  phone?: string | null;
   email?: string | null;
   emailConfirmed?: boolean;
   role?: number | UserRole;

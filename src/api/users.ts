@@ -9,6 +9,7 @@ export interface CreateUserData {
   height?: number | null;
   weight?: number | null;
   birthDate?: string | null;
+  phone?: string | null;
   photoUrl?: string | null;
   spbhlPlayerId?: string | null;
 }

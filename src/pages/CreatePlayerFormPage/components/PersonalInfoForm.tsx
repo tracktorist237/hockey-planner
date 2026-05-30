@@ -20,6 +20,7 @@ export function PersonalInfoForm({ formData, errors, getFieldStatus, onChange, c
 
       <FieldWithValidation label="Имя" name="firstName" value={formData.firstName} onChange={onChange as (event: ChangeEvent<HTMLInputElement>) => void} status={getFieldStatus("firstName")} error={errors.firstName} placeholder="Введите имя" required />
       <FieldWithValidation label="Фамилия" name="lastName" value={formData.lastName} onChange={onChange as (event: ChangeEvent<HTMLInputElement>) => void} status={getFieldStatus("lastName")} error={errors.lastName} placeholder="Введите фамилию" required />
+      <FieldWithValidation label="Телефон" name="phone" type="tel" value={formData.phone} onChange={onChange as (event: ChangeEvent<HTMLInputElement>) => void} status="default" placeholder="Номер для связи" />
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "16px" }}>
         <div>

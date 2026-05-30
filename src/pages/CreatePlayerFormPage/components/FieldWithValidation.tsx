@@ -9,7 +9,7 @@ interface FieldWithValidationProps {
   status: FieldStatus;
   error?: string;
   placeholder?: string;
-  type?: "text" | "number" | "date";
+  type?: "text" | "number" | "date" | "tel";
   required?: boolean;
   min?: string | number;
   max?: string | number;

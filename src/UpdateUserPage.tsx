@@ -43,6 +43,7 @@ const INITIAL_FORM_DATA: UserFormData = {
   height: null,
   weight: null,
   birthDate: null,
+  phone: null,
 };
 
 const isTechnicalAuthName = (firstName?: string | null, lastName?: string | null): boolean =>
@@ -112,6 +113,7 @@ export function UpdateUserPage() {
       fullName: user.fullName ?? `${user.lastName ?? ""} ${user.firstName ?? ""}`.trim(),
       photoUrl: user.photoUrl ?? null,
       spbhlPlayerId: user.spbhlPlayerId ?? null,
+      phone: user.phone ?? null,
       email: currentUser?.email ?? null,
       emailConfirmed: Boolean(currentUser?.emailConfirmed),
       role: normalizeRole(user.role ?? currentUser?.role),
@@ -154,6 +156,7 @@ export function UpdateUserPage() {
           height: user.height ?? null,
           weight: user.weight ?? null,
           birthDate: normalizeDateForInput(user.birthDate),
+          phone: user.phone ?? null,
         });
         setPhotoUrl(user.photoUrl ?? null);
         setSpbhlPlayerId(user.spbhlPlayerId ?? null);
