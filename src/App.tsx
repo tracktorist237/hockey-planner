@@ -14,6 +14,7 @@ import { DeleteEventPage } from "./DeleteEventPage";
 import { SettingsPage } from "./SettingsPage";
 import { UpdateEventPage } from "./UpdateEventPage";
 import { UpdateUserPage } from "./UpdateUserPage";
+import { UpdatesPage } from "src/pages/UpdatesPage";
 import { AdminPage } from "src/pages/AdminPage";
 import { AuthPage } from "src/pages/AuthPage";
 import { ConfirmEmailPage } from "src/pages/ConfirmEmailPage";
@@ -332,6 +333,17 @@ function AppRoutes() {
         />
 
         <Route
+          path="/updates"
+          element={
+            <RequireAuth>
+              <RequireOnboardingComplete>
+                <UpdatesPage />
+              </RequireOnboardingComplete>
+            </RequireAuth>
+          }
+        />
+
+        <Route
           path="/admin"
           element={
             <RequireAuth>
@@ -355,6 +367,28 @@ function AppRoutes() {
 
         <Route
           path="/admin/users"
+          element={
+            <RequireAuth>
+              <RequireSuperAdmin>
+                <AdminPage />
+              </RequireSuperAdmin>
+            </RequireAuth>
+          }
+        />
+
+        <Route
+          path="/admin/notifications"
+          element={
+            <RequireAuth>
+              <RequireSuperAdmin>
+                <AdminPage />
+              </RequireSuperAdmin>
+            </RequireAuth>
+          }
+        />
+
+        <Route
+          path="/admin/releases"
           element={
             <RequireAuth>
               <RequireSuperAdmin>

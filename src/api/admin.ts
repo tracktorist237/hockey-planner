@@ -23,6 +23,14 @@ export enum AppReportSeverity {
   Critical = 4,
 }
 
+export enum NotificationDeliveryStatus {
+  Pending = 1,
+  Sent = 2,
+  Failed = 3,
+  Skipped = 4,
+  EndpointInactive = 5,
+}
+
 export interface AdminDashboardResponse {
   totalUsers: number;
   totalTeams: number;
@@ -101,6 +109,61 @@ export interface CreateAppReportRequest {
   userAgent?: string;
 }
 
+export interface ReleaseNoticeDto {
+  id: string;
+  version: string;
+  title: string;
+  body: string;
+  isPublished: boolean;
+  sendNotification: boolean;
+  notificationSent: boolean;
+  publishedAt?: string | null;
+  createdAt: string;
+  updatedAt?: string | null;
+  createdByUserId?: string | null;
+}
+
+export interface CreateUpdateReleaseNoticeRequest {
+  version: string;
+  title: string;
+  body: string;
+  sendNotification: boolean;
+}
+
+export interface NotificationDeliverySummaryResponse {
+  total: number;
+  sent: number;
+  failed: number;
+  skipped: number;
+  endpointInactive: number;
+  activePushSubscriptions: number;
+  inactivePushSubscriptions: number;
+}
+
+export interface NotificationDeliveryDto {
+  id: string;
+  notificationId: string;
+  userId: string;
+  userName?: string | null;
+  userEmail?: string | null;
+  pushSubscriptionId?: string | null;
+  status: NotificationDeliveryStatus;
+  error?: string | null;
+  endpointHash?: string | null;
+  createdAt: string;
+  sentAt?: string | null;
+  notificationTitle?: string | null;
+  notificationType?: number | null;
+  notificationCategory?: number | null;
+}
+
+export interface NotificationDeliveryListResponse {
+  page: number;
+  pageSize: number;
+  total: number;
+  items: NotificationDeliveryDto[];
+}
+
 const readErrorMessage = async (response: Response): Promise<string> => {
   const text = await response.text();
   if (!text) {
@@ -174,6 +237,55 @@ export async function sendAdminTestNotification(): Promise<void> {
   if (!response.ok) {
     throw new Error(await readErrorMessage(response));
   }
+}
+
+export async function getAdminReleases(): Promise<ReleaseNoticeDto[]> {
+  return requireJson(await authFetch("/api/admin/releases"));
+}
+
+export async function createAdminRelease(request: CreateUpdateReleaseNoticeRequest): Promise<ReleaseNoticeDto> {
+  return requireJson(await authFetch("/api/admin/releases", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(request),
+  }));
+}
+
+export async function updateAdminRelease(id: string, request: CreateUpdateReleaseNoticeRequest): Promise<ReleaseNoticeDto> {
+  return requireJson(await authFetch(`/api/admin/releases/${encodeURIComponent(id)}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(request),
+  }));
+}
+
+export async function publishAdminRelease(id: string): Promise<ReleaseNoticeDto> {
+  return requireJson(await authFetch(`/api/admin/releases/${encodeURIComponent(id)}/publish`, { method: "POST" }));
+}
+
+export async function getNotificationDeliverySummary(params: {
+  status?: NotificationDeliveryStatus | "";
+} = {}): Promise<NotificationDeliverySummaryResponse> {
+  const search = new URLSearchParams();
+  if (params.status) search.set("status", String(params.status));
+
+  const suffix = search.toString() ? `?${search.toString()}` : "";
+  return requireJson(await authFetch(`/api/admin/notification-deliveries/summary${suffix}`));
+}
+
+export async function getNotificationDeliveries(params: {
+  status?: NotificationDeliveryStatus | "";
+  page?: number;
+  pageSize?: number;
+} = {}): Promise<NotificationDeliveryListResponse> {
+  const search = new URLSearchParams({
+    page: String(params.page ?? 1),
+    pageSize: String(params.pageSize ?? 25),
+  });
+
+  if (params.status) search.set("status", String(params.status));
+
+  return requireJson(await authFetch(`/api/admin/notification-deliveries?${search.toString()}`));
 }
 
 export async function createAppReport(request: CreateAppReportRequest): Promise<AppReportDto> {

@@ -269,6 +269,25 @@ export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
             >
               🚧 Ранняя стадия разработки
             </div>
+            <div style={{ marginTop: "12px" }}>
+              <button
+                type="button"
+                onClick={() => navigate("/updates")}
+                style={{
+                  border: "1px solid var(--hp-border)",
+                  borderRadius: "999px",
+                  padding: "7px 11px",
+                  backgroundColor: "var(--hp-surface)",
+                  color: "var(--hp-heading)",
+                  fontSize: "12px",
+                  fontWeight: 900,
+                  cursor: "pointer",
+                  boxShadow: "var(--hp-shadow-sm)",
+                }}
+              >
+                Release notes
+              </button>
+            </div>
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
