@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { BottomNav } from "src/components/BottomNav";
 import { LoadingIndicator } from "src/components/LoadingIndicator";
 import { PlayerAvatar } from "src/components/PlayerAvatar";
 import { getEvents } from "src/api/events";
@@ -172,6 +171,7 @@ export function TeamDetailsPage({ currentUser, currentTeamId, onTeamChange }: Te
   const [leaving, setLeaving] = useState(false);
   const [confirmJoin, setConfirmJoin] = useState(false);
   const [confirmLeave, setConfirmLeave] = useState(false);
+  const [isTeamMenuOpen, setIsTeamMenuOpen] = useState(false);
   const [descriptionExpanded, setDescriptionExpanded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -307,6 +307,7 @@ export function TeamDetailsPage({ currentUser, currentTeamId, onTeamChange }: Te
 
     if (!confirmLeave) {
       setConfirmLeave(true);
+      setIsTeamMenuOpen(true);
       return;
     }
 
@@ -438,13 +439,13 @@ export function TeamDetailsPage({ currentUser, currentTeamId, onTeamChange }: Te
       style={{
         minHeight: "100vh",
         padding: "16px",
-        paddingBottom: "120px",
+        paddingBottom: "32px",
         background: "linear-gradient(135deg, var(--hp-surface-soft) 0%, var(--hp-info-soft) 100%)",
         boxSizing: "border-box",
       }}
     >
       <main style={{ maxWidth: 620, margin: "0 auto" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
           <button
             onClick={() => navigate("/teams")}
             style={{ borderRadius: 12, border: "1px solid var(--hp-border)", background: "var(--hp-surface)", width: 42, height: 42, cursor: "pointer", fontSize: 20 }}
@@ -452,10 +453,6 @@ export function TeamDetailsPage({ currentUser, currentTeamId, onTeamChange }: Te
           >
             ←
           </button>
-          <div>
-            <h1 style={{ margin: 0, fontSize: 26, color: "var(--hp-text-strong)" }}>Команда</h1>
-            <div style={{ color: "var(--hp-muted)", fontSize: 14 }}>Страница сообщества</div>
-          </div>
         </div>
 
         {error && <div style={{ marginBottom: 12, background: "var(--hp-danger-soft)", color: "var(--hp-danger)", borderRadius: 14, padding: "12px 14px" }}>{error}</div>}
@@ -465,10 +462,11 @@ export function TeamDetailsPage({ currentUser, currentTeamId, onTeamChange }: Te
 
         {!loading && team && (
           <>
-            <section style={{ ...cardStyle, overflow: "hidden", padding: 0 }}>
+            <section style={{ ...cardStyle, overflow: "visible", padding: 0 }}>
               <div
                 style={{
                   height: 96,
+                  borderRadius: "16px 16px 0 0",
                   background: team.coverImageUrl
                     ? `linear-gradient(rgba(15, 23, 42, 0.08), rgba(15, 23, 42, 0.08)), url(${team.coverImageUrl}) center/cover`
                     : "linear-gradient(135deg, #0f766e 0%, var(--hp-primary) 55%, #7c3aed 100%)",
@@ -499,8 +497,66 @@ export function TeamDetailsPage({ currentUser, currentTeamId, onTeamChange }: Te
                       {getVisibilityText(team.visibility)} · участников: {team.membersCount}
                     </div>
                   </div>
-                  <div style={{ borderRadius: 999, padding: "7px 10px", background: "var(--hp-neutral-soft)", color: "var(--hp-neutral)", fontSize: 13, fontWeight: 900, whiteSpace: "nowrap" }}>
-                    {getRoleText(team.myRole)}
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, position: "relative", flexShrink: 0 }}>
+                    <div style={{ borderRadius: 999, padding: "7px 10px", background: "var(--hp-neutral-soft)", color: "var(--hp-neutral)", fontSize: 13, fontWeight: 900, whiteSpace: "nowrap" }}>
+                      {getRoleText(team.myRole)}
+                    </div>
+                    {team.myRole && team.myRole !== TeamRole.Owner && (
+                      <>
+                        <button
+                          type="button"
+                          aria-label="Меню команды"
+                          onClick={() => setIsTeamMenuOpen((value) => !value)}
+                          style={{ width: 34, height: 34, borderRadius: 12, border: "1px solid var(--hp-border)", background: "var(--hp-surface-soft)", color: "var(--hp-heading)", fontSize: 20, lineHeight: 1, fontWeight: 900, cursor: "pointer" }}
+                        >
+                          ...
+                        </button>
+                        {isTeamMenuOpen && (
+                          <div
+                            style={{
+                              position: "absolute",
+                              top: 40,
+                              right: 0,
+                              zIndex: 10,
+                              width: 250,
+                              border: "1px solid var(--hp-border)",
+                              borderRadius: 14,
+                              background: "var(--hp-surface)",
+                              boxShadow: "var(--hp-shadow-md)",
+                              padding: 8,
+                              display: "grid",
+                              gap: 8,
+                            }}
+                          >
+                            {confirmLeave && (
+                              <div style={{ borderRadius: 12, padding: 10, background: "var(--hp-warning-soft)", color: "var(--hp-warning)", border: "1px solid var(--hp-warning-border)", fontWeight: 800, lineHeight: 1.35, fontSize: 13 }}>
+                                Подтвердите выход из команды.
+                              </div>
+                            )}
+                            <button
+                              type="button"
+                              onClick={handleLeave}
+                              disabled={leaving}
+                              style={{ width: "100%", border: "1px solid var(--hp-danger-border)", borderRadius: 12, padding: "10px 12px", background: "var(--hp-danger-soft)", color: "var(--hp-danger)", fontWeight: 900, cursor: leaving ? "wait" : "pointer", textAlign: "left" }}
+                            >
+                              {leaving ? "Выходим..." : confirmLeave ? "Да, покинуть" : "Покинуть команду"}
+                            </button>
+                            {confirmLeave && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setConfirmLeave(false);
+                                  setIsTeamMenuOpen(false);
+                                }}
+                                style={{ width: "100%", border: "1px solid var(--hp-border)", borderRadius: 12, padding: "10px 12px", background: "var(--hp-surface-soft)", color: "var(--hp-heading)", fontWeight: 900, cursor: "pointer", textAlign: "left" }}
+                              >
+                                Отмена
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </>
+                    )}
                   </div>
                 </div>
 
@@ -560,24 +616,6 @@ export function TeamDetailsPage({ currentUser, currentTeamId, onTeamChange }: Te
                     </button>
                   )}
                 </div>
-
-                {team.myRole && team.myRole !== TeamRole.Owner && (
-                  <div style={{ marginTop: 8 }}>
-                    {confirmLeave && (
-                      <div style={{ borderRadius: 14, padding: 12, background: "var(--hp-warning-soft)", color: "var(--hp-warning)", border: "1px solid var(--hp-warning-border)", fontWeight: 800, lineHeight: 1.4, marginBottom: 8 }}>
-                        Подтвердите выход из команды. Она пропадёт из ваших фильтров.
-                      </div>
-                    )}
-                    <button
-                      type="button"
-                      onClick={handleLeave}
-                      disabled={leaving}
-                      style={{ width: "100%", border: "1px solid var(--hp-danger-border)", borderRadius: 14, padding: "12px 10px", background: "var(--hp-danger-soft)", color: "var(--hp-danger)", fontWeight: 900, cursor: leaving ? "wait" : "pointer" }}
-                    >
-                      {leaving ? "Выходим..." : confirmLeave ? "Да, покинуть команду" : "Покинуть команду"}
-                    </button>
-                  </div>
-                )}
 
                 {canJoinPublic && (
                   <div style={{ marginTop: 14, display: "grid", gap: 10 }}>
@@ -854,7 +892,6 @@ export function TeamDetailsPage({ currentUser, currentTeamId, onTeamChange }: Te
       </main>
 
       <PlayerInfoModal player={playerModal.selectedPlayer} isOpen={playerModal.isPlayerModalOpen} onClose={playerModal.handleCloseModal} />
-      <BottomNav activeTab="teams" />
     </div>
   );
 }

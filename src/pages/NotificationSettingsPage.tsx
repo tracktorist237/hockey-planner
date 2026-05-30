@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getNotificationPreferences, sendTestNotification, updateNotificationPreferences } from "src/api/notifications";
 import { getPushPublicKey, subscribePush } from "src/api/push";
-import { BottomNav } from "src/components/BottomNav";
 import { useAuth } from "src/hooks/useAuth";
 import { NotificationPreferencesDto } from "src/types/notifications";
 
@@ -330,7 +329,7 @@ export function NotificationSettingsPage() {
         </div>
       </div>
 
-      <div style={{ padding: "16px", paddingBottom: "120px", display: "grid", gap: "16px" }}>
+      <div style={{ padding: "16px", paddingBottom: "32px", display: "grid", gap: "16px" }}>
         <div
           style={{
             backgroundColor: "var(--hp-surface)",
@@ -441,8 +440,6 @@ export function NotificationSettingsPage() {
           </div>
         )}
       </div>
-
-      <BottomNav activeTab="settings" />
 
       <style>
         {`

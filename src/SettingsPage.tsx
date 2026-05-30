@@ -290,6 +290,23 @@ export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
             </div>
           </div>
 
+          {message && (
+            <div
+              style={{
+                marginBottom: "14px",
+                padding: "12px",
+                backgroundColor: messageType === "success" ? "var(--hp-success-soft)" : messageType === "error" ? "var(--hp-danger-soft)" : "var(--hp-primary-soft)",
+                color: messageType === "success" ? "var(--hp-success)" : messageType === "error" ? "var(--hp-danger)" : "var(--hp-primary)",
+                borderRadius: "8px",
+                fontSize: "14px",
+                textAlign: "center",
+                animation: "fadeIn 0.3s ease",
+              }}
+            >
+              {message}
+            </div>
+          )}
+
           <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
             {currentUser?.appRole === AppRole.SuperAdmin && (
               <button
@@ -511,22 +528,6 @@ export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
             </button>
           </div>
 
-          {message && (
-            <div
-              style={{
-                marginTop: "20px",
-                padding: "12px",
-                backgroundColor: messageType === "success" ? "var(--hp-success-soft)" : messageType === "error" ? "var(--hp-danger-soft)" : "var(--hp-primary-soft)",
-                color: messageType === "success" ? "var(--hp-success)" : messageType === "error" ? "var(--hp-danger)" : "var(--hp-primary)",
-                borderRadius: "8px",
-                fontSize: "14px",
-                textAlign: "center",
-                animation: "fadeIn 0.3s ease",
-              }}
-            >
-              {message}
-            </div>
-          )}
         </div>
 
         <div

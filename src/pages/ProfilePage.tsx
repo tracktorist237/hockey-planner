@@ -1,6 +1,5 @@
 import { FormEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { BottomNav } from "src/components/BottomNav";
 import { PlayerAvatar } from "src/components/PlayerAvatar";
 import { roleToLabel } from "src/constants/roles";
 import { useAuth } from "src/hooks/useAuth";
@@ -554,8 +553,6 @@ export function ProfilePage() {
         </button>
       </section>
 
-      <BottomNav activeTab="settings" />
-      <div style={{ height: "110px" }} />
     </div>
   );
 }

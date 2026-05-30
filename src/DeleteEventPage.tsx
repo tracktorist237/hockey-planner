@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { deleteEvent } from "./api/events"; // 👈 импортируем
+import { CheckboxControl } from "src/components/CheckboxControl";
 import { useAuth } from "src/hooks/useAuth";
 
 export function DeleteEventPage() {
@@ -272,28 +273,22 @@ export function DeleteEventPage() {
               borderRadius: "12px",
               border: "1px solid var(--hp-border)"
             }}>
-              <label style={{
+              <div style={{
                 display: "flex",
                 alignItems: "flex-start",
                 gap: "12px",
-                cursor: "pointer",
                 userSelect: "none"
               }}>
-                <input
-                  type="checkbox"
-                  checked={confirmed}
-                  onChange={(e) => {
-                    setConfirmed(e.target.checked);
-                    setError(null);
-                  }}
-                  style={{
-                    width: "20px",
-                    height: "20px",
-                    marginTop: "2px",
-                    flexShrink: 0,
-                    cursor: "pointer"
-                  }}
-                />
+                <div>
+                  <CheckboxControl
+                    checked={confirmed}
+                    onChange={(checked) => {
+                      setConfirmed(checked);
+                      setError(null);
+                    }}
+                    label=""
+                  />
+                </div>
                 <div style={{ textAlign: "left" }}>
                   <div style={{ 
                     fontWeight: "600", 
@@ -311,7 +306,7 @@ export function DeleteEventPage() {
                     Отметив этот чекбокс, вы подтверждаете, что осознаете необратимость этого действия
                   </div>
                 </div>
-              </label>
+              </div>
             </div>
 
             <div style={{ 
@@ -482,12 +477,7 @@ export function DeleteEventPage() {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
           }
-          
-          input[type="checkbox"]:focus {
-            outline: 2px solid var(--hp-primary);
-            outline-offset: 2px;
-          }
-          
+
           /* Для очень маленьких экранов */
           @media (max-width: 360px) {
             div[style*="padding: 24px"] {
