@@ -5,22 +5,23 @@ import { useAuth } from "src/hooks/useAuth";
 const pageStyle: CSSProperties = {
   minHeight: "100vh",
   padding: "20px 14px",
-  background:
-    "radial-gradient(circle at top left, #ccfbf1 0, transparent 34%), linear-gradient(135deg, #f8fafc 0%, #dbeafe 100%)",
+  background: "var(--hp-bg-gradient)",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
+  boxSizing: "border-box",
 };
 
 const cardStyle: CSSProperties = {
   width: "100%",
   maxWidth: 480,
-  borderRadius: 28,
+  borderRadius: 20,
   padding: 24,
-  background: "rgba(255,255,255,0.96)",
-  boxShadow: "0 24px 80px rgba(15, 23, 42, 0.16)",
-  border: "1px solid rgba(148, 163, 184, 0.28)",
+  background: "var(--hp-surface)",
+  boxShadow: "var(--hp-shadow-lg)",
+  border: "1px solid var(--hp-border)",
   textAlign: "center",
+  boxSizing: "border-box",
 };
 
 const buttonStyle: CSSProperties = {
@@ -31,7 +32,7 @@ const buttonStyle: CSSProperties = {
   fontSize: 17,
   fontWeight: 900,
   cursor: "pointer",
-  background: "linear-gradient(135deg, #0f766e, #2563eb)",
+  background: "var(--hp-primary)",
   color: "white",
 };
 
