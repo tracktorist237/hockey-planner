@@ -183,6 +183,11 @@ function AppRoutes() {
         />
 
         <Route
+          path="/start-search"
+          element={<Navigate to={homePath} replace />}
+        />
+
+        <Route
           path="/login"
           element={<AuthPage />}
         />
@@ -449,6 +454,11 @@ function AppRoutes() {
               </RequireOnboardingComplete>
             </RequireAuth>
           }
+        />
+
+        <Route
+          path="*"
+          element={<Navigate to={homePath} replace />}
         />
       </Routes>
 
