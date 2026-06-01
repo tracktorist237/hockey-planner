@@ -19,13 +19,14 @@ import {
   resendEmailConfirmationAuth,
   resetPasswordAuth,
 } from "src/api/auth";
-import { normalizeRole } from "src/constants/roles";
+import { normalizeAppRole, normalizeRole } from "src/constants/roles";
 import { User } from "src/types/user";
 
 const AUTH_STORAGE_KEY = "currentUser";
 
 type StoredUser = Partial<User> & {
   role?: number | string | null;
+  appRole?: number | string | null;
 };
 
 interface AuthContextValue {
@@ -61,11 +62,24 @@ const mapStoredUser = (raw: StoredUser): User | null => {
     fullName: raw.fullName,
     photoUrl: raw.photoUrl ?? null,
     spbhlPlayerId: raw.spbhlPlayerId ?? null,
+    primaryPosition: raw.primaryPosition ?? null,
     birthDate: raw.birthDate ?? null,
+    phone: raw.phone ?? null,
     email: raw.email ?? null,
     emailConfirmed: Boolean(raw.emailConfirmed),
     role: normalizeRole(raw.role),
+    appRole: normalizeAppRole(raw.appRole),
   };
+};
+
+const readStoredUser = (): User | null => {
+  try {
+    const raw = localStorage.getItem(AUTH_STORAGE_KEY);
+    return raw ? mapStoredUser(JSON.parse(raw) as StoredUser) : null;
+  } catch {
+    localStorage.removeItem(AUTH_STORAGE_KEY);
+    return null;
+  }
 };
 
 const persistCurrentUser = (user: User | null): void => {
@@ -78,7 +92,7 @@ const persistCurrentUser = (user: User | null): void => {
 };
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [currentUser, setCurrentUserState] = useState<User | null>(null);
+  const [currentUser, setCurrentUserState] = useState<User | null>(() => readStoredUser());
   const [authLoading, setAuthLoading] = useState(true);
 
   const setCurrentUser = useCallback((user: User | null) => {
@@ -181,7 +195,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } catch (error) {
         if (isMounted) {
           console.warn("Unable to sync auth session from API:", error);
-          clearAuthTokens();
         }
       } finally {
         if (isMounted) {

@@ -188,17 +188,23 @@ export async function refreshAuth(): Promise<User | null> {
     return null;
   }
 
-  try {
-    const response = await requestJson<AuthResponse>("/api/auth/refresh", {
-      method: "POST",
-      body: JSON.stringify({ refreshToken }),
-    });
+  const response = await fetch(`${API_BASE}/api/auth/refresh`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ refreshToken }),
+  });
 
-    return setAuthTokens(response);
-  } catch (error) {
-    clearAuthTokens();
-    throw error;
+  if (!response.ok) {
+    if (response.status === 400 || response.status === 401 || response.status === 403) {
+      clearAuthTokens();
+    }
+
+    throw new Error(await readErrorMessage(response));
   }
+
+  return setAuthTokens((await response.json()) as AuthResponse);
 }
 
 export async function authFetch(input: string, init: RequestInit = {}, retry = true): Promise<Response> {
