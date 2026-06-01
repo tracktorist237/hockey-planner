@@ -11,6 +11,7 @@ interface PlayerAvatarProps {
   fontSize?: number;
   badgeSizePx?: number;
   badgeFontSizePx?: number;
+  border?: string;
 }
 
 export function PlayerAvatar({
@@ -26,6 +27,7 @@ export function PlayerAvatar({
   fontSize = 14,
   badgeSizePx,
   badgeFontSizePx,
+  border,
 }: PlayerAvatarProps) {
   const displayNumber = jerseyNumber ?? "?";
   const radius = shape === "circle" ? "50%" : "8px";
@@ -48,6 +50,8 @@ export function PlayerAvatar({
         fontWeight: "600",
         fontSize: `${fontSize}px`,
         flexShrink: 0,
+        border,
+        boxSizing: "border-box",
       }}
     >
       {photoUrl ? (
