@@ -1,59 +1,128 @@
 /// <reference lib="webworker" />
 /* eslint-disable no-restricted-globals */
 
-// Это необходимо для правильной типизации service worker в TypeScript
 declare const self: ServiceWorkerGlobalScope;
 
-// ⚠️ ВАЖНО: Этот комментарий - маркер для Workbox
-// Он будет заменен на список файлов для кеширования
-const manifest = self.__WB_MANIFEST; // Workbox заменит это на реальный массив
+const manifest = self.__WB_MANIFEST;
 void manifest;
 
-const CACHE_NAME = 'hockey-planner-v1';
+const CACHE_NAME = "hockey-planner-v2";
 
-// Установка service worker
-self.addEventListener('install', (event) => {
-  console.log('Service worker installing...');
-  self.skipWaiting();
-});
+const getPathname = (request: Request) => new URL(request.url).pathname;
+const isSameOrigin = (request: Request) => new URL(request.url).origin === self.location.origin;
+const isApiRequest = (request: Request) => getPathname(request).startsWith("/api/");
+const isServiceWorkerRequest = (request: Request) => getPathname(request).endsWith("/service-worker.js");
+const isNavigationRequest = (request: Request) =>
+  request.mode === "navigate" || request.headers.get("accept")?.includes("text/html");
+const isStaticAssetRequest = (request: Request) => {
+  const pathname = getPathname(request);
+  return (
+    pathname.startsWith("/static/") ||
+    pathname.endsWith(".png") ||
+    pathname.endsWith(".ico") ||
+    pathname.endsWith(".svg") ||
+    pathname.endsWith(".webmanifest") ||
+    pathname.endsWith("/manifest.json")
+  );
+};
 
-// Активация и очистка старых кешей
-self.addEventListener('activate', (event) => {
-  console.log('Service worker activating...');
+const cacheFirst = async (request: Request) => {
+  const cachedResponse = await caches.match(request);
+  if (cachedResponse) {
+    return cachedResponse;
+  }
+
+  const networkResponse = await fetch(request);
+  if (networkResponse && networkResponse.status === 200) {
+    const responseToCache = networkResponse.clone();
+    const cache = await caches.open(CACHE_NAME);
+    await cache.put(request, responseToCache);
+  }
+
+  return networkResponse;
+};
+
+const networkFirst = async (request: Request) => {
+  try {
+    const networkResponse = await fetch(request);
+    if (networkResponse && networkResponse.status === 200) {
+      const responseToCache = networkResponse.clone();
+      const cache = await caches.open(CACHE_NAME);
+      await cache.put(request, responseToCache);
+    }
+
+    return networkResponse;
+  } catch (error) {
+    const cachedResponse = await caches.match(request);
+    if (cachedResponse) {
+      return cachedResponse;
+    }
+
+    const cachedShell = await caches.match("/index.html");
+    if (cachedShell) {
+      return cachedShell;
+    }
+
+    throw error;
+  }
+};
+
+self.addEventListener("install", (event) => {
+  console.log("Service worker installing...");
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames
-          .filter((name) => name !== CACHE_NAME)
-          .map((name) => caches.delete(name))
-      );
-    })
+    caches
+      .open(CACHE_NAME)
+      .then((cache) => cache.addAll(manifest.map((entry) => entry.url)))
+      .then(() => self.skipWaiting())
+      .catch((error) => {
+        console.warn("Failed to precache app shell:", error);
+      }),
   );
 });
 
-// Стратегия кеширования
-self.addEventListener('fetch', (event) => {
-  // Не кешируем API запросы
-  if (event.request.url.includes('/api/')) {
+self.addEventListener("activate", (event) => {
+  console.log("Service worker activating...");
+  event.waitUntil(
+    caches
+      .keys()
+      .then((cacheNames) =>
+        Promise.all(
+          cacheNames
+            .filter((name) => name !== CACHE_NAME)
+            .map((name) => caches.delete(name)),
+        ),
+      )
+      .then(() => self.clients.claim()),
+  );
+});
+
+self.addEventListener("message", (event) => {
+  if (event.data?.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
+});
+
+self.addEventListener("fetch", (event) => {
+  if (
+    event.request.method !== "GET" ||
+    !isSameOrigin(event.request) ||
+    isApiRequest(event.request) ||
+    isServiceWorkerRequest(event.request)
+  ) {
     return;
   }
 
-  event.respondWith(
-    caches.match(event.request).then((response) => {
-      if (response) {
-        return response;
-      }
-      return fetch(event.request).then((networkResponse) => {
-        if (networkResponse && networkResponse.status === 200) {
-          const responseToCache = networkResponse.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseToCache);
-          });
-        }
-        return networkResponse;
-      });
-    })
-  );
+  if (isNavigationRequest(event.request)) {
+    event.respondWith(networkFirst(event.request));
+    return;
+  }
+
+  if (isStaticAssetRequest(event.request)) {
+    event.respondWith(cacheFirst(event.request));
+    return;
+  }
+
+  event.respondWith(networkFirst(event.request));
 });
 
 self.addEventListener("push", (event) => {

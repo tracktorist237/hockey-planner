@@ -28,6 +28,7 @@ import { TeamManagePage } from "src/pages/TeamDetailsPage/TeamManagePage";
 import { TeamsPage } from "src/pages/TeamsPage";
 import { ProfilePage } from "src/pages/ProfilePage";
 import { DebugOverlay } from "src/components/DebugOverlay";
+import { AppUpdatePrompt } from "src/components/AppUpdatePrompt";
 import { LoadingIndicator } from "src/components/LoadingIndicator";
 import { PermissionDenied } from "src/components/PermissionDenied";
 import { PwaInstallPrompt } from "src/components/PwaInstallPrompt";
@@ -463,6 +464,7 @@ function AppRoutes() {
       </Routes>
 
       <DebugOverlay isOpen={isDebugOpen} onClose={() => setIsDebugOpen(false)} />
+      <AppUpdatePrompt />
       <PwaInstallPrompt isAuthenticated={isAuthenticated} />
     </>
   );

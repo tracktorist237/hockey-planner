@@ -4,6 +4,22 @@ services:
     runtime: static
     buildCommand: npm run build
     staticPublishPath: ./build
+    headers:
+      - path: /service-worker.js
+        name: Cache-Control
+        value: no-cache, no-store, must-revalidate
+      - path: /index.html
+        name: Cache-Control
+        value: no-cache, no-store, must-revalidate
+      - path: /asset-manifest.json
+        name: Cache-Control
+        value: no-cache, no-store, must-revalidate
+      - path: /manifest.json
+        name: Cache-Control
+        value: no-cache, no-store, must-revalidate
+      - path: /static/*
+        name: Cache-Control
+        value: public, max-age=31536000, immutable
     routes:
       - type: rewrite
         source: /*

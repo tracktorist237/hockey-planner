@@ -53,9 +53,36 @@ export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
       }
 
       await registration.update();
+      const updatedRegistration = registration;
+      const registrationWithWaitingWorker = await new Promise<ServiceWorkerRegistration | null>((resolve) => {
+        if (updatedRegistration.waiting) {
+          resolve(updatedRegistration);
+          return;
+        }
 
-      if (registration.waiting) {
-        registration.waiting.postMessage({ type: "SKIP_WAITING" });
+        const installingWorker = updatedRegistration.installing;
+        if (!installingWorker) {
+          resolve(null);
+          return;
+        }
+
+        const timeoutId = window.setTimeout(() => resolve(null), 8000);
+
+        installingWorker.addEventListener("statechange", () => {
+          if (installingWorker.state === "installed" && updatedRegistration.waiting) {
+            window.clearTimeout(timeoutId);
+            resolve(updatedRegistration);
+          }
+
+          if (installingWorker.state === "redundant") {
+            window.clearTimeout(timeoutId);
+            resolve(null);
+          }
+        });
+      });
+
+      if (registrationWithWaitingWorker?.waiting) {
+        registrationWithWaitingWorker.waiting.postMessage({ type: "SKIP_WAITING" });
 
         await new Promise<void>((resolve) => {
           navigator.serviceWorker.addEventListener(
