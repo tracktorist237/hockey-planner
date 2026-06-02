@@ -40,6 +40,7 @@ export function PersonalInfoForm({ formData, errors, getFieldStatus, onChange, c
         status={getFieldStatus("birthDate")}
         error={errors.birthDate}
         max={new Date().toISOString().split("T")[0]}
+        allowManualDateInput
       />
 
       {formData.birthDate && !errors.birthDate && (
