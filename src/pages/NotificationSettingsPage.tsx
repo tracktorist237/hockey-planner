@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getNotificationPreferences, sendTestNotification, updateNotificationPreferences } from "src/api/notifications";
-import { getPushPublicKey, subscribePush } from "src/api/push";
+import { getPushPublicKey, subscribePush, unsubscribePush } from "src/api/push";
 import { useAuth } from "src/hooks/useAuth";
 import { NotificationPreferencesDto } from "src/types/notifications";
 
@@ -228,12 +228,15 @@ export function NotificationSettingsPage() {
       }
 
       const existingSubscription = await registration.pushManager.getSubscription();
-      const subscription =
-        existingSubscription ||
-        (await registration.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: base64UrlToUint8Array(vapidPublicKey),
-        }));
+      if (existingSubscription) {
+        await unsubscribePush(existingSubscription.endpoint).catch(() => undefined);
+        await existingSubscription.unsubscribe().catch(() => undefined);
+      }
+
+      const subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: base64UrlToUint8Array(vapidPublicKey),
+      });
 
       const subscriptionJson = subscription.toJSON();
       const p256dh = subscriptionJson.keys?.p256dh;

@@ -33,6 +33,7 @@ import { LoadingIndicator } from "src/components/LoadingIndicator";
 import { PermissionDenied } from "src/components/PermissionDenied";
 import { PwaInstallPrompt } from "src/components/PwaInstallPrompt";
 import { useCurrentTeam } from "src/hooks/useCurrentTeam";
+import { usePushSubscriptionSync } from "src/hooks/usePushSubscriptionSync";
 import { useAuth } from "src/hooks/useAuth";
 import { AuthProvider } from "src/context/AuthContext";
 import { ThemeProvider } from "src/context/ThemeContext";
@@ -169,6 +170,7 @@ function AppRoutes() {
   const { currentUser, isAuthenticated } = useAuth();
   const { teamId: currentTeamId, teamName: currentTeamName, setCurrentTeam } = useCurrentTeam(currentUser?.id ?? null);
   const [isDebugOpen, setIsDebugOpen] = useState(false);
+  usePushSubscriptionSync(currentUser?.id);
   const homePath = isAuthenticated
     ? shouldRunOnboarding(currentUser)
       ? "/onboarding/link-player"
