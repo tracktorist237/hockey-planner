@@ -164,6 +164,11 @@ export interface NotificationDeliveryListResponse {
   items: NotificationDeliveryDto[];
 }
 
+export interface DatabaseBackupDownload {
+  blob: Blob;
+  fileName: string;
+}
+
 const readErrorMessage = async (response: Response): Promise<string> => {
   const text = await response.text();
   if (!text) {
@@ -184,6 +189,20 @@ const requireJson = async <T>(response: Response): Promise<T> => {
   }
 
   return (await response.json()) as T;
+};
+
+const getFileNameFromContentDisposition = (contentDisposition: string | null): string | null => {
+  if (!contentDisposition) {
+    return null;
+  }
+
+  const utf8Match = contentDisposition.match(/filename\*=UTF-8''([^;]+)/i);
+  if (utf8Match?.[1]) {
+    return decodeURIComponent(utf8Match[1].replace(/"/g, ""));
+  }
+
+  const fileNameMatch = contentDisposition.match(/filename="?([^";]+)"?/i);
+  return fileNameMatch?.[1] ?? null;
 };
 
 export async function getAdminDashboard(): Promise<AdminDashboardResponse> {
@@ -237,6 +256,18 @@ export async function sendAdminTestNotification(): Promise<void> {
   if (!response.ok) {
     throw new Error(await readErrorMessage(response));
   }
+}
+
+export async function downloadDatabaseBackup(): Promise<DatabaseBackupDownload> {
+  const response = await authFetch("/api/admin/backup/database");
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response));
+  }
+
+  return {
+    blob: await response.blob(),
+    fileName: getFileNameFromContentDisposition(response.headers.get("Content-Disposition")) ?? "hockeyplanner-backup.dump",
+  };
 }
 
 export async function getAdminReleases(): Promise<ReleaseNoticeDto[]> {

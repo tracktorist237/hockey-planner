@@ -14,6 +14,7 @@ import {
   NotificationDeliverySummaryResponse,
   ReleaseNoticeDto,
   createAdminRelease,
+  downloadDatabaseBackup,
   getAdminDashboard,
   getAdminReleases,
   getAdminReports,
@@ -142,6 +143,7 @@ export function AdminPage() {
   const [pushUrl, setPushUrl] = useState("/events");
   const [pushResult, setPushResult] = useState<PushBroadcastResult | null>(null);
   const [pushSubmitting, setPushSubmitting] = useState(false);
+  const [backupDownloading, setBackupDownloading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -201,6 +203,29 @@ export function AdminPage() {
   }, [tab, reportStatus, reportType, reportSeverity, deliveryStatus]);
 
   const openTab = (nextTab: AdminTab) => navigate(nextTab === "dashboard" ? "/admin" : `/admin/${nextTab}`);
+
+  const downloadBackup = async () => {
+    setError(null);
+    setMessage(null);
+    setBackupDownloading(true);
+
+    try {
+      const { blob, fileName } = await downloadDatabaseBackup();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      setMessage("Бэкап БД скачан.");
+    } catch (downloadError) {
+      setError(downloadError instanceof Error ? downloadError.message : "Не удалось скачать бэкап БД.");
+    } finally {
+      setBackupDownloading(false);
+    }
+  };
 
   const saveRelease = async (event: FormEvent) => {
     event.preventDefault();
@@ -326,6 +351,29 @@ export function AdminPage() {
                 style={{ justifySelf: "start", border: 0, borderRadius: 12, padding: "11px 14px", background: "var(--hp-primary)", color: "white", fontWeight: 900, cursor: "pointer" }}
               >
                 Отправить тестовое уведомление себе
+              </button>
+            </div>
+            <div style={{ ...cardStyle, display: "grid", gap: 10 }}>
+              <h2 style={{ margin: 0, fontSize: 18, color: "var(--hp-heading)" }}>Резервная копия</h2>
+              <div style={{ color: "var(--hp-muted)", fontSize: 13 }}>
+                Бэкап содержит персональные данные. Храните файл безопасно.
+              </div>
+              <button
+                type="button"
+                onClick={downloadBackup}
+                disabled={backupDownloading}
+                style={{
+                  justifySelf: "start",
+                  border: 0,
+                  borderRadius: 12,
+                  padding: "11px 14px",
+                  background: backupDownloading ? "var(--hp-muted)" : "var(--hp-primary)",
+                  color: "white",
+                  fontWeight: 900,
+                  cursor: backupDownloading ? "wait" : "pointer",
+                }}
+              >
+                {backupDownloading ? "Скачивание..." : "Скачать бэкап БД"}
               </button>
             </div>
           </>
