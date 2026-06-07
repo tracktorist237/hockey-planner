@@ -1,6 +1,8 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getEvents } from "../../../api/events";
 import { EventLookUpDto } from "../../../types/events";
+
+const EVENTS_REFRESH_INTERVAL_MS = 60000;
 
 const isUpcomingEvent = (startTime: string): boolean => {
   const now = new Date();
@@ -14,9 +16,15 @@ export const useEventsData = (currentUserId?: string, teamId?: string | null) =>
   const [events, setEvents] = useState<EventLookUpDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const isLoadingRef = useRef(false);
 
   const loadEvents = useCallback(
     async (silent = false) => {
+      if (isLoadingRef.current) {
+        return;
+      }
+
+      isLoadingRef.current = true;
       if (!silent) {
         setLoading(true);
       }
@@ -32,6 +40,7 @@ export const useEventsData = (currentUserId?: string, teamId?: string | null) =>
         if (!silent) {
           setLoading(false);
         }
+        isLoadingRef.current = false;
       }
     },
     [currentUserId, teamId],
@@ -41,11 +50,22 @@ export const useEventsData = (currentUserId?: string, teamId?: string | null) =>
     void loadEvents();
 
     const interval = window.setInterval(() => {
-      void loadEvents(true);
-    }, 30000);
+      if (document.visibilityState === "visible") {
+        void loadEvents(true);
+      }
+    }, EVENTS_REFRESH_INTERVAL_MS);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        void loadEvents(true);
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
       window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, [loadEvents]);
 

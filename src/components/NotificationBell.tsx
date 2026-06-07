@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getNotifications, markAllNotificationsRead, markNotificationRead } from "src/api/notifications";
 import { NotificationDto } from "src/types/notifications";
@@ -7,11 +7,14 @@ interface NotificationBellProps {
   currentUserId?: string | null;
 }
 
+const NOTIFICATIONS_POLL_INTERVAL_MS = 60000;
+
 export function NotificationBell({ currentUserId }: NotificationBellProps) {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [items, setItems] = useState<NotificationDto[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const isLoadingRef = useRef(false);
 
   const loadNotifications = useCallback(async () => {
     if (!currentUserId) {
@@ -20,6 +23,11 @@ export function NotificationBell({ currentUserId }: NotificationBellProps) {
       return;
     }
 
+    if (isLoadingRef.current) {
+      return;
+    }
+
+    isLoadingRef.current = true;
     try {
       const data = await getNotifications(currentUserId, 8);
       setItems(data.items ?? []);
@@ -27,18 +35,18 @@ export function NotificationBell({ currentUserId }: NotificationBellProps) {
     } catch {
       setItems([]);
       setUnreadCount(0);
+    } finally {
+      isLoadingRef.current = false;
     }
   }, [currentUserId]);
 
   useEffect(() => {
     void loadNotifications();
     const intervalId = window.setInterval(() => {
-      void loadNotifications();
-    }, 15000);
-
-    const handleFocus = () => {
-      void loadNotifications();
-    };
+      if (document.visibilityState === "visible") {
+        void loadNotifications();
+      }
+    }, NOTIFICATIONS_POLL_INTERVAL_MS);
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
@@ -52,13 +60,11 @@ export function NotificationBell({ currentUserId }: NotificationBellProps) {
       }
     };
 
-    window.addEventListener("focus", handleFocus);
     document.addEventListener("visibilitychange", handleVisibilityChange);
     navigator.serviceWorker?.addEventListener("message", handleServiceWorkerMessage);
 
     return () => {
       window.clearInterval(intervalId);
-      window.removeEventListener("focus", handleFocus);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       navigator.serviceWorker?.removeEventListener("message", handleServiceWorkerMessage);
     };
