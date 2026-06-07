@@ -1,5 +1,5 @@
 // AddressSearchInput.tsx
-import { useState, useEffect, useCallback } from "react";
+import { CSSProperties, useState, useEffect, useCallback } from "react";
 
 interface AddressSuggestion {
   display_name: string;
@@ -25,6 +25,7 @@ interface AddressSearchInputProps {
   locationName?: string;
   placeholder?: string;
   disabled?: boolean;
+  inputStyle?: CSSProperties;
 }
 
 export function AddressSearchInput({
@@ -33,7 +34,8 @@ export function AddressSearchInput({
   onLocationNameChange,
   locationName = "",
   placeholder = "Начните вводить адрес...",
-  disabled = false
+  disabled = false,
+  inputStyle
 }: AddressSearchInputProps) {
   const [addressQuery, setAddressQuery] = useState(value);
   const [addressSuggestions, setAddressSuggestions] = useState<AddressSuggestion[]>([]);
@@ -137,7 +139,8 @@ export function AddressSearchInput({
           borderRadius: "4px",
           fontSize: "16px",
           backgroundColor: disabled ? "var(--hp-surface-soft)" : "var(--hp-input-bg)",
-          color: "var(--hp-text)"
+          color: "var(--hp-text)",
+          ...inputStyle
         }}
       />
       

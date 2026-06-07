@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { AddressSearchInput } from "src/AddressSearchInput";
 import { LoadingIndicator } from "src/components/LoadingIndicator";
 import { BottomNav } from "src/components/BottomNav";
 import { getTeam, getTeamMembers, removeTeamMember, updateTeam, updateTeamMember } from "src/api/teams";
@@ -97,6 +98,116 @@ function ContactItemsEditor({
         style={{ border: "1px dashed var(--hp-info-border)", borderRadius: 12, padding: "10px 12px", background: "var(--hp-info-soft)", color: "var(--hp-info)", fontWeight: 900, cursor: "pointer" }}
       >
         Добавить пункт
+      </button>
+    </div>
+  );
+}
+
+function AddressItemsEditor({
+  items,
+  onChange,
+}: {
+  items: TeamContactItem[];
+  onChange: (items: TeamContactItem[]) => void;
+}) {
+  const [useAddressSearch, setUseAddressSearch] = useState(true);
+  const visibleItems = items.length > 0 ? items : [emptyContact()];
+
+  const updateItem = (index: number, field: keyof TeamContactItem, value: string) => {
+    const next = [...visibleItems];
+    next[index] = { ...next[index], [field]: value };
+    onChange(next);
+  };
+
+  const removeItem = (index: number) => {
+    onChange(visibleItems.filter((_, itemIndex) => itemIndex !== index));
+  };
+
+  return (
+    <div style={{ display: "grid", gap: 8 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
+        <div style={{ fontWeight: 900, color: "var(--hp-heading)", fontSize: 14 }}>Адрес *</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+          <span style={{ fontSize: 14, color: !useAddressSearch ? "var(--hp-text)" : "var(--hp-muted)" }}>✏️ Ручной</span>
+          <button
+            type="button"
+            onClick={() => setUseAddressSearch((value) => !value)}
+            aria-label="Переключить поиск адреса"
+            style={{
+              position: "relative",
+              width: 52,
+              height: 28,
+              border: 0,
+              backgroundColor: useAddressSearch ? "var(--hp-success)" : "var(--hp-border)",
+              borderRadius: 28,
+              cursor: "pointer",
+              padding: 0,
+              flexShrink: 0,
+            }}
+          >
+            <span
+              style={{
+                position: "absolute",
+                top: 4,
+                left: useAddressSearch ? 28 : 4,
+                width: 20,
+                height: 20,
+                backgroundColor: "var(--hp-surface)",
+                borderRadius: "50%",
+                transition: "left 0.15s ease",
+                boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
+              }}
+            />
+          </button>
+          <span style={{ fontSize: 14, color: useAddressSearch ? "var(--hp-text)" : "var(--hp-muted)" }}>🔍 Авто</span>
+        </div>
+      </div>
+
+      {visibleItems.map((item, index) => (
+        <div key={index} style={{ display: "grid", gridTemplateColumns: "minmax(0, 0.9fr) minmax(0, 1.3fr) auto", gap: 8 }}>
+          <input value={item.title} onChange={(event) => updateItem(index, "title", event.target.value)} placeholder="Название: Домашняя арена" style={inputStyle} />
+          {useAddressSearch ? (
+            <AddressSearchInput
+              value={item.value}
+              onChange={(address) => updateItem(index, "value", address)}
+              placeholder="Начните вводить адрес..."
+              inputStyle={{ ...inputStyle, padding: "13px 40px 13px 12px" }}
+            />
+          ) : (
+            <textarea
+              value={item.value}
+              onChange={(event) => updateItem(index, "value", event.target.value)}
+              placeholder="Страна, город, улица, дом..."
+              rows={1}
+              style={{ ...inputStyle, minHeight: 48, resize: "vertical", fontFamily: "inherit" }}
+            />
+          )}
+          <button
+            type="button"
+            onClick={() => removeItem(index)}
+            style={{ border: "1px solid var(--hp-danger-border)", borderRadius: 12, background: "var(--hp-danger-soft)", color: "var(--hp-danger)", fontWeight: 900, padding: "0 10px", cursor: "pointer" }}
+            aria-label="Удалить адрес"
+          >
+            ×
+          </button>
+        </div>
+      ))}
+
+      <div style={{ fontSize: 13, color: "var(--hp-muted)", display: "flex", alignItems: "flex-start", gap: 6 }}>
+        <span style={{ flexShrink: 0 }}>{useAddressSearch ? "💡" : "📝"}</span>
+        <span>
+          {useAddressSearch
+            ? "Введите улицу и номер дома для поиска. Можно искать по городу или названию места."
+            : "Укажите адрес полностью для навигации участников."}
+        </span>
+      </div>
+
+      <button
+        type="button"
+        onClick={() => onChange([...visibleItems, emptyContact()])}
+        style={{ border: "1px dashed var(--hp-info-border)", borderRadius: 12, padding: "10px 12px", background: "var(--hp-info-soft)", color: "var(--hp-info)", fontWeight: 900, cursor: "pointer" }}
+      >
+        Добавить адрес
       </button>
     </div>
   );
@@ -366,7 +477,7 @@ export function TeamManagePage({ currentUser }: TeamManagePageProps) {
                   <input value={form.coverImageUrl} onChange={(event) => setForm((value) => ({ ...value, coverImageUrl: event.target.value }))} placeholder="Ссылка на обои / обложку" style={inputStyle} />
                   <ContactItemsEditor title="Телефоны" titlePlaceholder="Название: Капитан" valuePlaceholder="Телефон" items={form.phones} onChange={(phones) => setForm((value) => ({ ...value, phones }))} />
                   <ContactItemsEditor title="Ссылки" titlePlaceholder="Название: Чат команды" valuePlaceholder="Ссылка" items={form.links} onChange={(links) => setForm((value) => ({ ...value, links }))} />
-                  <ContactItemsEditor title="Адреса" titlePlaceholder="Название: Домашняя арена" valuePlaceholder="Адрес" items={form.addresses} onChange={(addresses) => setForm((value) => ({ ...value, addresses }))} />
+                  <AddressItemsEditor items={form.addresses} onChange={(addresses) => setForm((value) => ({ ...value, addresses }))} />
                   <button type="button" onClick={handleSaveTeam} disabled={teamSaving} style={{ border: 0, borderRadius: 14, padding: "13px 14px", background: "var(--hp-primary)", color: "white", fontWeight: 900, cursor: teamSaving ? "wait" : "pointer", opacity: teamSaving ? 0.72 : 1 }}>
                     {teamSaving ? "Сохраняем..." : "Сохранить профиль"}
                   </button>
