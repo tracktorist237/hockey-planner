@@ -17,7 +17,7 @@ export function MyTeamsTab({ teams, loading, onGoPublic, onGoCode, onOpenTeam, p
     <div style={{ marginTop: 14 }}>
       <h2 style={{ margin: "0 0 6px", fontSize: 20, color: "var(--hp-text-strong)" }}>Мои команды</h2>
       <p style={{ margin: "0 0 12px", color: "var(--hp-muted)", lineHeight: 1.4 }}>
-        Здесь только команды, в которые вы уже вступили. Управление открывается на отдельной странице команды.
+        Здесь только команды, в которые вы уже вступили.
       </p>
 
       <div style={{ display: "grid", gap: 10 }}>
