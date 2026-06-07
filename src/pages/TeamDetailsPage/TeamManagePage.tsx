@@ -6,6 +6,7 @@ import { getTeam, getTeamMembers, removeTeamMember, updateTeam, updateTeamMember
 import { TeamContactItem, TeamDto, TeamMemberDto, TeamVisibility } from "src/types/teams";
 import { User } from "src/types/user";
 import { TeamMembersSection } from "src/pages/TeamsPage/components/TeamMembersSection";
+import { ExerciseBankManager, UniformColorsManager } from "src/pages/TeamDetailsPage/TeamLibrarySections";
 import { cardStyle, inputStyle } from "src/pages/TeamsPage/components/styles";
 
 const TeamRole = {
@@ -29,12 +30,14 @@ interface TeamFormState {
   addresses: TeamContactItem[];
 }
 
-type ManageTab = "profile" | "invite" | "members" | "privacy";
+type ManageTab = "profile" | "invite" | "members" | "exercises" | "uniforms" | "privacy";
 
 const manageTabs: Array<{ key: ManageTab; label: string; hint: string }> = [
   { key: "profile", label: "Профиль", hint: "Название, описание, контакты" },
   { key: "invite", label: "Приглашение", hint: "Код для вступления" },
   { key: "members", label: "Участники", hint: "Роли и бейджи" },
+  { key: "exercises", label: "Упражнения", hint: "Банк упражнений" },
+  { key: "uniforms", label: "Форма", hint: "Справочник цветов формы" },
   { key: "privacy", label: "Доступ", hint: "Публичность команды" },
 ];
 
@@ -124,6 +127,16 @@ export function TeamManagePage({ currentUser }: TeamManagePageProps) {
   const [activeTab, setActiveTab] = useState<ManageTab>("profile");
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+
+  const showError = useCallback((value: string) => {
+    setMessage(null);
+    setError(value);
+  }, []);
+
+  const showMessage = useCallback((value: string) => {
+    setError(null);
+    setMessage(value);
+  }, []);
 
   const loadTeam = useCallback(async () => {
     if (!id) {
@@ -313,7 +326,7 @@ export function TeamManagePage({ currentUser }: TeamManagePageProps) {
         {!loading && team && canManageTeam(team) && (
           <>
             <section style={{ ...cardStyle, padding: 10 }}>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 6 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 6 }}>
                 {manageTabs.map((tab) => {
                   const isActive = activeTab === tab.key;
                   return (
@@ -390,6 +403,24 @@ export function TeamManagePage({ currentUser }: TeamManagePageProps) {
                 removingUserId={removingUserId}
                 onSave={handleSaveMember}
                 onRemove={handleRemoveMember}
+              />
+            )}
+
+            {activeTab === "exercises" && currentUser?.id && (
+              <ExerciseBankManager
+                teamId={team.id}
+                currentUserId={currentUser.id}
+                onError={showError}
+                onMessage={showMessage}
+              />
+            )}
+
+            {activeTab === "uniforms" && currentUser?.id && (
+              <UniformColorsManager
+                teamId={team.id}
+                currentUserId={currentUser.id}
+                onError={showError}
+                onMessage={showMessage}
               />
             )}
 

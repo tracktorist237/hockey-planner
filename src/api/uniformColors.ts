@@ -8,6 +8,11 @@ export interface CreateUniformColorRequest {
   teamId: string;
 }
 
+export interface UpdateUniformColorRequest {
+  name: string;
+  imageUrl: string;
+}
+
 export async function getUniformColors(teamId: string): Promise<UniformColorDto[]> {
   const query = new URLSearchParams({ teamId });
   const res = await fetch(`${API_BASE}/api/uniform-colors?${query.toString()}`, {
@@ -69,4 +74,42 @@ export async function createUniformColorWithUpload(
   }
 
   return res.json();
+}
+
+export async function updateUniformColor(
+  id: string,
+  data: UpdateUniformColorRequest,
+  currentUserId: string,
+): Promise<UniformColorDto> {
+  const res = await fetch(
+    `${API_BASE}/api/uniform-colors/${encodeURIComponent(id)}?currentUserId=${encodeURIComponent(currentUserId)}`,
+    {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(data),
+    },
+  );
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || `PUT /api/uniform-colors/${id} failed: ${res.status}`);
+  }
+
+  return res.json();
+}
+
+export async function deleteUniformColor(id: string, currentUserId: string): Promise<void> {
+  const res = await fetch(
+    `${API_BASE}/api/uniform-colors/${encodeURIComponent(id)}?currentUserId=${encodeURIComponent(currentUserId)}`,
+    {
+      method: "DELETE",
+      credentials: "include",
+    },
+  );
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || `DELETE /api/uniform-colors/${id} failed: ${res.status}`);
+  }
 }

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { createExercise, getExercises } from "src/api/exercises";
+import { getExercises } from "src/api/exercises";
 import { LoadingIndicator } from "src/components/LoadingIndicator";
 import { ExerciseDto } from "src/types/events";
 
@@ -9,27 +9,11 @@ interface PracticeExercisesSectionProps {
   onChange: (ids: string[]) => void;
 }
 
-const getCurrentUserId = (): string | null => {
-  const raw = localStorage.getItem("currentUser");
-  if (!raw) return null;
-
-  try {
-    const parsed = JSON.parse(raw) as { id?: string | null };
-    return parsed.id ?? null;
-  } catch {
-    return null;
-  }
-};
-
 export function PracticeExercisesSection({ selectedExerciseIds, teamId, onChange }: PracticeExercisesSectionProps) {
   const [items, setItems] = useState<ExerciseDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showCreateForm, setShowCreateForm] = useState(false);
   const [isListExpanded, setIsListExpanded] = useState(false);
-  const [name, setName] = useState("");
-  const [videoUrl, setVideoUrl] = useState("");
-  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -89,70 +73,11 @@ export function PracticeExercisesSection({ selectedExerciseIds, teamId, onChange
     onChange([...selectedExerciseIds, exerciseId]);
   };
 
-  const handleCreate = async () => {
-    if (!name.trim() || !videoUrl.trim()) {
-      setError("Укажите название и ссылку на видео");
-      return;
-    }
-
-    const currentUserId = getCurrentUserId();
-    if (!currentUserId) {
-      setError("Не удалось определить текущего пользователя");
-      return;
-    }
-
-    if (!teamId) {
-      setError("Р’С‹Р±РµСЂРёС‚Рµ РєРѕРјР°РЅРґСѓ РґР»СЏ СѓРїСЂР°Р¶РЅРµРЅРёСЏ");
-      return;
-    }
-
-    setSaving(true);
-    setError(null);
-    try {
-      const created = await createExercise(
-        {
-          name: name.trim(),
-          videoUrl: videoUrl.trim(),
-          teamId,
-        },
-        currentUserId,
-      );
-      setItems((prev) => [...prev, created].sort((a, b) => a.name.localeCompare(b.name, "ru")));
-      setName("");
-      setVideoUrl("");
-      setShowCreateForm(false);
-      onChange([...selectedExerciseIds, created.id]);
-    } catch (createError) {
-      console.error(createError);
-      setError("Не удалось добавить упражнение. Проверьте права доступа.");
-    } finally {
-      setSaving(false);
-    }
-  };
-
   return (
     <div style={{ backgroundColor: "var(--hp-surface-soft)", padding: "20px", borderRadius: "12px", marginBottom: "20px", border: "1px solid var(--hp-primary-soft)", width: "100%", boxSizing: "border-box" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px", marginBottom: "12px", flexWrap: "wrap" }}>
         <h3 style={{ margin: 0, fontSize: "18px", fontWeight: "600", color: "var(--hp-heading)" }}>🏋️ Упражнения тренировки</h3>
-        <button
-          type="button"
-          onClick={() => setShowCreateForm((prev) => !prev)}
-          disabled={!teamId}
-          style={{ padding: "8px 12px", border: "1px solid var(--hp-info-border)", borderRadius: "10px", backgroundColor: "var(--hp-primary-soft)", color: "var(--hp-primary-text)", fontSize: "13px", fontWeight: "600", cursor: teamId ? "pointer" : "not-allowed", opacity: teamId ? 1 : 0.65 }}
-        >
-          {showCreateForm ? "Скрыть форму" : "+ Добавить в банк"}
-        </button>
       </div>
-
-      {showCreateForm && (
-        <div style={{ marginBottom: "12px", display: "grid", gap: "8px" }}>
-          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Название упражнения" style={{ width: "100%", padding: "10px 12px", borderRadius: "10px", border: "1px solid var(--hp-border)", fontSize: "14px", boxSizing: "border-box" }} />
-          <input value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} placeholder="Ссылка на видео" style={{ width: "100%", padding: "10px 12px", borderRadius: "10px", border: "1px solid var(--hp-border)", fontSize: "14px", boxSizing: "border-box" }} />
-          <button type="button" onClick={() => void handleCreate()} disabled={saving} style={{ justifySelf: "start", padding: "8px 12px", borderRadius: "10px", border: "none", backgroundColor: "var(--hp-primary)", color: "white", fontSize: "13px", fontWeight: "600", cursor: saving ? "wait" : "pointer", opacity: saving ? 0.7 : 1 }}>
-            {saving ? "Сохраняем..." : "Сохранить упражнение"}
-          </button>
-        </div>
-      )}
 
       {error && (
         <div style={{ marginBottom: "10px", padding: "10px 12px", backgroundColor: "var(--hp-danger-soft)", color: "var(--hp-danger)", borderRadius: "10px", fontSize: "13px" }}>
