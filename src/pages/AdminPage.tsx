@@ -13,24 +13,32 @@ import {
   NotificationDeliveryStatus,
   NotificationDeliverySummaryResponse,
   ReleaseNoticeDto,
+  createAdminInstruction,
   createAdminRelease,
+  deleteAdminInstruction,
   downloadDatabaseBackup,
   getAdminDashboard,
+  getAdminInstructions,
   getAdminReleases,
   getAdminReports,
   getAdminUsers,
   getNotificationDeliveries,
   getNotificationDeliverySummary,
+  publishAdminInstruction,
   publishAdminRelease,
   sendAdminTestNotification,
+  unpublishAdminInstruction,
+  updateAdminInstruction,
   updateAdminRelease,
   updateAdminReportStatus,
+  uploadAdminInstructionImage,
 } from "src/api/admin";
+import { CreateUpdateInstructionArticleRequest, InstructionArticleDto } from "src/api/instructions";
 import { broadcastPush, PushBroadcastResult } from "src/api/push";
 import { NotificationBell } from "src/components/NotificationBell";
 import { useAuth } from "src/hooks/useAuth";
 
-type AdminTab = "dashboard" | "reports" | "users" | "push" | "releases" | "notifications";
+type AdminTab = "dashboard" | "reports" | "users" | "push" | "releases" | "notifications" | "instructions";
 
 const pageStyle = {
   minHeight: "100vh",
@@ -105,6 +113,16 @@ const emptyReleaseForm: CreateUpdateReleaseNoticeRequest = {
   sendNotification: true,
 };
 
+const emptyInstructionForm: CreateUpdateInstructionArticleRequest = {
+  slug: "",
+  title: "",
+  summary: "",
+  content: "",
+  imageUrl: "",
+  isPublished: false,
+  sortOrder: 0,
+};
+
 const formatDate = (value?: string | null) => {
   if (!value) return "-";
   return new Date(value).toLocaleString("ru-RU", { dateStyle: "short", timeStyle: "short" });
@@ -121,6 +139,7 @@ export function AdminPage() {
     if (location.pathname.endsWith("/push")) return "push";
     if (location.pathname.endsWith("/releases")) return "releases";
     if (location.pathname.endsWith("/notifications")) return "notifications";
+    if (location.pathname.endsWith("/instructions")) return "instructions";
     return "dashboard";
   }, [location.pathname]);
 
@@ -128,6 +147,7 @@ export function AdminPage() {
   const [reports, setReports] = useState<AdminReportsListResponse | null>(null);
   const [users, setUsers] = useState<AdminUserListResponse | null>(null);
   const [releases, setReleases] = useState<ReleaseNoticeDto[]>([]);
+  const [instructions, setInstructions] = useState<InstructionArticleDto[]>([]);
   const [deliverySummary, setDeliverySummary] = useState<NotificationDeliverySummaryResponse | null>(null);
   const [deliveries, setDeliveries] = useState<NotificationDeliveryListResponse | null>(null);
   const [selectedReport, setSelectedReport] = useState<AppReportDto | null>(null);
@@ -138,6 +158,9 @@ export function AdminPage() {
   const [userSearch, setUserSearch] = useState("");
   const [releaseForm, setReleaseForm] = useState<CreateUpdateReleaseNoticeRequest>(emptyReleaseForm);
   const [editingReleaseId, setEditingReleaseId] = useState<string | null>(null);
+  const [instructionForm, setInstructionForm] = useState<CreateUpdateInstructionArticleRequest>(emptyInstructionForm);
+  const [editingInstructionId, setEditingInstructionId] = useState<string | null>(null);
+  const [instructionImageUploading, setInstructionImageUploading] = useState(false);
   const [pushTitle, setPushTitle] = useState("");
   const [pushBody, setPushBody] = useState("");
   const [pushUrl, setPushUrl] = useState("/events");
@@ -164,6 +187,7 @@ export function AdminPage() {
 
   const loadUsers = async () => setUsers(await getAdminUsers(userSearch));
   const loadReleases = async () => setReleases(await getAdminReleases());
+  const loadInstructions = async () => setInstructions(await getAdminInstructions());
 
   const loadDeliveries = async () => {
     const [summary, list] = await Promise.all([
@@ -189,7 +213,9 @@ export function AdminPage() {
               ? loadReleases
               : tab === "notifications"
                 ? loadDeliveries
-                : null;
+                : tab === "instructions"
+                  ? loadInstructions
+                  : null;
 
     if (!run) {
       setLoading(false);
@@ -249,6 +275,61 @@ export function AdminPage() {
     }
   };
 
+  const saveInstruction = async (event: FormEvent) => {
+    event.preventDefault();
+    setError(null);
+    setMessage(null);
+
+    try {
+      if (editingInstructionId) {
+        await updateAdminInstruction(editingInstructionId, instructionForm);
+        setMessage("Инструкция обновлена.");
+      } else {
+        await createAdminInstruction(instructionForm);
+        setMessage("Инструкция создана.");
+      }
+
+      setInstructionForm(emptyInstructionForm);
+      setEditingInstructionId(null);
+      await loadInstructions();
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : "Не удалось сохранить инструкцию.");
+    }
+  };
+
+  const editInstruction = (instruction: InstructionArticleDto) => {
+    setEditingInstructionId(instruction.id);
+    setInstructionForm({
+      slug: instruction.slug,
+      title: instruction.title,
+      summary: instruction.summary ?? "",
+      content: instruction.content,
+      imageUrl: instruction.imageUrl ?? "",
+      isPublished: Boolean(instruction.isPublished),
+      sortOrder: instruction.sortOrder,
+    });
+  };
+
+  const uploadInstructionImage = async (file?: File) => {
+    if (!file) {
+      return;
+    }
+
+    setError(null);
+    setMessage(null);
+    setInstructionImageUploading(true);
+
+    try {
+      const imageUrl = await uploadAdminInstructionImage(file);
+      setInstructionForm((current) => ({ ...current, imageUrl }));
+      setMessage("Изображение загружено.");
+    } catch (uploadError) {
+      setError(uploadError instanceof Error ? uploadError.message : "Не удалось загрузить изображение.");
+    } finally {
+      setInstructionImageUploading(false);
+    }
+  };
+
   const metricCards = dashboard
     ? [
         ["Пользователи", dashboard.totalUsers],
@@ -282,6 +363,7 @@ export function AdminPage() {
               ["users", "Пользователи"],
               ["notifications", "Доставки"],
               ["releases", "Что нового"],
+              ["instructions", "Инструкции"],
               ["push", "Push"],
             ].map(([key, label]) => {
               const active = tab === key;
@@ -570,6 +652,170 @@ export function AdminPage() {
                 </div>
               ))}
               {!loading && releases.length === 0 && <div style={cardStyle}>Release notices пока нет.</div>}
+            </div>
+          </div>
+        )}
+
+        {tab === "instructions" && (
+          <div style={{ display: "grid", gap: 12 }}>
+            <form onSubmit={saveInstruction} style={{ ...cardStyle, display: "grid", gap: 12 }}>
+              <h2 style={{ margin: 0, color: "var(--hp-heading)", fontSize: 18 }}>{editingInstructionId ? "Редактировать инструкцию" : "Новая инструкция"}</h2>
+              <div style={{ display: "grid", gridTemplateColumns: isNarrow ? "1fr" : "minmax(0, 1fr) 170px", gap: 10 }}>
+                <Field label="Title">
+                  <input value={instructionForm.title} onChange={(event) => setInstructionForm({ ...instructionForm, title: event.target.value })} maxLength={180} style={inputStyle} />
+                </Field>
+                <Field label="Sort order">
+                  <input type="number" value={instructionForm.sortOrder} onChange={(event) => setInstructionForm({ ...instructionForm, sortOrder: Number(event.target.value) || 0 })} style={inputStyle} />
+                </Field>
+              </div>
+              <Field label="Slug">
+                <input value={instructionForm.slug} onChange={(event) => setInstructionForm({ ...instructionForm, slug: event.target.value.toLowerCase() })} maxLength={120} placeholder="getting-started" style={inputStyle} />
+              </Field>
+              <Field label="Summary">
+                <textarea value={instructionForm.summary ?? ""} onChange={(event) => setInstructionForm({ ...instructionForm, summary: event.target.value })} rows={2} maxLength={500} style={{ ...inputStyle, resize: "vertical" }} />
+              </Field>
+              <Field label="Content">
+                <textarea value={instructionForm.content} onChange={(event) => setInstructionForm({ ...instructionForm, content: event.target.value })} rows={8} maxLength={12000} style={{ ...inputStyle, resize: "vertical", lineHeight: 1.45 }} />
+              </Field>
+              <Field label="Image">
+                <div style={{ display: "grid", gap: 8 }}>
+                  <input value={instructionForm.imageUrl ?? ""} onChange={(event) => setInstructionForm({ ...instructionForm, imageUrl: event.target.value })} placeholder="https://..." style={inputStyle} />
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    onChange={(event) => void uploadInstructionImage(event.target.files?.[0])}
+                    style={{ ...inputStyle, padding: 10 }}
+                  />
+                  {instructionImageUploading && <div style={{ color: "var(--hp-muted)", fontSize: 13 }}>Загрузка изображения...</div>}
+                  {instructionForm.imageUrl && (
+                    <img src={instructionForm.imageUrl} alt="" style={{ width: "100%", maxWidth: 360, borderRadius: 12, border: "1px solid var(--hp-border)", background: "var(--hp-surface-soft)" }} />
+                  )}
+                </div>
+              </Field>
+              <label style={{ display: "flex", alignItems: "flex-start", gap: 10, color: "var(--hp-heading)", fontWeight: 800, cursor: "pointer", userSelect: "none", lineHeight: 1.35 }}>
+                <span style={{ position: "relative", width: 22, height: 22, flexShrink: 0 }}>
+                  <input
+                    type="checkbox"
+                    checked={instructionForm.isPublished}
+                    onChange={(event) => setInstructionForm({ ...instructionForm, isPublished: event.target.checked })}
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      width: "100%",
+                      height: "100%",
+                      margin: 0,
+                      opacity: 0,
+                      cursor: "pointer",
+                    }}
+                  />
+                  <span
+                    aria-hidden="true"
+                    style={{
+                      width: 22,
+                      height: 22,
+                      borderRadius: 7,
+                      border: instructionForm.isPublished ? "1px solid var(--hp-primary)" : "1px solid var(--hp-border)",
+                      background: instructionForm.isPublished ? "var(--hp-primary)" : "var(--hp-input-bg)",
+                      color: "white",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: 15,
+                      fontWeight: 900,
+                      boxShadow: instructionForm.isPublished ? "var(--hp-shadow-sm)" : "inset 0 0 0 1px var(--hp-surface-soft)",
+                    }}
+                  >
+                    {instructionForm.isPublished ? "✓" : ""}
+                  </span>
+                </span>
+                <span>Опубликовать инструкцию</span>
+              </label>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <button type="submit" style={{ border: 0, borderRadius: 12, padding: "12px 16px", background: "var(--hp-primary)", color: "white", fontWeight: 900, cursor: "pointer" }}>
+                  {editingInstructionId ? "Сохранить" : "Создать"}
+                </button>
+                {editingInstructionId && (
+                  <button type="button" onClick={() => { setEditingInstructionId(null); setInstructionForm(emptyInstructionForm); }} style={{ border: "1px solid var(--hp-border)", borderRadius: 12, padding: "12px 16px", background: "var(--hp-surface-soft)", color: "var(--hp-heading)", fontWeight: 900, cursor: "pointer" }}>
+                    Отмена
+                  </button>
+                )}
+              </div>
+            </form>
+
+            <div style={{ display: "grid", gap: 10 }}>
+              {instructions.map((instruction) => (
+                <div key={instruction.id} style={{ ...cardStyle, display: "grid", gap: 10 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "start", flexWrap: "wrap" }}>
+                    <div style={{ minWidth: 0, flex: "1 1 240px" }}>
+                      <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                        <strong style={{ color: "var(--hp-heading)", overflowWrap: "anywhere" }}>{instruction.title}</strong>
+                        <Badge text={instruction.isPublished ? "Published" : "Draft"} tone={instruction.isPublished ? "success" : "warning"} />
+                        <Badge text={`#${instruction.sortOrder}`} tone="neutral" />
+                      </div>
+                      <div style={{ color: "var(--hp-muted)", fontSize: 13, marginTop: 4, overflowWrap: "anywhere" }}>
+                        /instructions/{instruction.slug}
+                      </div>
+                      {instruction.summary && <div style={{ marginTop: 8, color: "var(--hp-text)", lineHeight: 1.45 }}>{instruction.summary}</div>}
+                    </div>
+                    {instruction.imageUrl && <img src={instruction.imageUrl} alt="" style={{ width: 92, aspectRatio: "16 / 10", objectFit: "cover", borderRadius: 10, border: "1px solid var(--hp-border)" }} />}
+                  </div>
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    <button type="button" onClick={() => editInstruction(instruction)} style={{ border: "1px solid var(--hp-border)", borderRadius: 12, padding: "10px 12px", background: "var(--hp-surface-soft)", color: "var(--hp-heading)", fontWeight: 900, cursor: "pointer" }}>
+                      Изменить
+                    </button>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        setError(null);
+                        setMessage(null);
+                        try {
+                          if (instruction.isPublished) {
+                            await unpublishAdminInstruction(instruction.id);
+                            setMessage("Инструкция скрыта.");
+                          } else {
+                            await publishAdminInstruction(instruction.id);
+                            setMessage("Инструкция опубликована.");
+                          }
+                          await loadInstructions();
+                        } catch (publishError) {
+                          setError(publishError instanceof Error ? publishError.message : "Не удалось изменить публикацию.");
+                        }
+                      }}
+                      style={{ border: 0, borderRadius: 12, padding: "10px 12px", background: instruction.isPublished ? "var(--hp-warning)" : "var(--hp-primary)", color: "white", fontWeight: 900, cursor: "pointer" }}
+                    >
+                      {instruction.isPublished ? "Скрыть" : "Опубликовать"}
+                    </button>
+                    <button type="button" onClick={() => window.open(`/instructions/${instruction.slug}`, "_blank", "noopener,noreferrer")} style={{ border: "1px solid var(--hp-border)", borderRadius: 12, padding: "10px 12px", background: "var(--hp-surface-soft)", color: "var(--hp-heading)", fontWeight: 900, cursor: "pointer" }}>
+                      Открыть
+                    </button>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        if (!window.confirm("Удалить инструкцию?")) {
+                          return;
+                        }
+                        setError(null);
+                        setMessage(null);
+                        try {
+                          await deleteAdminInstruction(instruction.id);
+                          setMessage("Инструкция удалена.");
+                          if (editingInstructionId === instruction.id) {
+                            setEditingInstructionId(null);
+                            setInstructionForm(emptyInstructionForm);
+                          }
+                          await loadInstructions();
+                        } catch (deleteError) {
+                          setError(deleteError instanceof Error ? deleteError.message : "Не удалось удалить инструкцию.");
+                        }
+                      }}
+                      style={{ border: "1px solid var(--hp-danger)", borderRadius: 12, padding: "10px 12px", background: "var(--hp-danger-soft)", color: "var(--hp-danger)", fontWeight: 900, cursor: "pointer" }}
+                    >
+                      Удалить
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {!loading && instructions.length === 0 && <div style={cardStyle}>Инструкций пока нет.</div>}
             </div>
           </div>
         )}

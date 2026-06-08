@@ -22,6 +22,7 @@ export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
   const [message, setMessage] = useState<string | null>(null);
   const [isClearing, setIsClearing] = useState(false);
   const [isReportOpen, setIsReportOpen] = useState(false);
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
 
   const currentUserId = currentUser?.id ?? null;
 
@@ -269,6 +270,75 @@ export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
               );
             })}
           </div>
+        </div>
+
+        <div
+          style={{
+            backgroundColor: "var(--hp-surface)",
+            borderRadius: "16px",
+            padding: "18px",
+            marginBottom: "20px",
+            boxShadow: "var(--hp-shadow-sm)",
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => setIsHelpOpen((value) => !value)}
+            aria-expanded={isHelpOpen}
+            style={{
+              width: "100%",
+              border: 0,
+              padding: 0,
+              background: "transparent",
+              color: "var(--hp-heading)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "12px",
+              textAlign: "center",
+              cursor: "pointer",
+              position: "relative",
+            }}
+          >
+            <h2 style={{ margin: 0, fontSize: "18px", color: "var(--hp-heading)", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+              <span aria-hidden="true" style={{ fontSize: 16, lineHeight: 1 }}>
+                ℹ️
+              </span>
+              Помощь и инструкции
+            </h2>
+            <span style={{ position: "absolute", right: 0, fontSize: "22px", fontWeight: 900, color: "var(--hp-muted)", transform: isHelpOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.15s ease" }}>
+              V
+            </span>
+          </button>
+          {isHelpOpen && (
+            <div style={{ display: "grid", gap: "8px", marginTop: "14px" }}>
+              {[
+                ["Все инструкции", "/instructions"],
+                ["Как установить приложение", "/instructions/install-pwa"],
+                ["Как включить уведомления", "/instructions/notifications"],
+                ["Как вступить в команду", "/instructions/join-team"],
+              ].map(([label, path]) => (
+                <button
+                  key={path}
+                  type="button"
+                  onClick={() => navigate(path, { state: { from: "/settings" } })}
+                  style={{
+                    width: "100%",
+                    border: "1px solid var(--hp-border)",
+                    borderRadius: "12px",
+                    padding: "12px 14px",
+                    backgroundColor: "var(--hp-surface-soft)",
+                    color: "var(--hp-heading)",
+                    textAlign: "left",
+                    fontWeight: 800,
+                    cursor: "pointer",
+                  }}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         <div

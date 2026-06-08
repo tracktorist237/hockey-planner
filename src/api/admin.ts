@@ -1,4 +1,5 @@
 import { authFetch } from "src/api/auth";
+import { CreateUpdateInstructionArticleRequest, InstructionArticleDto } from "src/api/instructions";
 
 export enum AppReportType {
   Bug = 1,
@@ -256,6 +257,62 @@ export async function sendAdminTestNotification(): Promise<void> {
   if (!response.ok) {
     throw new Error(await readErrorMessage(response));
   }
+}
+
+export async function getAdminInstructions(): Promise<InstructionArticleDto[]> {
+  return requireJson(await authFetch("/api/admin/instructions"));
+}
+
+export async function createAdminInstruction(request: CreateUpdateInstructionArticleRequest): Promise<InstructionArticleDto> {
+  return requireJson(await authFetch("/api/admin/instructions", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(request),
+  }));
+}
+
+export async function updateAdminInstruction(id: string, request: CreateUpdateInstructionArticleRequest): Promise<InstructionArticleDto> {
+  return requireJson(await authFetch(`/api/admin/instructions/${encodeURIComponent(id)}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(request),
+  }));
+}
+
+export async function deleteAdminInstruction(id: string): Promise<void> {
+  const response = await authFetch(`/api/admin/instructions/${encodeURIComponent(id)}`, { method: "DELETE" });
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response));
+  }
+}
+
+export async function publishAdminInstruction(id: string): Promise<InstructionArticleDto> {
+  return requireJson(await authFetch(`/api/admin/instructions/${encodeURIComponent(id)}/publish`, { method: "POST" }));
+}
+
+export async function unpublishAdminInstruction(id: string): Promise<InstructionArticleDto> {
+  return requireJson(await authFetch(`/api/admin/instructions/${encodeURIComponent(id)}/unpublish`, { method: "POST" }));
+}
+
+export async function uploadAdminInstructionImage(file: File): Promise<string> {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await authFetch("/api/admin/instructions/upload-image", {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response));
+  }
+
+  const data = (await response.json()) as { imageUrl?: string };
+  if (!data.imageUrl) {
+    throw new Error("Сервер не вернул ссылку на изображение.");
+  }
+
+  return data.imageUrl;
 }
 
 export async function downloadDatabaseBackup(): Promise<DatabaseBackupDownload> {

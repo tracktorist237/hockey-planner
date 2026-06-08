@@ -20,6 +20,7 @@ import { AuthPage } from "src/pages/AuthPage";
 import { ConfirmEmailPage } from "src/pages/ConfirmEmailPage";
 import { EventPage } from "src/pages/EventPage/EventPage";
 import { EventsListPage } from "src/pages/EventsListPage/EventsListPage";
+import { InstructionArticlePage, InstructionsListPage } from "src/pages/InstructionsPage";
 import { LinkPlayerPage } from "src/pages/LinkPlayerPage";
 import { NewsPage } from "src/pages/NewsPage";
 import { NotificationSettingsPage } from "src/pages/NotificationSettingsPage";
@@ -193,6 +194,16 @@ function AppRoutes() {
         <Route
           path="/login"
           element={<AuthPage />}
+        />
+
+        <Route
+          path="/instructions"
+          element={<InstructionsListPage />}
+        />
+
+        <Route
+          path="/instructions/:slug"
+          element={<InstructionArticlePage />}
         />
 
         <Route
@@ -408,6 +419,17 @@ function AppRoutes() {
 
         <Route
           path="/admin/push"
+          element={
+            <RequireAuth>
+              <RequireSuperAdmin>
+                <AdminPage />
+              </RequireSuperAdmin>
+            </RequireAuth>
+          }
+        />
+
+        <Route
+          path="/admin/instructions"
           element={
             <RequireAuth>
               <RequireSuperAdmin>

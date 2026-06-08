@@ -365,6 +365,26 @@ export function AuthPage() {
             Сообщить о проблеме
           </button>
         </div>
+        <button
+          type="button"
+          onClick={() => navigate("/instructions", { state: { from: "/login" } })}
+          style={{
+            ...mutedButtonStyle,
+            width: "100%",
+            marginTop: 14,
+            padding: "8px 0",
+            color: "var(--hp-muted)",
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 7,
+          }}
+        >
+          <span aria-hidden="true" style={{ fontSize: 16, lineHeight: 1 }}>
+            ℹ️
+          </span>
+          <span>Инструкция</span>
+        </button>
       </form>
       <ReportProblemDialog isOpen={isReportOpen} onClose={() => setIsReportOpen(false)} />
     </div>
