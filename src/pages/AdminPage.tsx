@@ -1,8 +1,11 @@
 import { FormEvent, ReactNode, useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
+  addAdminTeamMember,
   AdminDashboardResponse,
   AdminReportsListResponse,
+  AdminTeamListResponse,
+  AdminUserDto,
   AdminUserListResponse,
   AppReportDto,
   AppReportSeverity,
@@ -21,16 +24,21 @@ import {
   getAdminInstructions,
   getAdminReleases,
   getAdminReports,
+  getAdminTeams,
   getAdminUsers,
   getNotificationDeliveries,
   getNotificationDeliverySummary,
   publishAdminInstruction,
   publishAdminRelease,
+  removeAdminTeamMember,
   sendAdminTestNotification,
   unpublishAdminInstruction,
+  updateAdminUser,
+  updateAdminTeamMember,
   updateAdminInstruction,
   updateAdminRelease,
   updateAdminReportStatus,
+  UpdateAdminUserRequest,
   uploadAdminInstructionImage,
 } from "src/api/admin";
 import { CreateUpdateInstructionArticleRequest, InstructionArticleDto } from "src/api/instructions";
@@ -106,6 +114,34 @@ const deliveryStatusLabels: Record<NotificationDeliveryStatus, string> = {
   [NotificationDeliveryStatus.EndpointInactive]: "Endpoint inactive",
 };
 
+const userRoleLabels: Record<number, string> = {
+  1: "Тренер",
+  2: "Капитан",
+  3: "Игрок",
+  4: "Менеджер",
+};
+
+const appRoleLabels: Record<number, string> = {
+  1: "User",
+  2: "SuperAdmin",
+};
+
+const userSortLabels: Record<string, string> = {
+  createdAt: "Дата регистрации",
+  name: "ФИО",
+  email: "Email",
+  role: "Роль",
+  appRole: "AppRole",
+  teams: "Команды",
+  push: "Push",
+};
+
+const teamMemberRoleLabels: Record<number, string> = {
+  1: "Владелец",
+  2: "Админ",
+  3: "Участник",
+};
+
 const emptyReleaseForm: CreateUpdateReleaseNoticeRequest = {
   version: "",
   title: "",
@@ -121,6 +157,17 @@ const emptyInstructionForm: CreateUpdateInstructionArticleRequest = {
   imageUrl: "",
   isPublished: false,
   sortOrder: 0,
+};
+
+const emptyUserForm: UpdateAdminUserRequest = {
+  firstName: "",
+  lastName: "",
+  email: "",
+  emailConfirmed: false,
+  role: 3,
+  appRole: 1,
+  phone: "",
+  jerseyNumber: null,
 };
 
 const formatDate = (value?: string | null) => {
@@ -146,6 +193,7 @@ export function AdminPage() {
   const [dashboard, setDashboard] = useState<AdminDashboardResponse | null>(null);
   const [reports, setReports] = useState<AdminReportsListResponse | null>(null);
   const [users, setUsers] = useState<AdminUserListResponse | null>(null);
+  const [adminTeams, setAdminTeams] = useState<AdminTeamListResponse | null>(null);
   const [releases, setReleases] = useState<ReleaseNoticeDto[]>([]);
   const [instructions, setInstructions] = useState<InstructionArticleDto[]>([]);
   const [deliverySummary, setDeliverySummary] = useState<NotificationDeliverySummaryResponse | null>(null);
@@ -156,6 +204,22 @@ export function AdminPage() {
   const [reportSeverity, setReportSeverity] = useState<AppReportSeverity | "">("");
   const [deliveryStatus, setDeliveryStatus] = useState<NotificationDeliveryStatus | "">("");
   const [userSearch, setUserSearch] = useState("");
+  const [userAppRoleFilter, setUserAppRoleFilter] = useState<number | "">("");
+  const [userRoleFilter, setUserRoleFilter] = useState<number | "">("");
+  const [userEmailConfirmedFilter, setUserEmailConfirmedFilter] = useState<boolean | "">("");
+  const [userTeamsFilter, setUserTeamsFilter] = useState<boolean | "">("");
+  const [userPushFilter, setUserPushFilter] = useState<boolean | "">("");
+  const [userPage, setUserPage] = useState(1);
+  const [userPageSize, setUserPageSize] = useState(25);
+  const [userSortBy, setUserSortBy] = useState("createdAt");
+  const [userSortDirection, setUserSortDirection] = useState<"asc" | "desc">("desc");
+  const [editingUserId, setEditingUserId] = useState<string | null>(null);
+  const [userForm, setUserForm] = useState<UpdateAdminUserRequest>(emptyUserForm);
+  const [addMemberTeamId, setAddMemberTeamId] = useState("");
+  const [teamMemberAction, setTeamMemberAction] = useState<"add" | "remove" | "edit">("add");
+  const [addMemberRole, setAddMemberRole] = useState(3);
+  const [addMemberBadgeTitle, setAddMemberBadgeTitle] = useState("");
+  const [addMemberSubmitting, setAddMemberSubmitting] = useState(false);
   const [releaseForm, setReleaseForm] = useState<CreateUpdateReleaseNoticeRequest>(emptyReleaseForm);
   const [editingReleaseId, setEditingReleaseId] = useState<string | null>(null);
   const [instructionForm, setInstructionForm] = useState<CreateUpdateInstructionArticleRequest>(emptyInstructionForm);
@@ -177,6 +241,34 @@ export function AdminPage() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  useEffect(() => {
+    if (!editingUserId) {
+      return;
+    }
+
+    const user = users?.items.find((item) => item.id === editingUserId);
+    if (!user) {
+      return;
+    }
+
+    const nextTeamId = resolveTeamForAction(user, teamMemberAction);
+    const isCurrentValid = teamMemberAction === "remove" || teamMemberAction === "edit"
+      ? user.teams.some((team) => team.teamId === addMemberTeamId)
+      : (adminTeams?.items ?? []).some((team) => team.id === addMemberTeamId && !user.teams.some((userTeam) => userTeam.teamId === team.id));
+
+    if (!isCurrentValid) {
+      setAddMemberTeamId(nextTeamId);
+      if (teamMemberAction === "edit") {
+        const membership = user.teams.find((team) => team.teamId === nextTeamId);
+        if (membership) {
+          setAddMemberRole(membership.role);
+          setAddMemberBadgeTitle(membership.badgeTitle ?? "");
+        }
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [adminTeams, editingUserId, teamMemberAction, users]);
+
   const loadDashboard = async () => setDashboard(await getAdminDashboard());
 
   const loadReports = async () => {
@@ -185,7 +277,33 @@ export function AdminPage() {
     if (selectedReport) setSelectedReport(data.items.find((item) => item.id === selectedReport.id) ?? null);
   };
 
-  const loadUsers = async () => setUsers(await getAdminUsers(userSearch));
+  const loadUsers = async (pageOverride = userPage) => {
+    const data = await getAdminUsers({
+      search: userSearch,
+      appRole: userAppRoleFilter,
+      role: userRoleFilter,
+      emailConfirmed: userEmailConfirmedFilter,
+      hasTeams: userTeamsFilter,
+      hasPush: userPushFilter,
+      sortBy: userSortBy,
+      sortDirection: userSortDirection,
+      page: pageOverride,
+      pageSize: userPageSize,
+    });
+    setUsers(data);
+
+  };
+  const loadAdminTeams = async () => {
+    const data = await getAdminTeams("", 1, 200);
+    setAdminTeams(data);
+
+    if (!addMemberTeamId && data.items.length > 0) {
+      setAddMemberTeamId(data.items[0].id);
+    }
+  };
+  const loadUsersTab = async () => {
+    await Promise.all([loadUsers(), loadAdminTeams()]);
+  };
   const loadReleases = async () => setReleases(await getAdminReleases());
   const loadInstructions = async () => setInstructions(await getAdminInstructions());
 
@@ -208,7 +326,7 @@ export function AdminPage() {
         : tab === "reports"
           ? loadReports
           : tab === "users"
-            ? loadUsers
+            ? loadUsersTab
             : tab === "releases"
               ? loadReleases
               : tab === "notifications"
@@ -250,6 +368,137 @@ export function AdminPage() {
       setError(downloadError instanceof Error ? downloadError.message : "Не удалось скачать бэкап БД.");
     } finally {
       setBackupDownloading(false);
+    }
+  };
+
+  const resolveTeamForAction = (user: AdminUserDto, action: "add" | "remove" | "edit") => {
+    if (action === "remove" || action === "edit") {
+      return user.teams[0]?.teamId ?? "";
+    }
+
+    const userTeamIds = new Set(user.teams.map((team) => team.teamId));
+    return (adminTeams?.items ?? []).find((team) => !userTeamIds.has(team.id))?.id ?? "";
+  };
+
+  const editUser = (user: AdminUserDto) => {
+    setEditingUserId(user.id);
+    setUserForm({
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email ?? "",
+      emailConfirmed: user.emailConfirmed,
+      role: user.role,
+      appRole: user.appRole,
+      phone: user.phone ?? "",
+      jerseyNumber: user.jerseyNumber ?? null,
+    });
+    setTeamMemberAction("add");
+    setAddMemberTeamId(resolveTeamForAction(user, "add"));
+  };
+
+  const cancelUserEdit = () => {
+    setEditingUserId(null);
+    setUserForm(emptyUserForm);
+    setTeamMemberAction("add");
+    setAddMemberTeamId("");
+    setAddMemberBadgeTitle("");
+  };
+
+  const saveUser = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!editingUserId) {
+      return;
+    }
+
+    setError(null);
+    setMessage(null);
+
+    try {
+      await updateAdminUser(editingUserId, {
+        ...userForm,
+        email: userForm.email?.trim() || null,
+        phone: userForm.phone?.trim() || null,
+      });
+      setMessage("Пользователь обновлён.");
+      cancelUserEdit();
+      await loadUsers();
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : "Не удалось сохранить пользователя.");
+    }
+  };
+
+  const addUserToTeam = async () => {
+    setError(null);
+    setMessage(null);
+
+    if (!editingUserId || !addMemberTeamId) {
+      setError("Откройте пользователя на редактирование и выберите команду.");
+      return;
+    }
+
+    setAddMemberSubmitting(true);
+
+    try {
+      await addAdminTeamMember(addMemberTeamId, {
+        userId: editingUserId,
+        role: addMemberRole,
+        badgeTitle: addMemberBadgeTitle.trim() || null,
+      });
+      setMessage("Пользователь добавлен в команду.");
+      setAddMemberBadgeTitle("");
+      await Promise.all([loadUsers(), loadAdminTeams()]);
+    } catch (addError) {
+      setError(addError instanceof Error ? addError.message : "Не удалось добавить пользователя в команду.");
+    } finally {
+      setAddMemberSubmitting(false);
+    }
+  };
+
+  const removeUserFromTeam = async () => {
+    setError(null);
+    setMessage(null);
+
+    if (!editingUserId || !addMemberTeamId) {
+      setError("Откройте пользователя на редактирование и выберите команду.");
+      return;
+    }
+
+    setAddMemberSubmitting(true);
+
+    try {
+      await removeAdminTeamMember(addMemberTeamId, editingUserId);
+      setMessage("Пользователь удалён из команды.");
+      setAddMemberBadgeTitle("");
+      await Promise.all([loadUsers(), loadAdminTeams()]);
+    } catch (removeError) {
+      setError(removeError instanceof Error ? removeError.message : "Не удалось удалить пользователя из команды.");
+    } finally {
+      setAddMemberSubmitting(false);
+    }
+  };
+
+  const updateUserTeam = async () => {
+    setError(null);
+    setMessage(null);
+
+    if (!editingUserId || !addMemberTeamId) {
+      setError("Откройте пользователя на редактирование и выберите команду.");
+      return;
+    }
+
+    setAddMemberSubmitting(true);
+
+    try {
+      await updateAdminTeamMember(addMemberTeamId, editingUserId, {
+        role: addMemberRole,
+        badgeTitle: addMemberBadgeTitle.trim() || null,
+      });
+      setMessage("Роль пользователя в команде обновлена.");
+      await Promise.all([loadUsers(), loadAdminTeams()]);
+    } catch (updateError) {
+      setError(updateError instanceof Error ? updateError.message : "Не удалось обновить роль пользователя в команде.");
+    } finally {
+      setAddMemberSubmitting(false);
     }
   };
 
@@ -340,6 +589,14 @@ export function AdminPage() {
         ["Открытые обращения", dashboard.openReports],
       ]
     : [];
+  const userTotalPages = users ? Math.max(1, Math.ceil(users.total / users.pageSize)) : 1;
+  const userFirstItem = users && users.total > 0 ? (users.page - 1) * users.pageSize + 1 : 0;
+  const userLastItem = users ? Math.min(users.page * users.pageSize, users.total) : 0;
+  const editingUser = editingUserId ? users?.items.find((user) => user.id === editingUserId) ?? null : null;
+  const editingUserTeamIds = new Set((editingUser?.teams ?? []).map((team) => team.teamId));
+  const addTeamOptions = (adminTeams?.items ?? []).filter((team) => !editingUserTeamIds.has(team.id));
+  const removeTeamOptions = editingUser?.teams ?? [];
+  const teamSelectHasOptions = teamMemberAction === "add" ? addTeamOptions.length > 0 : removeTeamOptions.length > 0;
 
   return (
     <div style={pageStyle}>
@@ -518,29 +775,366 @@ export function AdminPage() {
 
         {tab === "users" && (
           <div style={{ display: "grid", gap: 12 }}>
-            <form onSubmit={(event) => { event.preventDefault(); void loadUsers(); }} style={{ ...cardStyle, display: "flex", gap: 8 }}>
-              <input value={userSearch} onChange={(event) => setUserSearch(event.target.value)} placeholder="Поиск по имени или email" style={{ ...inputStyle, flex: 1, minWidth: 0 }} />
-              <button type="submit" style={{ border: 0, borderRadius: 12, padding: "0 14px", background: "var(--hp-primary)", color: "white", fontWeight: 900 }}>Найти</button>
+            <form onSubmit={(event) => { event.preventDefault(); setUserPage(1); void loadUsers(1); }} style={{ ...cardStyle, display: "grid", gap: 10 }}>
+              <div style={{ display: "grid", gridTemplateColumns: isNarrow ? "1fr" : "minmax(220px, 1.5fr) repeat(4, minmax(130px, 1fr)) auto", gap: 8, alignItems: "end" }}>
+                <label style={{ display: "grid", gap: 6, fontSize: 13, fontWeight: 800, color: "var(--hp-heading)" }}>
+                  Поиск
+                  <input value={userSearch} onChange={(event) => setUserSearch(event.target.value)} placeholder="Имя, фамилия или email" style={inputStyle} />
+                </label>
+                <label style={{ display: "grid", gap: 6, fontSize: 13, fontWeight: 800, color: "var(--hp-heading)" }}>
+                  AppRole
+                  <select value={userAppRoleFilter} onChange={(event) => setUserAppRoleFilter(event.target.value ? Number(event.target.value) : "")} style={inputStyle}>
+                    <option value="">Все</option>
+                    {Object.entries(appRoleLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                  </select>
+                </label>
+                <label style={{ display: "grid", gap: 6, fontSize: 13, fontWeight: 800, color: "var(--hp-heading)" }}>
+                  Роль
+                  <select value={userRoleFilter} onChange={(event) => setUserRoleFilter(event.target.value ? Number(event.target.value) : "")} style={inputStyle}>
+                    <option value="">Все</option>
+                    {Object.entries(userRoleLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                  </select>
+                </label>
+                <label style={{ display: "grid", gap: 6, fontSize: 13, fontWeight: 800, color: "var(--hp-heading)" }}>
+                  Email
+                  <select value={userEmailConfirmedFilter === "" ? "" : String(userEmailConfirmedFilter)} onChange={(event) => setUserEmailConfirmedFilter(event.target.value === "" ? "" : event.target.value === "true")} style={inputStyle}>
+                    <option value="">Все</option>
+                    <option value="true">Подтверждён</option>
+                    <option value="false">Не подтверждён</option>
+                  </select>
+                </label>
+                <label style={{ display: "grid", gap: 6, fontSize: 13, fontWeight: 800, color: "var(--hp-heading)" }}>
+                  Команды
+                  <select value={userTeamsFilter === "" ? "" : String(userTeamsFilter)} onChange={(event) => setUserTeamsFilter(event.target.value === "" ? "" : event.target.value === "true")} style={inputStyle}>
+                    <option value="">Все</option>
+                    <option value="true">Есть</option>
+                    <option value="false">Нет</option>
+                  </select>
+                </label>
+                <button type="submit" style={{ border: 0, borderRadius: 12, padding: "12px 14px", background: "var(--hp-primary)", color: "white", fontWeight: 900, cursor: "pointer" }}>Найти</button>
+              </div>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                <label style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--hp-heading)", fontSize: 13, fontWeight: 800 }}>
+                  Push
+                  <select value={userPushFilter === "" ? "" : String(userPushFilter)} onChange={(event) => setUserPushFilter(event.target.value === "" ? "" : event.target.value === "true")} style={{ ...inputStyle, width: "auto", minWidth: 130 }}>
+                    <option value="">Все</option>
+                    <option value="true">Есть</option>
+                    <option value="false">Нет</option>
+                  </select>
+                </label>
+                <label style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--hp-heading)", fontSize: 13, fontWeight: 800 }}>
+                  Сортировка
+                  <select value={userSortBy} onChange={(event) => { setUserSortBy(event.target.value); setUserPage(1); }} style={{ ...inputStyle, width: "auto", minWidth: 160 }}>
+                    {Object.entries(userSortLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                  </select>
+                </label>
+                <label style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--hp-heading)", fontSize: 13, fontWeight: 800 }}>
+                  Направление
+                  <select value={userSortDirection} onChange={(event) => { setUserSortDirection(event.target.value as "asc" | "desc"); setUserPage(1); }} style={{ ...inputStyle, width: "auto", minWidth: 140 }}>
+                    <option value="desc">По убыванию</option>
+                    <option value="asc">По возрастанию</option>
+                  </select>
+                </label>
+                <label style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--hp-heading)", fontSize: 13, fontWeight: 800 }}>
+                  На странице
+                  <select value={userPageSize} onChange={(event) => { setUserPageSize(Number(event.target.value)); setUserPage(1); }} style={{ ...inputStyle, width: "auto", minWidth: 90 }}>
+                    <option value={25}>25</option>
+                    <option value={50}>50</option>
+                    <option value={100}>100</option>
+                  </select>
+                </label>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setError(null);
+                    setUserSearch("");
+                    setUserAppRoleFilter("");
+                    setUserRoleFilter("");
+                    setUserEmailConfirmedFilter("");
+                    setUserTeamsFilter("");
+                    setUserPushFilter("");
+                    setUserPage(1);
+                    try {
+                      setUsers(await getAdminUsers({ page: 1, pageSize: userPageSize, sortBy: userSortBy, sortDirection: userSortDirection }));
+                    } catch (loadError) {
+                      setError(loadError instanceof Error ? loadError.message : "Не удалось загрузить пользователей.");
+                    }
+                  }}
+                  style={{ border: "1px solid var(--hp-border)", borderRadius: 12, padding: "10px 12px", background: "var(--hp-surface-soft)", color: "var(--hp-heading)", fontWeight: 900, cursor: "pointer" }}
+                >
+                  Сбросить
+                </button>
+                {users && <span style={{ color: "var(--hp-muted)", fontSize: 13 }}>Найдено: {users.total}</span>}
+              </div>
             </form>
+
+            {editingUserId && (
+              <form onSubmit={saveUser} style={{ ...cardStyle, display: "grid", gap: 12, borderColor: "var(--hp-primary)" }}>
+                <h2 style={{ margin: 0, color: "var(--hp-heading)", fontSize: 18 }}>Редактировать пользователя</h2>
+                <div style={{ display: "grid", gridTemplateColumns: isNarrow ? "1fr" : "repeat(2, minmax(0, 1fr))", gap: 10 }}>
+                  <Field label="Имя"><input value={userForm.firstName} onChange={(event) => setUserForm({ ...userForm, firstName: event.target.value })} maxLength={100} style={inputStyle} required /></Field>
+                  <Field label="Фамилия"><input value={userForm.lastName} onChange={(event) => setUserForm({ ...userForm, lastName: event.target.value })} maxLength={100} style={inputStyle} required /></Field>
+                  <Field label="Email"><input value={userForm.email ?? ""} onChange={(event) => setUserForm({ ...userForm, email: event.target.value })} maxLength={200} style={inputStyle} type="email" /></Field>
+                  <Field label="Телефон"><input value={userForm.phone ?? ""} onChange={(event) => setUserForm({ ...userForm, phone: event.target.value })} maxLength={20} style={inputStyle} /></Field>
+                  <Field label="Роль">
+                    <select value={userForm.role} onChange={(event) => setUserForm({ ...userForm, role: Number(event.target.value) })} style={inputStyle}>
+                      {Object.entries(userRoleLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                    </select>
+                  </Field>
+                  <Field label="AppRole">
+                    <select value={userForm.appRole} onChange={(event) => setUserForm({ ...userForm, appRole: Number(event.target.value) })} style={inputStyle}>
+                      {Object.entries(appRoleLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                    </select>
+                  </Field>
+                  <Field label="Номер">
+                    <input value={userForm.jerseyNumber ?? ""} onChange={(event) => setUserForm({ ...userForm, jerseyNumber: event.target.value ? Number(event.target.value) : null })} min={0} max={999} style={inputStyle} type="number" />
+                  </Field>
+                  <label style={{ display: "flex", alignItems: "center", gap: 10, color: "var(--hp-heading)", fontWeight: 800, alignSelf: "end", minHeight: 45, cursor: "pointer", userSelect: "none" }}>
+                    <span style={{ position: "relative", width: 22, height: 22, flexShrink: 0 }}>
+                      <input
+                        type="checkbox"
+                        checked={userForm.emailConfirmed}
+                        onChange={(event) => setUserForm({ ...userForm, emailConfirmed: event.target.checked })}
+                        style={{
+                          position: "absolute",
+                          inset: 0,
+                          width: "100%",
+                          height: "100%",
+                          margin: 0,
+                          opacity: 0,
+                          cursor: "pointer",
+                        }}
+                      />
+                      <span
+                        aria-hidden="true"
+                        style={{
+                          width: 22,
+                          height: 22,
+                          borderRadius: 7,
+                          border: userForm.emailConfirmed ? "1px solid var(--hp-primary)" : "1px solid var(--hp-border)",
+                          background: userForm.emailConfirmed ? "var(--hp-primary)" : "var(--hp-input-bg)",
+                          color: "white",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontSize: 15,
+                          fontWeight: 900,
+                          boxShadow: userForm.emailConfirmed ? "var(--hp-shadow-sm)" : "inset 0 0 0 1px var(--hp-surface-soft)",
+                        }}
+                      >
+                        {userForm.emailConfirmed ? "✓" : ""}
+                      </span>
+                    </span>
+                    <span>Email подтверждён</span>
+                  </label>
+                </div>
+                <div style={{ border: "1px solid var(--hp-border)", borderRadius: 14, padding: 12, background: "var(--hp-surface-soft)", display: "grid", gap: 10 }}>
+                  <div>
+                    <h3 style={{ margin: 0, color: "var(--hp-heading)", fontSize: 16 }}>Команды пользователя</h3>
+                    <div style={{ marginTop: 4, color: "var(--hp-muted)", fontSize: 13 }}>Добавляет, удаляет или меняет роль в команде.</div>
+                  </div>
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    {[
+                      ["add", "Добавить"],
+                      ["edit", "Изменить"],
+                      ["remove", "Удалить"],
+                    ].map(([action, label]) => {
+                      const selected = teamMemberAction === action;
+                      return (
+                        <button
+                          key={action}
+                          type="button"
+                          onClick={() => {
+                            const nextAction = action as "add" | "remove" | "edit";
+                            setTeamMemberAction(nextAction);
+                            if (editingUser) {
+                              const nextTeamId = resolveTeamForAction(editingUser, nextAction);
+                              const membership = editingUser.teams.find((team) => team.teamId === nextTeamId);
+                              setAddMemberTeamId(nextTeamId);
+                              if (nextAction === "edit" && membership) {
+                                setAddMemberRole(membership.role);
+                                setAddMemberBadgeTitle(membership.badgeTitle ?? "");
+                              }
+                            }
+                          }}
+                          style={{
+                            border: selected ? "1px solid var(--hp-primary)" : "1px solid var(--hp-border)",
+                            borderRadius: 999,
+                            padding: "9px 12px",
+                            background: selected ? "var(--hp-primary)" : "var(--hp-surface)",
+                            color: selected ? "white" : "var(--hp-heading)",
+                            fontWeight: 900,
+                            cursor: "pointer",
+                          }}
+                        >
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: isNarrow ? "1fr" : "minmax(220px, 1fr) minmax(0, 1fr) minmax(160px, 1fr)", gap: 10 }}>
+                    <Field label="Команда">
+                      <select
+                        value={addMemberTeamId}
+                        onChange={(event) => {
+                          const nextTeamId = event.target.value;
+                          setAddMemberTeamId(nextTeamId);
+                          if (teamMemberAction === "edit") {
+                            const membership = editingUser?.teams.find((team) => team.teamId === nextTeamId);
+                            if (membership) {
+                              setAddMemberRole(membership.role);
+                              setAddMemberBadgeTitle(membership.badgeTitle ?? "");
+                            }
+                          }
+                        }}
+                        style={inputStyle}
+                        disabled={!teamSelectHasOptions}
+                      >
+                        {teamMemberAction === "add" && addTeamOptions.map((team) => (
+                          <option key={team.id} value={team.id}>
+                            {team.name} · участников: {team.membersCount}
+                          </option>
+                        ))}
+                        {(teamMemberAction === "remove" || teamMemberAction === "edit") && removeTeamOptions.map((team) => (
+                          <option key={team.teamId} value={team.teamId}>
+                            {team.teamName} · {teamMemberRoleLabels[team.role] ?? "Участник"}
+                          </option>
+                        ))}
+                      </select>
+                    </Field>
+                    {(teamMemberAction === "add" || teamMemberAction === "edit") && <div style={{ display: "grid", gap: 7 }}>
+                      <div style={{ color: "var(--hp-heading)", fontSize: 13, fontWeight: 800 }}>Роль в команде</div>
+                      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                        {Object.entries(teamMemberRoleLabels).map(([value, label]) => {
+                          const roleValue = Number(value);
+                          const selected = addMemberRole === roleValue;
+                          return (
+                            <button
+                              key={value}
+                              type="button"
+                              onClick={() => setAddMemberRole(roleValue)}
+                              style={{
+                                border: selected ? "1px solid var(--hp-primary)" : "1px solid var(--hp-border)",
+                                borderRadius: 999,
+                                padding: "9px 12px",
+                                background: selected ? "var(--hp-primary)" : "var(--hp-surface)",
+                                color: selected ? "white" : "var(--hp-heading)",
+                                fontWeight: 900,
+                                cursor: "pointer",
+                              }}
+                            >
+                              {label}
+                            </button>
+                        );
+                      })}
+                      </div>
+                    </div>}
+                    {(teamMemberAction === "add" || teamMemberAction === "edit") ? <Field label="Бейдж">
+                      <input value={addMemberBadgeTitle} onChange={(event) => setAddMemberBadgeTitle(event.target.value)} placeholder="необязательно" maxLength={80} style={inputStyle} />
+                    </Field> : <div style={{ alignSelf: "end", color: "var(--hp-muted)", fontSize: 13 }}>
+                      {teamSelectHasOptions ? "Пользователь будет удалён из выбранной команды." : "Пользователь не состоит в командах."}
+                    </div>}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => void (teamMemberAction === "add" ? addUserToTeam() : teamMemberAction === "edit" ? updateUserTeam() : removeUserFromTeam())}
+                    disabled={addMemberSubmitting || !editingUserId || !addMemberTeamId || !teamSelectHasOptions}
+                    style={{
+                      justifySelf: "start",
+                      border: 0,
+                      borderRadius: 12,
+                      padding: "12px 16px",
+                      background: addMemberSubmitting || !editingUserId || !addMemberTeamId || !teamSelectHasOptions ? "var(--hp-muted)" : teamMemberAction === "remove" ? "var(--hp-danger)" : "var(--hp-primary)",
+                      color: "white",
+                      fontWeight: 900,
+                      cursor: addMemberSubmitting || !editingUserId || !addMemberTeamId || !teamSelectHasOptions ? "not-allowed" : "pointer",
+                    }}
+                  >
+                    {addMemberSubmitting ? "Выполняем..." : teamMemberAction === "remove" ? "Удалить из команды" : teamMemberAction === "edit" ? "Сохранить роль" : "Добавить в команду"}
+                  </button>
+                </div>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  <button type="submit" style={{ border: 0, borderRadius: 12, padding: "12px 16px", background: "var(--hp-primary)", color: "white", fontWeight: 900, cursor: "pointer" }}>Сохранить</button>
+                  <button type="button" onClick={cancelUserEdit} style={{ border: "1px solid var(--hp-border)", borderRadius: 12, padding: "12px 16px", background: "var(--hp-surface-soft)", color: "var(--hp-heading)", fontWeight: 900, cursor: "pointer" }}>Отмена</button>
+                </div>
+              </form>
+            )}
+
             <div style={{ display: "grid", gap: 10 }}>
               {(users?.items ?? []).map((user) => (
-                <div key={user.id} style={cardStyle}>
+                <div key={user.id} style={{ ...cardStyle, borderColor: editingUserId === user.id ? "var(--hp-primary)" : "var(--hp-border)" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
                     <div>
                       <div style={{ color: "var(--hp-heading)", fontWeight: 900 }}>{user.lastName} {user.firstName}</div>
                       <div style={{ color: "var(--hp-muted)", fontSize: 13 }}>{user.email || "email не указан"} · {formatDate(user.createdAt)}</div>
                     </div>
-                    <Badge text={user.appRole === 2 ? "SuperAdmin" : "User"} tone={user.appRole === 2 ? "primary" : "neutral"} />
+                    <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                      <Badge text={appRoleLabels[user.appRole] ?? "User"} tone={user.appRole === 2 ? "primary" : "neutral"} />
+                      <button type="button" onClick={() => editUser(user)} style={{ border: "1px solid var(--hp-border)", borderRadius: 12, padding: "9px 11px", background: "var(--hp-surface-soft)", color: "var(--hp-heading)", fontWeight: 900, cursor: "pointer" }}>
+                        Редактировать
+                      </button>
+                    </div>
                   </div>
                   <div style={{ display: "flex", gap: 6, marginTop: 10, flexWrap: "wrap" }}>
+                    <Badge text={userRoleLabels[user.role] ?? "Игрок"} tone="neutral" />
                     <Badge text={user.emailConfirmed ? "email подтверждён" : "email не подтверждён"} tone={user.emailConfirmed ? "success" : "warning"} />
                     <Badge text={`команд: ${user.teamsCount}`} tone="neutral" />
                     <Badge text={`push: ${user.pushSubscriptionsCount}`} tone="neutral" />
+                    {user.jerseyNumber != null && <Badge text={`№ ${user.jerseyNumber}`} tone="neutral" />}
                   </div>
                 </div>
               ))}
               {!loading && users?.items.length === 0 && <div style={cardStyle}>Пользователей не найдено.</div>}
             </div>
+            {users && users.total > 0 && (
+              <div style={{ ...cardStyle, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                <div style={{ color: "var(--hp-muted)", fontSize: 13 }}>
+                  {userFirstItem}-{userLastItem} из {users.total} · страница {users.page} из {userTotalPages}
+                </div>
+                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                  <button
+                    type="button"
+                    disabled={users.page <= 1}
+                    onClick={() => {
+                      const nextPage = Math.max(1, users.page - 1);
+                      setUserPage(nextPage);
+                      void loadUsers(nextPage);
+                    }}
+                    style={{
+                      border: "1px solid var(--hp-border)",
+                      borderRadius: 12,
+                      padding: "10px 12px",
+                      background: users.page <= 1 ? "var(--hp-surface-muted)" : "var(--hp-surface-soft)",
+                      color: users.page <= 1 ? "var(--hp-muted)" : "var(--hp-heading)",
+                      fontWeight: 900,
+                      cursor: users.page <= 1 ? "not-allowed" : "pointer",
+                    }}
+                  >
+                    Назад
+                  </button>
+                  <button
+                    type="button"
+                    disabled={users.page >= userTotalPages}
+                    onClick={() => {
+                      const nextPage = Math.min(userTotalPages, users.page + 1);
+                      setUserPage(nextPage);
+                      void loadUsers(nextPage);
+                    }}
+                    style={{
+                      border: 0,
+                      borderRadius: 12,
+                      padding: "10px 12px",
+                      background: users.page >= userTotalPages ? "var(--hp-surface-muted)" : "var(--hp-primary)",
+                      color: users.page >= userTotalPages ? "var(--hp-muted)" : "white",
+                      fontWeight: 900,
+                      cursor: users.page >= userTotalPages ? "not-allowed" : "pointer",
+                    }}
+                  >
+                    Вперёд
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
 

@@ -56,10 +56,34 @@ export interface AdminUserDto {
   lastName: string;
   email?: string | null;
   emailConfirmed: boolean;
+  role: number;
   appRole: number;
+  phone?: string | null;
+  jerseyNumber?: number | null;
   createdAt: string;
   teamsCount: number;
   pushSubscriptionsCount: number;
+  teams: AdminUserTeamDto[];
+}
+
+export interface AdminUserTeamDto {
+  teamId: string;
+  teamName: string;
+  role: number;
+  badgeTitle?: string | null;
+}
+
+export interface AdminUserFilters {
+  search?: string;
+  appRole?: number | "";
+  role?: number | "";
+  emailConfirmed?: boolean | "";
+  hasTeams?: boolean | "";
+  hasPush?: boolean | "";
+  sortBy?: string;
+  sortDirection?: "asc" | "desc";
+  page?: number;
+  pageSize?: number;
 }
 
 export interface AdminUserListResponse {
@@ -67,6 +91,42 @@ export interface AdminUserListResponse {
   pageSize: number;
   total: number;
   items: AdminUserDto[];
+}
+
+export interface AdminTeamDto {
+  id: string;
+  name: string;
+  visibility: number;
+  membersCount: number;
+}
+
+export interface AdminTeamListResponse {
+  page: number;
+  pageSize: number;
+  total: number;
+  items: AdminTeamDto[];
+}
+
+export interface UpdateAdminUserRequest {
+  firstName: string;
+  lastName: string;
+  email?: string | null;
+  emailConfirmed: boolean;
+  role: number;
+  appRole: number;
+  phone?: string | null;
+  jerseyNumber?: number | null;
+}
+
+export interface AddAdminTeamMemberRequest {
+  userId: string;
+  role: number;
+  badgeTitle?: string | null;
+}
+
+export interface UpdateAdminTeamMemberRequest {
+  role: number;
+  badgeTitle?: string | null;
 }
 
 export interface AppReportDto {
@@ -210,13 +270,67 @@ export async function getAdminDashboard(): Promise<AdminDashboardResponse> {
   return requireJson(await authFetch("/api/admin/dashboard"));
 }
 
-export async function getAdminUsers(search = "", page = 1, pageSize = 25): Promise<AdminUserListResponse> {
+export async function getAdminUsers(filters: AdminUserFilters = {}): Promise<AdminUserListResponse> {
+  const params = new URLSearchParams({
+    page: String(filters.page ?? 1),
+    pageSize: String(filters.pageSize ?? 25),
+  });
+
+  if (filters.search?.trim()) {
+    params.set("search", filters.search.trim());
+  }
+  if (filters.appRole) params.set("appRole", String(filters.appRole));
+  if (filters.role) params.set("role", String(filters.role));
+  if (filters.emailConfirmed !== "" && filters.emailConfirmed !== undefined) params.set("emailConfirmed", String(filters.emailConfirmed));
+  if (filters.hasTeams !== "" && filters.hasTeams !== undefined) params.set("hasTeams", String(filters.hasTeams));
+  if (filters.hasPush !== "" && filters.hasPush !== undefined) params.set("hasPush", String(filters.hasPush));
+  if (filters.sortBy) params.set("sortBy", filters.sortBy);
+  if (filters.sortDirection) params.set("sortDirection", filters.sortDirection);
+
+  return requireJson(await authFetch(`/api/admin/users?${params.toString()}`));
+}
+
+export async function updateAdminUser(id: string, request: UpdateAdminUserRequest): Promise<AdminUserDto> {
+  return requireJson(await authFetch(`/api/admin/users/${encodeURIComponent(id)}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(request),
+  }));
+}
+
+export async function getAdminTeams(search = "", page = 1, pageSize = 100): Promise<AdminTeamListResponse> {
   const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
   if (search.trim()) {
     params.set("search", search.trim());
   }
 
-  return requireJson(await authFetch(`/api/admin/users?${params.toString()}`));
+  return requireJson(await authFetch(`/api/admin/teams?${params.toString()}`));
+}
+
+export async function addAdminTeamMember(teamId: string, request: AddAdminTeamMemberRequest): Promise<AdminUserDto> {
+  return requireJson(await authFetch(`/api/admin/teams/${encodeURIComponent(teamId)}/members`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(request),
+  }));
+}
+
+export async function removeAdminTeamMember(teamId: string, userId: string): Promise<void> {
+  const response = await authFetch(`/api/admin/teams/${encodeURIComponent(teamId)}/members/${encodeURIComponent(userId)}`, {
+    method: "DELETE",
+  });
+
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response));
+  }
+}
+
+export async function updateAdminTeamMember(teamId: string, userId: string, request: UpdateAdminTeamMemberRequest): Promise<AdminUserDto> {
+  return requireJson(await authFetch(`/api/admin/teams/${encodeURIComponent(teamId)}/members/${encodeURIComponent(userId)}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(request),
+  }));
 }
 
 export async function getAdminReports(params: {
