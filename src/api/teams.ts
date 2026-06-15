@@ -1,10 +1,16 @@
 import {
   CreateTeamNewsRequest,
   CreateTeamRequest,
+  CreateTeamTableRequest,
+  EventTableProtocolDto,
   JoinTeamByCodeRequest,
   TeamDto,
   TeamMemberDto,
   TeamNewsDto,
+  TeamTableDto,
+  TeamTableSummaryDto,
+  UpdateEventTableProtocolRequest,
+  UpdateEventTableProtocolRowRequest,
   UpdateTeamMemberRequest,
   UpdateTeamNewsRequest,
   UpdateTeamRequest,
@@ -107,6 +113,140 @@ export async function getNewsFeed(currentUserId?: string): Promise<TeamNewsDto[]
 
   if (!response.ok) {
     await throwTeamsApiError(response, `GET /api/news failed: ${response.status}`);
+  }
+  return response.json();
+}
+
+export async function getTablesFeed(currentUserId?: string): Promise<TeamTableSummaryDto[]> {
+  const userId = currentUserId ?? requireCurrentUserId();
+  const response = await fetch(`${API_BASE}/api/news/tables?currentUserId=${encodeURIComponent(userId)}`, {
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    await throwTeamsApiError(response, `GET /api/news/tables failed: ${response.status}`);
+  }
+  return response.json();
+}
+
+export async function getTeamTables(teamId: string, currentUserId?: string): Promise<TeamTableSummaryDto[]> {
+  const userId = currentUserId ?? requireCurrentUserId();
+  const response = await fetch(`${API_BASE}/api/teams/${encodeURIComponent(teamId)}/tables?currentUserId=${encodeURIComponent(userId)}`, {
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    await throwTeamsApiError(response, `GET /api/teams/${teamId}/tables failed: ${response.status}`);
+  }
+  return response.json();
+}
+
+export async function getTeamTable(teamId: string, tableId: string, currentUserId?: string): Promise<TeamTableDto> {
+  const userId = currentUserId ?? requireCurrentUserId();
+  const response = await fetch(
+    `${API_BASE}/api/teams/${encodeURIComponent(teamId)}/tables/${encodeURIComponent(tableId)}?currentUserId=${encodeURIComponent(userId)}`,
+    { credentials: "include" },
+  );
+
+  if (!response.ok) {
+    await throwTeamsApiError(response, `GET /api/teams/${teamId}/tables/${tableId} failed: ${response.status}`);
+  }
+  return response.json();
+}
+
+export async function createTeamTable(
+  teamId: string,
+  request: CreateTeamTableRequest,
+  currentUserId?: string,
+): Promise<TeamTableDto> {
+  const userId = currentUserId ?? requireCurrentUserId();
+  const response = await fetch(`${API_BASE}/api/teams/${encodeURIComponent(teamId)}/tables?currentUserId=${encodeURIComponent(userId)}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify(request),
+  });
+
+  if (!response.ok) {
+    await throwTeamsApiError(response, `POST /api/teams/${teamId}/tables failed: ${response.status}`);
+  }
+  return response.json();
+}
+
+export async function getEventTableProtocols(eventId: string, currentUserId?: string): Promise<EventTableProtocolDto[]> {
+  const userId = currentUserId ?? requireCurrentUserId();
+  const response = await fetch(`${API_BASE}/api/events/${encodeURIComponent(eventId)}/table-protocols?currentUserId=${encodeURIComponent(userId)}`, {
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    await throwTeamsApiError(response, `GET /api/events/${eventId}/table-protocols failed: ${response.status}`);
+  }
+  return response.json();
+}
+
+export async function createEventTableProtocol(
+  eventId: string,
+  request: { teamTableId: string },
+  currentUserId?: string,
+): Promise<EventTableProtocolDto> {
+  const userId = currentUserId ?? requireCurrentUserId();
+  const response = await fetch(`${API_BASE}/api/events/${encodeURIComponent(eventId)}/table-protocols?currentUserId=${encodeURIComponent(userId)}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify(request),
+  });
+
+  if (!response.ok) {
+    await throwTeamsApiError(response, `POST /api/events/${eventId}/table-protocols failed: ${response.status}`);
+  }
+  return response.json();
+}
+
+export async function updateEventTableProtocolRow(
+  eventId: string,
+  protocolId: string,
+  rowId: string,
+  request: UpdateEventTableProtocolRowRequest,
+  currentUserId?: string,
+): Promise<EventTableProtocolDto> {
+  const userId = currentUserId ?? requireCurrentUserId();
+  const response = await fetch(
+    `${API_BASE}/api/events/${encodeURIComponent(eventId)}/table-protocols/${encodeURIComponent(protocolId)}/rows/${encodeURIComponent(rowId)}?currentUserId=${encodeURIComponent(userId)}`,
+    {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(request),
+    },
+  );
+
+  if (!response.ok) {
+    await throwTeamsApiError(response, `PUT /api/events/${eventId}/table-protocols/${protocolId}/rows/${rowId} failed: ${response.status}`);
+  }
+  return response.json();
+}
+
+export async function updateEventTableProtocol(
+  eventId: string,
+  protocolId: string,
+  request: UpdateEventTableProtocolRequest,
+  currentUserId?: string,
+): Promise<EventTableProtocolDto> {
+  const userId = currentUserId ?? requireCurrentUserId();
+  const response = await fetch(
+    `${API_BASE}/api/events/${encodeURIComponent(eventId)}/table-protocols/${encodeURIComponent(protocolId)}?currentUserId=${encodeURIComponent(userId)}`,
+    {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(request),
+    },
+  );
+
+  if (!response.ok) {
+    await throwTeamsApiError(response, `PUT /api/events/${eventId}/table-protocols/${protocolId} failed: ${response.status}`);
   }
   return response.json();
 }

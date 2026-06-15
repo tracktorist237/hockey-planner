@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { LoadingIndicator } from "src/components/LoadingIndicator";
 import { PlayerAvatar } from "src/components/PlayerAvatar";
+import { TeamTablesPanel } from "src/components/TeamTablesPanel";
 import { getEvents } from "src/api/events";
 import { createTeamNews, deleteTeamNews, getTeam, getTeamMembers, getTeamNews, joinPublicTeam, leaveTeam, updateTeamNews } from "src/api/teams";
 import { EventLookUpDto, EventType } from "src/types/events";
@@ -19,7 +20,7 @@ const TeamRole = {
   Member: 3,
 } as const;
 
-type TeamTab = "news" | "members" | "events";
+type TeamTab = "news" | "tables" | "members" | "events";
 
 const DESCRIPTION_LIMIT = 150;
 
@@ -638,9 +639,10 @@ export function TeamDetailsPage({ currentUser, currentTeamId, onTeamChange }: Te
             </section>
 
             <section style={{ ...cardStyle, marginTop: 14 }}>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 6, padding: 5, borderRadius: 16, background: "var(--hp-surface-muted)", marginBottom: 12 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 6, padding: 5, borderRadius: 16, background: "var(--hp-surface-muted)", marginBottom: 12 }}>
                 {([
                   ["news", "Новости"],
+                  ["tables", "Таблицы"],
                   ["members", "Участники"],
                   ["events", "Мероприятия"],
                 ] as Array<[TeamTab, string]>).map(([tab, label]) => (
@@ -801,6 +803,14 @@ export function TeamDetailsPage({ currentUser, currentTeamId, onTeamChange }: Te
                       </article>
                     ))}
                 </div>
+              )}
+
+              {activeTab === "tables" && (
+                <TeamTablesPanel
+                  currentUserId={currentUser?.id}
+                  teamId={team.id}
+                  canManageTeam={canManage}
+                />
               )}
 
               {activeTab === "members" && (

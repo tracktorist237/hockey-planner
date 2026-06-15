@@ -3,6 +3,7 @@ import { createEventGuest, updateAttendance, updateEventGuestAttendance } from "
 import { getEventGoalies } from "src/api/goalies";
 import { getMyTeams } from "src/api/teams";
 import { getUsers } from "src/api/users";
+import { EventTableProtocolsPanel } from "src/components/EventTableProtocolsPanel";
 import { LoadingIndicator } from "src/components/LoadingIndicator";
 import { CurrentPlayerHeader } from "src/CurrentPlayerHeader";
 import { ActionMenu } from "src/pages/EventPage/components/ActionMenu";
@@ -362,6 +363,13 @@ export function EventPage({ eventId, onBack, currentUser }: EventPageProps) {
           />
         )}
         {activeTab === "goalies" && <GoaliesPanel eventId={event.id} currentUserId={selectedUserId} />}
+        <EventTableProtocolsPanel
+          eventId={event.id}
+          teamId={event.teamId}
+          currentUserId={selectedUserId}
+          canManage={canManageEvent}
+          onError={reportError}
+        />
       </div>
 
       <PlayerInfoModal player={playerModal.selectedPlayer} isOpen={playerModal.isPlayerModalOpen} onClose={playerModal.handleCloseModal} />

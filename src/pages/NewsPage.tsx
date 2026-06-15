@@ -4,6 +4,7 @@ import { deleteTeamNews, getNewsFeed, updateTeamNews } from "src/api/teams";
 import { BottomNav } from "src/components/BottomNav";
 import { LoadingIndicator } from "src/components/LoadingIndicator";
 import { NotificationBell } from "src/components/NotificationBell";
+import { TeamTablesPanel } from "src/components/TeamTablesPanel";
 import { CurrentPlayerHeader } from "src/CurrentPlayerHeader";
 import { useAuth } from "src/hooks/useAuth";
 import { TeamNewsDto } from "src/types/teams";
@@ -19,6 +20,7 @@ const formatNewsDate = (value: string): string =>
 export function NewsPage() {
   const navigate = useNavigate();
   const { currentUser } = useAuth();
+  const [activeTab, setActiveTab] = useState<"news" | "tables">("news");
   const [news, setNews] = useState<TeamNewsDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -138,6 +140,37 @@ export function NewsPage() {
       </div>
 
       <main style={{ padding: "16px", paddingBottom: "120px", display: "grid", gap: "12px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, padding: 5, borderRadius: 16, background: "var(--hp-surface-muted)" }}>
+          {([
+            ["news", "Новости"],
+            ["tables", "Таблицы"],
+          ] as Array<[typeof activeTab, string]>).map(([tab, label]) => (
+            <button
+              key={tab}
+              type="button"
+              onClick={() => setActiveTab(tab)}
+              style={{
+                border: 0,
+                borderRadius: 12,
+                padding: "10px 4px",
+                background: activeTab === tab ? "var(--hp-surface)" : "transparent",
+                color: activeTab === tab ? "var(--hp-text-strong)" : "var(--hp-muted)",
+                fontWeight: 900,
+                cursor: "pointer",
+                boxShadow: activeTab === tab ? "var(--hp-shadow-sm)" : "none",
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {activeTab === "tables" && (
+          <TeamTablesPanel currentUserId={currentUser?.id} onOpenTeam={(teamId) => navigate(`/teams/${teamId}`)} />
+        )}
+
+        {activeTab === "news" && (
+          <>
         {error && (
           <div style={{ background: "var(--hp-danger-soft)", color: "var(--hp-danger)", border: "1px solid var(--hp-danger-border)", borderRadius: 14, padding: "12px 14px", fontWeight: 800 }}>
             {error}
@@ -228,6 +261,8 @@ export function NewsPage() {
               )}
             </article>
           ))}
+          </>
+        )}
       </main>
 
       <BottomNav activeTab="news" />

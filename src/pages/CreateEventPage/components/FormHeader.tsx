@@ -2,12 +2,14 @@ interface FormHeaderProps {
   onBack: () => void;
   isVisible: boolean;
   title?: string;
+  onCopyFromEvent?: () => void;
 }
 
 export const FormHeader = ({
   onBack,
   isVisible,
   title = "Новое событие",
+  onCopyFromEvent,
 }: FormHeaderProps) => {
   return (
     <div
@@ -70,6 +72,33 @@ export const FormHeader = ({
         <h1 style={{ margin: 0, fontSize: "20px", fontWeight: "600", color: "var(--hp-heading)", flex: 1 }}>
           {title}
         </h1>
+        {onCopyFromEvent && (
+          <button
+            type="button"
+            onClick={onCopyFromEvent}
+            aria-label="Дополнительные действия"
+            title="Дополнительные действия"
+            style={{
+              width: "44px",
+              height: "44px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              border: "1px solid var(--hp-border)",
+              background: "var(--hp-surface)",
+              color: "var(--hp-heading)",
+              fontSize: "24px",
+              lineHeight: 1,
+              cursor: "pointer",
+              borderRadius: "10px",
+              marginLeft: "12px",
+              flexShrink: 0,
+              fontWeight: 900,
+            }}
+          >
+            ⋯
+          </button>
+        )}
       </div>
     </div>
   );

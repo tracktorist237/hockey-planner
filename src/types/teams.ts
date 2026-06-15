@@ -89,3 +89,86 @@ export interface UpdateTeamRequest {
   links?: TeamContactItem[];
   addresses?: TeamContactItem[];
 }
+
+export enum TeamTableTemplateType {
+  PlayerStats = 1,
+}
+
+export interface TeamTableSummaryDto {
+  id: string;
+  teamId: string;
+  teamName: string;
+  name: string;
+  templateType: TeamTableTemplateType;
+  canManage: boolean;
+  createdAt: string;
+  rowsCount: number;
+}
+
+export interface TeamTableDto {
+  id: string;
+  teamId: string;
+  teamName: string;
+  name: string;
+  templateType: TeamTableTemplateType;
+  canManage: boolean;
+  createdAt: string;
+  rows: TeamTableRowDto[];
+}
+
+export interface TeamTableRowDto {
+  id: string;
+  userId: string;
+  playerName: string;
+  jerseyNumber?: number | null;
+  games: number;
+  goals: number;
+  assists: number;
+  points: number;
+}
+
+export interface CreateTeamTableRequest {
+  name: string;
+  templateType: TeamTableTemplateType;
+}
+
+export interface EventTableProtocolDto {
+  id: string;
+  eventId: string;
+  eventTitle: string;
+  teamTableId: string;
+  teamTableName: string;
+  canManage: boolean;
+  createdAt: string;
+  rows: EventTableProtocolRowDto[];
+}
+
+export interface EventTableProtocolRowDto {
+  id: string;
+  userId: string;
+  playerName: string;
+  jerseyNumber?: number | null;
+  games: number;
+  goals: number;
+  assists: number;
+  points: number;
+}
+
+export interface CreateEventTableProtocolRequest {
+  teamTableId: string;
+}
+
+export interface UpdateEventTableProtocolRowRequest {
+  games: number;
+  goals: number;
+  assists: number;
+}
+
+export interface UpdateEventTableProtocolRequest {
+  rows: Array<{
+    rowId: string;
+    games: number;
+    goals: number;
+    assists: number;
+  }>;
+}
