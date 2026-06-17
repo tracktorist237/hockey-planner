@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { AddressSearchInput } from "src/AddressSearchInput";
 import { LoadingIndicator } from "src/components/LoadingIndicator";
 import { BottomNav } from "src/components/BottomNav";
-import { getTeam, getTeamMembers, removeTeamMember, updateTeam, updateTeamMember } from "src/api/teams";
+import { getTeam, getTeamMembers, removeTeamMember, updateTeam, updateTeamMember, uploadTeamAvatar, uploadTeamCover } from "src/api/teams";
 import { TeamContactItem, TeamDto, TeamMemberDto, TeamVisibility } from "src/types/teams";
 import { User } from "src/types/user";
 import { TeamMembersSection } from "src/pages/TeamsPage/components/TeamMembersSection";
@@ -231,6 +231,7 @@ export function TeamManagePage({ currentUser }: TeamManagePageProps) {
   const [loading, setLoading] = useState(true);
   const [membersLoading, setMembersLoading] = useState(false);
   const [teamSaving, setTeamSaving] = useState(false);
+  const [mediaUploading, setMediaUploading] = useState<"avatar" | "cover" | null>(null);
   const [privacySaving, setPrivacySaving] = useState(false);
   const [savingUserId, setSavingUserId] = useState<string | null>(null);
   const [removingUserId, setRemovingUserId] = useState<string | null>(null);
@@ -346,6 +347,38 @@ export function TeamManagePage({ currentUser }: TeamManagePageProps) {
       setError(requestError instanceof Error ? requestError.message : "Не удалось обновить команду.");
     } finally {
       setTeamSaving(false);
+    }
+  };
+
+  const handleUploadTeamMedia = async (kind: "avatar" | "cover", file: File | null) => {
+    if (!team || !currentUser?.id || !file) {
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      setError("Нужен файл изображения.");
+      return;
+    }
+
+    setMediaUploading(kind);
+    setError(null);
+    setMessage(null);
+    try {
+      const updated = kind === "avatar"
+        ? await uploadTeamAvatar(team.id, file, currentUser.id)
+        : await uploadTeamCover(team.id, file, currentUser.id);
+
+      setTeam(updated);
+      setForm((value) => ({
+        ...value,
+        avatarUrl: updated.avatarUrl ?? value.avatarUrl,
+        coverImageUrl: updated.coverImageUrl ?? value.coverImageUrl,
+      }));
+      setMessage(kind === "avatar" ? "Аватарка команды загружена." : "Обложка команды загружена.");
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Не удалось загрузить изображение команды.");
+    } finally {
+      setMediaUploading(null);
     }
   };
 
@@ -473,8 +506,70 @@ export function TeamManagePage({ currentUser }: TeamManagePageProps) {
                 <div style={{ display: "grid", gap: 10 }}>
                   <input value={form.name} onChange={(event) => setForm((value) => ({ ...value, name: event.target.value }))} placeholder="Название команды" style={inputStyle} />
                   <textarea value={form.description} onChange={(event) => setForm((value) => ({ ...value, description: event.target.value }))} placeholder="Описание команды" style={{ ...inputStyle, minHeight: 82, resize: "vertical", fontFamily: "inherit" }} />
-                  <input value={form.avatarUrl} onChange={(event) => setForm((value) => ({ ...value, avatarUrl: event.target.value }))} placeholder="Ссылка на аватарку команды" style={inputStyle} />
-                  <input value={form.coverImageUrl} onChange={(event) => setForm((value) => ({ ...value, coverImageUrl: event.target.value }))} placeholder="Ссылка на обои / обложку" style={inputStyle} />
+                  <div style={{ display: "grid", gridTemplateColumns: "96px 1fr", gap: 12, alignItems: "center", border: "1px solid var(--hp-border)", borderRadius: 14, padding: 12, background: "var(--hp-surface-soft)" }}>
+                    <div
+                      style={{
+                        width: 84,
+                        height: 84,
+                        borderRadius: 22,
+                        background: form.avatarUrl ? `url(${form.avatarUrl}) center/cover` : "linear-gradient(135deg, #0f766e, var(--hp-primary))",
+                        display: "grid",
+                        placeItems: "center",
+                        color: "white",
+                        fontSize: 28,
+                        fontWeight: 900,
+                        border: "1px solid var(--hp-border)",
+                      }}
+                    >
+                      {!form.avatarUrl && "🏒"}
+                    </div>
+                    <div style={{ display: "grid", gap: 8, minWidth: 0 }}>
+                      <div style={{ fontWeight: 900, color: "var(--hp-heading)" }}>Аватарка команды</div>
+                      <label style={{ border: 0, borderRadius: 12, padding: "10px 12px", background: "var(--hp-primary)", color: "white", fontWeight: 900, cursor: mediaUploading === "avatar" ? "wait" : "pointer", textAlign: "center", opacity: mediaUploading === "avatar" ? 0.7 : 1 }}>
+                        {mediaUploading === "avatar" ? "Загружаем..." : "Загрузить аватарку"}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          disabled={mediaUploading !== null}
+                          onChange={(event) => {
+                            void handleUploadTeamMedia("avatar", event.target.files?.[0] ?? null);
+                            event.currentTarget.value = "";
+                          }}
+                          style={{ display: "none" }}
+                        />
+                      </label>
+                      <input value={form.avatarUrl} onChange={(event) => setForm((value) => ({ ...value, avatarUrl: event.target.value }))} placeholder="Ссылка на аватарку команды" style={inputStyle} />
+                    </div>
+                  </div>
+
+                  <div style={{ display: "grid", gap: 10, border: "1px solid var(--hp-border)", borderRadius: 14, padding: 12, background: "var(--hp-surface-soft)" }}>
+                    <div
+                      style={{
+                        width: "100%",
+                        aspectRatio: "16 / 6",
+                        borderRadius: 12,
+                        background: form.coverImageUrl ? `url(${form.coverImageUrl}) center/cover` : "linear-gradient(135deg, #0f766e 0%, var(--hp-primary) 55%, #7c3aed 100%)",
+                        border: "1px solid var(--hp-border)",
+                      }}
+                    />
+                    <div style={{ display: "grid", gap: 8 }}>
+                      <div style={{ fontWeight: 900, color: "var(--hp-heading)" }}>Обложка команды</div>
+                      <label style={{ border: 0, borderRadius: 12, padding: "10px 12px", background: "var(--hp-primary)", color: "white", fontWeight: 900, cursor: mediaUploading === "cover" ? "wait" : "pointer", textAlign: "center", opacity: mediaUploading === "cover" ? 0.7 : 1 }}>
+                        {mediaUploading === "cover" ? "Загружаем..." : "Загрузить обложку"}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          disabled={mediaUploading !== null}
+                          onChange={(event) => {
+                            void handleUploadTeamMedia("cover", event.target.files?.[0] ?? null);
+                            event.currentTarget.value = "";
+                          }}
+                          style={{ display: "none" }}
+                        />
+                      </label>
+                      <input value={form.coverImageUrl} onChange={(event) => setForm((value) => ({ ...value, coverImageUrl: event.target.value }))} placeholder="Ссылка на обои / обложку" style={inputStyle} />
+                    </div>
+                  </div>
                   <ContactItemsEditor title="Телефоны" titlePlaceholder="Название: Капитан" valuePlaceholder="Телефон" items={form.phones} onChange={(phones) => setForm((value) => ({ ...value, phones }))} />
                   <ContactItemsEditor title="Ссылки" titlePlaceholder="Название: Чат команды" valuePlaceholder="Ссылка" items={form.links} onChange={(links) => setForm((value) => ({ ...value, links }))} />
                   <AddressItemsEditor items={form.addresses} onChange={(addresses) => setForm((value) => ({ ...value, addresses }))} />

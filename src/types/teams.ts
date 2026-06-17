@@ -41,6 +41,7 @@ export interface TeamNewsDto {
   teamName?: string | null;
   title: string;
   body: string;
+  imageUrl?: string | null;
   authorUserId: string;
   authorName: string;
   createdAt: string;
@@ -51,12 +52,14 @@ export interface TeamNewsDto {
 export interface CreateTeamNewsRequest {
   title: string;
   body: string;
+  imageUrl?: string | null;
   sendNotification?: boolean;
 }
 
 export interface UpdateTeamNewsRequest {
   title: string;
   body: string;
+  imageUrl?: string | null;
 }
 
 export interface CreateTeamRequest {

@@ -308,6 +308,63 @@ export async function deleteTeamNews(teamId: string, newsId: string, currentUser
   }
 }
 
+export async function uploadTeamAvatar(teamId: string, file: File, currentUserId?: string): Promise<TeamDto> {
+  const userId = currentUserId ?? requireCurrentUserId();
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await fetch(`${API_BASE}/api/teams/${encodeURIComponent(teamId)}/avatar/upload?currentUserId=${encodeURIComponent(userId)}`, {
+    method: "POST",
+    credentials: "include",
+    body: formData,
+  });
+
+  if (!response.ok) {
+    await throwTeamsApiError(response, `POST /api/teams/${teamId}/avatar/upload failed: ${response.status}`);
+  }
+  return response.json();
+}
+
+export async function uploadTeamCover(teamId: string, file: File, currentUserId?: string): Promise<TeamDto> {
+  const userId = currentUserId ?? requireCurrentUserId();
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await fetch(`${API_BASE}/api/teams/${encodeURIComponent(teamId)}/cover/upload?currentUserId=${encodeURIComponent(userId)}`, {
+    method: "POST",
+    credentials: "include",
+    body: formData,
+  });
+
+  if (!response.ok) {
+    await throwTeamsApiError(response, `POST /api/teams/${teamId}/cover/upload failed: ${response.status}`);
+  }
+  return response.json();
+}
+
+export async function uploadTeamNewsImage(teamId: string, file: File, currentUserId?: string): Promise<string> {
+  const userId = currentUserId ?? requireCurrentUserId();
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await fetch(`${API_BASE}/api/teams/${encodeURIComponent(teamId)}/news/upload-image?currentUserId=${encodeURIComponent(userId)}`, {
+    method: "POST",
+    credentials: "include",
+    body: formData,
+  });
+
+  if (!response.ok) {
+    await throwTeamsApiError(response, `POST /api/teams/${teamId}/news/upload-image failed: ${response.status}`);
+  }
+
+  const data = (await response.json()) as { imageUrl?: string };
+  if (!data.imageUrl) {
+    throw new TeamsApiError("Upload response does not contain imageUrl", response.status);
+  }
+
+  return data.imageUrl;
+}
+
 export async function createTeam(request: CreateTeamRequest, currentUserId?: string): Promise<TeamDto> {
   const userId = currentUserId ?? requireCurrentUserId();
   const response = await fetch(`${API_BASE}/api/teams?currentUserId=${encodeURIComponent(userId)}`, {

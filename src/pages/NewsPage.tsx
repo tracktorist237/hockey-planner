@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { deleteTeamNews, getNewsFeed, updateTeamNews } from "src/api/teams";
+import { deleteTeamNews, getNewsFeed, updateTeamNews, uploadTeamNewsImage } from "src/api/teams";
 import { BottomNav } from "src/components/BottomNav";
 import { LoadingIndicator } from "src/components/LoadingIndicator";
 import { NotificationBell } from "src/components/NotificationBell";
@@ -28,6 +28,9 @@ export function NewsPage() {
   const [editingNewsId, setEditingNewsId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
   const [editingBody, setEditingBody] = useState("");
+  const [editingImageUrl, setEditingImageUrl] = useState("");
+  const [imageUploadingNewsId, setImageUploadingNewsId] = useState<string | null>(null);
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
   const [savingNewsId, setSavingNewsId] = useState<string | null>(null);
   const [deletingNewsId, setDeletingNewsId] = useState<string | null>(null);
 
@@ -58,6 +61,7 @@ export function NewsPage() {
     setEditingNewsId(item.id);
     setEditingTitle(item.title);
     setEditingBody(item.body);
+    setEditingImageUrl(item.imageUrl ?? "");
     setError(null);
     setMessage(null);
   };
@@ -66,6 +70,28 @@ export function NewsPage() {
     setEditingNewsId(null);
     setEditingTitle("");
     setEditingBody("");
+    setEditingImageUrl("");
+  };
+
+  const handleUploadEditImage = async (item: TeamNewsDto, file: File | null) => {
+    if (!currentUser?.id || !file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setError("Нужен файл изображения.");
+      return;
+    }
+
+    setImageUploadingNewsId(item.id);
+    setError(null);
+    setMessage(null);
+    try {
+      setEditingImageUrl(await uploadTeamNewsImage(item.teamId, file, currentUser.id));
+      setMessage("Изображение новости загружено.");
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Не удалось загрузить изображение новости.");
+    } finally {
+      setImageUploadingNewsId(null);
+    }
   };
 
   const handleUpdate = async (item: TeamNewsDto) => {
@@ -80,7 +106,7 @@ export function NewsPage() {
     setError(null);
     setMessage(null);
     try {
-      const updated = await updateTeamNews(item.teamId, item.id, { title: editingTitle.trim(), body: editingBody.trim() }, currentUser.id);
+      const updated = await updateTeamNews(item.teamId, item.id, { title: editingTitle.trim(), body: editingBody.trim(), imageUrl: editingImageUrl.trim() || null }, currentUser.id);
       setNews((previous) => previous.map((value) => value.id === item.id ? { ...updated, teamName: item.teamName, canManage: true } : value));
       cancelEdit();
       setMessage("Новость обновлена.");
@@ -219,6 +245,31 @@ export function NewsPage() {
                     maxLength={2000}
                     style={{ border: "1px solid var(--hp-border)", borderRadius: 12, padding: "10px 12px", minHeight: 100, resize: "vertical", fontFamily: "inherit", background: "var(--hp-input-bg)", color: "var(--hp-text)" }}
                   />
+                  {editingImageUrl && (
+                    <button type="button" onClick={() => setPreviewImageUrl(editingImageUrl)} style={{ border: 0, padding: 0, background: "transparent", cursor: "zoom-in", textAlign: "left" }}>
+                      <img src={editingImageUrl} alt="" style={{ width: "100%", borderRadius: 12, border: "1px solid var(--hp-border)", maxHeight: 320, objectFit: "cover", background: "var(--hp-surface-soft)", display: "block" }} />
+                    </button>
+                  )}
+                  <div style={{ display: "grid", gridTemplateColumns: editingImageUrl ? "1fr auto" : "1fr", gap: 8 }}>
+                    <label style={{ border: "1px solid var(--hp-border)", borderRadius: 12, padding: "10px 12px", background: "var(--hp-surface-soft)", color: "var(--hp-heading)", fontWeight: 900, cursor: imageUploadingNewsId === item.id ? "wait" : "pointer", textAlign: "center", opacity: imageUploadingNewsId === item.id ? 0.7 : 1 }}>
+                      {imageUploadingNewsId === item.id ? "Загружаем..." : editingImageUrl ? "Заменить картинку" : "Прикрепить картинку"}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        disabled={imageUploadingNewsId !== null}
+                        onChange={(event) => {
+                          void handleUploadEditImage(item, event.target.files?.[0] ?? null);
+                          event.currentTarget.value = "";
+                        }}
+                        style={{ display: "none" }}
+                      />
+                    </label>
+                    {editingImageUrl && (
+                      <button type="button" onClick={() => setEditingImageUrl("")} style={{ border: "1px solid var(--hp-danger-border)", borderRadius: 12, padding: "10px 12px", background: "var(--hp-danger-soft)", color: "var(--hp-danger)", fontWeight: 900, cursor: "pointer" }}>
+                        Убрать
+                      </button>
+                    )}
+                  </div>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
                     <button type="button" onClick={cancelEdit} style={{ border: "1px solid var(--hp-border)", borderRadius: 12, padding: "10px", background: "var(--hp-surface-soft)", color: "var(--hp-heading)", fontWeight: 900, cursor: "pointer" }}>
                       Отмена
@@ -256,6 +307,11 @@ export function NewsPage() {
                       </div>
                     )}
                   </div>
+                  {item.imageUrl && (
+                    <button type="button" onClick={() => setPreviewImageUrl(item.imageUrl ?? null)} style={{ border: 0, padding: 0, margin: "0 0 10px", background: "transparent", cursor: "zoom-in", width: "100%", textAlign: "left" }}>
+                      <img src={item.imageUrl} alt="" style={{ width: "100%", borderRadius: 12, border: "1px solid var(--hp-border)", maxHeight: 320, objectFit: "cover", background: "var(--hp-surface-soft)", display: "block" }} />
+                    </button>
+                  )}
                   <div style={{ color: "var(--hp-text)", lineHeight: 1.5, whiteSpace: "pre-wrap" }}>{item.body}</div>
                 </>
               )}
@@ -264,6 +320,53 @@ export function NewsPage() {
           </>
         )}
       </main>
+
+      {previewImageUrl && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setPreviewImageUrl(null)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 1000,
+            background: "rgba(15, 23, 42, 0.86)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 16,
+            boxSizing: "border-box",
+          }}
+        >
+          <button
+            type="button"
+            aria-label="Закрыть"
+            onClick={() => setPreviewImageUrl(null)}
+            style={{
+              position: "fixed",
+              top: 14,
+              right: 14,
+              width: 42,
+              height: 42,
+              borderRadius: 999,
+              border: "1px solid rgba(255,255,255,0.35)",
+              background: "rgba(15, 23, 42, 0.68)",
+              color: "white",
+              fontSize: 24,
+              lineHeight: 1,
+              cursor: "pointer",
+            }}
+          >
+            ×
+          </button>
+          <img
+            src={previewImageUrl}
+            alt=""
+            onClick={(event) => event.stopPropagation()}
+            style={{ maxWidth: "100%", maxHeight: "92vh", objectFit: "contain", borderRadius: 12, boxShadow: "0 24px 80px rgba(0,0,0,0.45)" }}
+          />
+        </div>
+      )}
 
       <BottomNav activeTab="news" />
     </div>
