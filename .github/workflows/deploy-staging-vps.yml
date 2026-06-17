@@ -1,0 +1,28 @@
+name: Deploy Frontend Staging to VPS
+
+on:
+  push:
+    branches: [ "develop" ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy frontend staging on VPS
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            set -e
+            cd /opt/hockeyplanner-staging/frontend-src
+            git pull origin develop
+            npm ci
+            REACT_APP_API_BASE=https://api-staging.hockeyplanner.ru REACT_APP_VERSION=staging npm run build
+            rm -rf /opt/hockeyplanner-staging/frontend/build
+            cp -r /opt/hockeyplanner-staging/frontend-src/build /opt/hockeyplanner-staging/frontend/build
+            cd /opt/hockeyplanner
+            docker-compose restart nginx
+            docker-compose ps
