@@ -24,6 +24,7 @@ import { InstructionArticlePage, InstructionsListPage } from "src/pages/Instruct
 import { LinkPlayerPage } from "src/pages/LinkPlayerPage";
 import { NewsPage } from "src/pages/NewsPage";
 import { NotificationSettingsPage } from "src/pages/NotificationSettingsPage";
+import { PrivacyPolicyPage, TermsOfServicePage } from "src/pages/LegalPages";
 import { TeamDetailsPage } from "src/pages/TeamDetailsPage/TeamDetailsPage";
 import { TeamManagePage } from "src/pages/TeamDetailsPage/TeamManagePage";
 import { TeamsPage } from "src/pages/TeamsPage";
@@ -194,6 +195,16 @@ function AppRoutes() {
         <Route
           path="/login"
           element={<AuthPage />}
+        />
+
+        <Route
+          path="/privacy"
+          element={<PrivacyPolicyPage />}
+        />
+
+        <Route
+          path="/terms"
+          element={<TermsOfServicePage />}
         />
 
         <Route

@@ -635,28 +635,35 @@ export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
             boxShadow: "var(--hp-shadow-sm)",
           }}
         >
-          <h3 style={{ margin: "0 0 16px 0", fontSize: "18px", fontWeight: "600", color: "var(--hp-heading)" }}>ℹ️ Информация</h3>
+          <h3 style={{ margin: "0 0 16px 0", fontSize: "18px", fontWeight: "600", color: "var(--hp-heading)" }}>Правовые документы</h3>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-            <div
-              style={{
-                padding: "12px",
-                backgroundColor: "var(--hp-surface-soft)",
-                borderRadius: "8px",
-                fontSize: "14px",
-                color: "var(--hp-muted)",
-                lineHeight: "1.5",
-              }}
-            >
-              <strong>Что такое очистка кэша?</strong>
-              <br />• удаляет сохраненные файлы приложения
-              <br />• удаляет service worker
-              <br />• перезагружает приложение
-              <br />• ваши данные (игроки, мероприятия) не удаляются
-            </div>
-
-            <div style={{ padding: "12px", backgroundColor: "var(--hp-primary-soft)", borderRadius: "8px", fontSize: "14px", color: "var(--hp-primary)" }}>
-              <strong>💡 Совет:</strong> используйте «Проверить обновления», если интерфейс не соответствует последней версии.
+          <div style={{ display: "grid", gap: "10px" }}>
+            {[
+              ["Пользовательское соглашение", "/terms"],
+              ["Политика конфиденциальности", "/privacy"],
+            ].map(([label, path]) => (
+              <button
+                key={path}
+                type="button"
+                onClick={() => navigate(path)}
+                style={{
+                  width: "100%",
+                  border: "1px solid var(--hp-border)",
+                  borderRadius: "12px",
+                  padding: "13px 14px",
+                  backgroundColor: "var(--hp-surface-soft)",
+                  color: "var(--hp-heading)",
+                  textAlign: "left",
+                  fontSize: "15px",
+                  fontWeight: 800,
+                  cursor: "pointer",
+                }}
+              >
+                {label}
+              </button>
+            ))}
+            <div style={{ fontSize: "13px", color: "var(--hp-muted)", lineHeight: 1.5 }}>
+              По вопросам данных и работы сервиса: support@hockeyplanner.ru
             </div>
           </div>
         </div>

@@ -1,17 +1,20 @@
 import { CSSProperties, FormEvent, useEffect, useMemo, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { ReportProblemDialog } from "src/components/ReportProblemDialog";
 import { useAuth } from "src/hooks/useAuth";
 import { markOnboardingRequired, shouldRunOnboarding } from "src/utils/onboarding";
 
 const panelStyle: CSSProperties = {
   minHeight: "100vh",
-  padding: "20px 14px",
+  padding: "20px 0 0",
   background: "var(--hp-bg-gradient)",
   color: "var(--hp-text)",
   display: "flex",
+  flexDirection: "column",
   alignItems: "center",
-  justifyContent: "center",
+  justifyContent: "space-between",
+  gap: 18,
+  boxSizing: "border-box",
 };
 
 const cardStyle: CSSProperties = {
@@ -66,6 +69,31 @@ const mutedButtonStyle: CSSProperties = {
   cursor: "pointer",
 };
 
+const legalLinkStyle: CSSProperties = {
+  color: "var(--hp-primary)",
+  fontWeight: 800,
+};
+
+const authFooterStyle: CSSProperties = {
+  width: "100%",
+  padding: "14px 16px",
+  background: "var(--hp-surface)",
+  borderTop: "1px solid var(--hp-border)",
+  boxShadow: "var(--hp-shadow-sm)",
+  boxSizing: "border-box",
+};
+
+const authFooterInnerStyle: CSSProperties = {
+  width: "100%",
+  maxWidth: 500,
+  margin: "0 auto",
+  display: "flex",
+  justifyContent: "center",
+  gap: 14,
+  flexWrap: "wrap",
+  fontSize: 13,
+};
+
 type Mode = "login" | "register" | "forgot" | "reset";
 
 export function AuthPage() {
@@ -95,6 +123,7 @@ export function AuthPage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const [isReportOpen, setIsReportOpen] = useState(false);
 
   useEffect(() => {
@@ -129,6 +158,11 @@ export function AuthPage() {
       if (mode === "register") {
         if (password !== passwordRepeat) {
           setError("Пароли не совпадают.");
+          return;
+        }
+
+        if (!termsAccepted) {
+          setError("Чтобы зарегистрироваться, примите пользовательское соглашение и политику конфиденциальности.");
           return;
         }
 
@@ -178,6 +212,7 @@ export function AuthPage() {
 
   return (
     <div style={panelStyle}>
+      <div style={{ width: "100%", flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 14px", boxSizing: "border-box" }}>
       <form style={cardStyle} onSubmit={submit}>
         <div style={{ marginBottom: 22 }}>
           <div style={{ fontSize: 13, fontWeight: 900, color: "#0f766e", textTransform: "uppercase", letterSpacing: 1 }}>
@@ -338,7 +373,81 @@ export function AuthPage() {
         {error && <div style={{ marginTop: 14, padding: 12, borderRadius: 14, background: "#fee2e2", color: "#991b1b" }}>{error}</div>}
         {message && <div style={{ marginTop: 14, padding: 12, borderRadius: 14, background: "#dcfce7", color: "#166534" }}>{message}</div>}
 
-        <button type="submit" style={{ ...buttonStyle, marginTop: 18, opacity: loading ? 0.7 : 1 }} disabled={loading}>
+        {mode === "register" && (
+          <label
+            style={{
+              display: "flex",
+              alignItems: "flex-start",
+              gap: 12,
+              marginTop: 14,
+              padding: "12px 13px",
+              borderRadius: 14,
+              border: "1px solid var(--hp-border)",
+              background: "var(--hp-surface-soft)",
+              color: "var(--hp-text)",
+              fontSize: 14,
+              lineHeight: 1.5,
+              cursor: "pointer",
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={termsAccepted}
+              onChange={(event) => setTermsAccepted(event.target.checked)}
+              required
+              style={{
+                position: "absolute",
+                width: 1,
+                height: 1,
+                opacity: 0,
+                pointerEvents: "none",
+              }}
+            />
+            <span
+              aria-hidden="true"
+              style={{
+                width: 20,
+                height: 20,
+                minWidth: 20,
+                marginTop: 1,
+                borderRadius: 6,
+                border: termsAccepted ? "1px solid var(--hp-primary)" : "1px solid var(--hp-border-strong)",
+                background: termsAccepted ? "var(--hp-primary)" : "var(--hp-surface)",
+                color: "white",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 15,
+                fontWeight: 900,
+                lineHeight: 1,
+                boxSizing: "border-box",
+              }}
+            >
+              {termsAccepted ? "✓" : ""}
+            </span>
+            <span>
+              Я принимаю{" "}
+              <Link to="/terms" style={legalLinkStyle}>
+                Пользовательское соглашение
+              </Link>{" "}
+              и{" "}
+              <Link to="/privacy" style={legalLinkStyle}>
+                Политику конфиденциальности
+              </Link>
+            </span>
+          </label>
+        )}
+
+        <button
+          type="submit"
+          style={{
+            ...buttonStyle,
+            marginTop: 18,
+            opacity: loading || (mode === "register" && !termsAccepted) ? 0.55 : 1,
+            cursor: loading || (mode === "register" && !termsAccepted) ? "not-allowed" : "pointer",
+          }}
+          disabled={loading || (mode === "register" && !termsAccepted)}
+        >
           {loading
             ? "Подождите..."
             : mode === "forgot"
@@ -386,6 +495,17 @@ export function AuthPage() {
           <span>Инструкция</span>
         </button>
       </form>
+      </div>
+      <footer style={authFooterStyle}>
+        <div style={authFooterInnerStyle}>
+          <Link to="/terms" style={{ ...legalLinkStyle, color: "var(--hp-muted)" }}>
+            Пользовательское соглашение
+          </Link>
+          <Link to="/privacy" style={{ ...legalLinkStyle, color: "var(--hp-muted)" }}>
+            Политика конфиденциальности
+          </Link>
+        </div>
+      </footer>
       <ReportProblemDialog isOpen={isReportOpen} onClose={() => setIsReportOpen(false)} />
     </div>
   );
