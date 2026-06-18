@@ -822,20 +822,13 @@ export const EventsListPage = ({
               min-height: 100vh;
             }
 
-            div[style*="position: fixed"] {
-              position: static !important;
-              border-top: 1px solid var(--hp-border);
-              margin-top: 32px;
-              box-shadow: none !important;
-            }
-
             div[style*="height: 80px"] {
               height: 0 !important;
             }
           }
 
           @supports (padding: max(0px)) {
-            div[style*="position: fixed"] {
+            .hp-bottom-nav {
               padding-bottom: max(12px, env(safe-area-inset-bottom, 12px));
             }
           }
