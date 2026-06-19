@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b1220" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <script>
+    (function () {
+      var params = new URLSearchParams(window.location.search);
+      var manifestPath = params.get("manifest") || "";
+      var iconPath = params.get("icon") || "";
+      var manifestPattern = /^\/pwa-assets\/teams\/[a-zA-Z0-9-]+\/manifest-\d+\.webmanifest$/;
+      var iconPattern = /^\/pwa-assets\/teams\/[a-zA-Z0-9-]+\/icon-192-\d+\.png$/;
+
+      if (manifestPattern.test(manifestPath)) {
+        var manifestLink = document.createElement("link");
+        manifestLink.rel = "manifest";
+        manifestLink.href = manifestPath;
+        document.head.appendChild(manifestLink);
+      }
+
+      if (iconPattern.test(iconPath)) {
+        var touchIconLink = document.createElement("link");
+        touchIconLink.rel = "apple-touch-icon";
+        touchIconLink.href = iconPath;
+        document.head.appendChild(touchIconLink);
+      }
+    })();
+  </script>
+  <title>Установка приложения команды</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --bg: #eef4fb;
+      --surface: #ffffff;
+      --soft: #f3f6fa;
+      --text: #172033;
+      --muted: #64748b;
+      --border: #d7e0ea;
+      --primary: #1769e0;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #09111d;
+        --surface: #111c2b;
+        --soft: #172538;
+        --text: #edf4ff;
+        --muted: #9fb0c6;
+        --border: #29405b;
+        --primary: #62a4ff;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      display: grid;
+      place-items: center;
+      padding: 20px 14px;
+    }
+    main {
+      width: 100%;
+      max-width: 430px;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      background: var(--surface);
+      box-shadow: 0 22px 70px rgba(15, 23, 42, 0.18);
+      padding: 20px;
+    }
+    .app { display: flex; align-items: center; gap: 14px; }
+    .icon {
+      width: 72px;
+      height: 72px;
+      border-radius: 18px;
+      border: 1px solid var(--border);
+      background: white;
+      object-fit: contain;
+      flex-shrink: 0;
+    }
+    h1 { margin: 0; font-size: 21px; line-height: 1.15; overflow-wrap: anywhere; }
+    .caption { margin-top: 5px; color: var(--muted); font-size: 14px; }
+    .status {
+      min-height: 44px;
+      margin: 18px 0 14px;
+      border-radius: 12px;
+      padding: 11px 12px;
+      background: var(--soft);
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.4;
+    }
+    .actions { display: grid; grid-template-columns: 1fr 1.35fr; gap: 8px; }
+    button {
+      border-radius: 12px;
+      padding: 13px 10px;
+      font: inherit;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .back { border: 1px solid var(--border); background: var(--soft); color: var(--text); }
+    .install { border: 0; background: var(--primary); color: white; }
+    .install:disabled { cursor: wait; opacity: 0.58; }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="app">
+      <img class="icon" id="app-icon" alt="" />
+      <div>
+        <h1 id="app-name">Приложение команды</h1>
+        <div class="caption">Hockey Planner</div>
+      </div>
+    </div>
+
+    <div class="status" id="status">Проверяем возможность установки...</div>
+
+    <div class="actions">
+      <button class="back" id="back-button" type="button">Назад</button>
+      <button class="install" id="install-button" type="button" disabled>Подождите...</button>
+    </div>
+  </main>
+
+  <script>
+    (function () {
+      var params = new URLSearchParams(window.location.search);
+      var teamId = params.get("teamId") || "";
+      var iconPath = params.get("icon") || "";
+      var appName = (params.get("name") || "Приложение команды").slice(0, 50);
+      var isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+      var deferredPrompt = null;
+      var status = document.getElementById("status");
+      var installButton = document.getElementById("install-button");
+      var backButton = document.getElementById("back-button");
+      var appIcon = document.getElementById("app-icon");
+
+      document.getElementById("app-name").textContent = appName;
+      document.title = "Установить " + appName;
+      appIcon.src = iconPath;
+
+      backButton.addEventListener("click", function () {
+        if (window.history.length > 1) {
+          window.history.back();
+        } else {
+          window.location.assign(teamId ? "/teams/" + encodeURIComponent(teamId) : "/teams");
+        }
+      });
+
+      window.addEventListener("beforeinstallprompt", function (event) {
+        event.preventDefault();
+        deferredPrompt = event;
+        installButton.disabled = false;
+        installButton.textContent = "Установить";
+        status.textContent = "Приложение готово к установке.";
+      });
+
+      window.addEventListener("appinstalled", function () {
+        deferredPrompt = null;
+        installButton.disabled = true;
+        installButton.textContent = "Установлено";
+        status.textContent = "Приложение команды установлено.";
+      });
+
+      installButton.addEventListener("click", async function () {
+        if (isIos) {
+          status.textContent = "В Safari нажмите «Поделиться», затем «На экран Домой».";
+          return;
+        }
+
+        if (!deferredPrompt) {
+          return;
+        }
+
+        installButton.disabled = true;
+        installButton.textContent = "Открываем...";
+        await deferredPrompt.prompt();
+        var choice = await deferredPrompt.userChoice;
+        deferredPrompt = null;
+
+        if (choice.outcome === "dismissed") {
+          installButton.textContent = "Отменено";
+          status.textContent = "Установка отменена. Вернитесь назад и попробуйте снова.";
+        }
+      });
+
+      if (isIos) {
+        installButton.disabled = false;
+        installButton.textContent = "Как установить";
+        status.textContent = "На iPhone установка выполняется через меню Safari.";
+        return;
+      }
+
+      window.setTimeout(function () {
+        if (!deferredPrompt) {
+          installButton.disabled = true;
+          installButton.textContent = "Недоступно";
+          status.textContent = "Chrome не подтвердил установку PWA. Обновите страницу или удалите старое приложение этой команды и попробуйте снова.";
+        }
+      }, 6000);
+    })();
+  </script>
+</body>
+</html>

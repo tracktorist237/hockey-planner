@@ -11,6 +11,9 @@ services:
       - path: /index.html
         name: Cache-Control
         value: no-cache, no-store, must-revalidate
+      - path: /team-install.html
+        name: Cache-Control
+        value: no-cache, no-store, must-revalidate
       - path: /asset-manifest.json
         name: Cache-Control
         value: no-cache, no-store, must-revalidate

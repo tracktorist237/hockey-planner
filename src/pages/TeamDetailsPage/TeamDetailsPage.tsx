@@ -370,27 +370,11 @@ export function TeamDetailsPage({ currentUser, currentTeamId, onTeamChange }: Te
     }
 
     const result = await teamPwaInstall.install();
-    if (result === "accepted") {
-      setIsTeamInstallDialogOpen(false);
-      setMessage(`Устанавливаем приложение команды «${team?.name ?? ""}».`);
+    if (result === "redirected") {
       return;
     }
 
-    if (result === "dismissed") {
-      return;
-    }
-
-    if (result === "manual") {
-      setIsTeamInstallDialogOpen(false);
-      setMessage(
-        /iphone|ipad|ipod/i.test(window.navigator.userAgent)
-          ? "В Safari нажмите «Поделиться», затем «На экран Домой»."
-          : "Откройте меню браузера и выберите «Установить приложение» или «Добавить на главный экран».",
-      );
-      return;
-    }
-
-    setError("Не удалось подготовить установку. Проверьте логотип команды и попробуйте ещё раз.");
+    setError("Не удалось подготовить полноценную PWA-установку. Обновите страницу и попробуйте ещё раз.");
   };
 
   const handleCreateNews = async () => {

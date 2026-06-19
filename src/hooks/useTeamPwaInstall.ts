@@ -1,24 +1,15 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { getTeamPwaLogoUrl } from "src/api/teams";
 import { TeamDto } from "src/types/teams";
+import { isStandalonePwa } from "src/utils/teamPwa";
 
-interface BeforeInstallPromptEvent extends Event {
-  prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
-}
-
-export type TeamPwaInstallResult = "accepted" | "dismissed" | "manual" | "unavailable";
+export type TeamPwaInstallResult = "redirected" | "unavailable";
 
 export interface TeamPwaInstallOptions {
   appName: string;
 }
 
-const isStandalone = (): boolean => {
-  const navigatorWithStandalone = window.navigator as Navigator & { standalone?: boolean };
-  return window.matchMedia("(display-mode: standalone)").matches || navigatorWithStandalone.standalone === true;
-};
-
-const isIos = (): boolean => /iphone|ipad|ipod/i.test(window.navigator.userAgent);
+const TEAM_PWA_CACHE_NAME = "hockey-planner-team-pwa";
 
 const loadImage = (source: string): Promise<HTMLImageElement> =>
   new Promise((resolve, reject) => {
@@ -28,8 +19,19 @@ const loadImage = (source: string): Promise<HTMLImageElement> =>
     image.src = source;
   });
 
-const createIcon = async (sourceUrl: string, size: number): Promise<string> => {
-  const response = await fetch(sourceUrl, { mode: "cors", cache: "force-cache" });
+const canvasToBlob = (canvas: HTMLCanvasElement): Promise<Blob> =>
+  new Promise((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (blob) {
+        resolve(blob);
+      } else {
+        reject(new Error("Team icon could not be created"));
+      }
+    }, "image/png");
+  });
+
+const createIcon = async (sourceUrl: string, size: number): Promise<Blob> => {
+  const response = await fetch(sourceUrl, { mode: "cors", cache: "no-store" });
   if (!response.ok) {
     throw new Error(`Team logo request failed: ${response.status}`);
   }
@@ -58,50 +60,41 @@ const createIcon = async (sourceUrl: string, size: number): Promise<string> => {
     const height = Math.round(image.naturalHeight * scale);
 
     context.drawImage(image, Math.round((size - width) / 2), Math.round((size - height) / 2), width, height);
-    return canvas.toDataURL("image/png");
+    return await canvasToBlob(canvas);
   } finally {
     URL.revokeObjectURL(objectUrl);
   }
 };
 
 export function useTeamPwaInstall(team: TeamDto | null, options: TeamPwaInstallOptions) {
-  const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isPreparing, setIsPreparing] = useState(false);
-  const [isReady, setIsReady] = useState(false);
 
-  useEffect(() => {
-    if (!team?.avatarUrl || isStandalone()) {
-      setIsReady(false);
-      return;
+  const install = useCallback(async (): Promise<TeamPwaInstallResult> => {
+    if (!team?.avatarUrl || isStandalonePwa() || !("serviceWorker" in navigator) || !("caches" in window)) {
+      return "unavailable";
     }
 
-    let disposed = false;
-    let manifestUrl: string | null = null;
-    const manifestLink = document.querySelector<HTMLLinkElement>('link[rel="manifest"]');
-    const touchIconLink = document.querySelector<HTMLLinkElement>('link[rel="apple-touch-icon"]');
-    const originalManifestHref = manifestLink?.href;
-    const originalTouchIconHref = touchIconLink?.href;
-
-    const handleBeforeInstallPrompt = (event: Event) => {
-      event.preventDefault();
-      setInstallPrompt(event as BeforeInstallPromptEvent);
-    };
-
-    const handleInstalled = () => setInstallPrompt(null);
-    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
-    window.addEventListener("appinstalled", handleInstalled);
-
     setIsPreparing(true);
-    setIsReady(false);
-    setInstallPrompt(null);
-
-    const applyManifest = (icon192: string, icon512: string) => {
-      if (disposed) {
-        return;
+    try {
+      await navigator.serviceWorker.ready;
+      if (!navigator.serviceWorker.controller) {
+        throw new Error("Service worker is not controlling the page");
       }
 
       const normalizedAppName = options.appName.trim() || team.name;
+      const version = `${Date.now()}`;
+      const assetBase = `/pwa-assets/teams/${encodeURIComponent(team.id)}`;
+      const manifestPath = `${assetBase}/manifest-${version}.webmanifest`;
+      const icon192Path = `${assetBase}/icon-192-${version}.png`;
+      const icon512Path = `${assetBase}/icon-512-${version}.png`;
       const launchUrl = new URL(`/pwa/teams/${team.id}`, window.location.origin).href;
+      const pwaLogoUrl = getTeamPwaLogoUrl(team.id);
+
+      const [icon192, icon512] = await Promise.all([
+        createIcon(pwaLogoUrl, 192),
+        createIcon(pwaLogoUrl, 512),
+      ]);
+
       const manifest = {
         id: launchUrl,
         name: normalizedAppName.slice(0, 50),
@@ -113,81 +106,44 @@ export function useTeamPwaInstall(team: TeamDto | null, options: TeamPwaInstallO
         theme_color: "#0b1220",
         background_color: "#ffffff",
         icons: [
-          { src: icon192, type: "image/png", sizes: "192x192", purpose: "any maskable" },
-          { src: icon512, type: "image/png", sizes: "512x512", purpose: "any maskable" },
+          { src: new URL(icon192Path, window.location.origin).href, type: "image/png", sizes: "192x192", purpose: "any maskable" },
+          { src: new URL(icon512Path, window.location.origin).href, type: "image/png", sizes: "512x512", purpose: "any maskable" },
         ],
       };
 
-      manifestUrl = URL.createObjectURL(new Blob([JSON.stringify(manifest)], { type: "application/manifest+json" }));
+      const cache = await caches.open(TEAM_PWA_CACHE_NAME);
+      const existingRequests = await cache.keys();
+      await Promise.all(existingRequests
+        .filter((request) => new URL(request.url).pathname.startsWith(`${assetBase}/`))
+        .map((request) => cache.delete(request)));
 
-      if (manifestLink) {
-        manifestLink.href = manifestUrl;
-      }
-      if (touchIconLink) {
-        touchIconLink.href = icon192;
-      }
+      await Promise.all([
+        cache.put(icon192Path, new Response(icon192, { headers: { "Content-Type": "image/png", "Cache-Control": "no-cache" } })),
+        cache.put(icon512Path, new Response(icon512, { headers: { "Content-Type": "image/png", "Cache-Control": "no-cache" } })),
+        cache.put(manifestPath, new Response(JSON.stringify(manifest), {
+          headers: { "Content-Type": "application/manifest+json", "Cache-Control": "no-cache" },
+        })),
+      ]);
 
-      setIsReady(true);
-    };
-
-    const pwaLogoUrl = getTeamPwaLogoUrl(team.id);
-    const iconPreparation = Promise.all([
-      createIcon(pwaLogoUrl, 192),
-      createIcon(pwaLogoUrl, 512),
-    ]);
-
-    void iconPreparation
-      .then(([icon192, icon512]) => applyManifest(icon192, icon512))
-      .catch((error) => {
-        console.warn("Team logo cannot be resized in the browser; original image will be used:", error);
-        if (!disposed) {
-          applyManifest(team.avatarUrl!, team.avatarUrl!);
-        }
-      })
-      .finally(() => {
-        if (!disposed) {
-          setIsPreparing(false);
-        }
-      });
-
-    return () => {
-      disposed = true;
-      window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
-      window.removeEventListener("appinstalled", handleInstalled);
-      setInstallPrompt(null);
-
-      if (manifestLink && originalManifestHref) {
-        manifestLink.href = originalManifestHref;
-      }
-      if (touchIconLink && originalTouchIconHref) {
-        touchIconLink.href = originalTouchIconHref;
-      }
-      if (manifestUrl) {
-        URL.revokeObjectURL(manifestUrl);
-      }
-    };
-  }, [options.appName, team?.avatarUrl, team?.id, team?.name]);
-
-  const install = useCallback(async (): Promise<TeamPwaInstallResult> => {
-    if (!team?.avatarUrl || !isReady || isStandalone()) {
+      const installerUrl = new URL("/team-install.html", window.location.origin);
+      installerUrl.searchParams.set("teamId", team.id);
+      installerUrl.searchParams.set("manifest", manifestPath);
+      installerUrl.searchParams.set("icon", icon192Path);
+      installerUrl.searchParams.set("name", normalizedAppName.slice(0, 50));
+      window.location.assign(installerUrl.href);
+      return "redirected";
+    } catch (error) {
+      console.error("Team PWA preparation failed:", error);
       return "unavailable";
+    } finally {
+      setIsPreparing(false);
     }
-
-    if (!installPrompt) {
-      return "manual";
-    }
-
-    await installPrompt.prompt();
-    const choice = await installPrompt.userChoice;
-    setInstallPrompt(null);
-    return choice.outcome;
-  }, [installPrompt, isReady, team?.avatarUrl]);
+  }, [options.appName, team]);
 
   return {
-    canOfferInstall: Boolean(team?.avatarUrl) && !isStandalone(),
+    canOfferInstall: Boolean(team?.avatarUrl) && !isStandalonePwa(),
     isPreparing,
-    isReady,
-    requiresManualInstall: isReady && (!installPrompt || isIos()),
+    isReady: Boolean(team?.avatarUrl),
     install,
   };
 }
