@@ -18,7 +18,7 @@ const buildDeviceName = () => (navigator.userAgent.includes("Mobile") ? "Mobile"
 
 export function usePushSubscriptionSync(currentUserId?: string | null) {
   useEffect(() => {
-    if (!currentUserId || typeof window === "undefined") {
+    if (process.env.NODE_ENV !== "production" || !currentUserId || typeof window === "undefined") {
       return;
     }
 

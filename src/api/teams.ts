@@ -18,6 +18,9 @@ import {
 
 const API_BASE = process.env.REACT_APP_API_BASE || "";
 
+export const getTeamPwaLogoUrl = (teamId: string): string =>
+  `${API_BASE}/api/teams/${encodeURIComponent(teamId)}/pwa-logo`;
+
 const requireCurrentUserId = (): string => {
   const saved = localStorage.getItem("currentUser");
   if (!saved) {

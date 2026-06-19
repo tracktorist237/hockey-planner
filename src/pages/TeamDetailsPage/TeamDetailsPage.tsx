@@ -10,6 +10,8 @@ import { TeamContactItem, TeamDto, TeamMemberDto, TeamNewsDto, TeamVisibility } 
 import { User } from "src/types/user";
 import { PlayerInfoModal } from "src/pages/EventPage/components/PlayerInfoModal";
 import { usePlayerModal } from "src/pages/EventPage/hooks/usePlayerModal";
+import { useTeamPwaInstall } from "src/hooks/useTeamPwaInstall";
+import { setTeamPwaPreferences, TeamPwaStartPage } from "src/utils/teamPwa";
 import { cardStyle } from "src/pages/TeamsPage/components/styles";
 import { formatRuDateLabel } from "src/utils/date";
 import { getAdaptiveFontSize } from "src/utils/text";
@@ -177,10 +179,25 @@ export function TeamDetailsPage({ currentUser, currentTeamId, onTeamChange }: Te
   const [confirmJoin, setConfirmJoin] = useState(false);
   const [confirmLeave, setConfirmLeave] = useState(false);
   const [isTeamMenuOpen, setIsTeamMenuOpen] = useState(false);
+  const [isTeamInstallDialogOpen, setIsTeamInstallDialogOpen] = useState(false);
+  const [teamAppName, setTeamAppName] = useState("");
+  const [teamAppStartPage, setTeamAppStartPage] = useState<TeamPwaStartPage>("team");
   const [descriptionExpanded, setDescriptionExpanded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const playerModal = usePlayerModal({ onError: setError });
+  const loadedTeamId = team?.id ?? null;
+  const loadedTeamName = team?.name ?? "";
+  const teamPwaInstall = useTeamPwaInstall(team, {
+    appName: teamAppName,
+  });
+
+  useEffect(() => {
+    if (loadedTeamId && loadedTeamName) {
+      setTeamAppName(loadedTeamName);
+      setTeamAppStartPage("team");
+    }
+  }, [loadedTeamId, loadedTeamName]);
 
   const canJoinPublic = team?.visibility === TeamVisibility.Public && !team.myRole;
   const canSeeMembers = Boolean(team?.myRole) || team?.visibility === TeamVisibility.Public;
@@ -339,6 +356,41 @@ export function TeamDetailsPage({ currentUser, currentTeamId, onTeamChange }: Te
 
     onTeamChange(team.id, team.name);
     setMessage(`Команда "${team.name}" назначена основной.`);
+  };
+
+  const handleInstallTeamApp = async () => {
+    setError(null);
+
+    if (team) {
+      setTeamPwaPreferences(team.id, {
+        startPage: teamAppStartPage,
+        teamName: team.name,
+        appName: teamAppName.trim() || team.name,
+      });
+    }
+
+    const result = await teamPwaInstall.install();
+    if (result === "accepted") {
+      setIsTeamInstallDialogOpen(false);
+      setMessage(`Устанавливаем приложение команды «${team?.name ?? ""}».`);
+      return;
+    }
+
+    if (result === "dismissed") {
+      return;
+    }
+
+    if (result === "manual") {
+      setIsTeamInstallDialogOpen(false);
+      setMessage(
+        /iphone|ipad|ipod/i.test(window.navigator.userAgent)
+          ? "В Safari нажмите «Поделиться», затем «На экран Домой»."
+          : "Откройте меню браузера и выберите «Установить приложение» или «Добавить на главный экран».",
+      );
+      return;
+    }
+
+    setError("Не удалось подготовить установку. Проверьте логотип команды и попробуйте ещё раз.");
   };
 
   const handleCreateNews = async () => {
@@ -537,7 +589,7 @@ export function TeamDetailsPage({ currentUser, currentTeamId, onTeamChange }: Te
                     <div style={{ borderRadius: 999, padding: "7px 10px", background: "var(--hp-neutral-soft)", color: "var(--hp-neutral)", fontSize: 13, fontWeight: 900, whiteSpace: "nowrap" }}>
                       {getRoleText(team.myRole)}
                     </div>
-                    {team.myRole && team.myRole !== TeamRole.Owner && (
+                    {(teamPwaInstall.canOfferInstall || (team.myRole && team.myRole !== TeamRole.Owner)) && (
                       <>
                         <button
                           type="button"
@@ -564,20 +616,46 @@ export function TeamDetailsPage({ currentUser, currentTeamId, onTeamChange }: Te
                               gap: 8,
                             }}
                           >
+                            {teamPwaInstall.canOfferInstall && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setIsTeamMenuOpen(false);
+                                  setIsTeamInstallDialogOpen(true);
+                                }}
+                                disabled={teamPwaInstall.isPreparing}
+                                style={{
+                                  width: "100%",
+                                  border: "1px solid var(--hp-primary)",
+                                  borderRadius: 12,
+                                  padding: "10px 12px",
+                                  background: "var(--hp-primary-soft)",
+                                  color: "var(--hp-primary)",
+                                  fontWeight: 900,
+                                  cursor: teamPwaInstall.isPreparing ? "wait" : "pointer",
+                                  textAlign: "left",
+                                  opacity: teamPwaInstall.isPreparing ? 0.7 : 1,
+                                }}
+                              >
+                                {teamPwaInstall.isPreparing ? "Готовим иконку..." : "Установить приложение команды"}
+                              </button>
+                            )}
                             {confirmLeave && (
                               <div style={{ borderRadius: 12, padding: 10, background: "var(--hp-warning-soft)", color: "var(--hp-warning)", border: "1px solid var(--hp-warning-border)", fontWeight: 800, lineHeight: 1.35, fontSize: 13 }}>
                                 Подтвердите выход из команды.
                               </div>
                             )}
-                            <button
-                              type="button"
-                              onClick={handleLeave}
-                              disabled={leaving}
-                              style={{ width: "100%", border: "1px solid var(--hp-danger-border)", borderRadius: 12, padding: "10px 12px", background: "var(--hp-danger-soft)", color: "var(--hp-danger)", fontWeight: 900, cursor: leaving ? "wait" : "pointer", textAlign: "left" }}
-                            >
-                              {leaving ? "Выходим..." : confirmLeave ? "Да, покинуть" : "Покинуть команду"}
-                            </button>
-                            {confirmLeave && (
+                            {team.myRole && team.myRole !== TeamRole.Owner && (
+                              <button
+                                type="button"
+                                onClick={handleLeave}
+                                disabled={leaving}
+                                style={{ width: "100%", border: "1px solid var(--hp-danger-border)", borderRadius: 12, padding: "10px 12px", background: "var(--hp-danger-soft)", color: "var(--hp-danger)", fontWeight: 900, cursor: leaving ? "wait" : "pointer", textAlign: "left" }}
+                              >
+                                {leaving ? "Выходим..." : confirmLeave ? "Да, покинуть" : "Покинуть команду"}
+                              </button>
+                            )}
+                            {team.myRole && team.myRole !== TeamRole.Owner && confirmLeave && (
                               <button
                                 type="button"
                                 onClick={() => {
@@ -990,6 +1068,138 @@ export function TeamDetailsPage({ currentUser, currentTeamId, onTeamChange }: Te
           </>
         )}
       </main>
+
+      {isTeamInstallDialogOpen && team && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="team-pwa-install-title"
+          onClick={() => setIsTeamInstallDialogOpen(false)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 1100,
+            background: "rgba(15, 23, 42, 0.58)",
+            display: "flex",
+            alignItems: "flex-end",
+            justifyContent: "center",
+            padding: "16px 12px 0",
+            boxSizing: "border-box",
+          }}
+        >
+          <div
+            onClick={(event) => event.stopPropagation()}
+            style={{
+              width: "100%",
+              maxWidth: 520,
+              maxHeight: "90vh",
+              overflowY: "auto",
+              border: "1px solid var(--hp-border)",
+              borderBottom: 0,
+              borderRadius: "22px 22px 0 0",
+              background: "var(--hp-surface)",
+              boxShadow: "0 -20px 60px rgba(15, 23, 42, 0.28)",
+              padding: "12px 16px calc(20px + env(safe-area-inset-bottom))",
+              boxSizing: "border-box",
+            }}
+          >
+            <div style={{ width: 42, height: 4, borderRadius: 999, background: "var(--hp-border)", margin: "0 auto 14px" }} />
+
+            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
+              <div>
+                <h2 id="team-pwa-install-title" style={{ margin: 0, color: "var(--hp-heading)", fontSize: 20 }}>
+                  Установка приложения
+                </h2>
+                <div style={{ marginTop: 4, color: "var(--hp-muted)", fontSize: 13, lineHeight: 1.4 }}>
+                  Настройте ярлык команды на устройстве.
+                </div>
+              </div>
+              <button
+                type="button"
+                aria-label="Закрыть"
+                onClick={() => setIsTeamInstallDialogOpen(false)}
+                style={{ width: 36, height: 36, borderRadius: 10, border: "1px solid var(--hp-border)", background: "var(--hp-surface-soft)", color: "var(--hp-heading)", fontSize: 22, lineHeight: 1, cursor: "pointer" }}
+              >
+                ×
+              </button>
+            </div>
+
+            <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "18px 0" }}>
+              <img
+                src={team.avatarUrl ?? ""}
+                alt=""
+                style={{ width: 64, height: 64, objectFit: "contain", borderRadius: 16, border: "1px solid var(--hp-border)", background: "white", padding: 6, boxSizing: "border-box", flexShrink: 0 }}
+              />
+              <div style={{ minWidth: 0 }}>
+                <div style={{ color: "var(--hp-muted)", fontSize: 12, fontWeight: 800 }}>Ярлык на устройстве</div>
+                <div style={{ color: "var(--hp-heading)", fontSize: 16, fontWeight: 900, overflowWrap: "anywhere", marginTop: 3 }}>
+                  {teamAppName.trim() || team.name}
+                </div>
+              </div>
+            </div>
+
+            <label style={{ display: "grid", gap: 7, color: "var(--hp-heading)", fontSize: 13, fontWeight: 900 }}>
+              Название приложения
+              <input
+                value={teamAppName}
+                maxLength={50}
+                onChange={(event) => setTeamAppName(event.target.value)}
+                placeholder={team.name}
+                style={{ width: "100%", border: "1px solid var(--hp-border)", borderRadius: 12, padding: "12px 13px", background: "var(--hp-input-bg)", color: "var(--hp-text)", fontSize: 16, boxSizing: "border-box", outline: "none" }}
+              />
+            </label>
+
+            <div style={{ marginTop: 16 }}>
+              <div style={{ color: "var(--hp-heading)", fontSize: 13, fontWeight: 900, marginBottom: 7 }}>Открывать при запуске</div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                {([
+                  ["team", "Команда"],
+                  ["events", "Мероприятия"],
+                  ["news", "Новости"],
+                ] as Array<[TeamPwaStartPage, string]>).map(([value, label]) => {
+                  const selected = teamAppStartPage === value;
+                  return (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => setTeamAppStartPage(value)}
+                      style={{
+                        border: `1px solid ${selected ? "var(--hp-primary)" : "var(--hp-border)"}`,
+                        borderRadius: 12,
+                        padding: "11px 10px",
+                        background: selected ? "var(--hp-primary-soft)" : "var(--hp-surface-soft)",
+                        color: selected ? "var(--hp-primary)" : "var(--hp-text)",
+                        fontWeight: 900,
+                        cursor: "pointer",
+                      }}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1.35fr", gap: 8, marginTop: 18 }}>
+              <button
+                type="button"
+                onClick={() => setIsTeamInstallDialogOpen(false)}
+                style={{ border: "1px solid var(--hp-border)", borderRadius: 12, padding: 13, background: "var(--hp-surface-soft)", color: "var(--hp-text)", fontWeight: 900, cursor: "pointer" }}
+              >
+                Отмена
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleInstallTeamApp()}
+                disabled={teamPwaInstall.isPreparing || !teamAppName.trim()}
+                style={{ border: 0, borderRadius: 12, padding: 13, background: "var(--hp-primary)", color: "white", fontWeight: 900, cursor: teamPwaInstall.isPreparing ? "wait" : "pointer", opacity: teamPwaInstall.isPreparing || !teamAppName.trim() ? 0.65 : 1 }}
+              >
+                {teamPwaInstall.isPreparing ? "Подготавливаем..." : "Установить"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {previewImageUrl && (
         <div

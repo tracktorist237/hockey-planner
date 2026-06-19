@@ -9,6 +9,7 @@ import { ReportProblemDialog } from "src/components/ReportProblemDialog";
 import { AppRole } from "src/constants/roles";
 import { useAuth } from "src/hooks/useAuth";
 import { ThemePreference, useTheme } from "src/context/ThemeContext";
+import { getActiveTeamPwaId, isStandalonePwa } from "src/utils/teamPwa";
 
 interface SettingsPageProps {
   onOpenDebug?: () => void;
@@ -25,6 +26,7 @@ export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
   const [isHelpOpen, setIsHelpOpen] = useState(false);
 
   const currentUserId = currentUser?.id ?? null;
+  const showTeamPwaSettings = isStandalonePwa() && Boolean(getActiveTeamPwaId());
 
   const compareVersions = (left: string, right: string): number => {
     const leftParts = left.split(".").map((part) => Number.parseInt(part, 10) || 0);
@@ -459,6 +461,32 @@ export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
               <span style={{ fontSize: "20px" }}>🔔</span>
               <span>Настройки уведомлений</span>
             </button>
+
+            {showTeamPwaSettings && (
+              <button
+                type="button"
+                onClick={() => navigate("/settings/team-apps")}
+                style={{
+                  width: "100%",
+                  padding: "16px",
+                  backgroundColor: "var(--hp-info-soft)",
+                  color: "var(--hp-info)",
+                  border: "1px solid var(--hp-info-border)",
+                  borderRadius: "12px",
+                  fontSize: "16px",
+                  fontWeight: "600",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "8px",
+                  transition: "all 0.2s ease",
+                }}
+              >
+                <span style={{ fontSize: "20px" }}>↗</span>
+                <span>Стартовая страница приложения</span>
+              </button>
+            )}
 
             <button
               onClick={() => currentUserId && navigate("/profile")}

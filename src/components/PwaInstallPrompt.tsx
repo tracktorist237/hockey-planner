@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocation } from "react-router-dom";
 import { usePwaInstallPrompt } from "src/hooks/usePwaInstallPrompt";
 
 interface PwaInstallPromptProps {
@@ -6,10 +7,13 @@ interface PwaInstallPromptProps {
 }
 
 export function PwaInstallPrompt({ isAuthenticated }: PwaInstallPromptProps) {
+  const location = useLocation();
   const { canInstall, install, dismiss } = usePwaInstallPrompt(isAuthenticated);
   const [isInstalling, setIsInstalling] = useState(false);
 
-  if (!canInstall) {
+  const isTeamDetailsPage = /^\/teams\/[^/]+\/?$/.test(location.pathname);
+
+  if (!canInstall || isTeamDetailsPage) {
     return null;
   }
 

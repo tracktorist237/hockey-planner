@@ -24,6 +24,7 @@ import { InstructionArticlePage, InstructionsListPage } from "src/pages/Instruct
 import { LinkPlayerPage } from "src/pages/LinkPlayerPage";
 import { NewsPage } from "src/pages/NewsPage";
 import { NotificationSettingsPage } from "src/pages/NotificationSettingsPage";
+import { TeamPwaSettingsPage } from "src/pages/TeamPwaSettingsPage";
 import { PrivacyPolicyPage, TermsOfServicePage } from "src/pages/LegalPages";
 import { TeamDetailsPage } from "src/pages/TeamDetailsPage/TeamDetailsPage";
 import { TeamManagePage } from "src/pages/TeamDetailsPage/TeamManagePage";
@@ -43,6 +44,7 @@ import { shouldRunOnboarding } from "src/utils/onboarding";
 import { useEffect, useState } from "react";
 import { getMyTeams } from "src/api/teams";
 import { AppRole } from "src/constants/roles";
+import { getTeamPwaDestination, getTeamPwaPreferences, isStandalonePwa, isTeamPwaReinstallRequired, setActiveTeamPwa } from "src/utils/teamPwa";
 
 function EventPageWrapper() {
   const { id } = useParams<{ id: string }>();
@@ -168,10 +170,59 @@ function RequireSuperAdmin({ children }: { children: ReactElement }) {
   return children;
 }
 
+function TeamPwaLaunchPage({ onTeamChange }: { onTeamChange: (teamId: string | null, teamName?: string | null) => void }) {
+  const { teamId } = useParams<{ teamId: string }>();
+  const [destination, setDestination] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!teamId) {
+      setDestination("/events");
+      return;
+    }
+
+    const preferences = getTeamPwaPreferences(teamId);
+    setActiveTeamPwa(teamId, false);
+    onTeamChange(teamId, preferences.teamName);
+    setDestination(getTeamPwaDestination(teamId));
+  }, [onTeamChange, teamId]);
+
+  return destination
+    ? <Navigate to={destination} replace />
+    : <LoadingIndicator text="Открываем приложение команды..." block />;
+}
+
 function AppRoutes() {
   const { currentUser, isAuthenticated } = useAuth();
   const { teamId: currentTeamId, teamName: currentTeamName, setCurrentTeam } = useCurrentTeam(currentUser?.id ?? null);
   const [isDebugOpen, setIsDebugOpen] = useState(false);
+  const [showTeamPwaReinstallNotice, setShowTeamPwaReinstallNotice] = useState(() => isTeamPwaReinstallRequired());
+
+  useEffect(() => {
+    if (!currentUser?.id || !isStandalonePwa()) {
+      return;
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const legacyTeamId = params.get("standaloneTeam")?.trim();
+    if (!legacyTeamId) {
+      return;
+    }
+
+    const legacyTeamName = params.get("standaloneTeamName")?.trim() || null;
+    setActiveTeamPwa(legacyTeamId, true);
+    setCurrentTeam(legacyTeamId, legacyTeamName);
+    setShowTeamPwaReinstallNotice(true);
+
+    params.delete("standaloneTeam");
+    params.delete("standaloneTeamName");
+    const remainingQuery = params.toString();
+    window.history.replaceState(
+      window.history.state,
+      "",
+      `${window.location.pathname}${remainingQuery ? `?${remainingQuery}` : ""}${window.location.hash}`,
+    );
+  }, [currentUser?.id, setCurrentTeam]);
+
   usePushSubscriptionSync(currentUser?.id);
   const homePath = isAuthenticated
     ? shouldRunOnboarding(currentUser)
@@ -363,6 +414,28 @@ function AppRoutes() {
         />
 
         <Route
+          path="/settings/team-apps"
+          element={
+            <RequireAuth>
+              <RequireOnboardingComplete>
+                <TeamPwaSettingsPage />
+              </RequireOnboardingComplete>
+            </RequireAuth>
+          }
+        />
+
+        <Route
+          path="/pwa/teams/:teamId"
+          element={
+            <RequireAuth>
+              <RequireOnboardingComplete>
+                <TeamPwaLaunchPage onTeamChange={setCurrentTeam} />
+              </RequireOnboardingComplete>
+            </RequireAuth>
+          }
+        />
+
+        <Route
           path="/updates"
           element={
             <RequireAuth>
@@ -501,6 +574,16 @@ function AppRoutes() {
       <DebugOverlay isOpen={isDebugOpen} onClose={() => setIsDebugOpen(false)} />
       <AppUpdatePrompt />
       <PwaInstallPrompt isAuthenticated={isAuthenticated} />
+      {showTeamPwaReinstallNotice && (
+        <div style={{ position: "fixed", left: 12, right: 12, bottom: 86, zIndex: 700, maxWidth: 560, margin: "0 auto", border: "1px solid var(--hp-warning-border)", borderRadius: 16, padding: 14, background: "var(--hp-warning-soft)", color: "var(--hp-warning)", boxShadow: "var(--hp-shadow-md)" }}>
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
+            <div style={{ fontSize: 14, lineHeight: 1.4, fontWeight: 800 }}>
+              Приложение команды нужно переустановить, чтобы заработали выбор стартовой страницы и новые настройки ярлыка.
+            </div>
+            <button type="button" aria-label="Закрыть" onClick={() => setShowTeamPwaReinstallNotice(false)} style={{ border: 0, background: "transparent", color: "inherit", fontSize: 22, lineHeight: 1, cursor: "pointer", padding: 0 }}>×</button>
+          </div>
+        </div>
+      )}
     </>
   );
 }
