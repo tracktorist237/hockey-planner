@@ -6,6 +6,7 @@ import {
   getTablesFeed,
 } from "src/api/teams";
 import { LoadingIndicator } from "src/components/LoadingIndicator";
+import { PlayerAvatar } from "src/components/PlayerAvatar";
 import {
   TeamTableDto,
   TeamTableSummaryDto,
@@ -41,6 +42,46 @@ const bodyCellStyle: React.CSSProperties = {
   textAlign: "right",
   fontWeight: 800,
   whiteSpace: "nowrap",
+};
+
+const stickyNumberHeaderStyle: React.CSSProperties = {
+  ...headerCellStyle,
+  position: "sticky",
+  left: 0,
+  zIndex: 2,
+  background: "var(--hp-surface)",
+};
+
+const stickyNumberCellStyle: React.CSSProperties = {
+  ...bodyCellStyle,
+  position: "sticky",
+  left: 0,
+  zIndex: 1,
+  background: "var(--hp-surface)",
+  color: "var(--hp-muted)",
+};
+
+const playerCellContentStyle: React.CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: 10,
+};
+
+const avatarFrameStyle: React.CSSProperties = {
+  borderRadius: 12,
+  boxShadow: "rgba(25, 118, 210, 0.25) 0px 3px 8px",
+  flexShrink: 0,
+};
+
+const formatPointsPerGame = (points: number, games: number) => {
+  if (games <= 0) {
+    return "0,00";
+  }
+
+  return (points / games).toLocaleString("ru-RU", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 };
 
 export function TeamTablesPanel({ currentUserId, teamId, canManageTeam, onOpenTeam }: TeamTablesPanelProps) {
@@ -197,7 +238,7 @@ export function TeamTablesPanel({ currentUserId, teamId, canManageTeam, onOpenTe
                   aria-pressed="true"
                   style={{ border: "1px solid var(--hp-primary)", borderRadius: 12, padding: "10px 12px", background: "var(--hp-surface)", color: "var(--hp-primary-text)", fontWeight: 900, textAlign: "left", cursor: "default" }}
                 >
-                  Игрок / Игры / Голы / Асисты / Очки
+                  Игрок / Игры / Голы / Асисты / Очки / О/И
                 </button>
               </div>
 
@@ -277,27 +318,35 @@ export function TeamTablesPanel({ currentUserId, teamId, canManageTeam, onOpenTe
 
       {!tableLoading && selectedTable && (
         <div style={tableShellStyle}>
-          <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 430 }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 540 }}>
             <thead>
               <tr>
+                <th style={stickyNumberHeaderStyle}>№</th>
                 <th style={{ ...headerCellStyle, textAlign: "left" }}>Игрок</th>
                 <th style={headerCellStyle}>Игры</th>
                 <th style={headerCellStyle}>Голы</th>
                 <th style={headerCellStyle}>Асисты</th>
                 <th style={headerCellStyle}>Очки</th>
+                <th style={headerCellStyle} title="Очки в среднем за игру">О/И</th>
               </tr>
             </thead>
             <tbody>
-              {selectedTable.rows.map((row) => (
+              {selectedTable.rows.map((row, index) => (
                 <tr key={row.id}>
+                  <td style={stickyNumberCellStyle}>{index + 1}</td>
                   <td style={{ ...bodyCellStyle, textAlign: "left", color: "var(--hp-heading)" }}>
-                    <span style={{ color: "var(--hp-muted)", marginRight: 6 }}>{row.jerseyNumber ? `#${row.jerseyNumber}` : ""}</span>
-                    {row.playerName || "Игрок"}
+                    <div style={playerCellContentStyle}>
+                      <div style={avatarFrameStyle}>
+                        <PlayerAvatar photoUrl={row.photoUrl} jerseyNumber={row.jerseyNumber} size={48} fontSize={16} badgeSizePx={18} badgeFontSizePx={10} />
+                      </div>
+                      <span>{row.playerName || "Игрок"}</span>
+                    </div>
                   </td>
                   <td style={bodyCellStyle}>{row.games}</td>
                   <td style={bodyCellStyle}>{row.goals}</td>
                   <td style={bodyCellStyle}>{row.assists}</td>
                   <td style={{ ...bodyCellStyle, color: "var(--hp-primary)" }}>{row.points}</td>
+                  <td style={bodyCellStyle}>{formatPointsPerGame(row.points, row.games)}</td>
                 </tr>
               ))}
             </tbody>

@@ -6,6 +6,7 @@ import {
   updateEventTableProtocol,
 } from "src/api/teams";
 import { LoadingIndicator } from "src/components/LoadingIndicator";
+import { PlayerAvatar } from "src/components/PlayerAvatar";
 import { EventTableProtocolDto, TeamTableSummaryDto } from "src/types/teams";
 
 interface EventTableProtocolsPanelProps {
@@ -39,6 +40,51 @@ const statCellStyle: React.CSSProperties = {
   textAlign: "right",
   fontWeight: 800,
   whiteSpace: "nowrap",
+};
+
+const stickyNumberHeaderStyle: React.CSSProperties = {
+  padding: "10px 8px",
+  color: "var(--hp-muted)",
+  fontSize: 12,
+  fontWeight: 900,
+  textAlign: "right",
+  whiteSpace: "nowrap",
+  position: "sticky",
+  left: 0,
+  zIndex: 2,
+  background: "var(--hp-surface)",
+};
+
+const stickyNumberCellStyle: React.CSSProperties = {
+  ...statCellStyle,
+  position: "sticky",
+  left: 0,
+  zIndex: 1,
+  background: "var(--hp-surface)",
+  color: "var(--hp-muted)",
+};
+
+const playerCellContentStyle: React.CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: 10,
+};
+
+const avatarFrameStyle: React.CSSProperties = {
+  borderRadius: 12,
+  boxShadow: "rgba(25, 118, 210, 0.25) 0px 3px 8px",
+  flexShrink: 0,
+};
+
+const formatPointsPerGame = (points: number, games: number) => {
+  if (games <= 0) {
+    return "0,00";
+  }
+
+  return (points / games).toLocaleString("ru-RU", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 };
 
 export function EventTableProtocolsPanel({ eventId, teamId, currentUserId, canManage, onError }: EventTableProtocolsPanelProps) {
@@ -291,25 +337,31 @@ export function EventTableProtocolsPanel({ eventId, teamId, currentUserId, canMa
               )}
 
               <div style={{ border: "1px solid var(--hp-border)", borderRadius: 14, overflow: "auto", background: "var(--hp-surface)" }}>
-                <table style={{ width: "100%", borderCollapse: "collapse", minWidth: canManage ? 520 : 430 }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", minWidth: canManage ? 620 : 540 }}>
                   <thead>
                     <tr>
-                      {["Игрок", "Игры", "Голы", "Асисты", "Очки"].map((label, index) => (
-                        <th key={label} style={{ padding: "10px 8px", color: "var(--hp-muted)", fontSize: 12, fontWeight: 900, textAlign: index === 0 ? "left" : "right", whiteSpace: "nowrap" }}>
+                      <th style={stickyNumberHeaderStyle}>№</th>
+                      {["Игрок", "Игры", "Голы", "Асисты", "Очки", "О/И"].map((label, index) => (
+                        <th key={label} title={label === "О/И" ? "Очки в среднем за игру" : undefined} style={{ padding: "10px 8px", color: "var(--hp-muted)", fontSize: 12, fontWeight: 900, textAlign: index === 0 ? "left" : "right", whiteSpace: "nowrap" }}>
                           {label}
                         </th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
-                    {protocol.rows.map((row) => {
+                    {protocol.rows.map((row, index) => {
                       const draft = drafts[row.id] ?? { games: row.games, goals: row.goals, assists: row.assists };
                       const points = draft.goals + draft.assists;
                       return (
                         <tr key={row.id}>
+                          <td style={stickyNumberCellStyle}>{index + 1}</td>
                           <td style={{ ...statCellStyle, textAlign: "left", fontWeight: 900, color: "var(--hp-heading)" }}>
-                            <span style={{ color: "var(--hp-muted)", marginRight: 6 }}>{row.jerseyNumber ? `#${row.jerseyNumber}` : ""}</span>
-                            {row.playerName || "Игрок"}
+                            <div style={playerCellContentStyle}>
+                              <div style={avatarFrameStyle}>
+                                <PlayerAvatar photoUrl={row.photoUrl} jerseyNumber={row.jerseyNumber} size={48} fontSize={16} badgeSizePx={18} badgeFontSizePx={10} />
+                              </div>
+                              <span>{row.playerName || "Игрок"}</span>
+                            </div>
                           </td>
                           {canManage ? (
                             <>
@@ -323,6 +375,7 @@ export function EventTableProtocolsPanel({ eventId, teamId, currentUserId, canMa
                                 <input type="number" min={0} max={999} value={draft.assists} onChange={(event) => changeDraft(row.id, "assists", event.target.value)} style={numberInputStyle} />
                               </td>
                               <td style={{ ...statCellStyle, color: "var(--hp-primary)", fontWeight: 900 }}>{points}</td>
+                              <td style={statCellStyle}>{formatPointsPerGame(points, draft.games)}</td>
                             </>
                           ) : (
                             <>
@@ -330,6 +383,7 @@ export function EventTableProtocolsPanel({ eventId, teamId, currentUserId, canMa
                               <td style={statCellStyle}>{row.goals}</td>
                               <td style={statCellStyle}>{row.assists}</td>
                               <td style={{ ...statCellStyle, color: "var(--hp-primary)", fontWeight: 900 }}>{row.points}</td>
+                              <td style={statCellStyle}>{formatPointsPerGame(row.points, row.games)}</td>
                             </>
                           )}
                         </tr>

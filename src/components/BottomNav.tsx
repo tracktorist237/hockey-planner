@@ -18,6 +18,7 @@ export function BottomNav({ activeTab }: BottomNavProps) {
 
   return (
     <div
+      className="hp-bottom-nav"
       style={{
         position: "fixed",
         bottom: "12px",

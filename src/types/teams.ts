@@ -124,6 +124,7 @@ export interface TeamTableRowDto {
   userId: string;
   playerName: string;
   jerseyNumber?: number | null;
+  photoUrl?: string | null;
   games: number;
   goals: number;
   assists: number;
@@ -151,6 +152,7 @@ export interface EventTableProtocolRowDto {
   userId: string;
   playerName: string;
   jerseyNumber?: number | null;
+  photoUrl?: string | null;
   games: number;
   goals: number;
   assists: number;
