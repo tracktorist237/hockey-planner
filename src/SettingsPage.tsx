@@ -22,6 +22,7 @@ export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
   const [isUpdating, setIsUpdating] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [isClearing, setIsClearing] = useState(false);
+  const [availableVersion, setAvailableVersion] = useState<string | null>(null);
   const [isReportOpen, setIsReportOpen] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
 
@@ -50,31 +51,28 @@ export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
       }
 
       const registration = await navigator.serviceWorker.getRegistration();
-
       if (!registration) {
         return false;
       }
 
       await registration.update();
-      const updatedRegistration = registration;
       const registrationWithWaitingWorker = await new Promise<ServiceWorkerRegistration | null>((resolve) => {
-        if (updatedRegistration.waiting) {
-          resolve(updatedRegistration);
+        if (registration.waiting) {
+          resolve(registration);
           return;
         }
 
-        const installingWorker = updatedRegistration.installing;
+        const installingWorker = registration.installing;
         if (!installingWorker) {
           resolve(null);
           return;
         }
 
         const timeoutId = window.setTimeout(() => resolve(null), 8000);
-
         installingWorker.addEventListener("statechange", () => {
-          if (installingWorker.state === "installed" && updatedRegistration.waiting) {
+          if (installingWorker.state === "installed" && registration.waiting) {
             window.clearTimeout(timeoutId);
-            resolve(updatedRegistration);
+            resolve(registration);
           }
 
           if (installingWorker.state === "redundant") {
@@ -84,26 +82,17 @@ export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
         });
       });
 
-      if (registrationWithWaitingWorker?.waiting) {
-        registrationWithWaitingWorker.waiting.postMessage({ type: "SKIP_WAITING" });
-
-        await new Promise<void>((resolve) => {
-          navigator.serviceWorker.addEventListener(
-            "controllerchange",
-            () => {
-              resolve();
-            },
-            { once: true },
-          );
-        });
-
-        window.location.reload();
-        return true;
+      if (!registrationWithWaitingWorker?.waiting) {
+        return false;
       }
 
-      return false;
+      const reload = () => window.location.reload();
+      navigator.serviceWorker.addEventListener("controllerchange", reload, { once: true });
+      registrationWithWaitingWorker.waiting.postMessage({ type: "SKIP_WAITING" });
+      window.setTimeout(reload, 4000);
+      return true;
     } catch (error) {
-      console.error("Ошибка при обновлении:", error);
+      console.error("Ошибка при обновлении service worker:", error);
       return false;
     }
   };
@@ -124,9 +113,9 @@ export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
       const comparison = compareVersions(backendVersion, APP_VERSION);
 
       if (comparison > 0) {
-        const hasUpdate = await applyServiceWorkerUpdate();
-        if (!hasUpdate) {
-          setMessage(`🆕 Доступна версия v${backendVersion}. Очистите кэш и перезагрузите приложение.`);
+        const hasAppliedUpdate = await applyServiceWorkerUpdate();
+        if (!hasAppliedUpdate) {
+          setAvailableVersion(backendVersion);
         }
         return;
       }
@@ -146,27 +135,23 @@ export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
   };
 
   const handleClearCache = async () => {
-    if (!window.confirm("Вы уверены? Это очистит кэш и перезагрузит приложение.")) {
-      return;
-    }
-
     setIsClearing(true);
 
     try {
       if ("caches" in window) {
         const keys = await caches.keys();
         await Promise.all(keys.map((key) => caches.delete(key)));
-
-        if ("serviceWorker" in navigator) {
-          const registrations = await navigator.serviceWorker.getRegistrations();
-          await Promise.all(registrations.map((registration) => registration.unregister()));
-        }
-
-        setMessage("✅ Кэш очищен. Перезагрузка...");
-        setTimeout(() => {
-          window.location.reload();
-        }, 1000);
       }
+
+      if ("serviceWorker" in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(registrations.map((registration) => registration.unregister()));
+      }
+
+      setAvailableVersion(null);
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
     } catch (error) {
       console.error("Ошибка очистки кэша:", error);
       setMessage("❌ Ошибка при очистке кэша");
@@ -174,6 +159,16 @@ export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
     } finally {
       setIsClearing(false);
     }
+  };
+
+  const handleUpdateFromPrompt = async () => {
+    setIsClearing(true);
+    const hasAppliedUpdate = await applyServiceWorkerUpdate();
+    if (hasAppliedUpdate) {
+      return;
+    }
+
+    await handleClearCache();
   };
 
   const isBusy = isUpdating || isClearing;
@@ -339,6 +334,48 @@ export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
                   {label}
                 </button>
               ))}
+              <button
+                type="button"
+                onClick={() => {
+                  setIsHelpOpen(false);
+                  setIsReportOpen(true);
+                }}
+                style={{
+                  width: "100%",
+                  border: "1px solid var(--hp-warning-border)",
+                  borderRadius: "12px",
+                  padding: "12px 14px",
+                  backgroundColor: "var(--hp-warning-soft)",
+                  color: "var(--hp-warning)",
+                  textAlign: "left",
+                  fontWeight: 800,
+                  cursor: "pointer",
+                }}
+              >
+                Сообщить о проблеме
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsHelpOpen(false);
+                  onOpenDebug?.();
+                }}
+                style={{
+                  width: "100%",
+                  border: "1px solid var(--hp-neutral-border)",
+                  borderRadius: "12px",
+                  padding: "12px 14px",
+                  backgroundColor: "var(--hp-neutral-soft)",
+                  color: "var(--hp-neutral)",
+                  textAlign: "left",
+                  cursor: "pointer",
+                  display: "grid",
+                  gap: "3px",
+                }}
+              >
+                <span style={{ fontWeight: 800 }}>🛠️ Открыть debug-окно</span>
+                <span style={{ color: "var(--hp-muted)", fontSize: "12px", fontWeight: 600 }}>Для разработчика</span>
+              </button>
             </div>
           )}
         </div>
@@ -411,6 +448,7 @@ export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
               <button
                 onClick={() => navigate("/admin")}
                 style={{
+                  order: 5,
                   width: "100%",
                   padding: "16px",
                   backgroundColor: "var(--hp-success-soft)",
@@ -434,6 +472,7 @@ export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
             <button
               onClick={() => navigate("/settings/notifications")}
               style={{
+                order: 3,
                 width: "100%",
                 padding: "16px",
                 backgroundColor: "var(--hp-primary-soft)",
@@ -462,11 +501,39 @@ export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
               <span>Настройки уведомлений</span>
             </button>
 
+            <button
+              type="button"
+              onClick={() => {
+                setMessage("ℹ️ Настройки приватности пока находятся в разработке");
+                window.setTimeout(() => setMessage(null), 3000);
+              }}
+              style={{
+                order: 4,
+                width: "100%",
+                padding: "16px",
+                backgroundColor: "var(--hp-surface-soft)",
+                color: "var(--hp-heading)",
+                border: "1px solid var(--hp-border)",
+                borderRadius: "12px",
+                fontSize: "16px",
+                fontWeight: "600",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "8px",
+              }}
+            >
+              <span style={{ fontSize: "20px" }}>🔒</span>
+              <span>Настройки приватности</span>
+            </button>
+
             {showTeamPwaSettings && (
               <button
                 type="button"
                 onClick={() => navigate("/settings/team-apps")}
                 style={{
+                  order: 6,
                   width: "100%",
                   padding: "16px",
                   backgroundColor: "var(--hp-info-soft)",
@@ -492,6 +559,7 @@ export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
               onClick={() => currentUserId && navigate("/profile")}
               disabled={!currentUserId || isBusy}
               style={{
+                order: 2,
                 width: "100%",
                 padding: "16px",
                 backgroundColor: !currentUserId ? "var(--hp-neutral-soft)" : "var(--hp-purple-soft)",
@@ -529,6 +597,7 @@ export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
               onClick={handleUpdate}
               disabled={isBusy}
               style={{
+                order: 1,
                 width: "100%",
                 padding: "16px",
                 backgroundColor: isUpdating ? "var(--hp-muted)" : "var(--hp-primary)",
@@ -562,95 +631,6 @@ export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
               <span>{isUpdating ? "Проверка обновления..." : "Проверить обновления"}</span>
             </button>
 
-            <button
-              onClick={handleClearCache}
-              disabled={isBusy}
-              style={{
-                width: "100%",
-                padding: "16px",
-                backgroundColor: isClearing ? "var(--hp-neutral)" : "var(--hp-danger-soft)",
-                color: isClearing ? "white" : "var(--hp-danger)",
-                border: "1px solid var(--hp-danger-border)",
-                borderRadius: "12px",
-                fontSize: "16px",
-                fontWeight: "600",
-                cursor: isClearing ? "wait" : "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "8px",
-                transition: "all 0.2s ease",
-                opacity: isBusy ? 0.7 : 1,
-              }}
-              onMouseEnter={(event) => {
-                if (!isBusy) {
-                  event.currentTarget.style.backgroundColor = "var(--hp-danger-border)";
-                  event.currentTarget.style.transform = "translateY(-1px)";
-                }
-              }}
-              onMouseLeave={(event) => {
-                if (!isBusy) {
-                  event.currentTarget.style.backgroundColor = "var(--hp-danger-soft)";
-                  event.currentTarget.style.transform = "translateY(0)";
-                }
-              }}
-            >
-              <span style={{ fontSize: "20px" }}>{isClearing ? "⏳" : "🧹"}</span>
-              <span>{isClearing ? "Очистка кэша..." : "Очистить кэш"}</span>
-            </button>
-
-            <button
-              onClick={() => setIsReportOpen(true)}
-              style={{
-                width: "100%",
-                padding: "16px",
-                backgroundColor: "var(--hp-warning-soft)",
-                color: "var(--hp-warning)",
-                border: "1px solid var(--hp-warning-border)",
-                borderRadius: "12px",
-                fontSize: "16px",
-                fontWeight: "600",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "8px",
-                transition: "all 0.2s ease",
-              }}
-            >
-              <span>Сообщить о проблеме</span>
-            </button>
-
-            <button
-              onClick={onOpenDebug}
-              style={{
-                width: "100%",
-                padding: "16px",
-                backgroundColor: "var(--hp-neutral-soft)",
-                color: "var(--hp-neutral)",
-                border: "1px solid var(--hp-neutral-border)",
-                borderRadius: "12px",
-                fontSize: "16px",
-                fontWeight: "600",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "8px",
-                transition: "all 0.2s ease",
-              }}
-              onMouseEnter={(event) => {
-                event.currentTarget.style.backgroundColor = "var(--hp-neutral-border)";
-                event.currentTarget.style.transform = "translateY(-1px)";
-              }}
-              onMouseLeave={(event) => {
-                event.currentTarget.style.backgroundColor = "var(--hp-neutral-soft)";
-                event.currentTarget.style.transform = "translateY(0)";
-              }}
-            >
-              <span style={{ fontSize: "20px" }}>🛠️</span>
-              <span>Открыть debug-окно</span>
-            </button>
           </div>
 
         </div>
@@ -698,6 +678,74 @@ export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
       </div>
       <BottomNav activeTab="settings" />
       <ReportProblemDialog isOpen={isReportOpen} onClose={() => setIsReportOpen(false)} />
+
+      {availableVersion && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Доступно обновление"
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 550,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "18px",
+            backgroundColor: "rgba(15, 23, 42, 0.55)",
+            boxSizing: "border-box",
+          }}
+        >
+          <div
+            style={{
+              width: "100%",
+              maxWidth: "460px",
+              padding: "18px",
+              border: "1px solid var(--hp-primary)",
+              borderRadius: "18px",
+              backgroundColor: "var(--hp-surface)",
+              color: "var(--hp-text)",
+              boxShadow: "var(--hp-shadow-md)",
+              boxSizing: "border-box",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "12px" }}>
+              <div style={{ fontSize: "15px", lineHeight: 1.5, fontWeight: 700 }}>
+                🆕 Доступна версия v{availableVersion}. Обновите приложение и перезапустите его.
+              </div>
+              <button
+                type="button"
+                aria-label="Закрыть сообщение об обновлении"
+                onClick={() => setAvailableVersion(null)}
+                disabled={isClearing}
+                style={{ border: 0, padding: "0 2px", background: "transparent", color: "var(--hp-muted)", fontSize: "24px", lineHeight: 1, cursor: "pointer" }}
+              >
+                ×
+              </button>
+            </div>
+            <button
+              type="button"
+              onClick={() => void handleUpdateFromPrompt()}
+              disabled={isClearing}
+              style={{
+                width: "100%",
+                marginTop: "16px",
+                padding: "12px",
+                border: 0,
+                borderRadius: "12px",
+                backgroundColor: "var(--hp-primary)",
+                color: "white",
+                fontSize: "15px",
+                fontWeight: 800,
+                cursor: isClearing ? "wait" : "pointer",
+                opacity: isClearing ? 0.72 : 1,
+              }}
+            >
+              {isClearing ? "Обновляем..." : "Обновить"}
+            </button>
+          </div>
+        </div>
+      )}
 
       <style>
         {`
