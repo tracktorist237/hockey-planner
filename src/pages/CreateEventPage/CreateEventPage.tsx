@@ -18,6 +18,7 @@ import { EventDto, EventLookUpDto } from "src/types/events";
 import { TeamDto } from "src/types/teams";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import { getEditableEventTitle } from "src/pages/CreateEventPage/utils/eventTitle";
 
 export function CreateEventPage({ onBack, onCreated, currentTeamId }: CreateEventPageProps) {
   const { currentUser } = useAuth();
@@ -92,7 +93,7 @@ export function CreateEventPage({ onBack, onCreated, currentTeamId }: CreateEven
 
   const applyCopiedEvent = useCallback((source: EventDto) => {
     setFormData({
-      title: source.type === 3 ? source.title ?? "" : "",
+      title: getEditableEventTitle(source),
       description: source.description ?? "",
       startTime: "",
       locationName: source.locationName ?? "",
@@ -298,11 +299,13 @@ export function CreateEventPage({ onBack, onCreated, currentTeamId }: CreateEven
 
             {isGame && (
               <GameForm
+                title={formData.title}
                 leagueName={formData.leagueName}
                 homeTeamName={formData.homeTeamName}
                 awayTeamName={formData.awayTeamName}
                 uniformColorId={formData.uniformColorId}
                 teamId={selectedTeamId}
+                onTitleChange={(value) => updateField("title", value)}
                 onLeagueChange={(value) => updateField("leagueName", value)}
                 onHomeChange={(value) => updateField("homeTeamName", value)}
                 onAwayChange={(value) => updateField("awayTeamName", value)}
@@ -319,9 +322,11 @@ export function CreateEventPage({ onBack, onCreated, currentTeamId }: CreateEven
             )}
 
             <EventDetailsFields
+              title={formData.title}
               description={formData.description}
               startTime={formData.startTime}
               isPractice={isPractice}
+              onTitleChange={(value) => updateField("title", value)}
               onDescriptionChange={(value) => updateField("description", value)}
               onStartTimeChange={(value) => updateField("startTime", value)}
             />

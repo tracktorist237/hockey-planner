@@ -1,4 +1,6 @@
 import { AddressSearchInput } from "src/AddressSearchInput";
+import { useEffect, useState } from "react";
+import { AddOptionalSectionButton } from "src/pages/CreateEventPage/components/AddOptionalSectionButton";
 
 interface LocationFormProps {
   locationName: string;
@@ -21,6 +23,14 @@ export const LocationForm = ({
   onIceRinkNumberChange,
   onToggleSearch,
 }: LocationFormProps) => {
+  const [isIceRinkNumberVisible, setIsIceRinkNumberVisible] = useState(Boolean(iceRinkNumber));
+
+  useEffect(() => {
+    if (iceRinkNumber) {
+      setIsIceRinkNumberVisible(true);
+    }
+  }, [iceRinkNumber]);
+
   return (
     <div
       style={{
@@ -134,37 +144,36 @@ export const LocationForm = ({
           />
         )}
 
-        <div style={{ marginTop: "10px", fontSize: "13px", color: "var(--hp-muted)", display: "flex", alignItems: "flex-start", gap: "6px" }}>
-          <span style={{ flexShrink: 0 }}>{useAddressSearch ? "💡" : "📝"}</span>
-          <span>
-            {useAddressSearch
-              ? "Введите улицу и номер дома для поиска. Можно искать по городу или названию места."
-              : "Укажите адрес полностью для навигации участников."}
-          </span>
-        </div>
       </div>
 
-      <div style={{ marginBottom: "0", width: "100%", boxSizing: "border-box" }}>
-        <label style={{ display: "block", marginBottom: "8px", fontWeight: "500", fontSize: "15px" }}>
-          Номер льда/корта
-        </label>
-        <input
-          value={iceRinkNumber}
-          onChange={(e) => onIceRinkNumberChange(e.target.value)}
-          placeholder="Например: Лед №1 или Корпус А"
-          style={{
-            width: "100%",
-            padding: "14px",
-            border: "1px solid var(--hp-border)",
-            borderRadius: "10px",
-            fontSize: "16px",
-            backgroundColor: "var(--hp-surface)",
-            color: "var(--hp-text)",
-            boxSizing: "border-box",
-            maxWidth: "100%",
-          }}
-        />
-      </div>
+      {isIceRinkNumberVisible ? (
+        <div style={{ marginBottom: "0", width: "100%", boxSizing: "border-box" }}>
+          <label style={{ display: "block", marginBottom: "8px", fontWeight: "500", fontSize: "15px" }}>
+            Номер льда/корта
+          </label>
+          <input
+            autoFocus={!iceRinkNumber}
+            value={iceRinkNumber}
+            onChange={(e) => onIceRinkNumberChange(e.target.value)}
+            placeholder="Например: Лед №1 или Корпус А"
+            style={{
+              width: "100%",
+              padding: "14px",
+              border: "1px solid var(--hp-border)",
+              borderRadius: "10px",
+              fontSize: "16px",
+              backgroundColor: "var(--hp-surface)",
+              color: "var(--hp-text)",
+              boxSizing: "border-box",
+              maxWidth: "100%",
+            }}
+          />
+        </div>
+      ) : (
+        <AddOptionalSectionButton onClick={() => setIsIceRinkNumberVisible(true)}>
+          + Добавить номер льда
+        </AddOptionalSectionButton>
+      )}
     </div>
   );
 };

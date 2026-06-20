@@ -42,6 +42,10 @@ const initialFormData: EventFormData = {
 };
 
 const getFinalTitle = (formData: EventFormData): string => {
+  if (formData.title.trim()) {
+    return formData.title.trim();
+  }
+
   if (formData.type === EventType.Practice) {
     return "Тренировка";
   }
@@ -50,7 +54,7 @@ const getFinalTitle = (formData: EventFormData): string => {
     return `${formData.homeTeamName} - ${formData.awayTeamName}`;
   }
 
-  return formData.title;
+  return formData.title.trim();
 };
 
 const normalizeTeamName = (name: string): string =>

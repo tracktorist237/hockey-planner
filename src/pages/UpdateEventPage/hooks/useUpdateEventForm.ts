@@ -3,6 +3,7 @@ import { getEvent, updateEvent } from "src/api/events";
 import { useEventForm } from "src/pages/CreateEventPage/hooks/useEventForm";
 import { EventFormData } from "src/pages/CreateEventPage/types";
 import { EventType } from "src/types/events";
+import { getEditableEventTitle } from "src/pages/CreateEventPage/utils/eventTitle";
 
 interface UseUpdateEventFormOptions {
   eventId?: string;
@@ -27,7 +28,7 @@ const normalizeType = (type: number): EventType => {
 };
 
 const mapEventToFormData = (event: Awaited<ReturnType<typeof getEvent>>): EventFormData => ({
-  title: event.title ?? "",
+  title: getEditableEventTitle(event),
   description: event.description ?? "",
   startTime: toDateTimeLocal(event.startTime),
   locationName: event.locationName ?? "",

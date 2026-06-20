@@ -1,11 +1,14 @@
 import { UniformColorSection } from "src/pages/CreateEventPage/components/UniformColorSection";
+import { EditableEventTitle } from "src/pages/CreateEventPage/components/EditableEventTitle";
 
 interface GameFormProps {
+  title: string;
   leagueName: string;
   homeTeamName: string;
   awayTeamName: string;
   uniformColorId: string;
   teamId: string | null;
+  onTitleChange: (value: string) => void;
   onLeagueChange: (value: string) => void;
   onHomeChange: (value: string) => void;
   onAwayChange: (value: string) => void;
@@ -13,11 +16,13 @@ interface GameFormProps {
 }
 
 export const GameForm = ({
+  title,
   leagueName,
   homeTeamName,
   awayTeamName,
   uniformColorId,
   teamId,
+  onTitleChange,
   onLeagueChange,
   onHomeChange,
   onAwayChange,
@@ -122,23 +127,14 @@ export const GameForm = ({
       <UniformColorSection selectedUniformColorId={uniformColorId} teamId={teamId} onChange={onUniformColorChange} />
 
       {homeTeamName && awayTeamName && (
-        <div
-          style={{
-            padding: "12px",
-            backgroundColor: "var(--hp-success-soft)",
-            borderRadius: "10px",
-            fontSize: "14px",
-            color: "var(--hp-success)",
-            textAlign: "center",
-            border: "1px solid var(--hp-success-border)",
-            width: "100%",
-            boxSizing: "border-box",
-          }}
-        >
-          <strong>Название матча:</strong>
-          <br />
-          <span style={{ fontSize: "15px", fontWeight: "600" }}>{homeTeamName} — {awayTeamName}</span>
-        </div>
+        <EditableEventTitle
+          label="Название матча"
+          value={title || `${homeTeamName} — ${awayTeamName}`}
+          onChange={onTitleChange}
+          backgroundColor="var(--hp-success-soft)"
+          borderColor="var(--hp-success-border)"
+          color="var(--hp-success)"
+        />
       )}
     </div>
   );

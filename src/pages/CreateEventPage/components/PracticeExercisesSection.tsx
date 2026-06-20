@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { getExercises } from "src/api/exercises";
 import { LoadingIndicator } from "src/components/LoadingIndicator";
 import { ExerciseDto } from "src/types/events";
+import { AddOptionalSectionButton } from "src/pages/CreateEventPage/components/AddOptionalSectionButton";
 
 interface PracticeExercisesSectionProps {
   selectedExerciseIds: string[];
@@ -14,6 +15,13 @@ export function PracticeExercisesSection({ selectedExerciseIds, teamId, onChange
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isListExpanded, setIsListExpanded] = useState(false);
+  const [isSectionVisible, setIsSectionVisible] = useState(selectedExerciseIds.length > 0);
+
+  useEffect(() => {
+    if (selectedExerciseIds.length > 0) {
+      setIsSectionVisible(true);
+    }
+  }, [selectedExerciseIds.length]);
 
   useEffect(() => {
     let active = true;
@@ -72,6 +80,14 @@ export function PracticeExercisesSection({ selectedExerciseIds, teamId, onChange
     }
     onChange([...selectedExerciseIds, exerciseId]);
   };
+
+  if (!isSectionVisible) {
+    return (
+      <AddOptionalSectionButton onClick={() => setIsSectionVisible(true)}>
+        + Добавить упражнение
+      </AddOptionalSectionButton>
+    );
+  }
 
   return (
     <div style={{ backgroundColor: "var(--hp-surface-soft)", padding: "20px", borderRadius: "12px", marginBottom: "20px", border: "1px solid var(--hp-primary-soft)", width: "100%", boxSizing: "border-box" }}>
