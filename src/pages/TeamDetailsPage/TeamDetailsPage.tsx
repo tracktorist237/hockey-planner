@@ -587,7 +587,7 @@ export function TeamDetailsPage({ currentUser, currentTeamId, onTeamChange }: Te
                           onClick={() => setIsTeamMenuOpen((value) => !value)}
                           style={{ width: 34, height: 34, borderRadius: 12, border: "1px solid var(--hp-border)", background: "var(--hp-surface-soft)", color: "var(--hp-heading)", fontSize: 20, lineHeight: 1, fontWeight: 900, cursor: "pointer" }}
                         >
-                          ...
+                          ⋮
                         </button>
                         {isTeamMenuOpen && (
                           <div

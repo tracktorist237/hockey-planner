@@ -96,7 +96,7 @@ export const FormHeader = ({
               fontWeight: 900,
             }}
           >
-            ⋯
+            ⋮
           </button>
         )}
       </div>

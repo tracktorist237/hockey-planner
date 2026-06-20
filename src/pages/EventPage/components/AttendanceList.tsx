@@ -180,7 +180,7 @@ export const AttendanceList = ({
             title="Настройки явки"
             aria-label="Настройки явки"
           >
-            ...
+            ⋮
           </button>
           {isMenuOpen && (
             <div

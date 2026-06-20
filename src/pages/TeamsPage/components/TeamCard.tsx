@@ -59,7 +59,7 @@ export function TeamCard({ team, actionText, actionTone = "blue", isPinned, onTo
               lineHeight: 1,
             }}
           >
-            ⋯
+            ⋮
           </button>
         </div>
       )}

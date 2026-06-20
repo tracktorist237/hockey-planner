@@ -97,7 +97,7 @@ function EditableMemberRow({ member, canEditBadge, canEditRole, canRemove, savin
               aria-label="Действия с участником"
               style={{ border: "1px solid var(--hp-border)", borderRadius: 999, padding: "6px 10px", background: "var(--hp-surface-muted)", color: "var(--hp-text)", fontWeight: 900, cursor: "pointer", lineHeight: 1 }}
             >
-              ...
+              ⋮
             </button>
             {isActionsOpen && (
               <div

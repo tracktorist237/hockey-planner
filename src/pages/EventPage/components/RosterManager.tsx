@@ -370,7 +370,7 @@ export const RosterManager = ({
             title="Настройки состава"
             aria-label="Настройки состава"
           >
-            ...
+            ⋮
           </button>
         </div>
       </div>
