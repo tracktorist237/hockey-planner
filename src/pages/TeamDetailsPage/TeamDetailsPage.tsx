@@ -16,6 +16,7 @@ import { cardStyle } from "src/pages/TeamsPage/components/styles";
 import { formatRuDateLabel } from "src/utils/date";
 import { getAdaptiveFontSize } from "src/utils/text";
 import { useSwipeToDismiss } from "src/hooks/useSwipeToDismiss";
+import { useSwipeTabs } from "src/hooks/useSwipeTabs";
 
 const TeamRole = {
   Owner: 1,
@@ -24,6 +25,7 @@ const TeamRole = {
 } as const;
 
 type TeamTab = "news" | "tables" | "members" | "events";
+const teamTabs: readonly TeamTab[] = ["news", "tables", "members", "events"];
 
 const DESCRIPTION_LIMIT = 150;
 
@@ -159,6 +161,7 @@ export function TeamDetailsPage({ currentUser, currentTeamId, onTeamChange }: Te
   const [events, setEvents] = useState<EventLookUpDto[]>([]);
   const [news, setNews] = useState<TeamNewsDto[]>([]);
   const [activeTab, setActiveTab] = useState<TeamTab>("news");
+  const teamTabsSwipeHandlers = useSwipeTabs({ tabs: teamTabs, activeTab, onChange: setActiveTab });
   const [loading, setLoading] = useState(true);
   const [membersLoading, setMembersLoading] = useState(false);
   const [eventsLoading, setEventsLoading] = useState(false);
@@ -510,6 +513,7 @@ export function TeamDetailsPage({ currentUser, currentTeamId, onTeamChange }: Te
 
   return (
     <div
+      {...teamTabsSwipeHandlers}
       style={{
         minHeight: "100vh",
         padding: "16px",

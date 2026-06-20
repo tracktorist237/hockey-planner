@@ -8,6 +8,10 @@ import { TeamTablesPanel } from "src/components/TeamTablesPanel";
 import { CurrentPlayerHeader } from "src/CurrentPlayerHeader";
 import { useAuth } from "src/hooks/useAuth";
 import { TeamNewsDto } from "src/types/teams";
+import { useSwipeTabs } from "src/hooks/useSwipeTabs";
+
+type NewsTab = "news" | "tables";
+const newsTabs: readonly NewsTab[] = ["news", "tables"];
 
 const formatNewsDate = (value: string): string =>
   new Date(value).toLocaleString("ru-RU", {
@@ -20,7 +24,7 @@ const formatNewsDate = (value: string): string =>
 export function NewsPage() {
   const navigate = useNavigate();
   const { currentUser } = useAuth();
-  const [activeTab, setActiveTab] = useState<"news" | "tables">("news");
+  const [activeTab, setActiveTab] = useState<NewsTab>("news");
   const [news, setNews] = useState<TeamNewsDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -33,6 +37,7 @@ export function NewsPage() {
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
   const [savingNewsId, setSavingNewsId] = useState<string | null>(null);
   const [deletingNewsId, setDeletingNewsId] = useState<string | null>(null);
+  const newsSwipeHandlers = useSwipeTabs({ tabs: newsTabs, activeTab, onChange: setActiveTab });
 
   const loadNews = useCallback(async () => {
     if (!currentUser?.id) {
@@ -140,6 +145,7 @@ export function NewsPage() {
 
   return (
     <div
+      {...newsSwipeHandlers}
       style={{
         minHeight: "100vh",
         background: "var(--hp-bg-gradient)",

@@ -12,6 +12,10 @@ import { PublicTeamsTab } from "./TeamsPage/components/PublicTeamsTab";
 import { cardStyle } from "./TeamsPage/components/styles";
 import { TeamsTabs } from "./TeamsPage/components/TeamsTabs";
 import { useTeamsPage } from "./TeamsPage/hooks/useTeamsPage";
+import { TeamsTab } from "./TeamsPage/types";
+import { useSwipeTabs } from "src/hooks/useSwipeTabs";
+
+const teamsTabs: readonly TeamsTab[] = ["my", "public", "code", "create"];
 
 interface TeamsPageProps {
   currentUser: User | null;
@@ -25,6 +29,7 @@ export function TeamsPage({ currentUser, currentTeamId, onTeamChange }: TeamsPag
   const teamsPage = useTeamsPage(currentUser);
   const { reloadTeams } = teamsPage;
   const initialTeamsLoading = !teamsPage.loaded;
+  const teamsSwipeHandlers = useSwipeTabs({ tabs: teamsTabs, activeTab: teamsPage.activeTab, onChange: teamsPage.setActiveTab });
 
   useEffect(() => {
     void reloadTeams();
@@ -43,6 +48,7 @@ export function TeamsPage({ currentUser, currentTeamId, onTeamChange }: TeamsPag
 
   return (
     <div
+      {...teamsSwipeHandlers}
       style={{
         minHeight: "100vh",
         background: "var(--hp-bg-gradient)",

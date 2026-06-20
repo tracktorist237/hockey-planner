@@ -22,12 +22,16 @@ import { useLineManagement } from "src/pages/EventPage/hooks/useLineManagement";
 import { usePlayerModal } from "src/pages/EventPage/hooks/usePlayerModal";
 import { EventPageProps } from "src/pages/EventPage/types";
 import { AttendanceLookUpDto } from "src/types/events";
+import { useSwipeTabs } from "src/hooks/useSwipeTabs";
 
 const GOALIE_POSITION = 1;
+type EventTab = "attendance" | "roster" | "goalies";
+const eventTabs: readonly EventTab[] = ["attendance", "roster", "goalies"];
 
 export function EventPage({ eventId, onBack, currentUser }: EventPageProps) {
   const [isActionsOpen, setIsActionsOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<"attendance" | "roster" | "goalies">("attendance");
+  const [activeTab, setActiveTab] = useState<EventTab>("attendance");
+  const eventTabsSwipeHandlers = useSwipeTabs({ tabs: eventTabs, activeTab, onChange: setActiveTab });
   const [avatarUrls, setAvatarUrls] = useState<Record<string, string>>({});
   const [manageableTeamIds, setManageableTeamIds] = useState<Set<string>>(new Set());
   const [resolvedCurrentUserPosition, setResolvedCurrentUserPosition] = useState<number | null | undefined>(undefined);
@@ -256,7 +260,7 @@ export function EventPage({ eventId, onBack, currentUser }: EventPageProps) {
   }
 
   return (
-    <div style={{ padding: "0", minHeight: "100vh", background: "var(--hp-bg-gradient)", color: "var(--hp-text)", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", boxSizing: "border-box" }}>
+    <div {...eventTabsSwipeHandlers} style={{ padding: "0", minHeight: "100vh", background: "var(--hp-bg-gradient)", color: "var(--hp-text)", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", boxSizing: "border-box" }}>
       <div style={{ backgroundColor: "var(--hp-surface)", padding: "16px", borderBottom: "1px solid var(--hp-border)", boxShadow: "var(--hp-shadow-sm)", position: "sticky", top: 0, zIndex: 100 }}>
         <div style={{ display: "flex", alignItems: "center", marginBottom: "12px" }}>
           <button

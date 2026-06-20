@@ -18,6 +18,7 @@ import { User } from "src/types/user";
 import { EventCard } from "./components/EventCard";
 import { useEventsData } from "./hooks/useEventsData";
 import { useSwipeToDismiss } from "src/hooks/useSwipeToDismiss";
+import { useSwipeTabs } from "src/hooks/useSwipeTabs";
 
 interface EventsListPageProps {
   currentUser: User | null;
@@ -27,6 +28,7 @@ interface EventsListPageProps {
 }
 
 type EventsView = "list" | "calendar";
+const eventsViews: readonly EventsView[] = ["list", "calendar"];
 type QuickFilter = "unanswered" | "games" | "practices" | "today";
 
 interface AdvancedFilters {
@@ -510,6 +512,11 @@ export const EventsListPage = ({
     },
     [eventsView],
   );
+  const eventsViewSwipeHandlers = useSwipeTabs({
+    tabs: eventsViews,
+    activeTab: eventsView,
+    onChange: handleEventsViewChange,
+  });
 
   const handleQuickFilterToggle = useCallback((filter: QuickFilter) => {
     setActiveQuickFilters((filters) =>
@@ -562,6 +569,7 @@ export const EventsListPage = ({
 
   return (
     <div
+      {...eventsViewSwipeHandlers}
       style={{
         padding: "0",
         minHeight: "100vh",
