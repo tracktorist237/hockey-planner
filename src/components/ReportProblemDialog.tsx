@@ -1,6 +1,7 @@
 import { FormEvent, useMemo, useState } from "react";
 import { AppReportSeverity, AppReportType, createAppReport } from "src/api/admin";
 import { APP_VERSION } from "src/config/version";
+import { useSwipeToDismiss } from "src/hooks/useSwipeToDismiss";
 
 interface ReportProblemDialogProps {
   isOpen: boolean;
@@ -34,6 +35,7 @@ export function ReportProblemDialog({ isOpen, onClose }: ReportProblemDialogProp
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
+  const { sheetRef: reportSheetRef, handleProps: reportSheetHandleProps } = useSwipeToDismiss<HTMLFormElement>(onClose);
 
   const platform = useMemo(() => {
     const nav = navigator as Navigator & { userAgentData?: { platform?: string } };
@@ -92,6 +94,7 @@ export function ReportProblemDialog({ isOpen, onClose }: ReportProblemDialogProp
       }}
     >
       <form
+        ref={reportSheetRef}
         onSubmit={handleSubmit}
         style={{
           width: "100%",
@@ -104,7 +107,9 @@ export function ReportProblemDialog({ isOpen, onClose }: ReportProblemDialogProp
           color: "var(--hp-text)",
         }}
       >
-        <div style={{ width: 42, height: 4, borderRadius: 999, background: "var(--hp-border)", margin: "0 auto 14px" }} />
+        <div {...reportSheetHandleProps}>
+          <div style={{ width: 42, height: 4, borderRadius: 999, background: "var(--hp-border)" }} />
+        </div>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 14 }}>
           <h2 style={{ margin: 0, fontSize: 18, color: "var(--hp-heading)" }}>Сообщить о проблеме</h2>
           <button type="button" onClick={onClose} style={{ border: 0, background: "transparent", color: "var(--hp-muted)", fontSize: 26, cursor: "pointer" }}>

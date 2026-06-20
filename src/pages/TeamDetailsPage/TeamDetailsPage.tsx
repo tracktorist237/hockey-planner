@@ -15,6 +15,7 @@ import { setTeamPwaPreferences, TeamPwaStartPage } from "src/utils/teamPwa";
 import { cardStyle } from "src/pages/TeamsPage/components/styles";
 import { formatRuDateLabel } from "src/utils/date";
 import { getAdaptiveFontSize } from "src/utils/text";
+import { useSwipeToDismiss } from "src/hooks/useSwipeToDismiss";
 
 const TeamRole = {
   Owner: 1,
@@ -185,6 +186,7 @@ export function TeamDetailsPage({ currentUser, currentTeamId, onTeamChange }: Te
   const [descriptionExpanded, setDescriptionExpanded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const { sheetRef: installSheetRef, handleProps: installSheetHandleProps } = useSwipeToDismiss(() => setIsTeamInstallDialogOpen(false));
   const playerModal = usePlayerModal({ onError: setError });
   const loadedTeamId = team?.id ?? null;
   const loadedTeamName = team?.name ?? "";
@@ -1079,6 +1081,7 @@ export function TeamDetailsPage({ currentUser, currentTeamId, onTeamChange }: Te
           }}
         >
           <div
+            ref={installSheetRef}
             onClick={(event) => event.stopPropagation()}
             style={{
               width: "100%",
@@ -1094,7 +1097,9 @@ export function TeamDetailsPage({ currentUser, currentTeamId, onTeamChange }: Te
               boxSizing: "border-box",
             }}
           >
-            <div style={{ width: 42, height: 4, borderRadius: 999, background: "var(--hp-border)", margin: "0 auto 14px" }} />
+            <div {...installSheetHandleProps}>
+              <div style={{ width: 42, height: 4, borderRadius: 999, background: "var(--hp-border)" }} />
+            </div>
 
             <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
               <div>

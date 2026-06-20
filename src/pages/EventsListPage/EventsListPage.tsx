@@ -17,6 +17,7 @@ import { TeamDto } from "src/types/teams";
 import { User } from "src/types/user";
 import { EventCard } from "./components/EventCard";
 import { useEventsData } from "./hooks/useEventsData";
+import { useSwipeToDismiss } from "src/hooks/useSwipeToDismiss";
 
 interface EventsListPageProps {
   currentUser: User | null;
@@ -240,6 +241,7 @@ function EventsFilters({
   onTeamChange,
 }: EventsFiltersProps) {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const { sheetRef: filterSheetRef, handleProps: filterSheetHandleProps } = useSwipeToDismiss(() => setIsSheetOpen(false));
   const advancedCount = getActiveFiltersCount(advancedFilters);
   const hasAdvancedFilters = advancedCount > 0 || Boolean(currentTeamId);
   const orderedQuickFilters = useMemo(
@@ -337,6 +339,7 @@ function EventsFilters({
           onClick={() => setIsSheetOpen(false)}
         >
           <div
+            ref={filterSheetRef}
             style={{
               width: "100%",
               maxWidth: "600px",
@@ -349,7 +352,9 @@ function EventsFilters({
             }}
             onClick={(event) => event.stopPropagation()}
           >
-            <div style={{ width: "42px", height: "4px", borderRadius: "999px", backgroundColor: "var(--hp-border)", margin: "0 auto 14px" }} />
+            <div {...filterSheetHandleProps}>
+              <div style={{ width: "42px", height: "4px", borderRadius: "999px", backgroundColor: "var(--hp-border)" }} />
+            </div>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", marginBottom: "14px" }}>
               <h2 style={{ margin: 0, fontSize: "18px", color: "var(--hp-heading)" }}>Фильтры</h2>
               <button type="button" onClick={() => setIsSheetOpen(false)} style={{ border: "none", background: "transparent", color: "var(--hp-muted)", fontSize: "24px", cursor: "pointer", lineHeight: 1 }}>
