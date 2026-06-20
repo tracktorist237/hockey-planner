@@ -3,10 +3,12 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { ReportProblemDialog } from "src/components/ReportProblemDialog";
 import { useAuth } from "src/hooks/useAuth";
 import { markOnboardingRequired, shouldRunOnboarding } from "src/utils/onboarding";
+import { useTheme } from "src/context/ThemeContext";
+import { getVersionInfo } from "src/api/version";
 
 const panelStyle: CSSProperties = {
   minHeight: "100vh",
-  padding: "20px 0 0",
+  padding: 0,
   background: "var(--hp-bg-gradient)",
   color: "var(--hp-text)",
   display: "flex",
@@ -95,10 +97,12 @@ const authFooterInnerStyle: CSSProperties = {
 };
 
 type Mode = "login" | "register" | "forgot" | "reset";
+type ServerStatus = "checking" | "online" | "offline";
 
 export function AuthPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { appliedTheme, setTheme } = useTheme();
   const {
     authLoading,
     isAuthenticated,
@@ -125,6 +129,43 @@ export function AuthPage() {
   const [error, setError] = useState<string | null>(null);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [isReportOpen, setIsReportOpen] = useState(false);
+  const [serverStatus, setServerStatus] = useState<ServerStatus>("checking");
+
+  useEffect(() => {
+    let active = true;
+
+    const checkServer = async () => {
+      if (!navigator.onLine) {
+        if (active) setServerStatus("offline");
+        return;
+      }
+
+      try {
+        await getVersionInfo();
+        if (active) setServerStatus("online");
+      } catch {
+        if (active) setServerStatus("offline");
+      }
+    };
+
+    const handleOnline = () => {
+      setServerStatus("checking");
+      void checkServer();
+    };
+    const handleOffline = () => setServerStatus("offline");
+
+    void checkServer();
+    const intervalId = window.setInterval(() => void checkServer(), 60_000);
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
+    return () => {
+      active = false;
+      window.clearInterval(intervalId);
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
 
   useEffect(() => {
     if (legacyConfirmToken) {
@@ -212,6 +253,92 @@ export function AuthPage() {
 
   return (
     <div style={panelStyle}>
+      <header
+        style={{
+          position: "sticky",
+          top: 0,
+          zIndex: 50,
+          width: "100%",
+          padding: "11px 16px",
+          borderBottom: "1px solid var(--hp-border)",
+          backgroundColor: "var(--hp-surface)",
+          boxShadow: "var(--hp-shadow-sm)",
+          boxSizing: "border-box",
+        }}
+      >
+        <div
+          style={{
+            width: "100%",
+            maxWidth: 720,
+            margin: "0 auto",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 16,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 9, color: "var(--hp-text-strong)", fontWeight: 900 }}>
+            <span aria-hidden="true" style={{ fontSize: 22, lineHeight: 1 }}>🏒</span>
+            <span>Hockey Planner</span>
+            <span
+              role="status"
+              aria-label={serverStatus === "online" ? "Сервер доступен" : serverStatus === "offline" ? "Нет соединения с сервером" : "Проверяем соединение с сервером"}
+              title={serverStatus === "online" ? "Сервер доступен" : serverStatus === "offline" ? "Нет соединения с сервером" : "Проверяем соединение"}
+              style={{
+                width: 7,
+                height: 7,
+                borderRadius: "50%",
+                backgroundColor: serverStatus === "online" ? "var(--hp-success)" : serverStatus === "offline" ? "var(--hp-danger)" : "var(--hp-border-strong)",
+                boxShadow: serverStatus === "online" ? "0 0 0 2px var(--hp-success-soft)" : serverStatus === "offline" ? "0 0 0 2px var(--hp-danger-soft)" : "none",
+                flexShrink: 0,
+              }}
+            />
+          </div>
+
+          <button
+            type="button"
+            role="switch"
+            aria-checked={appliedTheme === "dark"}
+            aria-label="Переключить цветовую тему"
+            title={appliedTheme === "dark" ? "Включить светлую тему" : "Включить тёмную тему"}
+            onClick={() => setTheme(appliedTheme === "dark" ? "light" : "dark")}
+            style={{
+              border: "1px solid var(--hp-border)",
+              borderRadius: 999,
+              padding: "3px",
+              width: 58,
+              height: 32,
+              backgroundColor: appliedTheme === "dark" ? "var(--hp-primary)" : "var(--hp-surface-muted)",
+              cursor: "pointer",
+              position: "relative",
+              flexShrink: 0,
+              transition: "background-color 0.2s ease",
+            }}
+          >
+            <span
+              aria-hidden="true"
+              style={{
+                position: "absolute",
+                top: 3,
+                left: appliedTheme === "dark" ? 29 : 3,
+                width: 24,
+                height: 24,
+                borderRadius: "50%",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                backgroundColor: "var(--hp-surface)",
+                boxShadow: "0 2px 5px rgba(15, 23, 42, 0.25)",
+                fontSize: 14,
+                lineHeight: 1,
+                transition: "left 0.2s ease",
+              }}
+            >
+              {appliedTheme === "dark" ? "🌙" : "☀️"}
+            </span>
+          </button>
+        </div>
+      </header>
       <div style={{ width: "100%", flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 14px", boxSizing: "border-box" }}>
       <form style={cardStyle} onSubmit={submit}>
         <div style={{ marginBottom: 22 }}>
@@ -223,7 +350,7 @@ export function AuthPage() {
             {mode === "login"
               ? "Введите email и пароль, которые указывали при регистрации."
               : mode === "register"
-                ? "Введите email и пароль. На следующем шаге можно будет выбрать себя из списка игроков."
+                ? "Введите email и придумайте пароль."
                 : mode === "forgot"
                   ? "Введите email, и мы отправим письмо для смены пароля."
                   : "Введите новый пароль для вашего аккаунта."}
