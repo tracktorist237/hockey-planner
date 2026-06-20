@@ -3,9 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { deleteTeamNews, getNewsFeed, updateTeamNews, uploadTeamNewsImage } from "src/api/teams";
 import { BottomNav } from "src/components/BottomNav";
 import { LoadingIndicator } from "src/components/LoadingIndicator";
-import { NotificationBell } from "src/components/NotificationBell";
 import { TeamTablesPanel } from "src/components/TeamTablesPanel";
-import { CurrentPlayerHeader } from "src/CurrentPlayerHeader";
+import { MainPageHeader } from "src/components/MainPageHeader";
 import { useAuth } from "src/hooks/useAuth";
 import { TeamNewsDto } from "src/types/teams";
 import { useSwipeTabs } from "src/hooks/useSwipeTabs";
@@ -154,22 +153,7 @@ export function NewsPage() {
         boxSizing: "border-box",
       }}
     >
-      <div
-        style={{
-          backgroundColor: "var(--hp-surface)",
-          padding: "16px",
-          borderBottom: "1px solid var(--hp-border)",
-          boxShadow: "var(--hp-shadow-sm)",
-        }}
-      >
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", marginBottom: "12px" }}>
-          <h1 style={{ margin: 0, fontSize: "20px", fontWeight: 700, color: "var(--hp-heading)" }}>
-            Новости
-          </h1>
-          <NotificationBell currentUserId={currentUser?.id} />
-        </div>
-        <CurrentPlayerHeader />
-      </div>
+      <MainPageHeader title="Новости" />
 
       <main style={{ padding: "16px", paddingBottom: "120px", display: "grid", gap: "12px" }}>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, padding: 5, borderRadius: 16, background: "var(--hp-surface-muted)" }}>

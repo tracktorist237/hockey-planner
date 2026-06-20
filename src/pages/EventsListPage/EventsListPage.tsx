@@ -3,8 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { getMyTeams } from "src/api/teams";
 import { BottomNav } from "src/components/BottomNav";
 import { LoadingIndicator } from "src/components/LoadingIndicator";
-import { NotificationBell } from "src/components/NotificationBell";
-import { CurrentPlayerHeader } from "src/CurrentPlayerHeader";
+import { MainPageHeader } from "src/components/MainPageHeader";
 import { EventsList as CalendarEventsList } from "src/pages/CalendarPage/components/EventsList";
 import { Legend } from "src/pages/CalendarPage/components/Legend";
 import { MonthView } from "src/pages/CalendarPage/components/MonthView";
@@ -579,29 +578,14 @@ export const EventsListPage = ({
         fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
       }}
     >
+      <MainPageHeader title="Мероприятия" />
       <div
         style={{
           backgroundColor: "var(--hp-surface)",
-          padding: "16px",
+          padding: "8px 12px 12px",
           borderBottom: "1px solid var(--hp-border)",
-          boxShadow: "var(--hp-shadow-sm)",
         }}
       >
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", marginBottom: "12px" }}>
-          <h1
-            style={{
-              margin: "0",
-              fontSize: "20px",
-              fontWeight: "600",
-              color: "var(--hp-heading)",
-            }}
-          >
-            Мероприятия
-          </h1>
-          <NotificationBell currentUserId={currentUser?.id} />
-        </div>
-
-        <CurrentPlayerHeader />
         <EventsFilters
           activeQuickFilters={activeQuickFilters}
           onQuickFilterToggle={handleQuickFilterToggle}

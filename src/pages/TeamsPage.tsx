@@ -1,8 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { BottomNav } from "src/components/BottomNav";
-import { NotificationBell } from "src/components/NotificationBell";
-import { CurrentPlayerHeader } from "src/CurrentPlayerHeader";
+import { MainPageHeader } from "src/components/MainPageHeader";
 import { TeamDto } from "src/types/teams";
 import { User } from "src/types/user";
 import { CreateTeamTab } from "./TeamsPage/components/CreateTeamTab";
@@ -56,22 +55,7 @@ export function TeamsPage({ currentUser, currentTeamId, onTeamChange }: TeamsPag
         boxSizing: "border-box",
       }}
     >
-      <div
-        style={{
-          backgroundColor: "var(--hp-surface)",
-          padding: "16px",
-          borderBottom: "1px solid var(--hp-border)",
-          boxShadow: "var(--hp-shadow-sm)",
-        }}
-      >
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", marginBottom: "12px" }}>
-          <h1 style={{ margin: 0, fontSize: "20px", fontWeight: 700, color: "var(--hp-heading)" }}>
-            Команды
-          </h1>
-          <NotificationBell currentUserId={currentUser?.id} />
-        </div>
-        <CurrentPlayerHeader />
-      </div>
+      <MainPageHeader title="Команды" />
 
       <main style={{ maxWidth: 560, margin: "0 auto", padding: "16px", paddingBottom: "120px" }}>
 

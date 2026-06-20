@@ -1,10 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { CurrentPlayerHeader } from "./CurrentPlayerHeader";
 import { APP_VERSION } from "./config/version";
 import { getVersionInfo } from "src/api/version";
 import { BottomNav } from "src/components/BottomNav";
-import { NotificationBell } from "src/components/NotificationBell";
+import { MainPageHeader } from "src/components/MainPageHeader";
 import { ReportProblemDialog } from "src/components/ReportProblemDialog";
 import { AppRole } from "src/constants/roles";
 import { useAuth } from "src/hooks/useAuth";
@@ -191,22 +190,7 @@ export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
         boxSizing: "border-box",
       }}
     >
-      <div
-        style={{
-          backgroundColor: "var(--hp-surface)",
-          padding: "16px",
-          borderBottom: "1px solid var(--hp-border)",
-          boxShadow: "var(--hp-shadow-sm)",
-        }}
-      >
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", marginBottom: "12px" }}>
-          <h1 style={{ margin: 0, fontSize: "20px", fontWeight: 700, color: "var(--hp-heading)" }}>
-            Настройки
-          </h1>
-          <NotificationBell currentUserId={currentUser?.id} />
-        </div>
-        <CurrentPlayerHeader />
-      </div>
+      <MainPageHeader title="Настройки" />
 
       <div style={{ padding: "16px", paddingBottom: "120px" }}>
         <div
