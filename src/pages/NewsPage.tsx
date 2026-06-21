@@ -151,11 +151,12 @@ export function NewsPage() {
         color: "var(--hp-text)",
         fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
         boxSizing: "border-box",
+        touchAction: "pan-y",
       }}
     >
       <MainPageHeader title="Новости" />
 
-      <main style={{ padding: "16px", paddingBottom: "120px", display: "grid", gap: "12px" }}>
+      <main style={{ padding: "16px", paddingBottom: "120px", display: "grid", gap: "12px", overflowX: "clip" }}>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, padding: 5, borderRadius: 16, background: "var(--hp-surface-muted)" }}>
           {([
             ["news", "Новости"],
@@ -174,6 +175,8 @@ export function NewsPage() {
                 fontWeight: 900,
                 cursor: "pointer",
                 boxShadow: activeTab === tab ? "var(--hp-shadow-sm)" : "none",
+                transform: activeTab === tab ? "scale(1)" : "scale(0.985)",
+                transition: "background-color 220ms cubic-bezier(0.22, 1, 0.36, 1), color 180ms ease, box-shadow 220ms ease, transform 220ms cubic-bezier(0.22, 1, 0.36, 1)",
               }}
             >
               {label}
@@ -181,6 +184,7 @@ export function NewsPage() {
           ))}
         </div>
 
+        <div data-swipe-tabs-content style={{ display: "grid", gap: "12px", minWidth: 0 }}>
         {activeTab === "tables" && (
           <TeamTablesPanel currentUserId={currentUser?.id} onOpenTeam={(teamId) => navigate(`/teams/${teamId}`)} />
         )}
@@ -309,6 +313,7 @@ export function NewsPage() {
           ))}
           </>
         )}
+        </div>
       </main>
 
       {previewImageUrl && (

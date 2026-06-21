@@ -17,6 +17,7 @@ import { PlayerAvatar } from "src/components/PlayerAvatar";
 interface GoaliesPanelProps {
   eventId: string;
   currentUserId: string | null;
+  embedded?: boolean;
 }
 
 const statusLabel: Record<GoalieApplicationStatus, string> = {
@@ -47,7 +48,7 @@ const formatDateTime = (value: string): string =>
 const goalieName = (goalie: GoalieUserDto): string =>
   `${goalie.lastName ?? ""} ${goalie.firstName ?? ""}`.trim() || "Вратарь";
 
-export const GoaliesPanel = ({ eventId, currentUserId }: GoaliesPanelProps) => {
+export const GoaliesPanel = ({ eventId, currentUserId, embedded = false }: GoaliesPanelProps) => {
   const [data, setData] = useState<EventGoaliesDto | null>(null);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -147,7 +148,7 @@ export const GoaliesPanel = ({ eventId, currentUserId }: GoaliesPanelProps) => {
   };
 
   return (
-    <div style={{ backgroundColor: "var(--hp-surface)", borderRadius: "16px", padding: "20px", marginBottom: "20px", boxShadow: "var(--hp-shadow-sm)" }}>
+    <div style={{ backgroundColor: "var(--hp-surface)", borderRadius: embedded ? 0 : "16px", padding: "20px", marginBottom: embedded ? 0 : "20px", boxShadow: embedded ? "none" : "var(--hp-shadow-sm)" }}>
       <h3 style={{ margin: "0 0 16px", fontSize: "18px", color: "var(--hp-heading)", display: "flex", alignItems: "center", gap: 8 }}>
         <span>🥅</span>
         <span>Вратари</span>

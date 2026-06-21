@@ -45,6 +45,7 @@ interface RosterManagerProps {
   eventType: EventType;
   teamId?: string | null;
   attendances?: AttendanceLookUpDto[];
+  embedded?: boolean;
 }
 
 const getSlotLabel = (slot: Slot): string => {
@@ -277,6 +278,7 @@ export const RosterManager = ({
   eventType,
   teamId,
   attendances,
+  embedded = false,
 }: RosterManagerProps) => {
   const [showRosterSettings, setShowRosterSettings] = useState(false);
   const [isRosterMenuOpen, setIsRosterMenuOpen] = useState(false);
@@ -338,10 +340,10 @@ export const RosterManager = ({
     <div
       style={{
         backgroundColor: "var(--hp-surface)",
-        borderRadius: "16px",
+        borderRadius: embedded ? 0 : "16px",
         padding: "20px",
-        marginBottom: "20px",
-        boxShadow: "var(--hp-shadow-sm)",
+        marginBottom: embedded ? 0 : "20px",
+        boxShadow: embedded ? "none" : "var(--hp-shadow-sm)",
       }}
     >
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>

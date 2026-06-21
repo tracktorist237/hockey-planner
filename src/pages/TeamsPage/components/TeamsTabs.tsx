@@ -30,6 +30,8 @@ export function TeamsTabs({ activeTab, onChange }: TeamsTabsProps) {
             color: activeTab === tab.value ? "var(--hp-text-strong)" : "var(--hp-muted)",
             boxShadow: activeTab === tab.value ? "var(--hp-shadow-sm)" : "none",
             fontSize: 13,
+            transform: activeTab === tab.value ? "scale(1)" : "scale(0.985)",
+            transition: "background-color 220ms cubic-bezier(0.22, 1, 0.36, 1), color 180ms ease, box-shadow 220ms ease, transform 220ms cubic-bezier(0.22, 1, 0.36, 1)",
           }}
         >
           {tab.label}

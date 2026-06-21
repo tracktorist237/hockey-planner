@@ -520,6 +520,7 @@ export function TeamDetailsPage({ currentUser, currentTeamId, onTeamChange }: Te
         paddingBottom: "32px",
         background: "linear-gradient(135deg, var(--hp-surface-soft) 0%, var(--hp-info-soft) 100%)",
         boxSizing: "border-box",
+        touchAction: "pan-y",
       }}
     >
       <main style={{ maxWidth: 620, margin: "0 auto" }}>
@@ -741,7 +742,7 @@ export function TeamDetailsPage({ currentUser, currentTeamId, onTeamChange }: Te
               </div>
             </section>
 
-            <section style={{ ...cardStyle, marginTop: 14 }}>
+            <section style={{ ...cardStyle, marginTop: 14, overflowX: "clip" }}>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 6, padding: 5, borderRadius: 16, background: "var(--hp-surface-muted)", marginBottom: 12 }}>
                 {([
                   ["news", "Новости"],
@@ -769,6 +770,8 @@ export function TeamDetailsPage({ currentUser, currentTeamId, onTeamChange }: Te
                       whiteSpace: "nowrap",
                       cursor: "pointer",
                       boxShadow: activeTab === tab ? "var(--hp-shadow-sm)" : "none",
+                      transform: activeTab === tab ? "scale(1)" : "scale(0.985)",
+                      transition: "background-color 220ms cubic-bezier(0.22, 1, 0.36, 1), color 180ms ease, box-shadow 220ms ease, transform 220ms cubic-bezier(0.22, 1, 0.36, 1)",
                     }}
                   >
                     {label}
@@ -776,6 +779,7 @@ export function TeamDetailsPage({ currentUser, currentTeamId, onTeamChange }: Te
                 ))}
               </div>
 
+              <div data-swipe-tabs-content style={{ minWidth: 0 }}>
               {activeTab === "news" && (
                 <div style={{ display: "grid", gap: 10 }}>
                   {canManage && (
@@ -1061,6 +1065,7 @@ export function TeamDetailsPage({ currentUser, currentTeamId, onTeamChange }: Te
                   {!eventsLoading && sortedEvents.map((event) => <TeamEventCard key={event.id} event={event} onOpen={(eventId) => navigate(`/events/${eventId}`)} />)}
                 </div>
               )}
+              </div>
             </section>
           </>
         )}

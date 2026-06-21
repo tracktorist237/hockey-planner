@@ -53,6 +53,7 @@ export function TeamsPage({ currentUser, currentTeamId, onTeamChange }: TeamsPag
         background: "var(--hp-bg-gradient)",
         color: "var(--hp-text)",
         boxSizing: "border-box",
+        touchAction: "pan-y",
       }}
     >
       <MainPageHeader title="Команды" />
@@ -72,9 +73,10 @@ export function TeamsPage({ currentUser, currentTeamId, onTeamChange }: TeamsPag
         )}
 
         {teamsPage.apiUnavailable ? null : (
-          <section style={cardStyle}>
+          <section style={{ ...cardStyle, overflowX: "clip" }}>
             <TeamsTabs activeTab={teamsPage.activeTab} onChange={teamsPage.setActiveTab} />
 
+            <div data-swipe-tabs-content style={{ minWidth: 0 }}>
             {teamsPage.activeTab === "my" && (
               <MyTeamsTab
                 teams={teamsPage.myTeams}
@@ -114,6 +116,7 @@ export function TeamsPage({ currentUser, currentTeamId, onTeamChange }: TeamsPag
                 onCreate={() => void teamsPage.createNewTeam()}
               />
             )}
+            </div>
           </section>
         )}
       </main>

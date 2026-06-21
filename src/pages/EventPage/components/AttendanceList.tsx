@@ -17,6 +17,7 @@ interface AttendanceListProps {
     handedness?: number | null;
     jerseyNumber?: number | null;
   }) => Promise<void>;
+  embedded?: boolean;
 }
 
 const DEFAULT_RESPONSE_TOLERANCE_MS = 5000;
@@ -59,6 +60,7 @@ export const AttendanceList = ({
   currentUserId,
   onStatusChange,
   onAddGuest,
+  embedded = false,
 }: AttendanceListProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isEditingStatuses, setIsEditingStatuses] = useState(false);
@@ -138,10 +140,10 @@ export const AttendanceList = ({
     <div
       style={{
         backgroundColor: "var(--hp-surface)",
-        borderRadius: "16px",
+        borderRadius: embedded ? 0 : "16px",
         padding: "20px",
-        marginBottom: "20px",
-        boxShadow: "var(--hp-shadow-sm)",
+        marginBottom: embedded ? 0 : "20px",
+        boxShadow: embedded ? "none" : "var(--hp-shadow-sm)",
       }}
     >
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", marginBottom: "16px" }}>

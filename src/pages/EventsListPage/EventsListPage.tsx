@@ -82,6 +82,8 @@ function EventsViewSwitcher({ activeView, onViewChange }: EventsViewSwitcherProp
           boxShadow: isActive ? "var(--hp-shadow-sm)" : "none",
           fontWeight: isActive ? 900 : 800,
           cursor: isActive ? "default" : "pointer",
+          transform: isActive ? "scale(1)" : "scale(0.985)",
+          transition: "background-color 220ms cubic-bezier(0.22, 1, 0.36, 1), color 180ms ease, border-color 220ms ease, box-shadow 220ms ease, transform 220ms cubic-bezier(0.22, 1, 0.36, 1)",
         }}
       >
         {label}
@@ -576,6 +578,8 @@ export const EventsListPage = ({
         color: "var(--hp-text)",
         boxSizing: "border-box",
         fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+        touchAction: "pan-y",
+        overflowX: "clip",
       }}
     >
       <MainPageHeader title="Мероприятия" />
@@ -604,7 +608,7 @@ export const EventsListPage = ({
         <EventsViewSwitcher activeView={eventsView} onViewChange={handleEventsViewChange} />
       </div>
 
-      <div style={{ padding: "16px", overflowAnchor: "none" }}>
+      <div data-swipe-tabs-content style={{ padding: "16px", overflowAnchor: "none" }}>
         {eventsView === "calendar" ? (
           loading ? (
             <LoadingIndicator text="Загрузка календаря..." block />

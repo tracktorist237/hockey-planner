@@ -260,7 +260,7 @@ export function EventPage({ eventId, onBack, currentUser }: EventPageProps) {
   }
 
   return (
-    <div {...eventTabsSwipeHandlers} style={{ padding: "0", minHeight: "100vh", background: "var(--hp-bg-gradient)", color: "var(--hp-text)", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", boxSizing: "border-box" }}>
+    <div style={{ padding: "0", minHeight: "100vh", background: "var(--hp-bg-gradient)", color: "var(--hp-text)", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", boxSizing: "border-box" }}>
       <div
         style={{
           background: "color-mix(in srgb, var(--hp-surface) 96%, transparent)",
@@ -296,7 +296,7 @@ export function EventPage({ eventId, onBack, currentUser }: EventPageProps) {
         </div>
       </div>
 
-      <div style={{ padding: "16px", paddingBottom: "100px" }}>
+      <div style={{ padding: "16px", paddingBottom: "100px", overflowX: "clip" }}>
         <EventInfoCard event={event} copySuccess={copySuccess} copyEventLink={copyEventLink} />
 
         {error && (
@@ -332,7 +332,19 @@ export function EventPage({ eventId, onBack, currentUser }: EventPageProps) {
           <GoalieResponseCard eventId={event.id} currentUserId={selectedUserId} />
         )}
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "8px", marginBottom: "16px" }}>
+        <section
+          {...eventTabsSwipeHandlers}
+          style={{
+            marginBottom: "20px",
+            border: "1px solid var(--hp-border)",
+            borderRadius: "16px",
+            backgroundColor: "var(--hp-surface)",
+            boxShadow: "var(--hp-shadow-sm)",
+            overflow: "hidden",
+            touchAction: "pan-y",
+          }}
+        >
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "5px", padding: "5px", backgroundColor: "var(--hp-surface-muted)", borderBottom: "1px solid var(--hp-border)" }}>
           {[
             ["attendance", "Явка"],
             ["roster", "Состав"],
@@ -345,11 +357,14 @@ export function EventPage({ eventId, onBack, currentUser }: EventPageProps) {
               style={{
                 padding: "12px 8px",
                 borderRadius: "12px",
-                border: activeTab === tab ? "1px solid var(--hp-primary)" : "1px solid var(--hp-border)",
-                backgroundColor: activeTab === tab ? "var(--hp-primary-soft)" : "var(--hp-surface)",
+                border: "none",
+                backgroundColor: activeTab === tab ? "var(--hp-surface)" : "transparent",
                 color: activeTab === tab ? "var(--hp-primary-text)" : "var(--hp-muted)",
                 fontWeight: 800,
                 cursor: "pointer",
+                boxShadow: activeTab === tab ? "0 2px 8px rgba(15, 23, 42, 0.10)" : "none",
+                transform: activeTab === tab ? "scale(1)" : "scale(0.985)",
+                transition: "background-color 220ms cubic-bezier(0.22, 1, 0.36, 1), color 180ms ease, border-color 220ms ease, box-shadow 220ms ease, transform 220ms cubic-bezier(0.22, 1, 0.36, 1)",
               }}
             >
               {label}
@@ -357,6 +372,7 @@ export function EventPage({ eventId, onBack, currentUser }: EventPageProps) {
           ))}
         </div>
 
+        <div data-swipe-tabs-content style={{ minWidth: 0 }}>
         {activeTab === "attendance" && (
           <AttendanceList
             attendances={playerAttendances}
@@ -367,6 +383,7 @@ export function EventPage({ eventId, onBack, currentUser }: EventPageProps) {
             currentUserId={selectedUserId}
             onStatusChange={handleManagedAttendanceStatus}
             onAddGuest={handleAddGuest}
+            embedded
           />
         )}
         {activeTab === "roster" && (
@@ -378,9 +395,12 @@ export function EventPage({ eventId, onBack, currentUser }: EventPageProps) {
             eventType={event.type}
             teamId={event.teamId}
             attendances={event.attendances}
+            embedded
           />
         )}
-        {activeTab === "goalies" && <GoaliesPanel eventId={event.id} currentUserId={selectedUserId} />}
+        {activeTab === "goalies" && <GoaliesPanel eventId={event.id} currentUserId={selectedUserId} embedded />}
+        </div>
+        </section>
         <EventTableProtocolsPanel
           eventId={event.id}
           teamId={event.teamId}
