@@ -29,6 +29,7 @@ const initialFormData: EventFormData = {
   title: "",
   description: "",
   startTime: "",
+  durationMinutes: 75,
   locationName: "",
   locationAddress: "",
   iceRinkNumber: "",
@@ -79,6 +80,10 @@ const validateForm = (formData: EventFormData): string | null => {
 
   if (!formData.startTime) {
     return "Необходимо указать дату и время начала";
+  }
+
+  if (!Number.isInteger(formData.durationMinutes) || formData.durationMinutes < 1 || formData.durationMinutes > 1440) {
+    return "Необходимо указать длительность мероприятия от 1 минуты до 24 часов";
   }
 
   if (!formData.locationName.trim()) {
@@ -139,6 +144,7 @@ export const useEventForm = ({
       description: formData.description || null,
       type: formData.type,
       startTime: new Date(formData.startTime).toISOString(),
+      durationMinutes: formData.durationMinutes,
       locationName: formData.locationName || null,
       locationAddress: formData.locationAddress || null,
       iceRinkNumber: formData.iceRinkNumber || null,

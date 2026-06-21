@@ -31,6 +31,7 @@ const mapEventToFormData = (event: Awaited<ReturnType<typeof getEvent>>): EventF
   title: getEditableEventTitle(event),
   description: event.description ?? "",
   startTime: toDateTimeLocal(event.startTime),
+  durationMinutes: event.durationMinutes ?? 75,
   locationName: event.locationName ?? "",
   locationAddress: event.locationAddress ?? "",
   iceRinkNumber: event.iceRinkNumber ?? "",

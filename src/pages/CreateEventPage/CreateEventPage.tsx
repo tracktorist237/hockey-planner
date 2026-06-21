@@ -96,6 +96,7 @@ export function CreateEventPage({ onBack, onCreated, currentTeamId }: CreateEven
       title: getEditableEventTitle(source),
       description: source.description ?? "",
       startTime: "",
+      durationMinutes: source.durationMinutes ?? 75,
       locationName: source.locationName ?? "",
       locationAddress: source.locationAddress ?? "",
       iceRinkNumber: source.iceRinkNumber ?? "",
@@ -325,10 +326,12 @@ export function CreateEventPage({ onBack, onCreated, currentTeamId }: CreateEven
               title={formData.title}
               description={formData.description}
               startTime={formData.startTime}
+              durationMinutes={formData.durationMinutes}
               isPractice={isPractice}
               onTitleChange={(value) => updateField("title", value)}
               onDescriptionChange={(value) => updateField("description", value)}
               onStartTimeChange={(value) => updateField("startTime", value)}
+              onDurationChange={(value) => updateField("durationMinutes", value)}
             />
 
             <LocationForm

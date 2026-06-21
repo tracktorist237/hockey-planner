@@ -10,6 +10,7 @@ export interface EventFormData {
   title: string;
   description: string;
   startTime: string;
+  durationMinutes: number;
   locationName: string;
   locationAddress: string;
   iceRinkNumber: string;

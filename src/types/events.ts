@@ -10,6 +10,7 @@ export interface EventLookUpDto {
   description?: string;
   type: number;
   startTime: string; // ISO date
+  durationMinutes: number;
   status: number;
   attendanceStatus?: number | null;
   locationName?: string;
@@ -71,6 +72,7 @@ export interface EventDto {
   description?: string;
   type: number;
   startTime: string;
+  durationMinutes: number;
   status: number;
   locationName?: string;
   locationAddress?: string;
@@ -95,6 +97,7 @@ export interface CreateEventDto {
   description?: string | null;
   type: EventType;
   startTime: string | null;     // ISO
+  durationMinutes: number;
   locationName?: string | null;
   locationAddress?: string | null;
   iceRinkNumber?: string | null;

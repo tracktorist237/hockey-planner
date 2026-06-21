@@ -6,20 +6,24 @@ interface EventDetailsFieldsProps {
   title: string;
   description: string;
   startTime: string;
+  durationMinutes: number;
   isPractice: boolean;
   onTitleChange: (value: string) => void;
   onDescriptionChange: (value: string) => void;
   onStartTimeChange: (value: string) => void;
+  onDurationChange: (value: number) => void;
 }
 
 export const EventDetailsFields = ({
   title,
   description,
   startTime,
+  durationMinutes,
   isPractice,
   onTitleChange,
   onDescriptionChange,
   onStartTimeChange,
+  onDurationChange,
 }: EventDetailsFieldsProps) => {
   const [isDescriptionVisible, setIsDescriptionVisible] = useState(Boolean(description));
 
@@ -28,6 +32,9 @@ export const EventDetailsFields = ({
       setIsDescriptionVisible(true);
     }
   }, [description]);
+
+  const durationHours = Math.floor(durationMinutes / 60);
+  const durationMinutePart = durationMinutes % 60;
 
   return (
     <>
@@ -85,6 +92,47 @@ export const EventDetailsFields = ({
             maxWidth: "100%",
           }}
         />
+      </div>
+
+      <div style={{ marginBottom: "20px", width: "100%", boxSizing: "border-box" }}>
+        <label style={{ display: "block", marginBottom: "8px", fontWeight: "600", fontSize: "16px", color: "var(--hp-text)" }}>
+          Длительность мероприятия *
+        </label>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+          <label style={{ display: "grid", gap: "5px", color: "var(--hp-muted)", fontSize: "12px", fontWeight: 600 }}>
+            Часы
+            <select
+              value={durationHours}
+              onChange={(event) => {
+                const hours = Number(event.target.value);
+                onDurationChange(hours === 24 ? 1440 : hours * 60 + durationMinutePart);
+              }}
+              required
+              style={{ width: "100%", padding: "13px 12px", border: "1px solid var(--hp-border)", borderRadius: "10px", backgroundColor: "var(--hp-surface-soft)", color: "var(--hp-text)", fontSize: "16px", boxSizing: "border-box" }}
+            >
+              {Array.from({ length: 25 }, (_, hour) => (
+                <option key={hour} value={hour}>{hour} ч</option>
+              ))}
+            </select>
+          </label>
+          <label style={{ display: "grid", gap: "5px", color: "var(--hp-muted)", fontSize: "12px", fontWeight: 600 }}>
+            Минуты
+            <select
+              value={durationMinutePart}
+              onChange={(event) => onDurationChange(durationHours * 60 + Number(event.target.value))}
+              disabled={durationHours === 24}
+              required
+              style={{ width: "100%", padding: "13px 12px", border: "1px solid var(--hp-border)", borderRadius: "10px", backgroundColor: "var(--hp-surface-soft)", color: "var(--hp-text)", fontSize: "16px", boxSizing: "border-box" }}
+            >
+              {Array.from({ length: 60 }, (_, minute) => (
+                <option key={minute} value={minute}>{minute} мин</option>
+              ))}
+            </select>
+          </label>
+        </div>
+        {durationMinutes < 1 && (
+          <div style={{ marginTop: "6px", color: "var(--hp-danger)", fontSize: "12px" }}>Длительность должна быть больше нуля.</div>
+        )}
       </div>
 
       {isPractice && (

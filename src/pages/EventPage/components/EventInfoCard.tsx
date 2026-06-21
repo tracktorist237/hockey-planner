@@ -21,6 +21,13 @@ const getEventTypeName = (type: EventType): string => {
   }
 };
 
+const formatDuration = (durationMinutes?: number | null): string => {
+  const totalMinutes = durationMinutes && durationMinutes > 0 ? durationMinutes : 75;
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return [hours ? `${hours} ч` : "", minutes ? `${minutes} мин` : ""].filter(Boolean).join(" ");
+};
+
 export const EventInfoCard = ({ event, copySuccess, copyEventLink }: EventInfoCardProps) => {
   return (
     <div
@@ -65,6 +72,20 @@ export const EventInfoCard = ({ event, copySuccess, copyEventLink }: EventInfoCa
             }}
           >
             🕒 {formatRuDateLabel(event.startTime)}
+          </span>
+          <span
+            style={{
+              fontSize: "14px",
+              color: "var(--hp-muted)",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "4px",
+              padding: "4px 9px",
+              borderRadius: "10px",
+              backgroundColor: "var(--hp-surface-soft)",
+            }}
+          >
+            ⏱ {formatDuration(event.durationMinutes)}
           </span>
 
           {event.teamName && (
