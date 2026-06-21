@@ -21,7 +21,10 @@ export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
   const [isUpdating, setIsUpdating] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [isClearing, setIsClearing] = useState(false);
+  const [updatePromptAction, setUpdatePromptAction] = useState<"update" | "clear" | null>(null);
   const [availableVersion, setAvailableVersion] = useState<string | null>(null);
+  const [isUpdatePromptOpen, setIsUpdatePromptOpen] = useState(false);
+  const [updatePromptMessage, setUpdatePromptMessage] = useState<string | null>(null);
   const [isReportOpen, setIsReportOpen] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
 
@@ -97,6 +100,9 @@ export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
   };
 
   const handleUpdate = async () => {
+    setIsUpdatePromptOpen(true);
+    setAvailableVersion(null);
+    setUpdatePromptMessage(null);
     setIsUpdating(true);
     setMessage(null);
 
@@ -105,31 +111,27 @@ export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
       const backendVersion = versionInfo.version?.trim();
 
       if (!backendVersion) {
-        setMessage("❌ Сервер не вернул версию");
+        setUpdatePromptMessage("Сервер не вернул номер версии. Можно повторить проверку позже или очистить кэш сейчас.");
         return;
       }
 
       const comparison = compareVersions(backendVersion, APP_VERSION);
 
       if (comparison > 0) {
-        const hasAppliedUpdate = await applyServiceWorkerUpdate();
-        if (!hasAppliedUpdate) {
-          setAvailableVersion(backendVersion);
-        }
+        setAvailableVersion(backendVersion);
         return;
       }
 
       if (comparison === 0) {
-        setMessage(`✅ У вас последняя версия v${APP_VERSION}`);
+        setUpdatePromptMessage(`У вас установлена последняя версия v${APP_VERSION}.`);
       } else {
-        setMessage(`ℹ️ Локальная версия v${APP_VERSION} новее серверной v${backendVersion}`);
+        setUpdatePromptMessage(`Локальная версия v${APP_VERSION} новее серверной v${backendVersion}.`);
       }
     } catch (updateError) {
       console.error("Ошибка при проверке версии:", updateError);
-      setMessage("❌ Не удалось проверить обновление");
+      setUpdatePromptMessage("Не удалось проверить обновление. Возможно, сейчас нет соединения с сервером — очистка кэша всё равно доступна.");
     } finally {
       setIsUpdating(false);
-      setTimeout(() => setMessage(null), 4000);
     }
   };
 
@@ -161,13 +163,27 @@ export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
   };
 
   const handleUpdateFromPrompt = async () => {
-    setIsClearing(true);
-    const hasAppliedUpdate = await applyServiceWorkerUpdate();
-    if (hasAppliedUpdate) {
-      return;
-    }
+    setUpdatePromptAction("update");
+    try {
+      setIsClearing(true);
+      const hasAppliedUpdate = await applyServiceWorkerUpdate();
+      if (hasAppliedUpdate) {
+        return;
+      }
 
-    await handleClearCache();
+      await handleClearCache();
+    } finally {
+      setUpdatePromptAction(null);
+    }
+  };
+
+  const handleClearCacheFromPrompt = async () => {
+    setUpdatePromptAction("clear");
+    try {
+      await handleClearCache();
+    } finally {
+      setUpdatePromptAction(null);
+    }
   };
 
   const isBusy = isUpdating || isClearing;
@@ -663,11 +679,11 @@ export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
       <BottomNav activeTab="settings" />
       <ReportProblemDialog isOpen={isReportOpen} onClose={() => setIsReportOpen(false)} />
 
-      {availableVersion && (
+      {isUpdatePromptOpen && (
         <div
           role="dialog"
           aria-modal="true"
-          aria-label="Доступно обновление"
+          aria-label="Обновление приложения"
           style={{
             position: "fixed",
             inset: 0,
@@ -695,12 +711,16 @@ export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
           >
             <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "12px" }}>
               <div style={{ fontSize: "15px", lineHeight: 1.5, fontWeight: 700 }}>
-                🆕 Доступна версия v{availableVersion}. Обновите приложение и перезапустите его.
+                {isUpdating
+                  ? "⏳ Проверяем наличие обновлений..."
+                  : availableVersion
+                    ? `🆕 Доступна версия v${availableVersion}. Обновите приложение и перезапустите его.`
+                    : updatePromptMessage ?? "Можно обновить приложение или очистить его кэш."}
               </div>
               <button
                 type="button"
                 aria-label="Закрыть сообщение об обновлении"
-                onClick={() => setAvailableVersion(null)}
+                onClick={() => setIsUpdatePromptOpen(false)}
                 disabled={isClearing}
                 style={{ border: 0, padding: "0 2px", background: "transparent", color: "var(--hp-muted)", fontSize: "24px", lineHeight: 1, cursor: "pointer" }}
               >
@@ -725,8 +745,37 @@ export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
                 opacity: isClearing ? 0.72 : 1,
               }}
             >
-              {isClearing ? "Обновляем..." : "Обновить"}
+              {isClearing && updatePromptAction === "update" ? "Обновляем..." : "Обновить"}
             </button>
+            <div style={{ marginTop: "12px", paddingTop: "12px", borderTop: "1px solid var(--hp-border)" }}>
+              <button
+                type="button"
+                onClick={() => void handleClearCacheFromPrompt()}
+                disabled={isClearing}
+                style={{
+                  width: "100%",
+                  padding: "10px 12px",
+                  border: "1px solid var(--hp-border)",
+                  borderRadius: "12px",
+                  backgroundColor: "var(--hp-surface-soft)",
+                  color: "var(--hp-heading)",
+                  fontSize: "14px",
+                  fontWeight: 750,
+                  cursor: isClearing ? "wait" : "pointer",
+                  opacity: isClearing ? 0.72 : 1,
+                }}
+              >
+                {isClearing && updatePromptAction === "clear" ? "Очищаем кэш..." : "Очистить кэш"}
+              </button>
+              <div style={{ marginTop: "6px", color: "var(--hp-muted)", fontSize: "11px", lineHeight: 1.4, textAlign: "center" }}>
+                Удалит сохранённые файлы приложения и загрузит их заново. Используйте, если обычное обновление не помогло.
+              </div>
+            </div>
+            {isUpdating && (
+              <div style={{ marginTop: "7px", color: "var(--hp-muted)", fontSize: "11px", lineHeight: 1.4 }}>
+                Если сервер недоступен, ждать ответа необязательно — очистить кэш можно кнопкой ниже.
+              </div>
+            )}
           </div>
         </div>
       )}
