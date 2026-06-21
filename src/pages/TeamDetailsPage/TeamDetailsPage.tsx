@@ -120,6 +120,7 @@ function TeamEventCard({ event, onOpen }: { event: EventLookUpDto; onOpen: (even
   return (
     <button
       type="button"
+      data-swipe-allow
       onClick={() => onOpen(event.id)}
       style={{
         width: "100%",
@@ -354,13 +355,19 @@ export function TeamDetailsPage({ currentUser, currentTeamId, onTeamChange }: Te
     }
   };
 
-  const handleSetMainTeam = () => {
+  const handleToggleMainTeam = () => {
     if (!team) {
       return;
     }
 
-    onTeamChange(team.id, team.name);
-    setMessage(`Команда "${team.name}" назначена основной.`);
+    if (isMainTeam) {
+      onTeamChange(null, null);
+      setMessage(`Команда "${team.name}" больше не является основной. Фильтр по команде не будет применяться по умолчанию.`);
+    } else {
+      onTeamChange(team.id, team.name);
+      setMessage(`Команда "${team.name}" назначена основной. Теперь фильтр по умолчанию будет установлен на эту команду.`);
+    }
+    setIsTeamMenuOpen(false);
   };
 
   const handleInstallTeamApp = async () => {
@@ -580,7 +587,7 @@ export function TeamDetailsPage({ currentUser, currentTeamId, onTeamChange }: Te
                     <div style={{ borderRadius: 999, padding: "7px 10px", background: "var(--hp-neutral-soft)", color: "var(--hp-neutral)", fontSize: 13, fontWeight: 900, whiteSpace: "nowrap" }}>
                       {getRoleText(team.myRole)}
                     </div>
-                    {(teamPwaInstall.canOfferInstall || (team.myRole && team.myRole !== TeamRole.Owner)) && (
+                    {(teamPwaInstall.canOfferInstall || Boolean(team.myRole)) && (
                       <>
                         <button
                           type="button"
@@ -607,6 +614,25 @@ export function TeamDetailsPage({ currentUser, currentTeamId, onTeamChange }: Te
                               gap: 8,
                             }}
                           >
+                            {team.myRole && (
+                              <button
+                                type="button"
+                                onClick={handleToggleMainTeam}
+                                style={{
+                                  width: "100%",
+                                  border: `1px solid ${isMainTeam ? "var(--hp-success-border)" : "var(--hp-border)"}`,
+                                  borderRadius: 12,
+                                  padding: "10px 12px",
+                                  background: isMainTeam ? "var(--hp-success-soft)" : "var(--hp-surface-soft)",
+                                  color: isMainTeam ? "var(--hp-success)" : "var(--hp-heading)",
+                                  fontWeight: 900,
+                                  cursor: "pointer",
+                                  textAlign: "left",
+                                }}
+                              >
+                                {isMainTeam ? "Убрать из основных" : "Сделать основной"}
+                              </button>
+                            )}
                             {teamPwaInstall.canOfferInstall && (
                               <button
                                 type="button"
@@ -699,19 +725,8 @@ export function TeamDetailsPage({ currentUser, currentTeamId, onTeamChange }: Te
                   </div>
                 )}
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 14 }}>
-                  {team.myRole && (
-                    <button
-                      type="button"
-                      onClick={handleSetMainTeam}
-                      disabled={isMainTeam}
-                      style={{ border: 0, borderRadius: 14, padding: "12px 10px", background: isMainTeam ? "var(--hp-success-soft)" : "var(--hp-primary-soft)", color: isMainTeam ? "var(--hp-success)" : "var(--hp-primary-text)", fontWeight: 900, cursor: isMainTeam ? "default" : "pointer" }}
-                    >
-                      {isMainTeam ? "Основная" : "Сделать основной"}
-                    </button>
-                  )}
-
-                  {canManage && (
+                {canManage && (
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 8, marginTop: 14 }}>
                     <button
                       type="button"
                       onClick={() => navigate(`/teams/${team.id}/manage`)}
@@ -719,8 +734,8 @@ export function TeamDetailsPage({ currentUser, currentTeamId, onTeamChange }: Te
                     >
                       Настройки
                     </button>
-                  )}
-                </div>
+                  </div>
+                )}
 
                 {canJoinPublic && (
                   <div style={{ marginTop: 14, display: "grid", gap: 10 }}>
@@ -991,6 +1006,7 @@ export function TeamDetailsPage({ currentUser, currentTeamId, onTeamChange }: Te
                       <button
                         key={member.userId}
                         type="button"
+                        data-swipe-allow
                         onClick={() => void playerModal.handleOpenPlayerInfo(member.userId)}
                         style={{
                           display: "flex",

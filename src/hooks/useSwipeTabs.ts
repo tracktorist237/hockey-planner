@@ -1,4 +1,4 @@
-import { TouchEvent as ReactTouchEvent, useEffect, useRef } from "react";
+import { MouseEvent as ReactMouseEvent, TouchEvent as ReactTouchEvent, useEffect, useRef } from "react";
 import { flushSync } from "react-dom";
 
 const SWIPE_DISTANCE_PX = 58;
@@ -28,7 +28,11 @@ interface SwipeGesture {
 const shouldIgnoreSwipe = (target: EventTarget | null, boundary: HTMLElement): boolean => {
   if (!(target instanceof HTMLElement)) return true;
 
-  if (target.closest("input, textarea, select, button, a, label, [role='dialog'], [data-swipe-ignore], [contenteditable='true']")) {
+  if (target.closest("input, textarea, select, [role='dialog'], [data-swipe-ignore], [contenteditable='true']")) {
+    return true;
+  }
+
+  if (target.closest("button, a, label") && !target.closest("[data-swipe-allow]")) {
     return true;
   }
 
@@ -63,6 +67,7 @@ const resetContentStyle = (content: HTMLElement | null, animate: boolean) => {
 
 export function useSwipeTabs<T extends string>({ tabs, activeTab, onChange, disabled = false }: UseSwipeTabsOptions<T>) {
   const latestRef = useRef({ tabs, activeTab, onChange, disabled });
+  const suppressClickUntilRef = useRef(0);
   const gestureRef = useRef<SwipeGesture>({
     touchId: -1,
     startX: 0,
@@ -169,6 +174,7 @@ export function useSwipeTabs<T extends string>({ tabs, activeTab, onChange, disa
     content.style.transition = "none";
     content.style.transform = `translate3d(${incomingOffset}px, 0, 0)`;
     content.style.opacity = "0.76";
+    suppressClickUntilRef.current = Date.now() + 500;
     flushSync(() => changeTab(nextTab));
     void content.offsetWidth;
     requestAnimationFrame(() => resetContentStyle(content, true));
@@ -179,5 +185,12 @@ export function useSwipeTabs<T extends string>({ tabs, activeTab, onChange, disa
     onTouchMove: handleTouchMove,
     onTouchEnd: handleTouchEnd,
     onTouchCancel: () => resetGesture(true),
+    onClickCapture: (event: ReactMouseEvent<HTMLElement>) => {
+      if (Date.now() >= suppressClickUntilRef.current) return;
+      if (!(event.target instanceof HTMLElement) || !event.target.closest("[data-swipe-allow]")) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+    },
   };
 }
