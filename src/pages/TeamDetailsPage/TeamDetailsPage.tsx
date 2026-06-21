@@ -168,6 +168,7 @@ export function TeamDetailsPage({ currentUser, currentTeamId, onTeamChange }: Te
   const [eventsLoading, setEventsLoading] = useState(false);
   const [newsLoading, setNewsLoading] = useState(false);
   const [newsSaving, setNewsSaving] = useState(false);
+  const [isNewsComposerOpen, setIsNewsComposerOpen] = useState(false);
   const [newsTitle, setNewsTitle] = useState("");
   const [newsBody, setNewsBody] = useState("");
   const [newsImageUrl, setNewsImageUrl] = useState("");
@@ -409,6 +410,7 @@ export function TeamDetailsPage({ currentUser, currentTeamId, onTeamChange }: Te
       setNewsBody("");
       setNewsImageUrl("");
       setNewsSendNotification(false);
+      setIsNewsComposerOpen(false);
       setMessage("Новость добавлена.");
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Не удалось добавить новость.");
@@ -797,8 +799,37 @@ export function TeamDetailsPage({ currentUser, currentTeamId, onTeamChange }: Te
               <div data-swipe-tabs-content style={{ minWidth: 0 }}>
               {activeTab === "news" && (
                 <div style={{ display: "grid", gap: 10 }}>
-                  {canManage && (
+                  {canManage && !isNewsComposerOpen && (
+                    <button
+                      type="button"
+                      onClick={() => setIsNewsComposerOpen(true)}
+                      style={{
+                        width: "100%",
+                        border: "1px solid var(--hp-primary)",
+                        borderRadius: 14,
+                        padding: "12px 14px",
+                        background: "var(--hp-primary-soft)",
+                        color: "var(--hp-primary-text)",
+                        fontWeight: 900,
+                        cursor: "pointer",
+                      }}
+                    >
+                      + Добавить новость
+                    </button>
+                  )}
+                  {canManage && isNewsComposerOpen && (
                     <div style={{ border: "1px solid var(--hp-info-border)", borderRadius: 16, padding: 12, background: "var(--hp-info-soft)", display: "grid", gap: 8 }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+                        <strong style={{ color: "var(--hp-heading)" }}>Новая новость</strong>
+                        <button
+                          type="button"
+                          onClick={() => setIsNewsComposerOpen(false)}
+                          disabled={newsSaving || newsImageUploading}
+                          style={{ border: 0, padding: "5px 7px", borderRadius: 9, background: "transparent", color: "var(--hp-muted)", fontSize: 12, fontWeight: 800, cursor: newsSaving || newsImageUploading ? "not-allowed" : "pointer" }}
+                        >
+                          Свернуть
+                        </button>
+                      </div>
                       <input
                         value={newsTitle}
                         onChange={(event) => setNewsTitle(event.target.value)}
