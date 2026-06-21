@@ -1,10 +1,14 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { getUniformColors } from "src/api/uniformColors";
 import { AttendanceLookUpDto, EventType, LineDto, UniformColorDto } from "src/types/events";
 import { Slot } from "src/pages/EventPage/types";
 import { LineCircles } from "src/pages/EventPage/components/LineCircles";
 import { PlayerAvatar } from "src/components/PlayerAvatar";
 import { getAdaptiveFontSize } from "src/utils/text";
+import { HandednessBadge } from "src/pages/EventPage/components/HandednessBadge";
+import { findDuplicateLastNames, getRosterPlayerName } from "src/pages/EventPage/utils/playerDisplayName";
+
+const ROSTER_HANDEDNESS_STORAGE_KEY = "hp-show-roster-handedness";
 
 interface RosterManagerProps {
   canManage: boolean;
@@ -40,6 +44,7 @@ interface RosterManagerProps {
   avatarUrls?: Record<string, string>;
   eventType: EventType;
   teamId?: string | null;
+  attendances?: AttendanceLookUpDto[];
 }
 
 const getSlotLabel = (slot: Slot): string => {
@@ -84,7 +89,11 @@ const renderEditableSlot = (
   onPlayerClick: (userId: string) => void,
   clearSlot: (slot: Slot) => void,
   avatarUrls?: Record<string, string>,
+  showHandedness = false,
+  duplicateLastNames = new Set<string>(),
 ) => {
+  const playerDisplayName = lineSlots[slot] ? getRosterPlayerName(lineSlots[slot]!, duplicateLastNames) : "";
+
   return (
     <div key={slot} style={{ textAlign: "center", width: "70px" }}>
       <div
@@ -130,6 +139,18 @@ const renderEditableSlot = (
               fallbackColor="var(--hp-heading)"
               fontSize={20}
             />
+            {showHandedness && (
+              <span
+                style={{
+                  position: "absolute",
+                  top: "-4px",
+                  ...(lineSlots[slot]!.handedness === 2 ? { right: "-4px" } : { left: "-4px" }),
+                  zIndex: 7,
+                }}
+              >
+                <HandednessBadge handedness={lineSlots[slot]!.handedness} />
+              </span>
+            )}
             <div
               style={{
                 position: "absolute",
@@ -166,7 +187,7 @@ const renderEditableSlot = (
         <>
           <div
             style={{
-              fontSize: `${getAdaptiveFontSize(lineSlots[slot]!.lastName, {
+              fontSize: `${getAdaptiveFontSize(playerDisplayName, {
                 base: 11,
                 min: 8,
                 startShrinkAt: 10,
@@ -195,7 +216,7 @@ const renderEditableSlot = (
               e.currentTarget.style.textDecoration = "none";
             }}
           >
-            {lineSlots[slot]!.lastName}
+            {playerDisplayName}
           </div>
           <button
             onClick={(e) => {
@@ -255,12 +276,30 @@ export const RosterManager = ({
   avatarUrls,
   eventType,
   teamId,
+  attendances,
 }: RosterManagerProps) => {
   const [showRosterSettings, setShowRosterSettings] = useState(false);
+  const [isRosterMenuOpen, setIsRosterMenuOpen] = useState(false);
+  const [showHandedness, setShowHandedness] = useState(() => {
+    try {
+      return localStorage.getItem(ROSTER_HANDEDNESS_STORAGE_KEY) === "true";
+    } catch {
+      return false;
+    }
+  });
   const [uniformColors, setUniformColors] = useState<UniformColorDto[]>([]);
   const [uniformColorsLoading, setUniformColorsLoading] = useState(false);
   const [uniformColorsError, setUniformColorsError] = useState<string | null>(null);
   const canAssignLineUniformColors = canManage && eventType === EventType.Practice && Boolean(teamId);
+  const duplicateLastNames = useMemo(() => findDuplicateLastNames(attendances), [attendances]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(ROSTER_HANDEDNESS_STORAGE_KEY, String(showHandedness));
+    } catch {
+      // Local storage may be unavailable in privacy mode; keep the session setting working.
+    }
+  }, [showHandedness]);
 
   useEffect(() => {
     if (!showRosterSettings || !canAssignLineUniformColors || !teamId) {
@@ -349,29 +388,105 @@ export const RosterManager = ({
             <span>+</span>
             <span>Добавить звено</span>
           </button>
-          <button
-            type="button"
-            onClick={() => setShowRosterSettings((prev) => !prev)}
-            disabled={!canAssignLineUniformColors}
-            style={{
-              width: "40px",
-              height: "40px",
-              padding: 0,
-              backgroundColor: "var(--hp-surface-soft)",
-              color: "var(--hp-heading)",
-              border: "1px solid var(--hp-border)",
-              borderRadius: "10px",
-              cursor: canAssignLineUniformColors ? "pointer" : "not-allowed",
-              fontSize: "18px",
-              fontWeight: 900,
-              lineHeight: 1,
-              opacity: canAssignLineUniformColors ? 1 : 0.55,
-            }}
-            title="Настройки состава"
-            aria-label="Настройки состава"
-          >
-            ⋮
-          </button>
+          <div style={{ position: "relative" }}>
+            <button
+              type="button"
+              onClick={() => setIsRosterMenuOpen((prev) => !prev)}
+              style={{
+                width: "40px",
+                height: "40px",
+                padding: 0,
+                backgroundColor: isRosterMenuOpen ? "var(--hp-primary-soft)" : "var(--hp-surface-soft)",
+                color: "var(--hp-heading)",
+                border: `1px solid ${isRosterMenuOpen ? "var(--hp-primary)" : "var(--hp-border)"}`,
+                borderRadius: "10px",
+                cursor: "pointer",
+                fontSize: "18px",
+                fontWeight: 900,
+                lineHeight: 1,
+              }}
+              title="Настройки отображения состава"
+              aria-label="Настройки отображения состава"
+              aria-expanded={isRosterMenuOpen}
+            >
+              ⋮
+            </button>
+            {isRosterMenuOpen && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: "calc(100% + 8px)",
+                  right: 0,
+                  zIndex: 30,
+                  width: "230px",
+                  padding: "6px",
+                  border: "1px solid var(--hp-border)",
+                  borderRadius: "12px",
+                  backgroundColor: "var(--hp-surface)",
+                  boxShadow: "var(--hp-shadow-md)",
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowHandedness((prev) => !prev);
+                    setIsRosterMenuOpen(false);
+                  }}
+                  style={{
+                    width: "100%",
+                    padding: "10px",
+                    border: "none",
+                    borderRadius: "8px",
+                    background: "transparent",
+                    color: "var(--hp-text)",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: "12px",
+                    fontSize: "14px",
+                    fontWeight: 600,
+                    textAlign: "left",
+                  }}
+                >
+                  <span>🏒 Показывать хват</span>
+                  <span style={{ color: showHandedness ? "var(--hp-success)" : "var(--hp-muted)", fontWeight: 900 }}>
+                    {showHandedness ? "✓" : "—"}
+                  </span>
+                </button>
+                {canAssignLineUniformColors && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowRosterSettings((prev) => !prev);
+                      setIsRosterMenuOpen(false);
+                    }}
+                    style={{
+                      width: "100%",
+                      padding: "10px",
+                      border: "none",
+                      borderRadius: "8px",
+                      background: "transparent",
+                      color: "var(--hp-text)",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: "12px",
+                      fontSize: "14px",
+                      fontWeight: 600,
+                      textAlign: "left",
+                    }}
+                  >
+                    <span>🎽 Цвет формы по звеньям</span>
+                    <span style={{ color: showRosterSettings ? "var(--hp-success)" : "var(--hp-muted)", fontWeight: 900 }}>
+                      {showRosterSettings ? "✓" : "—"}
+                    </span>
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -555,13 +670,33 @@ export const RosterManager = ({
 
           <div style={{ display: "flex", gap: "12px", justifyContent: "center", marginBottom: "16px", flexWrap: "wrap" }}>
             {(["LW", "C", "RW"] as Slot[]).map((slot) =>
-              renderEditableSlot(slot, lineSlots, activeSlot, setActiveSlot, onPlayerClick, clearSlot, avatarUrls),
+              renderEditableSlot(
+                slot,
+                lineSlots,
+                activeSlot,
+                setActiveSlot,
+                onPlayerClick,
+                clearSlot,
+                avatarUrls,
+                showHandedness,
+                duplicateLastNames,
+              ),
             )}
           </div>
 
           <div style={{ display: "flex", gap: "12px", justifyContent: "center", marginTop: "8px", marginBottom: "16px", flexWrap: "wrap" }}>
             {(["LD", "RD"] as Slot[]).map((slot) =>
-              renderEditableSlot(slot, lineSlots, activeSlot, setActiveSlot, onPlayerClick, clearSlot, avatarUrls),
+              renderEditableSlot(
+                slot,
+                lineSlots,
+                activeSlot,
+                setActiveSlot,
+                onPlayerClick,
+                clearSlot,
+                avatarUrls,
+                showHandedness,
+                duplicateLastNames,
+              ),
             )}
           </div>
 
@@ -607,6 +742,11 @@ export const RosterManager = ({
                         <div style={{ fontWeight: "500", fontSize: "15px" }}>
                           {player.firstName} {player.lastName}
                         </div>
+                        {showHandedness && (
+                          <div style={{ marginTop: "5px" }}>
+                            <HandednessBadge handedness={player.handedness} compact={false} />
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))
@@ -856,6 +996,8 @@ export const RosterManager = ({
               members={line.members}
               onPlayerClick={onPlayerClick}
               avatarUrls={avatarUrls}
+              showHandedness={showHandedness}
+              duplicateLastNames={duplicateLastNames}
             />
           </div>
         ))

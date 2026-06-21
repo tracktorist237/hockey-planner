@@ -59,14 +59,21 @@ const buildLinePayload = (line: LineDto, order = line.order): CreateUpdateLineDa
   players: buildPlayersPayload(line),
 });
 
-const cloneRoster = (roster?: LineDto[]): LineDto[] => (
+const cloneRoster = (roster?: LineDto[], attendances?: AttendanceLookUpDto[]): LineDto[] => {
+  const handednessByUserId = new Map((attendances ?? []).map((attendance) => [attendance.userId, attendance.handedness ?? null]));
+
+  return (
   [...(roster ?? [])]
     .sort((a, b) => (a.order || 0) - (b.order || 0))
     .map((line) => ({
       ...line,
-      members: [...(line.members ?? [])],
+      members: (line.members ?? []).map((member) => ({
+        ...member,
+        handedness: member.handedness ?? handednessByUserId.get(member.userId) ?? null,
+      })),
     }))
-);
+  );
+};
 
 const buildMemberFromAttendance = (slot: Slot, player: AttendanceLookUpDto) => ({
   userId: player.userId,
@@ -75,6 +82,7 @@ const buildMemberFromAttendance = (slot: Slot, player: AttendanceLookUpDto) => (
   firstName: player.firstName,
   lastName: player.lastName,
   photoUrl: player.photoUrl ?? null,
+  handedness: player.handedness ?? null,
   role: slotToRole[slot],
   isGuest: Boolean(player.isGuest),
   invitedByUserId: player.invitedByUserId ?? null,
@@ -99,9 +107,9 @@ export const useLineManagement = ({
 
   useEffect(() => {
     if (!hasUnsavedRosterChanges) {
-      setDraftRoster(cloneRoster(event?.roster));
+      setDraftRoster(cloneRoster(event?.roster, event?.attendances));
     }
-  }, [event?.roster, hasUnsavedRosterChanges]);
+  }, [event?.attendances, event?.roster, hasUnsavedRosterChanges]);
 
   const sortedRoster = useMemo(() => {
     return [...draftRoster].sort((a, b) => (a.order || 0) - (b.order || 0));
@@ -273,7 +281,7 @@ export const useLineManagement = ({
         lastName: member.lastName,
         photoUrl: member.photoUrl ?? null,
         primaryPosition: 0,
-        handedness: null,
+        handedness: member.handedness ?? event?.attendances?.find((attendance) => attendance.userId === member.userId)?.handedness ?? null,
         status: 2,
         respondedAt: new Date().toISOString(),
         isGuest: Boolean(member.isGuest),
@@ -285,7 +293,7 @@ export const useLineManagement = ({
     setCreatingLineState(true);
     setEditingLineIndex(index);
     setNewLineNameState("");
-  }, [sortedRoster]);
+  }, [event?.attendances, sortedRoster]);
 
   const saveEditedLine = useCallback(async () => {
     if (editingLineIndex === null || !ensureAuthorized()) {

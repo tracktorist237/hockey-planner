@@ -3,11 +3,15 @@ import { PlayerRole } from "src/types/lines";
 import { Slot, roleToSlot } from "src/pages/EventPage/types";
 import { PlayerAvatar } from "src/components/PlayerAvatar";
 import { getAdaptiveFontSize } from "src/utils/text";
+import { HandednessBadge } from "src/pages/EventPage/components/HandednessBadge";
+import { getRosterPlayerName } from "src/pages/EventPage/utils/playerDisplayName";
 
 interface LineCirclesProps {
   members?: PlayerLookUpDto[] | null;
   onPlayerClick: (userId: string) => void;
   avatarUrls?: Record<string, string>;
+  showHandedness?: boolean;
+  duplicateLastNames?: Set<string>;
 }
 
 const getSlotLabel = (slot: Slot): string => {
@@ -27,7 +31,13 @@ const getSlotLabel = (slot: Slot): string => {
   }
 };
 
-export const LineCircles = ({ members, onPlayerClick, avatarUrls }: LineCirclesProps) => {
+export const LineCircles = ({
+  members,
+  onPlayerClick,
+  avatarUrls,
+  showHandedness = false,
+  duplicateLastNames = new Set<string>(),
+}: LineCirclesProps) => {
   const slots: Record<Slot, PlayerLookUpDto | null> = {
     LW: null,
     C: null,
@@ -44,7 +54,10 @@ export const LineCircles = ({ members, onPlayerClick, avatarUrls }: LineCirclesP
     }
   });
 
-  const renderCircle = (slot: Slot) => (
+  const renderCircle = (slot: Slot) => {
+    const playerDisplayName = slots[slot] ? getRosterPlayerName(slots[slot]!, duplicateLastNames) : "";
+
+    return (
     <div key={slot} style={{ textAlign: "center", width: "70px" }}>
       <div
         onClick={() => {
@@ -96,6 +109,18 @@ export const LineCircles = ({ members, onPlayerClick, avatarUrls }: LineCirclesP
               fallbackColor="var(--hp-heading)"
               fontSize={20}
             />
+            {showHandedness && (
+              <span
+                style={{
+                  position: "absolute",
+                  top: "-4px",
+                  ...(slots[slot]!.handedness === 2 ? { right: "-4px" } : { left: "-4px" }),
+                  zIndex: 7,
+                }}
+              >
+                <HandednessBadge handedness={slots[slot]!.handedness} />
+              </span>
+            )}
             <div
               style={{
                 position: "absolute",
@@ -138,7 +163,7 @@ export const LineCircles = ({ members, onPlayerClick, avatarUrls }: LineCirclesP
       {slots[slot] && (
         <div
           style={{
-            fontSize: `${getAdaptiveFontSize(slots[slot]!.lastName, {
+            fontSize: `${getAdaptiveFontSize(playerDisplayName, {
               base: 11,
               min: 8,
               startShrinkAt: 10,
@@ -165,11 +190,12 @@ export const LineCircles = ({ members, onPlayerClick, avatarUrls }: LineCirclesP
             e.currentTarget.style.textDecoration = "none";
           }}
         >
-          {slots[slot]!.lastName}
+          {playerDisplayName}
         </div>
       )}
     </div>
-  );
+    );
+  };
 
   return (
     <div style={{ marginTop: "12px" }}>

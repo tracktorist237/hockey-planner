@@ -261,11 +261,24 @@ export function EventPage({ eventId, onBack, currentUser }: EventPageProps) {
 
   return (
     <div {...eventTabsSwipeHandlers} style={{ padding: "0", minHeight: "100vh", background: "var(--hp-bg-gradient)", color: "var(--hp-text)", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", boxSizing: "border-box" }}>
-      <div style={{ backgroundColor: "var(--hp-surface)", padding: "16px", borderBottom: "1px solid var(--hp-border)", boxShadow: "var(--hp-shadow-sm)", position: "sticky", top: 0, zIndex: 100 }}>
-        <div style={{ display: "flex", alignItems: "center", marginBottom: "12px" }}>
+      <div
+        style={{
+          background: "color-mix(in srgb, var(--hp-surface) 96%, transparent)",
+          padding: "8px 12px",
+          borderBottom: "1px solid var(--hp-border)",
+          boxShadow: "var(--hp-shadow-sm)",
+          backdropFilter: "blur(10px)",
+          position: "sticky",
+          top: 0,
+          zIndex: 100,
+        }}
+      >
+        <div style={{ width: "100%", maxWidth: "600px", margin: "0 auto", display: "flex", alignItems: "center", gap: "8px" }}>
           <button
+            type="button"
             onClick={onBack}
-            style={{ width: "44px", height: "44px", display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid var(--hp-border)", background: "var(--hp-surface)", fontSize: "20px", cursor: "pointer", borderRadius: "10px", marginRight: "12px", flexShrink: 0, transition: "all 0.2s ease" }}
+            aria-label="Назад"
+            style={{ width: "40px", height: "40px", display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid var(--hp-border)", background: "var(--hp-surface-soft)", color: "var(--hp-heading)", fontSize: "19px", cursor: "pointer", borderRadius: "12px", padding: 0, flexShrink: 0, transition: "all 0.2s ease" }}
             onMouseEnter={(e) => {
               e.currentTarget.style.backgroundColor = "var(--hp-surface-hover)";
               e.currentTarget.style.borderColor = "var(--hp-primary)";
@@ -277,8 +290,8 @@ export function EventPage({ eventId, onBack, currentUser }: EventPageProps) {
           >
             ←
           </button>
-          <div style={{ flex: 1 }}>
-            <CurrentPlayerHeader />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <CurrentPlayerHeader compact />
           </div>
         </div>
       </div>
@@ -364,6 +377,7 @@ export function EventPage({ eventId, onBack, currentUser }: EventPageProps) {
             avatarUrls={avatarUrls}
             eventType={event.type}
             teamId={event.teamId}
+            attendances={event.attendances}
           />
         )}
         {activeTab === "goalies" && <GoaliesPanel eventId={event.id} currentUserId={selectedUserId} />}
@@ -387,7 +401,7 @@ export function EventPage({ eventId, onBack, currentUser }: EventPageProps) {
         div[style*="overflowY: auto"]::-webkit-scrollbar-thumb:hover { background: var(--hp-primary-hover); }
         @media (max-width: 360px) { div[style*="padding: 16px"] { padding: 12px !important; } div[style*="padding: 20px"] { padding: 16px !important; } button[style*="padding: 14px 16px"] { padding: 12px !important; font-size: 15px !important; } }
         @media (min-width: 768px) { div[style*="minHeight: 100vh"] { max-width: 600px; margin: 0 auto; border-left: 1px solid var(--hp-border); border-right: 1px solid var(--hp-border); min-height: 100vh; } }
-        @supports (padding: max(0px)) { div[style*="position: sticky"] { padding-top: max(16px, env(safe-area-inset-top, 16px)); } }
+        @supports (padding: max(0px)) { div[style*="position: sticky"] { padding-top: max(8px, env(safe-area-inset-top, 8px)); } }
         @keyframes slideDown { from { opacity: 0; transform: translateY(-10px);} to { opacity: 1; transform: translateY(0);} }
       `}</style>
     </div>

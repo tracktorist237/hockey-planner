@@ -45,6 +45,7 @@ export interface PlayerLookUpDto {
   lastName?: string;
   photoUrl?: string | null;
   role: number;
+  handedness?: number | null;
   isGuest?: boolean;
   invitedByUserId?: string | null;
 }
