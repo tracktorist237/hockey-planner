@@ -2,7 +2,6 @@ import { CSSProperties, FormEvent, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { ReportProblemDialog } from "src/components/ReportProblemDialog";
 import { useAuth } from "src/hooks/useAuth";
-import { markOnboardingRequired, shouldRunOnboarding } from "src/utils/onboarding";
 import { useTheme } from "src/context/ThemeContext";
 import { getVersionInfo } from "src/api/version";
 
@@ -110,7 +109,6 @@ export function AuthPage() {
     registerWithPassword,
     forgotPassword,
     resetPassword,
-    currentUser,
   } = useAuth();
 
   const resetToken = searchParams.get("resetToken") ?? searchParams.get("token") ?? "";
@@ -174,14 +172,14 @@ export function AuthPage() {
   }, [legacyConfirmToken, navigate]);
 
   useEffect(() => {
-    if (authLoading || resetToken || legacyConfirmToken) {
+    if (authLoading || loading || mode === "register" || resetToken || legacyConfirmToken) {
       return;
     }
 
     if (isAuthenticated) {
-      navigate(shouldRunOnboarding(currentUser) ? "/onboarding/link-player" : "/events", { replace: true });
+      navigate("/events", { replace: true });
     }
-  }, [authLoading, currentUser, isAuthenticated, legacyConfirmToken, navigate, resetToken]);
+  }, [authLoading, isAuthenticated, legacyConfirmToken, loading, mode, navigate, resetToken]);
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
@@ -207,14 +205,13 @@ export function AuthPage() {
           return;
         }
 
-        await registerWithPassword({
+        const registeredUser = await registerWithPassword({
           firstName: "Новый",
           lastName: "Игрок",
           email,
           password,
         });
-        markOnboardingRequired();
-        navigate("/onboarding/link-player?emailConfirmation=sent", { replace: true });
+        navigate(`/users/${registeredUser.id}/edit?next=${encodeURIComponent("/teams")}`, { replace: true });
         return;
       }
 

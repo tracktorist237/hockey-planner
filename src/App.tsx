@@ -21,7 +21,6 @@ import { ConfirmEmailPage } from "src/pages/ConfirmEmailPage";
 import { EventPage } from "src/pages/EventPage/EventPage";
 import { EventsListPage } from "src/pages/EventsListPage/EventsListPage";
 import { InstructionArticlePage, InstructionsListPage } from "src/pages/InstructionsPage";
-import { LinkPlayerPage } from "src/pages/LinkPlayerPage";
 import { NewsPage } from "src/pages/NewsPage";
 import { NotificationSettingsPage } from "src/pages/NotificationSettingsPage";
 import { TeamPwaSettingsPage } from "src/pages/TeamPwaSettingsPage";
@@ -40,7 +39,6 @@ import { usePushSubscriptionSync } from "src/hooks/usePushSubscriptionSync";
 import { useAuth } from "src/hooks/useAuth";
 import { AuthProvider } from "src/context/AuthContext";
 import { ThemeProvider } from "src/context/ThemeContext";
-import { shouldRunOnboarding } from "src/utils/onboarding";
 import { useEffect, useState } from "react";
 import { getMyTeams } from "src/api/teams";
 import { AppRole } from "src/constants/roles";
@@ -79,16 +77,6 @@ function RequireAuth({ children }: { children: ReactElement }) {
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
-  }
-
-  return children;
-}
-
-function RequireOnboardingComplete({ children }: { children: ReactElement }) {
-  const { currentUser } = useAuth();
-
-  if (shouldRunOnboarding(currentUser)) {
-    return <Navigate to="/onboarding/link-player" replace />;
   }
 
   return children;
@@ -224,22 +212,13 @@ function AppRoutes() {
   }, [currentUser?.id, setCurrentTeam]);
 
   usePushSubscriptionSync(currentUser?.id);
-  const homePath = isAuthenticated
-    ? shouldRunOnboarding(currentUser)
-      ? "/onboarding/link-player"
-      : "/events"
-    : "/login";
+  const homePath = isAuthenticated ? "/events" : "/login";
 
   return (
     <>
       <Routes>
         <Route
           path="/"
-          element={<Navigate to={homePath} replace />}
-        />
-
-        <Route
-          path="/start-search"
           element={<Navigate to={homePath} replace />}
         />
 
@@ -274,26 +253,15 @@ function AppRoutes() {
         />
 
         <Route
-          path="/onboarding/link-player"
-          element={
-            <RequireAuth>
-              <LinkPlayerPage />
-            </RequireAuth>
-          }
-        />
-
-        <Route
           path="/events"
           element={
             <RequireAuth>
-              <RequireOnboardingComplete>
-                <EventsListPage
-                  currentUser={currentUser}
-                  currentTeamId={currentTeamId}
-                  currentTeamName={currentTeamName}
-                  onTeamChange={setCurrentTeam}
-                />
-              </RequireOnboardingComplete>
+              <EventsListPage
+                currentUser={currentUser}
+                currentTeamId={currentTeamId}
+                currentTeamName={currentTeamName}
+                onTeamChange={setCurrentTeam}
+              />
             </RequireAuth>
           }
         />
@@ -302,11 +270,9 @@ function AppRoutes() {
           path="/events/create"
           element={
             <RequireAuth>
-              <RequireOnboardingComplete>
-                <RequireEventManager>
-                  <CreateEventWrapper currentTeamId={currentTeamId} />
-                </RequireEventManager>
-              </RequireOnboardingComplete>
+              <RequireEventManager>
+                <CreateEventWrapper currentTeamId={currentTeamId} />
+              </RequireEventManager>
             </RequireAuth>
           }
         />
@@ -315,9 +281,7 @@ function AppRoutes() {
           path="/events/:id"
           element={
             <RequireAuth>
-              <RequireOnboardingComplete>
-                <EventPageWrapper />
-              </RequireOnboardingComplete>
+              <EventPageWrapper />
             </RequireAuth>
           }
         />
@@ -326,11 +290,9 @@ function AppRoutes() {
           path="/events/:id/delete"
           element={
             <RequireAuth>
-              <RequireOnboardingComplete>
-                <RequireEventManager>
-                  <DeleteEventPage />
-                </RequireEventManager>
-              </RequireOnboardingComplete>
+              <RequireEventManager>
+                <DeleteEventPage />
+              </RequireEventManager>
             </RequireAuth>
           }
         />
@@ -339,11 +301,9 @@ function AppRoutes() {
           path="/events/:id/edit"
           element={
             <RequireAuth>
-              <RequireOnboardingComplete>
-                <RequireEventManager>
-                  <UpdateEventPage />
-                </RequireEventManager>
-              </RequireOnboardingComplete>
+              <RequireEventManager>
+                <UpdateEventPage />
+              </RequireEventManager>
             </RequireAuth>
           }
         />
@@ -372,9 +332,7 @@ function AppRoutes() {
           path="/calendar"
           element={
             <RequireAuth>
-              <RequireOnboardingComplete>
-                <CalendarPage />
-              </RequireOnboardingComplete>
+              <CalendarPage />
             </RequireAuth>
           }
         />
@@ -384,9 +342,7 @@ function AppRoutes() {
           path="/news"
           element={
             <RequireAuth>
-              <RequireOnboardingComplete>
-                <NewsPage />
-              </RequireOnboardingComplete>
+              <NewsPage />
             </RequireAuth>
           }
         />
@@ -395,9 +351,7 @@ function AppRoutes() {
           path="/settings"
           element={
             <RequireAuth>
-              <RequireOnboardingComplete>
-                <SettingsPage onOpenDebug={() => setIsDebugOpen(true)} />
-              </RequireOnboardingComplete>
+              <SettingsPage onOpenDebug={() => setIsDebugOpen(true)} />
             </RequireAuth>
           }
         />
@@ -406,9 +360,7 @@ function AppRoutes() {
           path="/settings/notifications"
           element={
             <RequireAuth>
-              <RequireOnboardingComplete>
-                <NotificationSettingsPage />
-              </RequireOnboardingComplete>
+              <NotificationSettingsPage />
             </RequireAuth>
           }
         />
@@ -417,9 +369,7 @@ function AppRoutes() {
           path="/settings/team-apps"
           element={
             <RequireAuth>
-              <RequireOnboardingComplete>
-                <TeamPwaSettingsPage />
-              </RequireOnboardingComplete>
+              <TeamPwaSettingsPage />
             </RequireAuth>
           }
         />
@@ -428,9 +378,7 @@ function AppRoutes() {
           path="/pwa/teams/:teamId"
           element={
             <RequireAuth>
-              <RequireOnboardingComplete>
-                <TeamPwaLaunchPage onTeamChange={setCurrentTeam} />
-              </RequireOnboardingComplete>
+              <TeamPwaLaunchPage onTeamChange={setCurrentTeam} />
             </RequireAuth>
           }
         />
@@ -439,9 +387,7 @@ function AppRoutes() {
           path="/updates"
           element={
             <RequireAuth>
-              <RequireOnboardingComplete>
-                <UpdatesPage />
-              </RequireOnboardingComplete>
+              <UpdatesPage />
             </RequireAuth>
           }
         />
@@ -527,14 +473,12 @@ function AppRoutes() {
           path="/teams"
           element={
             <RequireAuth>
-              <RequireOnboardingComplete>
-                <TeamsPage
-                  currentUser={currentUser}
-                  currentTeamId={currentTeamId}
-                  currentTeamName={currentTeamName}
-                  onTeamChange={setCurrentTeam}
-                />
-              </RequireOnboardingComplete>
+              <TeamsPage
+                currentUser={currentUser}
+                currentTeamId={currentTeamId}
+                currentTeamName={currentTeamName}
+                onTeamChange={setCurrentTeam}
+              />
             </RequireAuth>
           }
         />
@@ -543,13 +487,11 @@ function AppRoutes() {
           path="/teams/:id"
           element={
             <RequireAuth>
-              <RequireOnboardingComplete>
-                <TeamDetailsPage
-                  currentUser={currentUser}
-                  currentTeamId={currentTeamId}
-                  onTeamChange={setCurrentTeam}
-                />
-              </RequireOnboardingComplete>
+              <TeamDetailsPage
+                currentUser={currentUser}
+                currentTeamId={currentTeamId}
+                onTeamChange={setCurrentTeam}
+              />
             </RequireAuth>
           }
         />
@@ -558,9 +500,7 @@ function AppRoutes() {
           path="/teams/:id/manage"
           element={
             <RequireAuth>
-              <RequireOnboardingComplete>
-                <TeamManagePage currentUser={currentUser} />
-              </RequireOnboardingComplete>
+              <TeamManagePage currentUser={currentUser} />
             </RequireAuth>
           }
         />

@@ -21,10 +21,6 @@ export interface RegisterAuthRequest {
   jerseyNumber?: number | null;
 }
 
-export interface LinkPlayerRequest {
-  userId: string;
-}
-
 export interface ChangeEmailRequest {
   newEmail: string;
   password: string;
@@ -121,22 +117,6 @@ export async function registerAuth(request: RegisterAuthRequest): Promise<User> 
   });
 
   return setAuthTokens(response);
-}
-
-export async function linkPlayerAuth(request: LinkPlayerRequest): Promise<User> {
-  const response = await authFetch("/api/auth/link-player", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(request),
-  });
-
-  if (!response.ok) {
-    throw new Error(await readErrorMessage(response));
-  }
-
-  return setAuthTokens((await response.json()) as AuthResponse);
 }
 
 export async function changeEmailAuth(request: ChangeEmailRequest): Promise<User> {

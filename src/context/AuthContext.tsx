@@ -10,8 +10,6 @@ import {
   forgotPasswordAuth,
   getCurrentAuthUser,
   getRefreshToken,
-  LinkPlayerRequest,
-  linkPlayerAuth,
   loginAuth,
   logoutAuth,
   registerAuth,
@@ -36,7 +34,6 @@ interface AuthContextValue {
   login: (user: User) => Promise<void>;
   loginWithPassword: (email: string, password: string) => Promise<void>;
   registerWithPassword: (request: RegisterAuthRequest) => Promise<User>;
-  linkPlayer: (request: LinkPlayerRequest) => Promise<User>;
   changeEmail: (request: ChangeEmailRequest) => Promise<User>;
   changePassword: (request: ChangePasswordRequest) => Promise<User>;
   resendEmailConfirmation: () => Promise<void>;
@@ -127,15 +124,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [setCurrentUser],
   );
 
-  const linkPlayer = useCallback(
-    async (request: LinkPlayerRequest) => {
-      const user = await linkPlayerAuth(request);
-      setCurrentUser(user);
-      return user;
-    },
-    [setCurrentUser],
-  );
-
   const changeEmail = useCallback(
     async (request: ChangeEmailRequest) => {
       const user = await changeEmailAuth(request);
@@ -218,7 +206,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       login,
       loginWithPassword,
       registerWithPassword,
-      linkPlayer,
       changeEmail,
       changePassword,
       resendEmailConfirmation,
@@ -234,7 +221,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       login,
       loginWithPassword,
       registerWithPassword,
-      linkPlayer,
       changeEmail,
       changePassword,
       resendEmailConfirmation,

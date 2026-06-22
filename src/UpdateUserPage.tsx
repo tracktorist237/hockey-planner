@@ -28,7 +28,6 @@ import {
 import { User as AuthUser } from "src/types/user";
 import { normalizeSpbhlBirthDateForInput } from "src/utils/spbhl";
 import { getAdaptiveFontSize } from "src/utils/text";
-import { markOnboardingCompleted } from "src/utils/onboarding";
 
 const SPBHL_PROFILE_URL = "https://spbhl.ru/Player?PlayerID=";
 const getSpbhlAvatarUrl = (playerId: string, size: "M" | "O" = "O") =>
@@ -429,7 +428,6 @@ export function UpdateUserPage() {
 
       try {
         const updatedUser = await updateUser(id, payload);
-        markOnboardingCompleted(updatedUser.id);
         syncCurrentUser(updatedUser);
         setSuccessMessage("✅ Профиль обновлён");
         setTimeout(() => navigate(nextPath), 700);
