@@ -2,7 +2,7 @@
 export const APP_VERSION = process.env.REACT_APP_VERSION || 
                           (typeof window !== 'undefined' && 
                            (window as any).appVersion) || 
-                          '0.3.3';
+                          '0.3.5';
 
 // Дополнительная информация о сборке
 export const BUILD_TIME = process.env.REACT_APP_BUILD_TIME || 
