@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { AddressSearchInput } from "src/AddressSearchInput";
 import { LoadingIndicator } from "src/components/LoadingIndicator";
+import { InternalPageHeader } from "src/components/InternalPageHeader";
 import { BottomNav } from "src/components/BottomNav";
 import { getTeam, getTeamMembers, removeTeamMember, updateTeam, updateTeamMember, uploadTeamAvatar, uploadTeamCover } from "src/api/teams";
 import { TeamContactItem, TeamDto, TeamMemberDto, TeamVisibility } from "src/types/teams";
@@ -444,17 +445,13 @@ export function TeamManagePage({ currentUser }: TeamManagePageProps) {
   const isPublic = form.visibility === TeamVisibility.Public;
 
   return (
-    <div style={{ minHeight: "100vh", padding: "16px", paddingBottom: "120px", background: "linear-gradient(135deg, var(--hp-surface-soft) 0%, var(--hp-info-soft) 100%)", boxSizing: "border-box" }}>
-      <main style={{ maxWidth: 620, margin: "0 auto" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
-          <button onClick={() => navigate(id ? `/teams/${id}` : "/teams")} style={{ borderRadius: 12, border: "1px solid var(--hp-border)", background: "var(--hp-surface)", width: 42, height: 42, cursor: "pointer", fontSize: 20 }} aria-label="Назад">
-            ←
-          </button>
-          <div>
-            <h1 style={{ margin: 0, fontSize: 26, color: "var(--hp-text-strong)" }}>Настройки команды</h1>
-            <div style={{ color: "var(--hp-muted)", fontSize: 14 }}>{team?.name ?? "Оформление, права и приглашения"}</div>
-          </div>
-        </div>
+    <div style={{ minHeight: "100vh", paddingBottom: "120px", background: "linear-gradient(135deg, var(--hp-surface-soft) 0%, var(--hp-info-soft) 100%)", boxSizing: "border-box" }}>
+      <InternalPageHeader
+        title="Настройки команды"
+        subtitle={team?.name ?? "Оформление, права и приглашения"}
+        onBack={() => navigate(id ? `/teams/${id}` : "/teams")}
+      />
+      <main style={{ maxWidth: 620, margin: "0 auto", padding: "14px 16px 0", boxSizing: "border-box" }}>
 
         {error && <div style={{ marginBottom: 12, background: "var(--hp-danger-soft)", color: "var(--hp-danger)", borderRadius: 14, padding: "12px 14px" }}>{error}</div>}
         {message && <div style={{ marginBottom: 12, background: "var(--hp-success-soft)", color: "var(--hp-success)", borderRadius: 14, padding: "12px 14px", fontWeight: 800 }}>{message}</div>}
@@ -469,8 +466,21 @@ export function TeamManagePage({ currentUser }: TeamManagePageProps) {
 
         {!loading && team && canManageTeam(team) && (
           <>
-            <section style={{ ...cardStyle, padding: 10 }}>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 6 }}>
+            <section
+              style={{
+                position: "sticky",
+                top: 57,
+                zIndex: 150,
+                margin: "0 -16px",
+                padding: "0 12px",
+                overflowX: "auto",
+                scrollbarWidth: "none",
+                borderBottom: "1px solid var(--hp-border)",
+                background: "color-mix(in srgb, var(--hp-surface) 96%, transparent)",
+                backdropFilter: "blur(10px)",
+              }}
+            >
+              <div style={{ display: "flex", width: "max-content", minWidth: "100%", gap: 4 }}>
                 {manageTabs.map((tab) => {
                   const isActive = activeTab === tab.key;
                   return (
@@ -480,16 +490,18 @@ export function TeamManagePage({ currentUser }: TeamManagePageProps) {
                       onClick={() => setActiveTab(tab.key)}
                       title={tab.hint}
                       style={{
-                        border: isActive ? "1px solid var(--hp-primary)" : "1px solid transparent",
-                        borderRadius: 12,
-                        padding: "10px 4px",
-                        background: isActive ? "var(--hp-surface)" : "transparent",
-                        color: isActive ? "var(--hp-heading)" : "var(--hp-muted)",
-                        boxShadow: isActive ? "var(--hp-shadow-sm)" : "none",
+                        position: "relative",
+                        border: 0,
+                        borderBottom: isActive ? "3px solid var(--hp-primary)" : "3px solid transparent",
+                        borderRadius: 0,
+                        padding: "12px 11px 10px",
+                        background: "transparent",
+                        color: isActive ? "var(--hp-primary)" : "var(--hp-muted)",
                         fontWeight: 900,
                         cursor: "pointer",
                         fontSize: 13,
-                        minWidth: 0,
+                        whiteSpace: "nowrap",
+                        transition: "color 180ms ease, border-color 180ms ease, background 180ms ease",
                       }}
                     >
                       {tab.label}

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { getTeam } from "src/api/teams";
 import { LoadingIndicator } from "src/components/LoadingIndicator";
+import { InternalPageHeader } from "src/components/InternalPageHeader";
 import { useAuth } from "src/hooks/useAuth";
 import { TeamDto } from "src/types/teams";
 import {
@@ -66,17 +67,7 @@ export function TeamPwaSettingsPage() {
   return (
     <div style={{ minHeight: "100vh", background: "var(--hp-bg-gradient)", color: "var(--hp-text)", padding: 16, boxSizing: "border-box" }}>
       <main style={{ width: "100%", maxWidth: 620, margin: "0 auto" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
-          <button
-            type="button"
-            aria-label="Назад"
-            onClick={() => navigate("/settings")}
-            style={{ width: 42, height: 42, borderRadius: 12, border: "1px solid var(--hp-border)", background: "var(--hp-surface)", color: "var(--hp-heading)", cursor: "pointer", fontSize: 20 }}
-          >
-            ←
-          </button>
-          <h1 style={{ margin: 0, color: "var(--hp-heading)", fontSize: 22 }}>Стартовая страница</h1>
-        </div>
+        <InternalPageHeader title="Стартовая страница" onBack={() => navigate("/settings")} position="static" marginBottom={16} />
 
         {isTeamPwaReinstallRequired() && (
           <div style={{ marginBottom: 12, border: "1px solid var(--hp-warning-border)", borderRadius: 14, padding: 13, background: "var(--hp-warning-soft)", color: "var(--hp-warning)", fontSize: 14, fontWeight: 800, lineHeight: 1.45 }}>

@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { LoadingIndicator } from "src/components/LoadingIndicator";
+import { InternalPageHeader } from "src/components/InternalPageHeader";
+import { NotificationBell } from "src/components/NotificationBell";
 import { PlayerAvatar } from "src/components/PlayerAvatar";
 import { TeamTablesPanel } from "src/components/TeamTablesPanel";
 import { getEvents } from "src/api/events";
@@ -525,23 +527,18 @@ export function TeamDetailsPage({ currentUser, currentTeamId, onTeamChange }: Te
       {...teamTabsSwipeHandlers}
       style={{
         minHeight: "100vh",
-        padding: "16px",
         paddingBottom: "32px",
         background: "linear-gradient(135deg, var(--hp-surface-soft) 0%, var(--hp-info-soft) 100%)",
         boxSizing: "border-box",
         touchAction: "pan-y",
       }}
     >
-      <main style={{ maxWidth: 620, margin: "0 auto" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
-          <button
-            onClick={() => navigate("/teams")}
-            style={{ borderRadius: 12, border: "1px solid var(--hp-border)", background: "var(--hp-surface)", width: 42, height: 42, cursor: "pointer", fontSize: 20 }}
-            aria-label="Назад"
-          >
-            ←
-          </button>
-        </div>
+      <InternalPageHeader
+        title=""
+        onBack={() => navigate("/teams")}
+        action={<NotificationBell currentUserId={currentUser?.id} />}
+      />
+      <main style={{ maxWidth: 620, margin: "0 auto", padding: "14px 16px 0", boxSizing: "border-box" }}>
 
         {error && <div style={{ marginBottom: 12, background: "var(--hp-danger-soft)", color: "var(--hp-danger)", borderRadius: 14, padding: "12px 14px" }}>{error}</div>}
         {message && <div style={{ marginBottom: 12, background: "var(--hp-success-soft)", color: "var(--hp-success)", borderRadius: 14, padding: "12px 14px", fontWeight: 800 }}>{message}</div>}

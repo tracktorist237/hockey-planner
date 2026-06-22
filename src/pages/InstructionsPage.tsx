@@ -1,12 +1,12 @@
 import { ReactNode, useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { getInstruction, getInstructions, InstructionArticleDto, InstructionListItemDto } from "src/api/instructions";
+import { InternalPageHeader } from "src/components/InternalPageHeader";
 
 const pageStyle = {
   minHeight: "100vh",
   background: "var(--hp-bg-gradient)",
   color: "var(--hp-text)",
-  padding: "16px",
   boxSizing: "border-box",
 } as const;
 
@@ -14,6 +14,8 @@ const shellStyle = {
   width: "100%",
   maxWidth: 920,
   margin: "0 auto",
+  padding: "14px 16px 28px",
+  boxSizing: "border-box",
   display: "grid",
   gap: 14,
 } as const;
@@ -25,25 +27,6 @@ const cardStyle = {
   boxShadow: "var(--hp-shadow-sm)",
   padding: 16,
   boxSizing: "border-box",
-} as const;
-
-const backButtonStyle = {
-  justifySelf: "start",
-  border: "1px solid var(--hp-border)",
-  borderRadius: 12,
-  width: 40,
-  height: 40,
-  padding: 0,
-  background: "var(--hp-surface-soft)",
-  color: "var(--hp-heading)",
-  boxShadow: "var(--hp-shadow-sm)",
-  fontSize: 22,
-  fontWeight: 900,
-  cursor: "pointer",
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  lineHeight: 1,
 } as const;
 
 type InstructionsLocationState = {
@@ -76,18 +59,13 @@ export function InstructionsListPage() {
 
   return (
     <div style={pageStyle}>
+      <InternalPageHeader
+        title="Инструкции"
+        subtitle="Установка, уведомления и работа с командой"
+        onBack={() => navigate(returnTo, { replace: true })}
+        maxWidth={920}
+      />
       <div style={shellStyle}>
-        <button type="button" onClick={() => navigate(returnTo, { replace: true })} style={backButtonStyle} aria-label="Назад" title="Назад">
-          ←
-        </button>
-
-        <header style={{ ...cardStyle, display: "grid", gap: 6 }}>
-          <h1 style={{ margin: 0, color: "var(--hp-heading)", fontSize: 28 }}>Инструкции</h1>
-          <p style={{ margin: 0, color: "var(--hp-muted)", lineHeight: 1.45 }}>
-            Короткие подсказки по установке приложения, уведомлениям и работе с командой.
-          </p>
-        </header>
-
         {loading && <div style={cardStyle}>Загрузка...</div>}
         {error && <div style={{ ...cardStyle, color: "var(--hp-danger)", background: "var(--hp-danger-soft)", fontWeight: 800 }}>{error}</div>}
 
@@ -157,17 +135,13 @@ export function InstructionArticlePage() {
 
   return (
     <div style={pageStyle}>
+      <InternalPageHeader
+        title={article?.title ?? "Инструкция"}
+        subtitle={article?.summary ?? "Пошаговая помощь"}
+        onBack={() => navigate("/instructions", { replace: true, state: { from: returnTo } })}
+        maxWidth={920}
+      />
       <article style={shellStyle}>
-        <button
-          type="button"
-          onClick={() => navigate("/instructions", { replace: true, state: { from: returnTo } })}
-          style={backButtonStyle}
-          aria-label="К списку инструкций"
-          title="К списку инструкций"
-        >
-          ←
-        </button>
-
         {loading && <div style={cardStyle}>Загрузка...</div>}
         {error && <div style={{ ...cardStyle, color: "var(--hp-danger)", background: "var(--hp-danger-soft)", fontWeight: 800 }}>{error}</div>}
 
@@ -181,10 +155,6 @@ export function InstructionArticlePage() {
               />
             )}
             <div style={{ padding: 18, display: "grid", gap: 14 }}>
-              <div>
-                <h1 style={{ margin: 0, color: "var(--hp-heading)", fontSize: 28, overflowWrap: "anywhere" }}>{article.title}</h1>
-                {article.summary && <p style={{ margin: "8px 0 0", color: "var(--hp-muted)", lineHeight: 1.45 }}>{article.summary}</p>}
-              </div>
               <SafeInstructionContent content={article.content} />
             </div>
           </div>

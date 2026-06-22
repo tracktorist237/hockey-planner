@@ -1,6 +1,7 @@
 import { FormEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PlayerAvatar } from "src/components/PlayerAvatar";
+import { InternalPageHeader } from "src/components/InternalPageHeader";
 import { roleToLabel } from "src/constants/roles";
 import { useAuth } from "src/hooks/useAuth";
 import { getRoleColor } from "src/utils/colors";
@@ -113,24 +114,7 @@ export function ProfilePage() {
         boxSizing: "border-box",
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px" }}>
-        <button
-          onClick={() => navigate("/settings")}
-          style={{
-            width: "44px",
-            height: "44px",
-            border: "1px solid var(--hp-border)",
-            borderRadius: "10px",
-            backgroundColor: "var(--hp-surface)",
-            cursor: "pointer",
-            fontSize: "20px",
-          }}
-          aria-label="Назад"
-        >
-          ←
-        </button>
-        <h1 style={{ margin: 0, fontSize: "22px", color: "var(--hp-heading)" }}>Профиль</h1>
-      </div>
+      <InternalPageHeader title="Профиль" onBack={() => navigate("/settings")} position="static" marginBottom={16} fullBleedInset={16} />
 
       <section
         style={{

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getPublishedReleases, PublicReleaseNotice } from "src/api/releases";
 import { LoadingIndicator } from "src/components/LoadingIndicator";
+import { InternalPageHeader } from "src/components/InternalPageHeader";
 import { NotificationBell } from "src/components/NotificationBell";
 import { useAuth } from "src/hooks/useAuth";
 
@@ -39,40 +40,12 @@ export function UpdatesPage() {
   return (
     <div style={{ minHeight: "100vh", background: "var(--hp-bg-gradient)", color: "var(--hp-text)" }}>
       <div style={{ width: "100%", maxWidth: 600, minHeight: "100vh", margin: "0 auto" }}>
-        <div style={{ background: "var(--hp-surface)", borderBottom: "1px solid var(--hp-border)", boxShadow: "var(--hp-shadow-sm)", padding: 16 }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
-              <button
-                type="button"
-                onClick={() => navigate("/settings")}
-                aria-label="Назад"
-                style={{
-                  width: 44,
-                  height: 44,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  border: "1px solid var(--hp-border)",
-                  borderRadius: 10,
-                  background: "var(--hp-surface)",
-                  color: "var(--hp-heading)",
-                  fontSize: 20,
-                  cursor: "pointer",
-                  flexShrink: 0,
-                }}
-              >
-                ←
-              </button>
-              <div style={{ minWidth: 0 }}>
-                <h1 style={{ margin: 0, fontSize: 20, color: "var(--hp-heading)" }}>Что нового</h1>
-                <div style={{ marginTop: 4, color: "var(--hp-muted)", fontSize: 13, lineHeight: 1.3 }}>
-                  История обновлений и ближайшие планы
-                </div>
-              </div>
-            </div>
-            <NotificationBell currentUserId={currentUser?.id} />
-          </div>
-        </div>
+        <InternalPageHeader
+          title="Что нового"
+          subtitle="История обновлений и ближайшие планы"
+          onBack={() => navigate("/settings")}
+          action={<NotificationBell currentUserId={currentUser?.id} />}
+        />
 
         <main style={{ padding: 16, display: "grid", gap: 12 }}>
           {loading && <LoadingIndicator text="Загрузка обновлений..." block />}

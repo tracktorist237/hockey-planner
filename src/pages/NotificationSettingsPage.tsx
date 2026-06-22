@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getNotificationPreferences, sendTestNotification, updateNotificationPreferences } from "src/api/notifications";
 import { getPushPublicKey, subscribePush, unsubscribePush } from "src/api/push";
+import { InternalPageHeader } from "src/components/InternalPageHeader";
 import { useAuth } from "src/hooks/useAuth";
 import { NotificationPreferencesDto } from "src/types/notifications";
 
@@ -287,50 +288,7 @@ export function NotificationSettingsPage() {
         boxSizing: "border-box",
       }}
     >
-      <div
-        style={{
-          backgroundColor: "var(--hp-surface)",
-          padding: "16px",
-          borderBottom: "1px solid var(--hp-border)",
-          boxShadow: "var(--hp-shadow-sm)",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "12px" }}>
-          <button
-            type="button"
-            onClick={() => navigate("/settings")}
-            aria-label="Назад"
-            style={{
-              width: "44px",
-              height: "44px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              border: "1px solid var(--hp-border)",
-              borderRadius: "10px",
-              background: "var(--hp-surface)",
-              color: "var(--hp-heading)",
-              fontSize: "20px",
-              cursor: "pointer",
-              flexShrink: 0,
-              transition: "all 0.2s ease",
-            }}
-            onMouseEnter={(event) => {
-              event.currentTarget.style.backgroundColor = "var(--hp-surface-soft)";
-              event.currentTarget.style.borderColor = "var(--hp-primary)";
-            }}
-            onMouseLeave={(event) => {
-              event.currentTarget.style.backgroundColor = "var(--hp-surface)";
-              event.currentTarget.style.borderColor = "var(--hp-border)";
-            }}
-          >
-            ←
-          </button>
-          <h1 style={{ margin: 0, fontSize: "20px", fontWeight: 700, color: "var(--hp-heading)" }}>
-            Уведомления
-          </h1>
-        </div>
-      </div>
+      <InternalPageHeader title="Уведомления" onBack={() => navigate("/settings")} />
 
       <div style={{ padding: "16px", paddingBottom: "32px", display: "grid", gap: "16px" }}>
         <div

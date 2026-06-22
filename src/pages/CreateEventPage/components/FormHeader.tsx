@@ -1,3 +1,5 @@
+import { InternalPageHeader } from "src/components/InternalPageHeader";
+
 interface FormHeaderProps {
   onBack: () => void;
   isVisible: boolean;
@@ -5,101 +7,22 @@ interface FormHeaderProps {
   onCopyFromEvent?: () => void;
 }
 
-export const FormHeader = ({
-  onBack,
-  isVisible,
-  title = "Новое событие",
-  onCopyFromEvent,
-}: FormHeaderProps) => {
-  return (
-    <div
-      style={{
-        position: "fixed",
-        top: "0",
-        left: "0",
-        right: "0",
-        zIndex: "100",
-        backgroundColor: "var(--hp-surface)",
-        borderBottom: "1px solid var(--hp-border)",
-        boxShadow: isVisible ? "0 2px 4px rgba(0,0,0,0.05)" : "none",
-        padding: "16px",
-        height: "76px",
-        boxSizing: "border-box",
-        transform: isVisible ? "translateY(0)" : "translateY(-100%)",
-        opacity: isVisible ? 1 : 0,
-        transition: "transform 0.3s ease, opacity 0.3s ease, box-shadow 0.3s ease",
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          height: "100%",
-          maxWidth: "100%",
-          margin: "0 auto",
-          padding: "0 16px",
-          boxSizing: "border-box",
-        }}
+export const FormHeader = ({ onBack, isVisible, title = "Новое событие", onCopyFromEvent }: FormHeaderProps) => (
+  <InternalPageHeader
+    title={title}
+    onBack={onBack}
+    position="fixed"
+    visible={isVisible}
+    action={onCopyFromEvent ? (
+      <button
+        type="button"
+        onClick={onCopyFromEvent}
+        aria-label="Дополнительные действия"
+        title="Дополнительные действия"
+        style={{ width: 40, height: 40, padding: 0, border: "1px solid var(--hp-border)", borderRadius: 12, background: "var(--hp-surface-soft)", color: "var(--hp-heading)", fontSize: 20, lineHeight: 1, fontWeight: 900, cursor: "pointer" }}
       >
-        <button
-          onClick={onBack}
-          style={{
-            width: "44px",
-            height: "44px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            border: "1px solid var(--hp-border)",
-            background: "var(--hp-surface)",
-            fontSize: "20px",
-            cursor: "pointer",
-            borderRadius: "10px",
-            marginRight: "12px",
-            flexShrink: 0,
-            transition: "all 0.2s ease",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = "var(--hp-surface-soft)";
-            e.currentTarget.style.borderColor = "var(--hp-primary)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = "var(--hp-surface)";
-            e.currentTarget.style.borderColor = "var(--hp-border)";
-          }}
-        >
-          ⬅
-        </button>
-        <h1 style={{ margin: 0, fontSize: "20px", fontWeight: "600", color: "var(--hp-heading)", flex: 1 }}>
-          {title}
-        </h1>
-        {onCopyFromEvent && (
-          <button
-            type="button"
-            onClick={onCopyFromEvent}
-            aria-label="Дополнительные действия"
-            title="Дополнительные действия"
-            style={{
-              width: "44px",
-              height: "44px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              border: "1px solid var(--hp-border)",
-              background: "var(--hp-surface)",
-              color: "var(--hp-heading)",
-              fontSize: "24px",
-              lineHeight: 1,
-              cursor: "pointer",
-              borderRadius: "10px",
-              marginLeft: "12px",
-              flexShrink: 0,
-              fontWeight: 900,
-            }}
-          >
-            ⋮
-          </button>
-        )}
-      </div>
-    </div>
-  );
-};
+        ⋮
+      </button>
+    ) : undefined}
+  />
+);
