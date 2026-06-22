@@ -78,8 +78,14 @@ export const useEventsData = (currentUserId?: string, teamId?: string | null) =>
       );
   }, [events]);
 
+  const allEvents = useMemo(
+    () => [...events].sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime()),
+    [events],
+  );
+
   return {
     events: upcomingEvents,
+    allEvents,
     loading,
     error,
     reloadEvents: loadEvents,

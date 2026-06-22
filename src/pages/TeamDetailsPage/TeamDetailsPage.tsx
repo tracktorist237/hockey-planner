@@ -28,6 +28,7 @@ const TeamRole = {
 
 type TeamTab = "news" | "tables" | "members" | "events";
 const teamTabs: readonly TeamTab[] = ["news", "tables", "members", "events"];
+type EventsPeriod = "future" | "past";
 
 const DESCRIPTION_LIMIT = 150;
 
@@ -164,6 +165,7 @@ export function TeamDetailsPage({ currentUser, currentTeamId, onTeamChange }: Te
   const [events, setEvents] = useState<EventLookUpDto[]>([]);
   const [news, setNews] = useState<TeamNewsDto[]>([]);
   const [activeTab, setActiveTab] = useState<TeamTab>("news");
+  const [eventsPeriod, setEventsPeriod] = useState<EventsPeriod>("future");
   const teamTabsSwipeHandlers = useSwipeTabs({ tabs: teamTabs, activeTab, onChange: setActiveTab });
   const [loading, setLoading] = useState(true);
   const [membersLoading, setMembersLoading] = useState(false);
@@ -297,10 +299,19 @@ export function TeamDetailsPage({ currentUser, currentTeamId, onTeamChange }: Te
     [members],
   );
 
-  const sortedEvents = useMemo(
-    () => [...events].sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime()),
-    [events],
-  );
+  const visibleEvents = useMemo(() => {
+    const now = Date.now();
+    const filtered = events.filter((event) => {
+      const startTime = new Date(event.startTime).getTime();
+      const endTime = startTime + (event.durationMinutes ?? 0) * 60_000;
+      return eventsPeriod === "past" ? endTime < now : endTime >= now;
+    });
+
+    return filtered.sort((a, b) => {
+      const difference = new Date(a.startTime).getTime() - new Date(b.startTime).getTime();
+      return eventsPeriod === "past" ? -difference : difference;
+    });
+  }, [events, eventsPeriod]);
 
   const handleJoin = async () => {
     if (!team || !currentUser?.id) {
@@ -1095,6 +1106,32 @@ export function TeamDetailsPage({ currentUser, currentTeamId, onTeamChange }: Te
 
               {activeTab === "events" && (
                 <div style={{ display: "grid", gap: 8 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4, padding: 4, borderRadius: 13, background: "var(--hp-surface-muted)" }}>
+                    {(["future", "past"] as EventsPeriod[]).map((period) => {
+                      const isActive = eventsPeriod === period;
+                      return (
+                        <button
+                          key={period}
+                          type="button"
+                          data-swipe-allow
+                          onClick={() => setEventsPeriod(period)}
+                          style={{
+                            border: isActive ? "1px solid var(--hp-border)" : "1px solid transparent",
+                            borderRadius: 10,
+                            padding: "9px 10px",
+                            background: isActive ? "var(--hp-surface)" : "transparent",
+                            color: isActive ? "var(--hp-heading)" : "var(--hp-muted)",
+                            boxShadow: isActive ? "var(--hp-shadow-sm)" : "none",
+                            fontWeight: 900,
+                            cursor: isActive ? "default" : "pointer",
+                            transition: "background 180ms ease, color 180ms ease, box-shadow 180ms ease",
+                          }}
+                        >
+                          {period === "future" ? "Будущие" : "Прошедшие"}
+                        </button>
+                      );
+                    })}
+                  </div>
                   {canManage && (
                     <button
                       type="button"
@@ -1105,8 +1142,12 @@ export function TeamDetailsPage({ currentUser, currentTeamId, onTeamChange }: Te
                     </button>
                   )}
                   {eventsLoading && <LoadingIndicator text="Загружаем мероприятия..." />}
-                  {!eventsLoading && sortedEvents.length === 0 && <div style={{ color: "var(--hp-muted)" }}>Мероприятий этой команды пока нет.</div>}
-                  {!eventsLoading && sortedEvents.map((event) => <TeamEventCard key={event.id} event={event} onOpen={(eventId) => navigate(`/events/${eventId}`)} />)}
+                  {!eventsLoading && visibleEvents.length === 0 && (
+                    <div style={{ padding: "16px 8px", color: "var(--hp-muted)", textAlign: "center" }}>
+                      {eventsPeriod === "future" ? "Будущих мероприятий пока нет." : "Прошедших мероприятий пока нет."}
+                    </div>
+                  )}
+                  {!eventsLoading && visibleEvents.map((event) => <TeamEventCard key={event.id} event={event} onOpen={(eventId) => navigate(`/events/${eventId}`)} />)}
                 </div>
               )}
               </div>

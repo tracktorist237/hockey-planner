@@ -60,6 +60,29 @@ const isUnanswered = (event: EventLookUpDto) =>
 const getActiveFiltersCount = (filters: AdvancedFilters) =>
   [filters.dateFrom, filters.dateTo].filter(Boolean).length;
 
+const formatFilterDate = (value: string) =>
+  new Date(`${value}T00:00:00`).toLocaleDateString("ru-RU", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+
+const getEventsPeriodLabel = (filters: AdvancedFilters) => {
+  if (filters.dateFrom && filters.dateTo) {
+    return `${formatFilterDate(filters.dateFrom)} — ${formatFilterDate(filters.dateTo)}`;
+  }
+
+  if (filters.dateFrom) {
+    return `С ${formatFilterDate(filters.dateFrom)}`;
+  }
+
+  if (filters.dateTo) {
+    return `По ${formatFilterDate(filters.dateTo)}`;
+  }
+
+  return "Предстоящие мероприятия";
+};
+
 interface EventsViewSwitcherProps {
   activeView: EventsView;
   onViewChange: (view: EventsView) => void;
@@ -435,10 +458,11 @@ export const EventsListPage = ({
   onTeamChange,
 }: EventsListPageProps) => {
   const navigate = useNavigate();
-  const { events, loading, error, reloadEvents } = useEventsData(currentUser?.id, currentTeamId);
+  const { events, allEvents, loading, error, reloadEvents } = useEventsData(currentUser?.id, currentTeamId);
   const [canManageTeamEvents, setCanManageTeamEvents] = useState(false);
   const [eventsView, setEventsView] = useState<EventsView>("list");
   const [teams, setTeams] = useState<TeamDto[]>([]);
+  const [teamsLoading, setTeamsLoading] = useState(true);
   const [activeQuickFilters, setActiveQuickFilters] = useState<QuickFilter[]>([]);
   const [advancedFilters, setAdvancedFilters] = useState<AdvancedFilters>(emptyAdvancedFilters);
   const [isCreateFabVisible, setIsCreateFabVisible] = useState(true);
@@ -446,9 +470,11 @@ export const EventsListPage = ({
   const canCreateEvents = canManageTeamEvents;
 
   const loadTeams = useCallback(async () => {
+    setTeamsLoading(true);
     if (!currentUser?.id) {
       setCanManageTeamEvents(false);
       setTeams([]);
+      setTeamsLoading(false);
       return;
     }
 
@@ -460,6 +486,8 @@ export const EventsListPage = ({
       console.error(error);
       setTeams([]);
       setCanManageTeamEvents(false);
+    } finally {
+      setTeamsLoading(false);
     }
   }, [currentUser?.id]);
 
@@ -527,12 +555,16 @@ export const EventsListPage = ({
     );
   }, []);
 
+  const hasDateRangeFilter = Boolean(advancedFilters.dateFrom || advancedFilters.dateTo);
+
   const filteredEvents = useMemo(() => {
     const today = new Date();
     const fromDate = advancedFilters.dateFrom ? new Date(`${advancedFilters.dateFrom}T00:00:00`) : null;
     const toDate = advancedFilters.dateTo ? new Date(`${advancedFilters.dateTo}T23:59:59`) : null;
 
-    return events.filter((event) => {
+    const sourceEvents = eventsView === "calendar" || hasDateRangeFilter ? allEvents : events;
+
+    return sourceEvents.filter((event) => {
       const eventDate = new Date(event.startTime);
 
       if (activeQuickFilters.includes("unanswered") && !isUnanswered(event)) {
@@ -561,7 +593,9 @@ export const EventsListPage = ({
 
       return true;
     });
-  }, [activeQuickFilters, advancedFilters, events]);
+  }, [activeQuickFilters, advancedFilters, allEvents, events, eventsView, hasDateRangeFilter]);
+
+  const eventsPeriodLabel = getEventsPeriodLabel(advancedFilters);
 
   const hasAnyFilter =
     activeQuickFilters.length > 0 ||
@@ -609,6 +643,47 @@ export const EventsListPage = ({
       </div>
 
       <div data-swipe-tabs-content style={{ padding: "16px", overflowAnchor: "none" }}>
+        {!teamsLoading && currentUser?.id && teams.length === 0 && (
+          <div
+            style={{
+              marginBottom: 14,
+              padding: "13px 14px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 12,
+              flexWrap: "wrap",
+              border: "1px solid var(--hp-info-border)",
+              borderRadius: 14,
+              background: "var(--hp-info-soft)",
+              color: "var(--hp-text)",
+            }}
+          >
+            <div style={{ minWidth: 0, flex: "1 1 220px" }}>
+              <div style={{ color: "var(--hp-heading)", fontWeight: 900 }}>Вы пока не состоите ни в одной команде</div>
+              <div style={{ marginTop: 3, color: "var(--hp-muted)", fontSize: 13, lineHeight: 1.4 }}>
+                Вступите в команду, чтобы видеть её тренировки, матчи и встречи.
+              </div>
+            </div>
+            <button
+              type="button"
+              data-swipe-allow
+              onClick={() => navigate("/teams")}
+              style={{
+                border: "1px solid var(--hp-primary)",
+                borderRadius: 11,
+                padding: "9px 12px",
+                background: "var(--hp-primary)",
+                color: "white",
+                fontWeight: 900,
+                cursor: "pointer",
+                whiteSpace: "nowrap",
+              }}
+            >
+              Найти команду
+            </button>
+          </div>
+        )}
         {eventsView === "calendar" ? (
           loading ? (
             <LoadingIndicator text="Загрузка календаря..." block />
@@ -672,7 +747,7 @@ export const EventsListPage = ({
               }}
             >
               <h2 style={{ margin: "0", fontSize: "18px", fontWeight: "600", color: "var(--hp-text)" }}>
-                Предстоящие мероприятия
+                {eventsPeriodLabel}
               </h2>
               <div
                 style={{
