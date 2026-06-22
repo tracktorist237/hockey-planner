@@ -9,6 +9,13 @@ interface NotificationBellProps {
 
 const NOTIFICATIONS_POLL_INTERVAL_MS = 60000;
 
+const formatNotificationDate = (value: string): string => {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+
+  return `${date.toLocaleDateString("ru-RU", { day: "2-digit", month: "2-digit" })} · ${date.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" })}`;
+};
+
 export function NotificationBell({ currentUserId }: NotificationBellProps) {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
@@ -166,7 +173,7 @@ export function NotificationBell({ currentUserId }: NotificationBellProps) {
               Прочитать все
             </button>
           </div>
-          <div style={{ maxHeight: "360px", overflowY: "auto" }}>
+          <div style={{ maxHeight: "360px", overflowY: "auto", overflowX: "hidden" }}>
             {items.length === 0 ? (
               <div style={{ padding: "18px", color: "var(--hp-muted)", textAlign: "center" }}>Пока пусто</div>
             ) : (
@@ -179,6 +186,10 @@ export function NotificationBell({ currentUserId }: NotificationBellProps) {
                   }}
                   style={{
                     width: "100%",
+                    minWidth: 0,
+                    maxWidth: "100%",
+                    boxSizing: "border-box",
+                    overflow: "hidden",
                     border: "none",
                     borderBottom: "1px solid var(--hp-border)",
                     background: notification.isRead ? "var(--hp-surface)" : "var(--hp-primary-soft)",
@@ -190,8 +201,13 @@ export function NotificationBell({ currentUserId }: NotificationBellProps) {
                     gap: "4px",
                   }}
                 >
-                  <span style={{ color: "var(--hp-heading)", fontWeight: 900, fontSize: "13px" }}>{notification.title}</span>
-                  <span style={{ color: "var(--hp-muted)", fontSize: "12px", lineHeight: 1.35 }}>{notification.body}</span>
+                  <span style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 10 }}>
+                    <span style={{ minWidth: 0, color: "var(--hp-heading)", fontWeight: 900, fontSize: "13px", overflowWrap: "anywhere", wordBreak: "break-word", display: "-webkit-box", WebkitBoxOrient: "vertical", WebkitLineClamp: 2, overflow: "hidden" }}>{notification.title}</span>
+                    <time dateTime={notification.createdAt} style={{ flexShrink: 0, color: "var(--hp-muted)", fontSize: 10, fontWeight: 700, whiteSpace: "nowrap", opacity: 0.82 }}>
+                      {formatNotificationDate(notification.createdAt)}
+                    </time>
+                  </span>
+                  <span style={{ minWidth: 0, maxWidth: "100%", color: "var(--hp-muted)", fontSize: "12px", lineHeight: 1.35, overflowWrap: "anywhere", wordBreak: "break-word", whiteSpace: "normal", display: "-webkit-box", WebkitBoxOrient: "vertical", WebkitLineClamp: 3, overflow: "hidden" }}>{notification.body}</span>
                 </button>
               ))
             )}
