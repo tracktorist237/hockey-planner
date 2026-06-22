@@ -51,6 +51,37 @@ export function MainPageHeader({ title }: MainPageHeaderProps) {
 
           <NotificationBell currentUserId={currentUser?.id} />
         </div>
+        {currentUser?.emailConfirmed === false && (
+          <button
+            type="button"
+            onClick={() => navigate("/profile")}
+            style={{
+              width: "100%",
+              maxWidth: 600,
+              minHeight: 38,
+              margin: "8px auto 0",
+              padding: "8px 14px",
+              border: "1px solid var(--hp-warning-border)",
+              borderRadius: 12,
+              background: "var(--hp-warning-soft)",
+              color: "var(--hp-warning)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 8,
+              fontSize: 14,
+              fontWeight: 900,
+              cursor: "pointer",
+              boxSizing: "border-box",
+              boxShadow: "0 2px 8px rgba(245, 158, 11, 0.16)",
+            }}
+            aria-label="Перейти к подтверждению электронной почты"
+          >
+            <span aria-hidden="true">✉️</span>
+            <span>Подтвердите почту</span>
+            <span aria-hidden="true" style={{ marginLeft: 2 }}>→</span>
+          </button>
+        )}
       </header>
 
       <GlobalSearchDialog isOpen={isSearchOpen} currentUserId={currentUser?.id ?? null} onClose={() => setIsSearchOpen(false)} />
