@@ -38,7 +38,7 @@ interface EditableMemberRowProps {
   canRemove: boolean;
   saving: boolean;
   removing: boolean;
-  onSave: (member: TeamMemberDto, role: number, badgeTitle: string) => void;
+  onSave: (member: TeamMemberDto, role: number, badgeTitle: string, teamJerseyNumber: number | null) => void;
   onRemove: (member: TeamMemberDto) => void;
 }
 
@@ -47,24 +47,28 @@ function EditableMemberRow({ member, canEditBadge, canEditRole, canRemove, savin
   const [isActionsOpen, setIsActionsOpen] = useState(false);
   const [role, setRole] = useState(member.role);
   const [badgeTitle, setBadgeTitle] = useState(member.badgeTitle ?? "");
+  const [teamJerseyNumber, setTeamJerseyNumber] = useState(member.teamJerseyNumber?.toString() ?? "");
 
   useEffect(() => {
     setRole(member.role);
     setBadgeTitle(member.badgeTitle ?? "");
-  }, [member.badgeTitle, member.role]);
+    setTeamJerseyNumber(member.teamJerseyNumber?.toString() ?? "");
+  }, [member.badgeTitle, member.role, member.teamJerseyNumber]);
 
-  const hasChanges = role !== member.role || badgeTitle.trim() !== (member.badgeTitle ?? "");
+  const normalizedTeamNumber = teamJerseyNumber === "" ? null : Number(teamJerseyNumber);
+  const hasChanges = role !== member.role || badgeTitle.trim() !== (member.badgeTitle ?? "") || normalizedTeamNumber !== (member.teamJerseyNumber ?? null);
   const canSave = hasChanges && !saving && (canEditBadge || canEditRole);
   const name = `${member.lastName ?? ""} ${member.firstName ?? ""}`.trim() || "Без имени";
 
   const handleCancel = () => {
     setRole(member.role);
     setBadgeTitle(member.badgeTitle ?? "");
+    setTeamJerseyNumber(member.teamJerseyNumber?.toString() ?? "");
     setIsEditing(false);
   };
 
   const handleSave = () => {
-    onSave(member, role, badgeTitle);
+    onSave(member, role, badgeTitle, normalizedTeamNumber);
     setIsEditing(false);
   };
 
@@ -75,7 +79,7 @@ function EditableMemberRow({ member, canEditBadge, canEditRole, canRemove, savin
       <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "flex-start" }}>
         <div style={{ minWidth: 0 }}>
           <div style={{ fontSize: 16, fontWeight: 900, color: "var(--hp-text-strong)" }}>
-            #{member.jerseyNumber ?? "?"} {name}
+            #{member.teamJerseyNumber ?? member.jerseyNumber ?? "?"} {name}
           </div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 7 }}>
             <span style={{ borderRadius: 999, padding: "4px 8px", fontSize: 12, fontWeight: 900, ...roleBadgeColor(member.role) }}>
@@ -165,6 +169,21 @@ function EditableMemberRow({ member, canEditBadge, canEditRole, canRemove, savin
 
           {canEditBadge && (
             <label style={{ display: "grid", gap: 5, fontSize: 13, color: "var(--hp-muted)", fontWeight: 800 }}>
+              Внутрикомандный номер
+              <input
+                type="number"
+                min={0}
+                max={99}
+                value={teamJerseyNumber}
+                onChange={(event) => setTeamJerseyNumber(event.target.value)}
+                placeholder="0–99"
+                style={{ border: "1px solid var(--hp-border)", borderRadius: 10, padding: "9px 10px", fontWeight: 700 }}
+              />
+            </label>
+          )}
+
+          {canEditBadge && (
+            <label style={{ display: "grid", gap: 5, fontSize: 13, color: "var(--hp-muted)", fontWeight: 800 }}>
               Бейдж
               <input
                 value={badgeTitle}
@@ -214,7 +233,7 @@ interface TeamMembersSectionProps {
   loading: boolean;
   savingUserId: string | null;
   removingUserId?: string | null;
-  onSave: (member: TeamMemberDto, role: number, badgeTitle: string) => void;
+  onSave: (member: TeamMemberDto, role: number, badgeTitle: string, teamJerseyNumber: number | null) => void;
   onRemove?: (member: TeamMemberDto) => void;
 }
 

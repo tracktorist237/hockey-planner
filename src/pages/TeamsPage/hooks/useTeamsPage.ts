@@ -25,6 +25,7 @@ export function useTeamsPage(currentUser: User | null) {
   const [createName, setCreateName] = useState("");
   const [createPublic, setCreatePublic] = useState(true);
   const [joinCode, setJoinCode] = useState("");
+  const [joinTeamNumber, setJoinTeamNumber] = useState("");
   const [loading, setLoading] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [joining, setJoining] = useState(false);
@@ -194,8 +195,9 @@ export function useTeamsPage(currentUser: User | null) {
     setError(null);
     setMessage(null);
     try {
-      const joined = await joinTeamByCode({ code: joinCode.trim() }, currentUser.id);
+      const joined = await joinTeamByCode({ code: joinCode.trim(), teamJerseyNumber: joinTeamNumber === "" ? null : Number(joinTeamNumber) }, currentUser.id);
       setJoinCode("");
+      setJoinTeamNumber("");
       setMessage(`Вы вступили в команду "${joined.name}".`);
       setActiveTab("my");
       await reloadTeams();
@@ -204,7 +206,7 @@ export function useTeamsPage(currentUser: User | null) {
     } finally {
       setLoading(false);
     }
-  }, [currentUser?.id, joinCode, reloadTeams]);
+  }, [currentUser?.id, joinCode, joinTeamNumber, reloadTeams]);
 
   const joinSelectedPublicTeam = useCallback(async () => {
     if (!currentUser?.id || !selectedPublicTeam) {
@@ -239,6 +241,7 @@ export function useTeamsPage(currentUser: User | null) {
     joinByCode,
     joining,
     joinCode,
+    joinTeamNumber,
     joinSelectedPublicTeam,
     loading,
     loaded,
@@ -256,6 +259,7 @@ export function useTeamsPage(currentUser: User | null) {
     setCreatePublic,
     setError,
     setJoinCode,
+    setJoinTeamNumber,
     setMessage,
     setSelectedPublicTeam,
     teamMembers,

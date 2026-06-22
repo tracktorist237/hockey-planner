@@ -34,6 +34,7 @@ export function EventPage({ eventId, onBack, currentUser }: EventPageProps) {
   const eventTabsSwipeHandlers = useSwipeTabs({ tabs: eventTabs, activeTab, onChange: setActiveTab });
   const [avatarUrls, setAvatarUrls] = useState<Record<string, string>>({});
   const [manageableTeamIds, setManageableTeamIds] = useState<Set<string>>(new Set());
+  const [eventTeamJerseyNumber, setEventTeamJerseyNumber] = useState<number | null>(null);
   const [resolvedCurrentUserPosition, setResolvedCurrentUserPosition] = useState<number | null | undefined>(undefined);
   const [resolvedGoalieStatus, setResolvedGoalieStatus] = useState<boolean | undefined>(undefined);
   const selectedUserId = useMemo(() => currentUser?.id ?? null, [currentUser?.id]);
@@ -106,19 +107,30 @@ export function EventPage({ eventId, onBack, currentUser }: EventPageProps) {
   const attendance = useAttendance({ event, selectedUserId, reloadEvent, onError: reportError });
   const lineManagement = useLineManagement({ event, currentUserId: selectedUserId, reloadEvent, onError: reportError });
   const playerModal = usePlayerModal({ onError: reportError });
+  const currentEventJerseyNumber = event?.attendances?.find((item) => item.userId === selectedUserId)?.jerseyNumber ?? eventTeamJerseyNumber;
+  const handleOpenEventPlayerInfo = (userId: string) => {
+    const attendanceNumber = event?.attendances?.find((item) => item.userId === userId)?.jerseyNumber;
+    const rosterNumber = event?.roster?.flatMap((line) => line.members ?? []).find((member) => member.userId === userId)?.jerseyNumber;
+    return playerModal.handleOpenPlayerInfo(userId, attendanceNumber ?? rosterNumber);
+  };
 
   useEffect(() => {
     if (!currentUser?.id) {
       setManageableTeamIds(new Set());
+      setEventTeamJerseyNumber(null);
       return;
     }
 
     void getMyTeams(currentUser.id)
       .then((teams) => {
         setManageableTeamIds(new Set(teams.filter((team) => team.myRole === 1 || team.myRole === 2).map((team) => team.id)));
+        setEventTeamJerseyNumber(teams.find((team) => team.id === event?.teamId)?.myTeamJerseyNumber ?? null);
       })
-      .catch(() => setManageableTeamIds(new Set()));
-  }, [currentUser?.id]);
+      .catch(() => {
+        setManageableTeamIds(new Set());
+        setEventTeamJerseyNumber(null);
+      });
+  }, [currentUser?.id, event?.teamId]);
 
   useEffect(() => {
     if (!selectedUserId) {
@@ -291,7 +303,7 @@ export function EventPage({ eventId, onBack, currentUser }: EventPageProps) {
             ←
           </button>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <CurrentPlayerHeader compact />
+            <CurrentPlayerHeader compact jerseyNumberOverride={currentEventJerseyNumber} />
           </div>
         </div>
       </div>
@@ -376,7 +388,7 @@ export function EventPage({ eventId, onBack, currentUser }: EventPageProps) {
         {activeTab === "attendance" && (
           <AttendanceList
             attendances={playerAttendances}
-            onPlayerClick={playerModal.handleOpenPlayerInfo}
+            onPlayerClick={handleOpenEventPlayerInfo}
             avatarUrls={avatarUrls}
             eventCreatedAt={event.createdAt}
             canManage={canManageEvent}
@@ -390,7 +402,7 @@ export function EventPage({ eventId, onBack, currentUser }: EventPageProps) {
           <RosterManager
             canManage={canManageEvent}
             {...lineManagement}
-            onPlayerClick={playerModal.handleOpenPlayerInfo}
+            onPlayerClick={handleOpenEventPlayerInfo}
             avatarUrls={avatarUrls}
             eventType={event.type}
             teamId={event.teamId}

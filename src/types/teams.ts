@@ -18,6 +18,9 @@ export interface TeamDto {
   membersCount: number;
   myRole?: number | null;
   myBadgeTitle?: string | null;
+  myTeamJerseyNumber?: number | null;
+  allowDuplicateJerseyNumbers?: boolean;
+  blockedJerseyNumbers?: number[];
 }
 
 export interface TeamContactItem {
@@ -33,6 +36,7 @@ export interface TeamMemberDto {
   photoUrl?: string | null;
   role: number;
   badgeTitle?: string | null;
+  teamJerseyNumber?: number | null;
 }
 
 export interface TeamNewsDto {
@@ -75,11 +79,13 @@ export interface CreateTeamRequest {
 
 export interface JoinTeamByCodeRequest {
   code: string;
+  teamJerseyNumber?: number | null;
 }
 
 export interface UpdateTeamMemberRequest {
   role?: number | null;
   badgeTitle?: string | null;
+  teamJerseyNumber?: number | null;
 }
 
 export interface UpdateTeamRequest {
@@ -91,6 +97,8 @@ export interface UpdateTeamRequest {
   phones?: TeamContactItem[];
   links?: TeamContactItem[];
   addresses?: TeamContactItem[];
+  allowDuplicateJerseyNumbers: boolean;
+  blockedJerseyNumbers: number[];
 }
 
 export enum TeamTableTemplateType {

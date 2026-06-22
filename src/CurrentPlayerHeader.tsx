@@ -8,12 +8,13 @@ import { getAdaptiveFontSize } from "src/utils/text";
 interface CurrentPlayerHeaderProps {
   onBack?: () => void;
   compact?: boolean;
+  jerseyNumberOverride?: number | null;
 }
 
 const getRoleName = (role?: number | UserRole): string => roleToLabel[normalizeRole(role)];
 const getColorByRole = (role?: number | UserRole): string => getRoleColor(normalizeRole(role));
 
-export function CurrentPlayerHeader({ onBack, compact = false }: CurrentPlayerHeaderProps) {
+export function CurrentPlayerHeader({ onBack, compact = false, jerseyNumberOverride }: CurrentPlayerHeaderProps) {
   const navigate = useNavigate();
   const { currentUser } = useAuth();
 
@@ -93,7 +94,7 @@ export function CurrentPlayerHeader({ onBack, compact = false }: CurrentPlayerHe
               size={compact ? 38 : 48}
               shape="rounded"
               photoUrl={currentUser.photoUrl}
-              jerseyNumber={currentUser.jerseyNumber}
+              jerseyNumber={jerseyNumberOverride ?? currentUser.jerseyNumber}
               fallbackBg={getColorByRole(currentUser.role)}
               fallbackColor="white"
               fallbackPrefix="#"

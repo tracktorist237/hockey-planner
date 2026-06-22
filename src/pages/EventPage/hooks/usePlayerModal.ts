@@ -10,7 +10,7 @@ interface UsePlayerModalResult {
   selectedPlayer: PlayerDetails | null;
   isPlayerModalOpen: boolean;
   loadingPlayer: boolean;
-  handleOpenPlayerInfo: (userId: string) => Promise<void>;
+  handleOpenPlayerInfo: (userId: string, jerseyNumberOverride?: number | null) => Promise<void>;
   handleCloseModal: () => void;
 }
 
@@ -20,12 +20,15 @@ export const usePlayerModal = ({ onError }: UsePlayerModalOptions = {}): UsePlay
   const [loadingPlayer, setLoadingPlayer] = useState(false);
 
   const handleOpenPlayerInfo = useCallback(
-    async (userId: string) => {
+    async (userId: string, jerseyNumberOverride?: number | null) => {
       setLoadingPlayer(true);
 
       try {
         const playerData = await getUserById(userId);
-        setSelectedPlayer(playerData);
+        setSelectedPlayer({
+          ...playerData,
+          jerseyNumber: jerseyNumberOverride ?? playerData.jerseyNumber,
+        });
         setIsPlayerModalOpen(true);
       } catch (err) {
         const message = err instanceof Error ? err.message : "Не удалось загрузить данные игрока";

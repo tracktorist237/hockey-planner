@@ -100,8 +100,10 @@ export function TeamsPage({ currentUser, currentTeamId, onTeamChange }: TeamsPag
             {teamsPage.activeTab === "code" && (
               <JoinByCodeTab
                 code={teamsPage.joinCode}
+                teamNumber={teamsPage.joinTeamNumber}
                 loading={teamsPage.loading}
                 onCodeChange={teamsPage.setJoinCode}
+                onTeamNumberChange={teamsPage.setJoinTeamNumber}
                 onJoin={() => void teamsPage.joinByCode()}
               />
             )}

@@ -398,10 +398,11 @@ export async function joinTeamByCode(request: JoinTeamByCodeRequest, currentUser
   return response.json();
 }
 
-export async function joinPublicTeam(teamId: string, currentUserId?: string): Promise<TeamDto> {
+export async function joinPublicTeam(teamId: string, currentUserId?: string, teamJerseyNumber?: number | null): Promise<TeamDto> {
   const userId = currentUserId ?? requireCurrentUserId();
+  const numberQuery = teamJerseyNumber === null || teamJerseyNumber === undefined ? "" : `&teamJerseyNumber=${teamJerseyNumber}`;
   const response = await fetch(
-    `${API_BASE}/api/teams/${encodeURIComponent(teamId)}/join-public?currentUserId=${encodeURIComponent(userId)}`,
+    `${API_BASE}/api/teams/${encodeURIComponent(teamId)}/join-public?currentUserId=${encodeURIComponent(userId)}${numberQuery}`,
     {
       method: "POST",
       credentials: "include",
@@ -410,6 +411,20 @@ export async function joinPublicTeam(teamId: string, currentUserId?: string): Pr
 
   if (!response.ok) {
     await throwTeamsApiError(response, `POST /api/teams/${teamId}/join-public failed: ${response.status}`);
+  }
+  return response.json();
+}
+
+export async function updateMyTeamJerseyNumber(teamId: string, teamJerseyNumber: number | null, currentUserId?: string): Promise<TeamDto> {
+  const userId = currentUserId ?? requireCurrentUserId();
+  const response = await fetch(`${API_BASE}/api/teams/${encodeURIComponent(teamId)}/members/me/number?currentUserId=${encodeURIComponent(userId)}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ teamJerseyNumber }),
+  });
+  if (!response.ok) {
+    await throwTeamsApiError(response, `PUT /api/teams/${teamId}/members/me/number failed: ${response.status}`);
   }
   return response.json();
 }

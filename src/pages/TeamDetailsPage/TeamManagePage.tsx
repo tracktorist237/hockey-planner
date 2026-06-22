@@ -30,6 +30,8 @@ interface TeamFormState {
   phones: TeamContactItem[];
   links: TeamContactItem[];
   addresses: TeamContactItem[];
+  allowDuplicateJerseyNumbers: boolean;
+  blockedJerseyNumbers: number[];
 }
 
 type ManageTab = "profile" | "invite" | "members" | "exercises" | "uniforms" | "privacy";
@@ -228,15 +230,19 @@ export function TeamManagePage({ currentUser }: TeamManagePageProps) {
     phones: [],
     links: [],
     addresses: [],
+    allowDuplicateJerseyNumbers: true,
+    blockedJerseyNumbers: [],
   });
   const [loading, setLoading] = useState(true);
   const [membersLoading, setMembersLoading] = useState(false);
   const [teamSaving, setTeamSaving] = useState(false);
   const [mediaUploading, setMediaUploading] = useState<"avatar" | "cover" | null>(null);
   const [privacySaving, setPrivacySaving] = useState(false);
+  const [numberRulesSaving, setNumberRulesSaving] = useState(false);
   const [savingUserId, setSavingUserId] = useState<string | null>(null);
   const [removingUserId, setRemovingUserId] = useState<string | null>(null);
   const [copySuccess, setCopySuccess] = useState(false);
+  const [blockedNumbersInput, setBlockedNumbersInput] = useState("");
   const [activeTab, setActiveTab] = useState<ManageTab>("profile");
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -263,6 +269,7 @@ export function TeamManagePage({ currentUser }: TeamManagePageProps) {
     try {
       const loadedTeam = await getTeam(id, currentUser?.id);
       setTeam(loadedTeam);
+      setBlockedNumbersInput((loadedTeam.blockedJerseyNumbers ?? []).join(", "));
       setForm({
         name: loadedTeam.name,
         description: loadedTeam.description ?? "",
@@ -272,6 +279,8 @@ export function TeamManagePage({ currentUser }: TeamManagePageProps) {
         phones: loadedTeam.phones ?? [],
         links: loadedTeam.links ?? [],
         addresses: loadedTeam.addresses ?? [],
+        allowDuplicateJerseyNumbers: loadedTeam.allowDuplicateJerseyNumbers ?? true,
+        blockedJerseyNumbers: loadedTeam.blockedJerseyNumbers ?? [],
       });
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Не удалось загрузить команду.");
@@ -321,6 +330,8 @@ export function TeamManagePage({ currentUser }: TeamManagePageProps) {
         links: form.links,
         addresses: form.addresses,
         visibility: form.visibility,
+        allowDuplicateJerseyNumbers: form.allowDuplicateJerseyNumbers,
+        blockedJerseyNumbers: form.blockedJerseyNumbers,
       },
       currentUser.id,
     );
@@ -396,7 +407,20 @@ export function TeamManagePage({ currentUser }: TeamManagePageProps) {
     }
   };
 
-  const handleSaveMember = async (member: TeamMemberDto, role: number, badgeTitle: string) => {
+  const handleSaveNumberRules = async () => {
+    setNumberRulesSaving(true);
+    setError(null);
+    setMessage(null);
+    try {
+      await saveTeam("Настройки внутрикомандных номеров сохранены.");
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Не удалось сохранить настройки номеров.");
+    } finally {
+      setNumberRulesSaving(false);
+    }
+  };
+
+  const handleSaveMember = async (member: TeamMemberDto, role: number, badgeTitle: string, teamJerseyNumber: number | null) => {
     if (!team || !currentUser?.id) {
       return;
     }
@@ -405,7 +429,7 @@ export function TeamManagePage({ currentUser }: TeamManagePageProps) {
     setError(null);
     setMessage(null);
     try {
-      const updated = await updateTeamMember(team.id, member.userId, { role, badgeTitle }, currentUser.id);
+      const updated = await updateTeamMember(team.id, member.userId, { role, badgeTitle, teamJerseyNumber }, currentUser.id);
       setMembers((previous) => previous.map((value) => (value.userId === updated.userId ? updated : value)));
       setMessage("Участник обновлён.");
       await loadTeam();
@@ -613,15 +637,60 @@ export function TeamManagePage({ currentUser }: TeamManagePageProps) {
             )}
 
             {activeTab === "members" && (
-              <TeamMembersSection
-                team={team}
-                members={sortedMembers}
-                loading={membersLoading}
-                savingUserId={savingUserId}
-                removingUserId={removingUserId}
-                onSave={handleSaveMember}
-                onRemove={handleRemoveMember}
-              />
+              <div style={{ display: "grid", gap: 14, marginTop: 14 }}>
+                <section style={{ ...cardStyle, margin: 0 }}>
+                  <div style={{ color: "var(--hp-heading)", fontWeight: 900 }}>Внутрикомандные номера</div>
+                  <div style={{ marginTop: 4, color: "var(--hp-muted)", fontSize: 13, lineHeight: 1.4 }}>
+                    Эти правила применяются при вступлении и изменении номера участника.
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setForm((value) => ({ ...value, allowDuplicateJerseyNumbers: !value.allowDuplicateJerseyNumbers }))}
+                    style={{ width: "100%", marginTop: 10, border: "1px solid var(--hp-border)", borderRadius: 12, padding: "10px 11px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, background: "var(--hp-surface-soft)", color: "var(--hp-heading)", cursor: "pointer", textAlign: "left" }}
+                  >
+                    <span style={{ fontWeight: 800 }}>Разрешать одинаковые номера</span>
+                    <span style={{ width: 46, height: 26, padding: 3, borderRadius: 999, background: form.allowDuplicateJerseyNumbers ? "var(--hp-success)" : "var(--hp-border)", boxSizing: "border-box" }}>
+                      <span style={{ display: "block", width: 20, height: 20, borderRadius: "50%", background: "white", transform: form.allowDuplicateJerseyNumbers ? "translateX(20px)" : "translateX(0)", transition: "transform 160ms ease" }} />
+                    </span>
+                  </button>
+                  <label style={{ display: "grid", gap: 6, marginTop: 10, color: "var(--hp-muted)", fontSize: 13, fontWeight: 800 }}>
+                    Запрещённые номера
+                    <input
+                      value={blockedNumbersInput}
+                      onChange={(event) => {
+                        setBlockedNumbersInput(event.target.value);
+                        const values = event.target.value.split(/[\s,;]+/).filter(Boolean).map(Number).filter((value) => Number.isInteger(value) && value >= 0 && value <= 99);
+                        setForm((current) => ({ ...current, blockedJerseyNumbers: Array.from(new Set(values)) }));
+                      }}
+                      inputMode="numeric"
+                      placeholder="Например: 0, 13, 99"
+                      style={inputStyle}
+                    />
+                  </label>
+                  {(!form.allowDuplicateJerseyNumbers || form.blockedJerseyNumbers.length > 0) && (
+                    <div style={{ marginTop: 8, color: "var(--hp-warning)", fontSize: 12, lineHeight: 1.4 }}>
+                      Новые участники должны будут указать свободный допустимый номер.
+                    </div>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => void handleSaveNumberRules()}
+                    disabled={numberRulesSaving}
+                    style={{ width: "100%", marginTop: 12, border: 0, borderRadius: 12, padding: "11px 12px", background: "var(--hp-primary)", color: "white", fontWeight: 900, cursor: numberRulesSaving ? "wait" : "pointer", opacity: numberRulesSaving ? 0.72 : 1 }}
+                  >
+                    {numberRulesSaving ? "Сохраняем..." : "Сохранить правила номеров"}
+                  </button>
+                </section>
+                <TeamMembersSection
+                  team={team}
+                  members={sortedMembers}
+                  loading={membersLoading}
+                  savingUserId={savingUserId}
+                  removingUserId={removingUserId}
+                  onSave={handleSaveMember}
+                  onRemove={handleRemoveMember}
+                />
+              </div>
             )}
 
             {activeTab === "exercises" && currentUser?.id && (

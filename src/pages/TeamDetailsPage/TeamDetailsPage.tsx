@@ -6,7 +6,7 @@ import { NotificationBell } from "src/components/NotificationBell";
 import { PlayerAvatar } from "src/components/PlayerAvatar";
 import { TeamTablesPanel } from "src/components/TeamTablesPanel";
 import { getEvents } from "src/api/events";
-import { createTeamNews, deleteTeamNews, getTeam, getTeamMembers, getTeamNews, joinPublicTeam, leaveTeam, updateTeamNews, uploadTeamNewsImage } from "src/api/teams";
+import { createTeamNews, deleteTeamNews, getTeam, getTeamMembers, getTeamNews, joinPublicTeam, leaveTeam, updateMyTeamJerseyNumber, updateTeamNews, uploadTeamNewsImage } from "src/api/teams";
 import { EventLookUpDto, EventType } from "src/types/events";
 import { TeamContactItem, TeamDto, TeamMemberDto, TeamNewsDto, TeamVisibility } from "src/types/teams";
 import { User } from "src/types/user";
@@ -187,6 +187,10 @@ export function TeamDetailsPage({ currentUser, currentTeamId, onTeamChange }: Te
   const [joining, setJoining] = useState(false);
   const [leaving, setLeaving] = useState(false);
   const [confirmJoin, setConfirmJoin] = useState(false);
+  const [joinTeamNumber, setJoinTeamNumber] = useState("");
+  const [isTeamNumberEditorOpen, setIsTeamNumberEditorOpen] = useState(false);
+  const [teamNumberDraft, setTeamNumberDraft] = useState("");
+  const [teamNumberSaving, setTeamNumberSaving] = useState(false);
   const [confirmLeave, setConfirmLeave] = useState(false);
   const [isTeamMenuOpen, setIsTeamMenuOpen] = useState(false);
   const [isTeamInstallDialogOpen, setIsTeamInstallDialogOpen] = useState(false);
@@ -324,11 +328,17 @@ export function TeamDetailsPage({ currentUser, currentTeamId, onTeamChange }: Te
       return;
     }
 
+    const numberRequired = team.allowDuplicateJerseyNumbers === false || (team.blockedJerseyNumbers?.length ?? 0) > 0;
+    if (numberRequired && joinTeamNumber === "") {
+      setError("Укажите внутрикомандный номер.");
+      return;
+    }
+
     setJoining(true);
     setError(null);
     setMessage(null);
     try {
-      const joined = await joinPublicTeam(team.id, currentUser.id);
+      const joined = await joinPublicTeam(team.id, currentUser.id, joinTeamNumber === "" ? null : Number(joinTeamNumber));
       setTeam(joined);
       setMessage(`Вы вступили в команду "${joined.name}".`);
       setConfirmJoin(false);
@@ -339,6 +349,23 @@ export function TeamDetailsPage({ currentUser, currentTeamId, onTeamChange }: Te
       setError(requestError instanceof Error ? requestError.message : "Не удалось вступить в команду.");
     } finally {
       setJoining(false);
+    }
+  };
+
+  const handleSaveMyTeamNumber = async () => {
+    if (!team || !currentUser?.id) return;
+    setTeamNumberSaving(true);
+    setError(null);
+    try {
+      const updated = await updateMyTeamJerseyNumber(team.id, teamNumberDraft === "" ? null : Number(teamNumberDraft), currentUser.id);
+      setTeam(updated);
+      setIsTeamNumberEditorOpen(false);
+      setMessage("Внутрикомандный номер обновлён.");
+      await loadMembers();
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Не удалось изменить внутрикомандный номер.");
+    } finally {
+      setTeamNumberSaving(false);
     }
   };
 
@@ -643,6 +670,28 @@ export function TeamDetailsPage({ currentUser, currentTeamId, onTeamChange }: Te
                                 {isMainTeam ? "Убрать из основных" : "Сделать основной"}
                               </button>
                             )}
+                            {team.myRole && (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setTeamNumberDraft(team.myTeamJerseyNumber?.toString() ?? "");
+                                    setIsTeamNumberEditorOpen((value) => !value);
+                                  }}
+                                  style={{ width: "100%", border: "1px solid var(--hp-border)", borderRadius: 12, padding: "10px 12px", background: "var(--hp-surface-soft)", color: "var(--hp-heading)", fontWeight: 900, cursor: "pointer", textAlign: "left" }}
+                                >
+                                  Внутрикомандный номер{team.myTeamJerseyNumber != null ? `: #${team.myTeamJerseyNumber}` : ""}
+                                </button>
+                                {isTeamNumberEditorOpen && (
+                                  <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 6 }}>
+                                    <input type="number" min={0} max={99} inputMode="numeric" value={teamNumberDraft} onChange={(event) => setTeamNumberDraft(event.target.value)} placeholder="0–99" style={{ minWidth: 0, border: "1px solid var(--hp-border)", borderRadius: 10, padding: "9px 10px", background: "var(--hp-input-bg)", color: "var(--hp-text)" }} />
+                                    <button type="button" onClick={() => void handleSaveMyTeamNumber()} disabled={teamNumberSaving} style={{ border: 0, borderRadius: 10, padding: "9px 11px", background: "var(--hp-primary)", color: "white", fontWeight: 900, cursor: teamNumberSaving ? "wait" : "pointer" }}>
+                                      {teamNumberSaving ? "…" : "Сохранить"}
+                                    </button>
+                                  </div>
+                                )}
+                              </>
+                            )}
                             {teamPwaInstall.canOfferInstall && (
                               <button
                                 type="button"
@@ -750,8 +799,15 @@ export function TeamDetailsPage({ currentUser, currentTeamId, onTeamChange }: Te
                 {canJoinPublic && (
                   <div style={{ marginTop: 14, display: "grid", gap: 10 }}>
                     {confirmJoin && (
-                      <div style={{ borderRadius: 14, padding: 12, background: "var(--hp-warning-soft)", color: "var(--hp-warning)", border: "1px solid var(--hp-warning-border)", fontWeight: 800, lineHeight: 1.4 }}>
-                        Подтвердите вступление. После этого команда появится в ваших командах и в фильтрах мероприятий.
+                      <div style={{ display: "grid", gap: 9, borderRadius: 14, padding: 12, background: "var(--hp-warning-soft)", color: "var(--hp-warning)", border: "1px solid var(--hp-warning-border)", fontWeight: 800, lineHeight: 1.4 }}>
+                        <div>Подтвердите вступление. После этого команда появится в ваших командах и в фильтрах мероприятий.</div>
+                        {(team.allowDuplicateJerseyNumbers === false || (team.blockedJerseyNumbers?.length ?? 0) > 0) && (
+                          <label style={{ display: "grid", gap: 5, color: "var(--hp-heading)", fontSize: 13 }}>
+                            Внутрикомандный номер *
+                            <input type="number" min={0} max={99} inputMode="numeric" value={joinTeamNumber} onChange={(event) => setJoinTeamNumber(event.target.value)} placeholder="0–99" style={{ border: "1px solid var(--hp-border)", borderRadius: 10, padding: "10px 11px", background: "var(--hp-input-bg)", color: "var(--hp-text)" }} />
+                            {(team.blockedJerseyNumbers?.length ?? 0) > 0 && <span style={{ color: "var(--hp-muted)", fontSize: 12 }}>Недоступны: {(team.blockedJerseyNumbers ?? []).join(", ")}</span>}
+                          </label>
+                        )}
                       </div>
                     )}
                     <button
@@ -1072,7 +1128,7 @@ export function TeamDetailsPage({ currentUser, currentTeamId, onTeamChange }: Te
                             size={36}
                             shape="rounded"
                             photoUrl={member.photoUrl}
-                            jerseyNumber={member.jerseyNumber}
+                              jerseyNumber={member.teamJerseyNumber ?? member.jerseyNumber}
                             fallbackPrefix="#"
                             badgePrefix="#"
                             fontSize={13}

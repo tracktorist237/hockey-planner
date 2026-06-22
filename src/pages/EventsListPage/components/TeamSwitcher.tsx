@@ -125,8 +125,10 @@ export function TeamSwitcher({
       return;
     }
 
+    const numberValue = window.prompt("Внутрикомандный номер (0–99). Оставьте пустым, если команда его не требует.");
+
     try {
-      const joined = await joinTeamByCode({ code: code.trim() }, currentUserId);
+      const joined = await joinTeamByCode({ code: code.trim(), teamJerseyNumber: numberValue?.trim() ? Number(numberValue) : null }, currentUserId);
       onTeamChange(joined.id, joined.name);
       await loadTeams();
       showMessage(`Вы вступили в команду "${joined.name}"`);
@@ -150,7 +152,10 @@ export function TeamSwitcher({
 
       if (!filterOnly && selectedTeam.visibility === TeamVisibility.Public && currentUserId) {
         try {
-          await joinPublicTeam(selectedTeam.id, currentUserId);
+          const numberRequired = selectedTeam.allowDuplicateJerseyNumbers === false || (selectedTeam.blockedJerseyNumbers?.length ?? 0) > 0;
+          const numberValue = numberRequired ? window.prompt("Введите внутрикомандный номер (0–99)") : null;
+          if (numberRequired && !numberValue?.trim()) return;
+          await joinPublicTeam(selectedTeam.id, currentUserId, numberValue?.trim() ? Number(numberValue) : null);
         } catch (error) {
           const text = error instanceof Error ? error.message : "Не удалось вступить в команду";
           showMessage(text);
