@@ -46,7 +46,10 @@ import { getMyTeams } from "src/api/teams";
 import { AppRole } from "src/constants/roles";
 import { getTeamPwaDestination, getTeamPwaPreferences, isStandalonePwa, isTeamPwaReinstallRequired, setActiveTeamPwa } from "src/utils/teamPwa";
 
-const isRenderMigrationMode = process.env.REACT_APP_RENDER_MIGRATION_MODE === "true";
+const currentHost = typeof window === "undefined" ? "" : window.location.hostname.toLowerCase();
+const legacyRenderHost = (process.env.REACT_APP_RENDER_MIGRATION_HOST || "hockey-planner.onrender.com").toLowerCase();
+const isLegacyRenderHost = currentHost === legacyRenderHost;
+const isRenderMigrationMode = process.env.REACT_APP_RENDER_MIGRATION_MODE === "true" && isLegacyRenderHost;
 
 function EventPageWrapper() {
   const { id } = useParams<{ id: string }>();

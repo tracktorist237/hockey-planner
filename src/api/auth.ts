@@ -19,6 +19,14 @@ export interface MigrationTokenResponse {
   expiresAt: string;
 }
 
+type RawMigrationTokenResponse = Partial<MigrationTokenResponse> & {
+  MigrationToken?: string;
+  TargetUrl?: string;
+  ExpiresAt?: string;
+  token?: string;
+  newUrl?: string;
+};
+
 export interface RegisterAuthRequest {
   firstName: string;
   lastName: string;
@@ -135,7 +143,17 @@ export async function requestMigrationTokenAuth(): Promise<MigrationTokenRespons
     throw new Error(await readErrorMessage(response));
   }
 
-  return (await response.json()) as MigrationTokenResponse;
+  const data = (await response.json()) as RawMigrationTokenResponse;
+  const migrationToken = data.migrationToken ?? data.MigrationToken ?? data.token ?? "";
+  if (!migrationToken.trim()) {
+    throw new Error("Migration token is empty.");
+  }
+
+  return {
+    migrationToken,
+    targetUrl: data.targetUrl ?? data.TargetUrl ?? data.newUrl ?? "https://hockeyplanner.ru",
+    expiresAt: data.expiresAt ?? data.ExpiresAt ?? "",
+  };
 }
 
 export async function migrateLoginAuth(token: string): Promise<User> {
