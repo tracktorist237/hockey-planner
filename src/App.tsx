@@ -22,11 +22,9 @@ import { EventPage } from "src/pages/EventPage/EventPage";
 import { EventsListPage } from "src/pages/EventsListPage/EventsListPage";
 import { InstructionArticlePage, InstructionsListPage } from "src/pages/InstructionsPage";
 import { NewsPage } from "src/pages/NewsPage";
-import { MigrateLoginPage } from "src/pages/MigrateLoginPage";
 import { NotificationSettingsPage } from "src/pages/NotificationSettingsPage";
 import { TeamPwaSettingsPage } from "src/pages/TeamPwaSettingsPage";
 import { PrivacyPolicyPage, TermsOfServicePage } from "src/pages/LegalPages";
-import { RenderMigrationPage } from "src/pages/RenderMigrationPage";
 import { TeamDetailsPage } from "src/pages/TeamDetailsPage/TeamDetailsPage";
 import { TeamManagePage } from "src/pages/TeamDetailsPage/TeamManagePage";
 import { TeamsPage } from "src/pages/TeamsPage";
@@ -45,11 +43,6 @@ import { useEffect, useState } from "react";
 import { getMyTeams } from "src/api/teams";
 import { AppRole } from "src/constants/roles";
 import { getTeamPwaDestination, getTeamPwaPreferences, isStandalonePwa, isTeamPwaReinstallRequired, setActiveTeamPwa } from "src/utils/teamPwa";
-
-const currentHost = typeof window === "undefined" ? "" : window.location.hostname.toLowerCase();
-const legacyRenderHost = (process.env.REACT_APP_RENDER_MIGRATION_HOST || "hockey-planner.onrender.com").toLowerCase();
-const isLegacyRenderHost = currentHost === legacyRenderHost;
-const isRenderMigrationMode = process.env.REACT_APP_RENDER_MIGRATION_MODE === "true" && isLegacyRenderHost;
 
 function EventPageWrapper() {
   const { id } = useParams<{ id: string }>();
@@ -232,11 +225,6 @@ function AppRoutes() {
         <Route
           path="/login"
           element={<AuthPage />}
-        />
-
-        <Route
-          path="/migrate-login"
-          element={<MigrateLoginPage />}
         />
 
         <Route
@@ -541,16 +529,6 @@ function AppRoutes() {
 }
 
 export default function App() {
-  if (isRenderMigrationMode) {
-    return (
-      <ThemeProvider>
-        <BrowserRouter>
-          <RenderMigrationPage />
-        </BrowserRouter>
-      </ThemeProvider>
-    );
-  }
-
   return (
     <ThemeProvider>
       <AuthProvider>

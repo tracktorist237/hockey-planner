@@ -13,20 +13,6 @@ export interface AuthResponse {
   user: AuthUserDto;
 }
 
-export interface MigrationTokenResponse {
-  migrationToken: string;
-  targetUrl: string;
-  expiresAt: string;
-}
-
-type RawMigrationTokenResponse = Partial<MigrationTokenResponse> & {
-  MigrationToken?: string;
-  TargetUrl?: string;
-  ExpiresAt?: string;
-  token?: string;
-  newUrl?: string;
-};
-
 export interface RegisterAuthRequest {
   firstName: string;
   lastName: string;
@@ -71,7 +57,6 @@ const mapAuthUser = (user: AuthUserDto): User => ({
 
 export const getAccessToken = (): string | null => localStorage.getItem(ACCESS_TOKEN_KEY);
 export const getRefreshToken = (): string | null => localStorage.getItem(REFRESH_TOKEN_KEY);
-export const hasStoredAuthTokens = (): boolean => Boolean(getAccessToken() || getRefreshToken());
 
 export const setAuthTokens = (response: AuthResponse): User => {
   localStorage.setItem(ACCESS_TOKEN_KEY, response.accessToken);
@@ -129,37 +114,6 @@ export async function registerAuth(request: RegisterAuthRequest): Promise<User> 
   const response = await requestJson<AuthResponse>("/api/auth/register", {
     method: "POST",
     body: JSON.stringify(request),
-  });
-
-  return setAuthTokens(response);
-}
-
-export async function requestMigrationTokenAuth(): Promise<MigrationTokenResponse> {
-  const response = await authFetch("/api/auth/migration-token", {
-    method: "POST",
-  });
-
-  if (!response.ok) {
-    throw new Error(await readErrorMessage(response));
-  }
-
-  const data = (await response.json()) as RawMigrationTokenResponse;
-  const migrationToken = data.migrationToken ?? data.MigrationToken ?? data.token ?? "";
-  if (!migrationToken.trim()) {
-    throw new Error("Migration token is empty.");
-  }
-
-  return {
-    migrationToken,
-    targetUrl: data.targetUrl ?? data.TargetUrl ?? data.newUrl ?? "https://hockeyplanner.ru",
-    expiresAt: data.expiresAt ?? data.ExpiresAt ?? "",
-  };
-}
-
-export async function migrateLoginAuth(token: string): Promise<User> {
-  const response = await requestJson<AuthResponse>("/api/auth/migrate-login", {
-    method: "POST",
-    body: JSON.stringify({ token }),
   });
 
   return setAuthTokens(response);
