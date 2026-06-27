@@ -22,7 +22,6 @@ import { EventPage } from "src/pages/EventPage/EventPage";
 import { EventsListPage } from "src/pages/EventsListPage/EventsListPage";
 import { InstructionArticlePage, InstructionsListPage } from "src/pages/InstructionsPage";
 import { NewsPage } from "src/pages/NewsPage";
-import { MigrateLoginPage } from "src/pages/MigrateLoginPage";
 import { NotificationSettingsPage } from "src/pages/NotificationSettingsPage";
 import { TeamPwaSettingsPage } from "src/pages/TeamPwaSettingsPage";
 import { PrivacyPolicyPage, TermsOfServicePage } from "src/pages/LegalPages";
@@ -232,11 +231,6 @@ function AppRoutes() {
         <Route
           path="/login"
           element={<AuthPage />}
-        />
-
-        <Route
-          path="/migrate-login"
-          element={<MigrateLoginPage />}
         />
 
         <Route
