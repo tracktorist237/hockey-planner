@@ -115,6 +115,7 @@ export function InstructionArticlePage() {
   const [article, setArticle] = useState<InstructionArticleDto | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (!slug) {
@@ -148,11 +149,17 @@ export function InstructionArticlePage() {
         {article && (
           <div style={{ ...cardStyle, padding: 0, overflow: "hidden" }}>
             {article.imageUrl && (
-              <img
-                src={article.imageUrl}
-                alt=""
-                style={{ width: "100%", maxHeight: 360, objectFit: "cover", display: "block", background: "var(--hp-surface-soft)" }}
-              />
+              <button
+                type="button"
+                onClick={() => setPreviewImageUrl(article.imageUrl ?? null)}
+                style={{ border: 0, padding: 0, background: "transparent", cursor: "zoom-in", width: "100%", textAlign: "left" }}
+              >
+                <img
+                  src={article.imageUrl}
+                  alt=""
+                  style={{ width: "100%", maxHeight: 360, objectFit: "cover", display: "block", background: "var(--hp-surface-soft)" }}
+                />
+              </button>
             )}
             <div style={{ padding: 18, display: "grid", gap: 14 }}>
               <SafeInstructionContent content={article.content} />
@@ -160,6 +167,53 @@ export function InstructionArticlePage() {
           </div>
         )}
       </article>
+
+      {previewImageUrl && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setPreviewImageUrl(null)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 1000,
+            background: "rgba(15, 23, 42, 0.86)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 16,
+            boxSizing: "border-box",
+          }}
+        >
+          <button
+            type="button"
+            aria-label="Закрыть"
+            onClick={() => setPreviewImageUrl(null)}
+            style={{
+              position: "fixed",
+              top: 14,
+              right: 14,
+              width: 42,
+              height: 42,
+              borderRadius: 999,
+              border: "1px solid rgba(255,255,255,0.35)",
+              background: "rgba(15, 23, 42, 0.68)",
+              color: "white",
+              fontSize: 24,
+              lineHeight: 1,
+              cursor: "pointer",
+            }}
+          >
+            ×
+          </button>
+          <img
+            src={previewImageUrl}
+            alt=""
+            onClick={(event) => event.stopPropagation()}
+            style={{ maxWidth: "100%", maxHeight: "92vh", objectFit: "contain", borderRadius: 12, boxShadow: "0 24px 80px rgba(0,0,0,0.45)" }}
+          />
+        </div>
+      )}
     </div>
   );
 }
