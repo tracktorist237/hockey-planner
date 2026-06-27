@@ -49,15 +49,15 @@ const mutedStyle: CSSProperties = {
 const primaryButtonStyle: CSSProperties = {
   width: "100%",
   marginTop: 16,
-  padding: "15px 18px",
+  padding: "16px 18px",
   border: 0,
   borderRadius: 16,
-  background: "linear-gradient(135deg, var(--hp-primary), var(--hp-primary-dark))",
+  background: "linear-gradient(135deg, var(--hp-success), #128a4a)",
   color: "#fff",
-  fontSize: 16,
+  fontSize: 17,
   fontWeight: 900,
   cursor: "pointer",
-  boxShadow: "0 12px 24px rgba(25, 118, 210, 0.26)",
+  boxShadow: "0 12px 24px rgba(18, 138, 74, 0.28)",
 };
 
 const secondaryButtonStyle: CSSProperties = {
@@ -111,16 +111,6 @@ export function RenderMigrationPage() {
     setMessage(copied ? successMessage : "Не удалось скопировать автоматически. Выделите текст и скопируйте вручную.");
   };
 
-  const handleOpenInBrowser = () => {
-    const opened = window.open(newAppUrl, "_blank", "noopener,noreferrer");
-    if (!opened) {
-      setMessage("Скопируйте новый адрес и откройте его в браузере: Safari, Chrome или Яндекс Браузере.");
-      return;
-    }
-
-    setMessage("Если новый сайт открылся внутри старого приложения, скопируйте адрес и вставьте его в браузер.");
-  };
-
   return (
     <main style={pageStyle}>
       <section style={cardStyle} aria-labelledby="render-migration-title">
@@ -144,52 +134,54 @@ export function RenderMigrationPage() {
         </div>
 
         <h1 id="render-migration-title" style={titleStyle}>
-          Hockey Planner переехал
+          Старое приложение больше не работает
         </h1>
 
         <p style={{ ...paragraphStyle, textAlign: "center", fontSize: 17 }}>
-          Старый адрес больше не используется. Новая версия доступна на{" "}
-          <strong style={{ color: "var(--hp-heading)" }}>hockeyplanner.ru</strong>.
+          Hockey Planner переехал на новый адрес:
+          <br />
+          <strong style={{ color: "var(--hp-heading)", fontSize: 18 }}>hockeyplanner.ru</strong>
         </p>
 
-        <button type="button" style={primaryButtonStyle} onClick={handleOpenInBrowser}>
-          Открыть новый сайт в браузере
-        </button>
+        <p style={{ ...paragraphStyle, textAlign: "center", marginBottom: 0, fontWeight: 800 }}>
+          Все данные сохранены.
+        </p>
 
-        <button type="button" style={secondaryButtonStyle} onClick={() => handleCopy(newAppUrl, "Ссылка на новый адрес скопирована.")}>
-          Скопировать новый адрес
+        <button
+          type="button"
+          style={primaryButtonStyle}
+          onClick={() => handleCopy(newAppUrl, "✅ Адрес скопирован. Теперь откройте браузер и вставьте ссылку в адресную строку.")}
+        >
+          📋 Скопировать новый адрес
         </button>
 
         <p style={{ ...mutedStyle, margin: "10px 0 0", textAlign: "center" }}>
-          Если кнопка откроет сайт внутри старого приложения, скопируйте адрес и вставьте его вручную в Safari, Chrome или Яндекс Браузер.
+          Нажмите зелёную кнопку, затем откройте Safari, Chrome или Яндекс Браузер и вставьте ссылку в адресную строку.
         </p>
 
         <div style={infoBoxStyle}>
-          <div style={{ marginBottom: 8, fontWeight: 900, color: "var(--hp-heading)" }}>
-            Как войти на новом сайте
-          </div>
-          <p style={{ ...paragraphStyle, marginBottom: 0 }}>
-            Используйте те же данные для входа: вашу почту и пароль от Hockey Planner. Новый адрес другой, но аккаунт остаётся тем же.
+          <p style={{ ...paragraphStyle, marginBottom: 0, fontSize: 18, fontWeight: 900, textAlign: "center", color: "var(--hp-heading)" }}>
+            ПОЧТА И ПАРОЛЬ ТОТ ЖЕ САМЫЙ
           </p>
         </div>
 
         <div style={infoBoxStyle}>
           <div style={{ marginBottom: 8, fontWeight: 900, color: "var(--hp-heading)" }}>
-            Что нужно сделать
+            Что сделать:
           </div>
           <ol style={{ margin: 0, paddingLeft: 20, ...mutedStyle }}>
-            <li>Удалите старое установленное приложение Hockey Planner с телефона или компьютера.</li>
-            <li>Откройте новый адрес: <strong style={{ color: "var(--hp-heading)" }}>{newAppUrl}</strong></li>
-            <li>Войдите заново. При необходимости установите приложение повторно уже с нового адреса.</li>
+            <li>Удалите старую иконку Hockey Planner с телефона.</li>
+            <li>Откройте браузер: Safari, Chrome или Яндекс.</li>
+            <li>Вставьте ссылку и войдите как обычно.</li>
           </ol>
         </div>
 
         <div style={infoBoxStyle}>
           <div style={{ marginBottom: 8, fontWeight: 900, color: "var(--hp-heading)" }}>
-            Нужна помощь?
+            Если не получается войти — звоните:
           </div>
-          <p style={paragraphStyle}>
-            Позвоните или напишите: <a href={`tel:${supportPhone}`} style={{ color: "var(--hp-primary)", fontWeight: 900 }}>{supportPhone}</a>
+          <p style={{ ...paragraphStyle, marginBottom: 0 }}>
+            <a href={`tel:${supportPhone}`} style={{ color: "var(--hp-primary)", fontWeight: 900, fontSize: 18 }}>{supportPhone}</a>
           </p>
           <button type="button" style={secondaryButtonStyle} onClick={() => handleCopy(supportPhone, "Телефон скопирован.")}>
             Скопировать телефон
