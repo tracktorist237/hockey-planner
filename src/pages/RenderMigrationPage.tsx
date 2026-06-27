@@ -105,10 +105,24 @@ async function copyText(value: string): Promise<boolean> {
 
 export function RenderMigrationPage() {
   const [message, setMessage] = useState<string | null>(null);
+  const [copiedMainLink, setCopiedMainLink] = useState(false);
 
   const handleCopy = async (value: string, successMessage: string) => {
     const copied = await copyText(value);
     setMessage(copied ? successMessage : "Не удалось скопировать автоматически. Выделите текст и скопируйте вручную.");
+  };
+
+  const handleCopyMainLink = async () => {
+    const copied = await copyText(newAppUrl);
+    if (!copied) {
+      setCopiedMainLink(false);
+      setMessage("Не удалось скопировать автоматически. Выделите текст и скопируйте вручную.");
+      return;
+    }
+
+    setCopiedMainLink(true);
+    setMessage("✅ Адрес скопирован. Теперь откройте браузер и вставьте ссылку в адресную строку.");
+    window.setTimeout(() => setCopiedMainLink(false), 1800);
   };
 
   return (
@@ -149,10 +163,16 @@ export function RenderMigrationPage() {
 
         <button
           type="button"
-          style={primaryButtonStyle}
-          onClick={() => handleCopy(newAppUrl, "✅ Адрес скопирован. Теперь откройте браузер и вставьте ссылку в адресную строку.")}
+          style={{
+            ...primaryButtonStyle,
+            background: copiedMainLink ? "linear-gradient(135deg, #0f7a43, #0a5c32)" : primaryButtonStyle.background,
+            transform: copiedMainLink ? "scale(0.98)" : "scale(1)",
+            boxShadow: copiedMainLink ? "0 7px 16px rgba(18, 138, 74, 0.22)" : primaryButtonStyle.boxShadow,
+            transition: "transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease",
+          }}
+          onClick={handleCopyMainLink}
         >
-          📋 Скопировать новый адрес
+          {copiedMainLink ? "✅ Ссылка скопирована" : "📋 Скопировать новый адрес"}
         </button>
 
         <p style={{ ...mutedStyle, margin: "10px 0 0", textAlign: "center" }}>
