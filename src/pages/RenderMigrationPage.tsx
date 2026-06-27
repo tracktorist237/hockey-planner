@@ -1,8 +1,7 @@
-import { CSSProperties, useMemo, useState } from "react";
+import { CSSProperties, useState } from "react";
 
 const newAppUrl = (process.env.REACT_APP_MIGRATION_TARGET_URL || "https://hockeyplanner.ru").replace(/\/+$/, "");
 const supportPhone = "+79080723092";
-const storedUserKey = "currentUser";
 
 const pageStyle: CSSProperties = {
   minHeight: "100vh",
@@ -82,22 +81,6 @@ const infoBoxStyle: CSSProperties = {
   background: "var(--hp-surface-soft)",
 };
 
-type StoredUser = {
-  email?: string | null;
-  firstName?: string | null;
-  lastName?: string | null;
-  fullName?: string | null;
-};
-
-function readStoredUser(): StoredUser | null {
-  try {
-    const raw = localStorage.getItem(storedUserKey);
-    return raw ? (JSON.parse(raw) as StoredUser) : null;
-  } catch {
-    return null;
-  }
-}
-
 async function copyText(value: string): Promise<boolean> {
   try {
     await navigator.clipboard.writeText(value);
@@ -122,13 +105,20 @@ async function copyText(value: string): Promise<boolean> {
 
 export function RenderMigrationPage() {
   const [message, setMessage] = useState<string | null>(null);
-  const storedUser = useMemo(() => readStoredUser(), []);
-  const displayName = [storedUser?.lastName, storedUser?.firstName].filter(Boolean).join(" ") || storedUser?.fullName || null;
-  const email = storedUser?.email?.trim() || null;
 
   const handleCopy = async (value: string, successMessage: string) => {
     const copied = await copyText(value);
     setMessage(copied ? successMessage : "Не удалось скопировать автоматически. Выделите текст и скопируйте вручную.");
+  };
+
+  const handleOpenInBrowser = () => {
+    const opened = window.open(newAppUrl, "_blank", "noopener,noreferrer");
+    if (!opened) {
+      setMessage("Скопируйте новый адрес и откройте его в браузере: Safari, Chrome или Яндекс Браузере.");
+      return;
+    }
+
+    setMessage("Если новый сайт открылся внутри старого приложения, скопируйте адрес и вставьте его в браузер.");
   };
 
   return (
@@ -162,13 +152,26 @@ export function RenderMigrationPage() {
           <strong style={{ color: "var(--hp-heading)" }}>hockeyplanner.ru</strong>.
         </p>
 
-        <button type="button" style={primaryButtonStyle} onClick={() => window.location.assign(newAppUrl)}>
-          Открыть новый Hockey Planner
+        <button type="button" style={primaryButtonStyle} onClick={handleOpenInBrowser}>
+          Открыть новый сайт в браузере
         </button>
 
         <button type="button" style={secondaryButtonStyle} onClick={() => handleCopy(newAppUrl, "Ссылка на новый адрес скопирована.")}>
           Скопировать новый адрес
         </button>
+
+        <p style={{ ...mutedStyle, margin: "10px 0 0", textAlign: "center" }}>
+          Если кнопка откроет сайт внутри старого приложения, скопируйте адрес и вставьте его вручную в Safari, Chrome или Яндекс Браузер.
+        </p>
+
+        <div style={infoBoxStyle}>
+          <div style={{ marginBottom: 8, fontWeight: 900, color: "var(--hp-heading)" }}>
+            Как войти на новом сайте
+          </div>
+          <p style={{ ...paragraphStyle, marginBottom: 0 }}>
+            Используйте те же данные для входа: вашу почту и пароль от Hockey Planner. Новый адрес другой, но аккаунт остаётся тем же.
+          </p>
+        </div>
 
         <div style={infoBoxStyle}>
           <div style={{ marginBottom: 8, fontWeight: 900, color: "var(--hp-heading)" }}>
@@ -179,34 +182,6 @@ export function RenderMigrationPage() {
             <li>Откройте новый адрес: <strong style={{ color: "var(--hp-heading)" }}>{newAppUrl}</strong></li>
             <li>Войдите заново. При необходимости установите приложение повторно уже с нового адреса.</li>
           </ol>
-        </div>
-
-        <div style={infoBoxStyle}>
-          <div style={{ marginBottom: 8, fontWeight: 900, color: "var(--hp-heading)" }}>
-            Данные для входа
-          </div>
-          {displayName && (
-            <p style={paragraphStyle}>
-              Пользователь: <strong>{displayName}</strong>
-            </p>
-          )}
-          {email ? (
-            <>
-              <p style={paragraphStyle}>
-                Почта: <strong>{email}</strong>
-              </p>
-              <button type="button" style={secondaryButtonStyle} onClick={() => handleCopy(email, "Почта скопирована.")}>
-                Скопировать почту
-              </button>
-            </>
-          ) : (
-            <p style={paragraphStyle}>
-              Почту не удалось определить на этом устройстве. Если вход не получится, используйте восстановление пароля на новом сайте.
-            </p>
-          )}
-          <p style={{ ...mutedStyle, margin: email ? "10px 0 0" : 0 }}>
-            Пароль показать нельзя: приложение не хранит его открытым текстом. Если браузер сохранял пароль, его можно посмотреть в настройках паролей браузера/устройства. Если не помните пароль — нажмите «Забыли пароль?» на новой странице входа.
-          </p>
         </div>
 
         <div style={infoBoxStyle}>
