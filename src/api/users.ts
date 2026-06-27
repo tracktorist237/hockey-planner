@@ -31,19 +31,6 @@ export interface User extends CreateUserData {
   fullName: string;
 }
 
-export interface BirthdayUser {
-  userId: string;
-  firstName: string;
-  lastName: string;
-  jerseyNumber?: number | null;
-  age?: number | null;
-}
-
-export interface BirthdaysTodayResponse {
-  date: string;
-  users: BirthdayUser[];
-}
-
 const ensureOk = async (res: Response, fallbackMessage: string): Promise<void> => {
   if (res.ok) {
     return;
@@ -62,12 +49,6 @@ export async function getUsers(): Promise<User[]> {
 export async function getUserById(id: string): Promise<User> {
   const res = await fetch(`${API_BASE}/api/Users/${id}`);
   await ensureOk(res, "Не удалось загрузить пользователя");
-  return res.json();
-}
-
-export async function getTodayBirthdays(): Promise<BirthdaysTodayResponse> {
-  const res = await fetch(`${API_BASE}/api/Users/birthdays/today`);
-  await ensureOk(res, "Не удалось загрузить список именинников");
   return res.json();
 }
 
