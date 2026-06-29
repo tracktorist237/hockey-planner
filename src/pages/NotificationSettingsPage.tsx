@@ -4,6 +4,7 @@ import { getNotificationPreferences, sendTestNotification, updateNotificationPre
 import { getPushPublicKey, subscribePush, unsubscribePush } from "src/api/push";
 import { InternalPageHeader } from "src/components/InternalPageHeader";
 import { useAuth } from "src/hooks/useAuth";
+import { SW_KILL_SWITCH_APPLIED_KEY } from "src/serviceWorkerRegistration";
 import { NotificationPreferencesDto } from "src/types/notifications";
 
 const base64UrlToUint8Array = (value: string): Uint8Array => {
@@ -207,6 +208,16 @@ export function NotificationSettingsPage() {
 
     if (!("serviceWorker" in navigator)) {
       setMessage("Не удалось включить push: Service Worker не поддерживается");
+      return;
+    }
+
+    try {
+      if (window.localStorage.getItem(SW_KILL_SWITCH_APPLIED_KEY) === "true") {
+        setMessage("Push временно отключён для восстановления приложения. Попробуйте позже.");
+        return;
+      }
+    } catch {
+      setMessage("Push временно отключён для восстановления приложения. Попробуйте позже.");
       return;
     }
 
