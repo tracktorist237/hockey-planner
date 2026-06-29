@@ -5,6 +5,7 @@ const API_BASE = process.env.REACT_APP_API_BASE || "";
 const ACCESS_TOKEN_KEY = "authAccessToken";
 const REFRESH_TOKEN_KEY = "authRefreshToken";
 const ACCESS_TOKEN_EXPIRES_AT_KEY = "authAccessTokenExpiresAt";
+const AUTH_REQUEST_TIMEOUT_MS = 15_000;
 
 export interface AuthResponse {
   accessToken: string;
@@ -85,8 +86,27 @@ const readErrorMessage = async (response: Response): Promise<string> => {
   }
 };
 
+const createNetworkError = (): Error =>
+  new Error("Сервер временно недоступен. Проверьте интернет и попробуйте ещё раз.");
+
+const fetchWithTimeout = async (input: RequestInfo | URL, init: RequestInit = {}): Promise<Response> => {
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), AUTH_REQUEST_TIMEOUT_MS);
+
+  try {
+    return await fetch(input, {
+      ...init,
+      signal: controller.signal,
+    });
+  } catch {
+    throw createNetworkError();
+  } finally {
+    window.clearTimeout(timeoutId);
+  }
+};
+
 const requestJson = async <T>(path: string, init: RequestInit): Promise<T> => {
-  const response = await fetch(`${API_BASE}${path}`, {
+  const response = await fetchWithTimeout(`${API_BASE}${path}`, {
     ...init,
     headers: {
       "Content-Type": "application/json",
@@ -168,7 +188,7 @@ export async function refreshAuth(): Promise<User | null> {
     return null;
   }
 
-  const response = await fetch(`${API_BASE}/api/auth/refresh`, {
+  const response = await fetchWithTimeout(`${API_BASE}/api/auth/refresh`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -194,7 +214,7 @@ export async function authFetch(input: string, init: RequestInit = {}, retry = t
     headers.set("Authorization", `Bearer ${accessToken}`);
   }
 
-  const response = await fetch(`${API_BASE}${input}`, {
+  const response = await fetchWithTimeout(`${API_BASE}${input}`, {
     ...init,
     headers,
   });

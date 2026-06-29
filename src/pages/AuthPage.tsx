@@ -183,6 +183,11 @@ export function AuthPage() {
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
+    if (serverStatus === "offline") {
+      setError("Сервер временно недоступен. Проверьте интернет, отключите VPN или попробуйте позже.");
+      return;
+    }
+
     setLoading(true);
     setError(null);
     setMessage(null);

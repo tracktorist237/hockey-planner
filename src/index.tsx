@@ -4,6 +4,7 @@ import './index.css';
 import './styles/theme.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
+import { AppErrorBoundary } from "./components/AppErrorBoundary";
 import { notifyServiceWorkerUpdate } from "./components/AppUpdatePrompt";
 import * as serviceWorkerRegistration from "./serviceWorkerRegistration";
 
@@ -12,7 +13,9 @@ const root = ReactDOM.createRoot(
 );
 root.render(
   <React.StrictMode>
-    <App />
+    <AppErrorBoundary>
+      <App />
+    </AppErrorBoundary>
   </React.StrictMode>
 );
 
