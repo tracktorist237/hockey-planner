@@ -20,7 +20,7 @@ jobs:
             cd /opt/hockeyplanner/frontend-src
             git pull origin master
             npm ci
-            REACT_APP_API_BASE=https://api.hockeyplanner.ru npm run build
+            REACT_APP_API_BASE=/api npm run build
             rm -rf /opt/hockeyplanner/frontend/build
             cp -r /opt/hockeyplanner/frontend-src/build /opt/hockeyplanner/frontend/build
             cd /opt/hockeyplanner
