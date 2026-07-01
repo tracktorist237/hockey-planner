@@ -7,6 +7,9 @@ import reportWebVitals from './reportWebVitals';
 import { AppErrorBoundary } from "./components/AppErrorBoundary";
 import { notifyServiceWorkerUpdate } from "./components/AppUpdatePrompt";
 import * as serviceWorkerRegistration from "./serviceWorkerRegistration";
+import { installClientDebugLog } from "./utils/clientDebugLog";
+
+installClientDebugLog();
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement

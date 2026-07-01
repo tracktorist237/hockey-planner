@@ -631,11 +631,23 @@
           if (name === "localStorage") {
             killSwitch = s.getItem("hpSwKillSwitchApplied20260629");
             info.hpSwKillSwitchApplied20260629 = killSwitch;
+            info.hpClientDebugLog = readClientDebugLog(s.getItem("hpClientDebugLog"));
           }
         } catch (e) {
           info.error = e.name + ": " + e.message;
         }
         return info;
+      }
+
+      function readClientDebugLog(raw) {
+        if (!raw) { return []; }
+        try {
+          var parsed = JSON.parse(raw);
+          if (!parsed || !parsed.length) { return []; }
+          return parsed.slice(-200);
+        } catch (e) {
+          return "present but invalid JSON";
+        }
       }
 
       function collectStorage() {

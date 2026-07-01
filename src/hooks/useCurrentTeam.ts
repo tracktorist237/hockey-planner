@@ -4,8 +4,12 @@ const CURRENT_TEAM_ID_KEY = "currentTeamId";
 const CURRENT_TEAM_NAME_KEY = "currentTeamName";
 
 const readStoredValue = (key: string): string | null => {
-  const value = localStorage.getItem(key);
-  return value && value.trim() ? value : null;
+  try {
+    const value = localStorage.getItem(key);
+    return value && value.trim() ? value : null;
+  } catch {
+    return null;
+  }
 };
 
 const getTeamStorageKeys = (userId: string | null | undefined) => {
@@ -40,18 +44,22 @@ export const useCurrentTeam = (userId?: string | null) => {
       return;
     }
 
-    // Legacy global keys must not leak selected team between users.
-    localStorage.removeItem(CURRENT_TEAM_ID_KEY);
-    localStorage.removeItem(CURRENT_TEAM_NAME_KEY);
+    try {
+      // Legacy global keys must not leak selected team between users.
+      localStorage.removeItem(CURRENT_TEAM_ID_KEY);
+      localStorage.removeItem(CURRENT_TEAM_NAME_KEY);
 
-    if (normalizedTeamId) {
-      localStorage.setItem(keys.teamIdKey, normalizedTeamId);
-      if (normalizedTeamName) {
-        localStorage.setItem(keys.teamNameKey, normalizedTeamName);
+      if (normalizedTeamId) {
+        localStorage.setItem(keys.teamIdKey, normalizedTeamId);
+        if (normalizedTeamName) {
+          localStorage.setItem(keys.teamNameKey, normalizedTeamName);
+        }
+      } else {
+        localStorage.removeItem(keys.teamIdKey);
+        localStorage.removeItem(keys.teamNameKey);
       }
-    } else {
-      localStorage.removeItem(keys.teamIdKey);
-      localStorage.removeItem(keys.teamNameKey);
+    } catch {
+      // Team selection can still work in memory when storage is unavailable.
     }
 
     if (normalizedTeamId && normalizedTeamName) {

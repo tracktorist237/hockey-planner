@@ -17,6 +17,30 @@ import {
 } from "src/types/teams";
 
 const API_BASE = process.env.REACT_APP_API_BASE || "";
+const API_REQUEST_TIMEOUT_MS = 10000;
+
+const fetchWithTimeout = async (input: RequestInfo | URL, init: RequestInit = {}): Promise<Response> => {
+  if (typeof AbortController === "undefined") {
+    return Promise.race([
+      fetch(input, init),
+      new Promise<Response>((_, reject) => {
+        window.setTimeout(() => reject(new Error("Request timed out")), API_REQUEST_TIMEOUT_MS);
+      }),
+    ]);
+  }
+
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), API_REQUEST_TIMEOUT_MS);
+
+  try {
+    return await fetch(input, {
+      ...init,
+      signal: controller.signal,
+    });
+  } finally {
+    window.clearTimeout(timeoutId);
+  }
+};
 
 export const getTeamPwaLogoUrl = (teamId: string): string =>
   `${API_BASE}/api/teams/${encodeURIComponent(teamId)}/pwa-logo`;
@@ -54,7 +78,7 @@ const throwTeamsApiError = async (response: Response, fallbackMessage: string): 
 };
 
 export async function getPublicTeams(): Promise<TeamDto[]> {
-  const response = await fetch(`${API_BASE}/api/teams/public`, { credentials: "include" });
+  const response = await fetchWithTimeout(`${API_BASE}/api/teams/public`, { credentials: "include" });
   if (!response.ok) {
     await throwTeamsApiError(response, `GET /api/teams/public failed: ${response.status}`);
   }
@@ -63,7 +87,7 @@ export async function getPublicTeams(): Promise<TeamDto[]> {
 
 export async function getMyTeams(currentUserId?: string): Promise<TeamDto[]> {
   const userId = currentUserId ?? requireCurrentUserId();
-  const response = await fetch(`${API_BASE}/api/teams?currentUserId=${encodeURIComponent(userId)}`, {
+  const response = await fetchWithTimeout(`${API_BASE}/api/teams?currentUserId=${encodeURIComponent(userId)}`, {
     credentials: "include",
   });
 
@@ -75,7 +99,7 @@ export async function getMyTeams(currentUserId?: string): Promise<TeamDto[]> {
 
 export async function getTeam(teamId: string, currentUserId?: string): Promise<TeamDto> {
   const query = currentUserId ? `?currentUserId=${encodeURIComponent(currentUserId)}` : "";
-  const response = await fetch(`${API_BASE}/api/teams/${encodeURIComponent(teamId)}${query}`, {
+  const response = await fetchWithTimeout(`${API_BASE}/api/teams/${encodeURIComponent(teamId)}${query}`, {
     credentials: "include",
   });
 
@@ -86,7 +110,7 @@ export async function getTeam(teamId: string, currentUserId?: string): Promise<T
 }
 
 export async function getTeamMembers(teamId: string): Promise<TeamMemberDto[]> {
-  const response = await fetch(`${API_BASE}/api/teams/${encodeURIComponent(teamId)}/members`, {
+  const response = await fetchWithTimeout(`${API_BASE}/api/teams/${encodeURIComponent(teamId)}/members`, {
     credentials: "include",
   });
 
@@ -98,7 +122,7 @@ export async function getTeamMembers(teamId: string): Promise<TeamMemberDto[]> {
 
 export async function getTeamNews(teamId: string, currentUserId?: string): Promise<TeamNewsDto[]> {
   const query = currentUserId ? `?currentUserId=${encodeURIComponent(currentUserId)}` : "";
-  const response = await fetch(`${API_BASE}/api/teams/${encodeURIComponent(teamId)}/news${query}`, {
+  const response = await fetchWithTimeout(`${API_BASE}/api/teams/${encodeURIComponent(teamId)}/news${query}`, {
     credentials: "include",
   });
 
@@ -110,7 +134,7 @@ export async function getTeamNews(teamId: string, currentUserId?: string): Promi
 
 export async function getNewsFeed(currentUserId?: string): Promise<TeamNewsDto[]> {
   const userId = currentUserId ?? requireCurrentUserId();
-  const response = await fetch(`${API_BASE}/api/news?currentUserId=${encodeURIComponent(userId)}`, {
+  const response = await fetchWithTimeout(`${API_BASE}/api/news?currentUserId=${encodeURIComponent(userId)}`, {
     credentials: "include",
   });
 
@@ -122,7 +146,7 @@ export async function getNewsFeed(currentUserId?: string): Promise<TeamNewsDto[]
 
 export async function getTablesFeed(currentUserId?: string): Promise<TeamTableSummaryDto[]> {
   const userId = currentUserId ?? requireCurrentUserId();
-  const response = await fetch(`${API_BASE}/api/news/tables?currentUserId=${encodeURIComponent(userId)}`, {
+  const response = await fetchWithTimeout(`${API_BASE}/api/news/tables?currentUserId=${encodeURIComponent(userId)}`, {
     credentials: "include",
   });
 
@@ -134,7 +158,7 @@ export async function getTablesFeed(currentUserId?: string): Promise<TeamTableSu
 
 export async function getTeamTables(teamId: string, currentUserId?: string): Promise<TeamTableSummaryDto[]> {
   const userId = currentUserId ?? requireCurrentUserId();
-  const response = await fetch(`${API_BASE}/api/teams/${encodeURIComponent(teamId)}/tables?currentUserId=${encodeURIComponent(userId)}`, {
+  const response = await fetchWithTimeout(`${API_BASE}/api/teams/${encodeURIComponent(teamId)}/tables?currentUserId=${encodeURIComponent(userId)}`, {
     credentials: "include",
   });
 
@@ -146,7 +170,7 @@ export async function getTeamTables(teamId: string, currentUserId?: string): Pro
 
 export async function getTeamTable(teamId: string, tableId: string, currentUserId?: string): Promise<TeamTableDto> {
   const userId = currentUserId ?? requireCurrentUserId();
-  const response = await fetch(
+  const response = await fetchWithTimeout(
     `${API_BASE}/api/teams/${encodeURIComponent(teamId)}/tables/${encodeURIComponent(tableId)}?currentUserId=${encodeURIComponent(userId)}`,
     { credentials: "include" },
   );
@@ -163,7 +187,7 @@ export async function createTeamTable(
   currentUserId?: string,
 ): Promise<TeamTableDto> {
   const userId = currentUserId ?? requireCurrentUserId();
-  const response = await fetch(`${API_BASE}/api/teams/${encodeURIComponent(teamId)}/tables?currentUserId=${encodeURIComponent(userId)}`, {
+  const response = await fetchWithTimeout(`${API_BASE}/api/teams/${encodeURIComponent(teamId)}/tables?currentUserId=${encodeURIComponent(userId)}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     credentials: "include",
@@ -178,7 +202,7 @@ export async function createTeamTable(
 
 export async function getEventTableProtocols(eventId: string, currentUserId?: string): Promise<EventTableProtocolDto[]> {
   const userId = currentUserId ?? requireCurrentUserId();
-  const response = await fetch(`${API_BASE}/api/events/${encodeURIComponent(eventId)}/table-protocols?currentUserId=${encodeURIComponent(userId)}`, {
+  const response = await fetchWithTimeout(`${API_BASE}/api/events/${encodeURIComponent(eventId)}/table-protocols?currentUserId=${encodeURIComponent(userId)}`, {
     credentials: "include",
   });
 
@@ -194,7 +218,7 @@ export async function createEventTableProtocol(
   currentUserId?: string,
 ): Promise<EventTableProtocolDto> {
   const userId = currentUserId ?? requireCurrentUserId();
-  const response = await fetch(`${API_BASE}/api/events/${encodeURIComponent(eventId)}/table-protocols?currentUserId=${encodeURIComponent(userId)}`, {
+  const response = await fetchWithTimeout(`${API_BASE}/api/events/${encodeURIComponent(eventId)}/table-protocols?currentUserId=${encodeURIComponent(userId)}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     credentials: "include",
@@ -215,7 +239,7 @@ export async function updateEventTableProtocolRow(
   currentUserId?: string,
 ): Promise<EventTableProtocolDto> {
   const userId = currentUserId ?? requireCurrentUserId();
-  const response = await fetch(
+  const response = await fetchWithTimeout(
     `${API_BASE}/api/events/${encodeURIComponent(eventId)}/table-protocols/${encodeURIComponent(protocolId)}/rows/${encodeURIComponent(rowId)}?currentUserId=${encodeURIComponent(userId)}`,
     {
       method: "PUT",
@@ -238,7 +262,7 @@ export async function updateEventTableProtocol(
   currentUserId?: string,
 ): Promise<EventTableProtocolDto> {
   const userId = currentUserId ?? requireCurrentUserId();
-  const response = await fetch(
+  const response = await fetchWithTimeout(
     `${API_BASE}/api/events/${encodeURIComponent(eventId)}/table-protocols/${encodeURIComponent(protocolId)}?currentUserId=${encodeURIComponent(userId)}`,
     {
       method: "PUT",
@@ -260,7 +284,7 @@ export async function createTeamNews(
   currentUserId?: string,
 ): Promise<TeamNewsDto> {
   const userId = currentUserId ?? requireCurrentUserId();
-  const response = await fetch(`${API_BASE}/api/teams/${encodeURIComponent(teamId)}/news?currentUserId=${encodeURIComponent(userId)}`, {
+  const response = await fetchWithTimeout(`${API_BASE}/api/teams/${encodeURIComponent(teamId)}/news?currentUserId=${encodeURIComponent(userId)}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     credentials: "include",
@@ -280,7 +304,7 @@ export async function updateTeamNews(
   currentUserId?: string,
 ): Promise<TeamNewsDto> {
   const userId = currentUserId ?? requireCurrentUserId();
-  const response = await fetch(
+  const response = await fetchWithTimeout(
     `${API_BASE}/api/teams/${encodeURIComponent(teamId)}/news/${encodeURIComponent(newsId)}?currentUserId=${encodeURIComponent(userId)}`,
     {
       method: "PUT",
@@ -298,7 +322,7 @@ export async function updateTeamNews(
 
 export async function deleteTeamNews(teamId: string, newsId: string, currentUserId?: string): Promise<void> {
   const userId = currentUserId ?? requireCurrentUserId();
-  const response = await fetch(
+  const response = await fetchWithTimeout(
     `${API_BASE}/api/teams/${encodeURIComponent(teamId)}/news/${encodeURIComponent(newsId)}?currentUserId=${encodeURIComponent(userId)}`,
     {
       method: "DELETE",
@@ -316,7 +340,7 @@ export async function uploadTeamAvatar(teamId: string, file: File, currentUserId
   const formData = new FormData();
   formData.append("file", file);
 
-  const response = await fetch(`${API_BASE}/api/teams/${encodeURIComponent(teamId)}/avatar/upload?currentUserId=${encodeURIComponent(userId)}`, {
+  const response = await fetchWithTimeout(`${API_BASE}/api/teams/${encodeURIComponent(teamId)}/avatar/upload?currentUserId=${encodeURIComponent(userId)}`, {
     method: "POST",
     credentials: "include",
     body: formData,
@@ -333,7 +357,7 @@ export async function uploadTeamCover(teamId: string, file: File, currentUserId?
   const formData = new FormData();
   formData.append("file", file);
 
-  const response = await fetch(`${API_BASE}/api/teams/${encodeURIComponent(teamId)}/cover/upload?currentUserId=${encodeURIComponent(userId)}`, {
+  const response = await fetchWithTimeout(`${API_BASE}/api/teams/${encodeURIComponent(teamId)}/cover/upload?currentUserId=${encodeURIComponent(userId)}`, {
     method: "POST",
     credentials: "include",
     body: formData,
@@ -350,7 +374,7 @@ export async function uploadTeamNewsImage(teamId: string, file: File, currentUse
   const formData = new FormData();
   formData.append("file", file);
 
-  const response = await fetch(`${API_BASE}/api/teams/${encodeURIComponent(teamId)}/news/upload-image?currentUserId=${encodeURIComponent(userId)}`, {
+  const response = await fetchWithTimeout(`${API_BASE}/api/teams/${encodeURIComponent(teamId)}/news/upload-image?currentUserId=${encodeURIComponent(userId)}`, {
     method: "POST",
     credentials: "include",
     body: formData,
@@ -370,7 +394,7 @@ export async function uploadTeamNewsImage(teamId: string, file: File, currentUse
 
 export async function createTeam(request: CreateTeamRequest, currentUserId?: string): Promise<TeamDto> {
   const userId = currentUserId ?? requireCurrentUserId();
-  const response = await fetch(`${API_BASE}/api/teams?currentUserId=${encodeURIComponent(userId)}`, {
+  const response = await fetchWithTimeout(`${API_BASE}/api/teams?currentUserId=${encodeURIComponent(userId)}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     credentials: "include",
@@ -385,7 +409,7 @@ export async function createTeam(request: CreateTeamRequest, currentUserId?: str
 
 export async function joinTeamByCode(request: JoinTeamByCodeRequest, currentUserId?: string): Promise<TeamDto> {
   const userId = currentUserId ?? requireCurrentUserId();
-  const response = await fetch(`${API_BASE}/api/teams/join-by-code?currentUserId=${encodeURIComponent(userId)}`, {
+  const response = await fetchWithTimeout(`${API_BASE}/api/teams/join-by-code?currentUserId=${encodeURIComponent(userId)}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     credentials: "include",
@@ -401,7 +425,7 @@ export async function joinTeamByCode(request: JoinTeamByCodeRequest, currentUser
 export async function joinPublicTeam(teamId: string, currentUserId?: string, teamJerseyNumber?: number | null): Promise<TeamDto> {
   const userId = currentUserId ?? requireCurrentUserId();
   const numberQuery = teamJerseyNumber === null || teamJerseyNumber === undefined ? "" : `&teamJerseyNumber=${teamJerseyNumber}`;
-  const response = await fetch(
+  const response = await fetchWithTimeout(
     `${API_BASE}/api/teams/${encodeURIComponent(teamId)}/join-public?currentUserId=${encodeURIComponent(userId)}${numberQuery}`,
     {
       method: "POST",
@@ -417,7 +441,7 @@ export async function joinPublicTeam(teamId: string, currentUserId?: string, tea
 
 export async function updateMyTeamJerseyNumber(teamId: string, teamJerseyNumber: number | null, currentUserId?: string): Promise<TeamDto> {
   const userId = currentUserId ?? requireCurrentUserId();
-  const response = await fetch(`${API_BASE}/api/teams/${encodeURIComponent(teamId)}/members/me/number?currentUserId=${encodeURIComponent(userId)}`, {
+  const response = await fetchWithTimeout(`${API_BASE}/api/teams/${encodeURIComponent(teamId)}/members/me/number?currentUserId=${encodeURIComponent(userId)}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     credentials: "include",
@@ -431,7 +455,7 @@ export async function updateMyTeamJerseyNumber(teamId: string, teamJerseyNumber:
 
 export async function updateTeam(teamId: string, request: UpdateTeamRequest, currentUserId?: string): Promise<TeamDto> {
   const userId = currentUserId ?? requireCurrentUserId();
-  const response = await fetch(`${API_BASE}/api/teams/${encodeURIComponent(teamId)}?currentUserId=${encodeURIComponent(userId)}`, {
+  const response = await fetchWithTimeout(`${API_BASE}/api/teams/${encodeURIComponent(teamId)}?currentUserId=${encodeURIComponent(userId)}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     credentials: "include",
@@ -446,7 +470,7 @@ export async function updateTeam(teamId: string, request: UpdateTeamRequest, cur
 
 export async function leaveTeam(teamId: string, currentUserId?: string): Promise<void> {
   const userId = currentUserId ?? requireCurrentUserId();
-  const response = await fetch(
+  const response = await fetchWithTimeout(
     `${API_BASE}/api/teams/${encodeURIComponent(teamId)}/members/me?currentUserId=${encodeURIComponent(userId)}`,
     {
       method: "DELETE",
@@ -461,7 +485,7 @@ export async function leaveTeam(teamId: string, currentUserId?: string): Promise
 
 export async function removeTeamMember(teamId: string, userId: string, currentUserId?: string): Promise<void> {
   const actorId = currentUserId ?? requireCurrentUserId();
-  const response = await fetch(
+  const response = await fetchWithTimeout(
     `${API_BASE}/api/teams/${encodeURIComponent(teamId)}/members/${encodeURIComponent(userId)}?currentUserId=${encodeURIComponent(actorId)}`,
     {
       method: "DELETE",
@@ -481,7 +505,7 @@ export async function updateTeamMember(
   currentUserId?: string,
 ): Promise<TeamMemberDto> {
   const actorId = currentUserId ?? requireCurrentUserId();
-  const response = await fetch(
+  const response = await fetchWithTimeout(
     `${API_BASE}/api/teams/${encodeURIComponent(teamId)}/members/${encodeURIComponent(userId)}?currentUserId=${encodeURIComponent(actorId)}`,
     {
       method: "PUT",

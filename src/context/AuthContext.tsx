@@ -19,6 +19,7 @@ import {
 } from "src/api/auth";
 import { normalizeAppRole, normalizeRole } from "src/constants/roles";
 import { User } from "src/types/user";
+import { writeClientDebugEvent } from "src/utils/clientDebugLog";
 
 const AUTH_STORAGE_KEY = "currentUser";
 
@@ -73,19 +74,28 @@ const readStoredUser = (): User | null => {
   try {
     const raw = localStorage.getItem(AUTH_STORAGE_KEY);
     return raw ? mapStoredUser(JSON.parse(raw) as StoredUser) : null;
-  } catch {
-    localStorage.removeItem(AUTH_STORAGE_KEY);
+  } catch (error) {
+    writeClientDebugEvent("auth.readStoredUser.failed", { error });
+    try {
+      localStorage.removeItem(AUTH_STORAGE_KEY);
+    } catch (removeError) {
+      writeClientDebugEvent("auth.readStoredUser.removeFailed", { error: removeError });
+    }
     return null;
   }
 };
 
 const persistCurrentUser = (user: User | null): void => {
-  if (!user) {
-    localStorage.removeItem(AUTH_STORAGE_KEY);
-    return;
-  }
+  try {
+    if (!user) {
+      localStorage.removeItem(AUTH_STORAGE_KEY);
+      return;
+    }
 
-  localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(user));
+    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(user));
+  } catch (error) {
+    writeClientDebugEvent("auth.persistCurrentUser.failed", { error, hasUser: Boolean(user?.id) });
+  }
 };
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -173,19 +183,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let isMounted = true;
+    const timeoutId = window.setTimeout(() => {
+      if (isMounted) {
+        writeClientDebugEvent("auth.syncSession.timeout");
+        setAuthLoading(false);
+      }
+    }, 20000);
 
     const syncSession = async () => {
       try {
+        writeClientDebugEvent("auth.syncSession.start");
         const serverUser = await getCurrentAuthUser();
         if (isMounted) {
           setCurrentUser(serverUser);
+          writeClientDebugEvent("auth.syncSession.success", { hasUser: Boolean(serverUser?.id) });
         }
       } catch (error) {
         if (isMounted) {
           console.warn("Unable to sync auth session from API:", error);
+          writeClientDebugEvent("auth.syncSession.failed", { error });
         }
       } finally {
         if (isMounted) {
+          window.clearTimeout(timeoutId);
           setAuthLoading(false);
         }
       }
@@ -195,6 +215,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return () => {
       isMounted = false;
+      window.clearTimeout(timeoutId);
     };
   }, [setCurrentUser]);
 

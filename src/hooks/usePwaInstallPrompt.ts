@@ -16,18 +16,22 @@ const isRunningStandalone = (): boolean => {
   const navigatorWithStandalone = window.navigator as Navigator & { standalone?: boolean };
 
   return (
-    window.matchMedia("(display-mode: standalone)").matches ||
-    window.matchMedia("(display-mode: fullscreen)").matches ||
-    window.matchMedia("(display-mode: minimal-ui)").matches ||
+    Boolean(window.matchMedia?.("(display-mode: standalone)").matches) ||
+    Boolean(window.matchMedia?.("(display-mode: fullscreen)").matches) ||
+    Boolean(window.matchMedia?.("(display-mode: minimal-ui)").matches) ||
     navigatorWithStandalone.standalone === true ||
     document.referrer.startsWith("android-app://")
   );
 };
 
 const isDismissedNow = (): boolean => {
-  const rawValue = localStorage.getItem(DISMISSED_UNTIL_KEY);
-  const dismissedUntil = rawValue ? Number(rawValue) : 0;
-  return Number.isFinite(dismissedUntil) && dismissedUntil > Date.now();
+  try {
+    const rawValue = localStorage.getItem(DISMISSED_UNTIL_KEY);
+    const dismissedUntil = rawValue ? Number(rawValue) : 0;
+    return Number.isFinite(dismissedUntil) && dismissedUntil > Date.now();
+  } catch {
+    return false;
+  }
 };
 
 export function usePwaInstallPrompt(isEnabled: boolean) {
@@ -45,7 +49,11 @@ export function usePwaInstallPrompt(isEnabled: boolean) {
     const handleInstalled = () => {
       setInstallPrompt(null);
       setIsStandalone(true);
-      localStorage.removeItem(DISMISSED_UNTIL_KEY);
+      try {
+        localStorage.removeItem(DISMISSED_UNTIL_KEY);
+      } catch {
+        // Optional install prompt persistence.
+      }
     };
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
@@ -72,13 +80,21 @@ export function usePwaInstallPrompt(isEnabled: boolean) {
     setInstallPrompt(null);
 
     if (choice.outcome === "dismissed") {
-      localStorage.setItem(DISMISSED_UNTIL_KEY, String(Date.now() + DISMISS_DELAY_MS));
+      try {
+        localStorage.setItem(DISMISSED_UNTIL_KEY, String(Date.now() + DISMISS_DELAY_MS));
+      } catch {
+        // Optional install prompt persistence.
+      }
       setIsDismissed(true);
     }
   }, [installPrompt]);
 
   const dismiss = useCallback(() => {
-    localStorage.setItem(DISMISSED_UNTIL_KEY, String(Date.now() + DISMISS_DELAY_MS));
+    try {
+      localStorage.setItem(DISMISSED_UNTIL_KEY, String(Date.now() + DISMISS_DELAY_MS));
+    } catch {
+      // Optional install prompt persistence.
+    }
     setIsDismissed(true);
   }, []);
 

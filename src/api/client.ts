@@ -2,6 +2,15 @@ const API_BASE = process.env.REACT_APP_API_BASE || "";
 const API_REQUEST_TIMEOUT_MS = 10_000;
 
 async function fetchWithTimeout(input: RequestInfo | URL, init: RequestInit = {}): Promise<Response> {
+  if (typeof AbortController === "undefined") {
+    return Promise.race([
+      fetch(input, init),
+      new Promise<Response>((_, reject) => {
+        window.setTimeout(() => reject(new Error("Request timed out")), API_REQUEST_TIMEOUT_MS);
+      }),
+    ]);
+  }
+
   const controller = new AbortController();
   const timeoutId = window.setTimeout(() => controller.abort(), API_REQUEST_TIMEOUT_MS);
 

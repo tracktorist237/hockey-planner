@@ -32,7 +32,11 @@ export const getTeamPwaPreferences = (teamId: string): TeamPwaPreferences => {
 };
 
 export const setTeamPwaPreferences = (teamId: string, preferences: TeamPwaPreferences): void => {
-  localStorage.setItem(`${STORAGE_PREFIX}${teamId}`, JSON.stringify(preferences));
+  try {
+    localStorage.setItem(`${STORAGE_PREFIX}${teamId}`, JSON.stringify(preferences));
+  } catch {
+    // Optional PWA preference persistence.
+  }
 };
 
 export const getTeamPwaDestination = (teamId: string): string => {
@@ -48,20 +52,36 @@ export const getTeamPwaDestination = (teamId: string): string => {
 
 export const isStandalonePwa = (): boolean => {
   const navigatorWithStandalone = window.navigator as Navigator & { standalone?: boolean };
-  return window.matchMedia("(display-mode: standalone)").matches || navigatorWithStandalone.standalone === true;
+  return Boolean(window.matchMedia?.("(display-mode: standalone)").matches || navigatorWithStandalone.standalone === true);
 };
 
 export const setActiveTeamPwa = (teamId: string, reinstallRequired: boolean): void => {
-  sessionStorage.setItem(ACTIVE_TEAM_ID_KEY, teamId);
-  if (reinstallRequired) {
-    sessionStorage.setItem(REINSTALL_REQUIRED_KEY, "true");
-  } else {
-    sessionStorage.removeItem(REINSTALL_REQUIRED_KEY);
+  try {
+    sessionStorage.setItem(ACTIVE_TEAM_ID_KEY, teamId);
+    if (reinstallRequired) {
+      sessionStorage.setItem(REINSTALL_REQUIRED_KEY, "true");
+    } else {
+      sessionStorage.removeItem(REINSTALL_REQUIRED_KEY);
+    }
+  } catch {
+    // Optional PWA session state.
   }
 };
 
 export const getActiveTeamPwaId = (): string | null =>
-  isStandalonePwa() ? sessionStorage.getItem(ACTIVE_TEAM_ID_KEY) : null;
+  isStandalonePwa() ? (() => {
+    try {
+      return sessionStorage.getItem(ACTIVE_TEAM_ID_KEY);
+    } catch {
+      return null;
+    }
+  })() : null;
 
 export const isTeamPwaReinstallRequired = (): boolean =>
-  isStandalonePwa() && sessionStorage.getItem(REINSTALL_REQUIRED_KEY) === "true";
+  isStandalonePwa() && (() => {
+    try {
+      return sessionStorage.getItem(REINSTALL_REQUIRED_KEY) === "true";
+    } catch {
+      return false;
+    }
+  })();

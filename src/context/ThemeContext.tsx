@@ -26,10 +26,14 @@ const readStoredTheme = (): ThemePreference => {
     return "system";
   }
 
-  const storedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
-  return storedTheme === "light" || storedTheme === "dark" || storedTheme === "system"
-    ? storedTheme
-    : "system";
+  try {
+    const storedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
+    return storedTheme === "light" || storedTheme === "dark" || storedTheme === "system"
+      ? storedTheme
+      : "system";
+  } catch {
+    return "system";
+  }
 };
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
@@ -39,7 +43,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const appliedTheme: AppliedTheme = theme === "system" ? systemTheme : theme;
 
   useEffect(() => {
-    window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+    try {
+      window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+    } catch {
+      // Theme persistence is optional.
+    }
   }, [theme]);
 
   useEffect(() => {

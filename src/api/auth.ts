@@ -1,11 +1,13 @@
 import { normalizeAppRole, normalizeRole } from "src/constants/roles";
 import { User } from "src/types/user";
+import { writeClientDebugEvent } from "src/utils/clientDebugLog";
 
 const API_BASE = process.env.REACT_APP_API_BASE || "";
 const ACCESS_TOKEN_KEY = "authAccessToken";
 const REFRESH_TOKEN_KEY = "authRefreshToken";
 const ACCESS_TOKEN_EXPIRES_AT_KEY = "authAccessTokenExpiresAt";
 const AUTH_REQUEST_TIMEOUT_MS = 15_000;
+let refreshPromise: Promise<User | null> | null = null;
 
 export interface AuthResponse {
   accessToken: string;
@@ -56,20 +58,56 @@ const mapAuthUser = (user: AuthUserDto): User => ({
   emailConfirmed: Boolean(user.emailConfirmed),
 });
 
-export const getAccessToken = (): string | null => localStorage.getItem(ACCESS_TOKEN_KEY);
-export const getRefreshToken = (): string | null => localStorage.getItem(REFRESH_TOKEN_KEY);
+const safeGetItem = (key: string): string | null => {
+  try {
+    return localStorage.getItem(key);
+  } catch (error) {
+    writeClientDebugEvent("auth.storage.get.failed", { key, error });
+    return null;
+  }
+};
+
+const safeSetItem = (key: string, value: string): void => {
+  try {
+    localStorage.setItem(key, value);
+  } catch (error) {
+    writeClientDebugEvent("auth.storage.set.failed", { key, error });
+    throw error;
+  }
+};
+
+const safeRemoveItem = (key: string): void => {
+  try {
+    localStorage.removeItem(key);
+  } catch (error) {
+    writeClientDebugEvent("auth.storage.remove.failed", { key, error });
+  }
+};
+
+export const getAccessToken = (): string | null => safeGetItem(ACCESS_TOKEN_KEY);
+export const getRefreshToken = (): string | null => safeGetItem(REFRESH_TOKEN_KEY);
 
 export const setAuthTokens = (response: AuthResponse): User => {
-  localStorage.setItem(ACCESS_TOKEN_KEY, response.accessToken);
-  localStorage.setItem(REFRESH_TOKEN_KEY, response.refreshToken);
-  localStorage.setItem(ACCESS_TOKEN_EXPIRES_AT_KEY, response.accessTokenExpiresAt);
+  if (!response?.accessToken || !response.refreshToken || !response.accessTokenExpiresAt || !response.user?.id) {
+    writeClientDebugEvent("auth.setAuthTokens.invalidResponse", {
+      hasAccessToken: Boolean(response?.accessToken),
+      hasRefreshToken: Boolean(response?.refreshToken),
+      hasExpiresAt: Boolean(response?.accessTokenExpiresAt),
+      hasUser: Boolean(response?.user?.id),
+    });
+    throw new Error("Invalid authentication response.");
+  }
+
+  safeSetItem(ACCESS_TOKEN_KEY, response.accessToken);
+  safeSetItem(REFRESH_TOKEN_KEY, response.refreshToken);
+  safeSetItem(ACCESS_TOKEN_EXPIRES_AT_KEY, response.accessTokenExpiresAt);
   return mapAuthUser(response.user);
 };
 
 export const clearAuthTokens = (): void => {
-  localStorage.removeItem(ACCESS_TOKEN_KEY);
-  localStorage.removeItem(REFRESH_TOKEN_KEY);
-  localStorage.removeItem(ACCESS_TOKEN_EXPIRES_AT_KEY);
+  safeRemoveItem(ACCESS_TOKEN_KEY);
+  safeRemoveItem(REFRESH_TOKEN_KEY);
+  safeRemoveItem(ACCESS_TOKEN_EXPIRES_AT_KEY);
 };
 
 const readErrorMessage = async (response: Response): Promise<string> => {
@@ -90,15 +128,27 @@ const createNetworkError = (): Error =>
   new Error("Сервер временно недоступен. Проверьте интернет и попробуйте ещё раз.");
 
 const fetchWithTimeout = async (input: RequestInfo | URL, init: RequestInit = {}): Promise<Response> => {
+  if (typeof AbortController === "undefined") {
+    writeClientDebugEvent("auth.fetch.noAbortController", { input: String(input) });
+    return Promise.race([
+      fetch(input, init),
+      new Promise<Response>((_, reject) => {
+        window.setTimeout(() => reject(createNetworkError()), AUTH_REQUEST_TIMEOUT_MS);
+      }),
+    ]);
+  }
+
   const controller = new AbortController();
   const timeoutId = window.setTimeout(() => controller.abort(), AUTH_REQUEST_TIMEOUT_MS);
 
   try {
+    writeClientDebugEvent("auth.fetch.start", { input: String(input), method: init.method ?? "GET" });
     return await fetch(input, {
       ...init,
       signal: controller.signal,
     });
-  } catch {
+  } catch (error) {
+    writeClientDebugEvent("auth.fetch.failed", { input: String(input), error });
     throw createNetworkError();
   } finally {
     window.clearTimeout(timeoutId);
@@ -122,12 +172,15 @@ const requestJson = async <T>(path: string, init: RequestInit): Promise<T> => {
 };
 
 export async function loginAuth(email: string, password: string): Promise<User> {
+  writeClientDebugEvent("auth.login.start");
   const response = await requestJson<AuthResponse>("/api/auth/login", {
     method: "POST",
     body: JSON.stringify({ email, password }),
   });
 
-  return setAuthTokens(response);
+  const user = setAuthTokens(response);
+  writeClientDebugEvent("auth.login.success", { hasUser: Boolean(user.id) });
+  return user;
 }
 
 export async function registerAuth(request: RegisterAuthRequest): Promise<User> {
@@ -182,12 +235,25 @@ export async function resendEmailConfirmationAuth(): Promise<void> {
 }
 
 export async function refreshAuth(): Promise<User | null> {
+  if (refreshPromise) {
+    writeClientDebugEvent("auth.refresh.joinExisting");
+    return refreshPromise;
+  }
+
+  refreshPromise = refreshAuthInternal().finally(() => {
+    refreshPromise = null;
+  });
+  return refreshPromise;
+}
+
+async function refreshAuthInternal(): Promise<User | null> {
   const refreshToken = getRefreshToken();
   if (!refreshToken) {
     clearAuthTokens();
     return null;
   }
 
+  writeClientDebugEvent("auth.refresh.start");
   const response = await fetchWithTimeout(`${API_BASE}/api/auth/refresh`, {
     method: "POST",
     headers: {
@@ -204,7 +270,9 @@ export async function refreshAuth(): Promise<User | null> {
     throw new Error(await readErrorMessage(response));
   }
 
-  return setAuthTokens((await response.json()) as AuthResponse);
+  const user = setAuthTokens((await response.json()) as AuthResponse);
+  writeClientDebugEvent("auth.refresh.success", { hasUser: Boolean(user.id) });
+  return user;
 }
 
 export async function authFetch(input: string, init: RequestInit = {}, retry = true): Promise<Response> {
@@ -223,7 +291,10 @@ export async function authFetch(input: string, init: RequestInit = {}, retry = t
     return response;
   }
 
-  await refreshAuth();
+  const refreshedUser = await refreshAuth();
+  if (!refreshedUser) {
+    return response;
+  }
   return authFetch(input, init, false);
 }
 

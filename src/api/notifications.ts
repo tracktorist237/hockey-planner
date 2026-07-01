@@ -1,11 +1,35 @@
 import { NotificationPreferencesDto, NotificationsListDto } from "src/types/notifications";
 
 const API_BASE = process.env.REACT_APP_API_BASE || "";
+const API_REQUEST_TIMEOUT_MS = 10000;
 
 const currentUserQuery = (currentUserId: string): string => `currentUserId=${encodeURIComponent(currentUserId)}`;
 
+const fetchWithTimeout = async (input: RequestInfo | URL, init: RequestInit = {}): Promise<Response> => {
+  if (typeof AbortController === "undefined") {
+    return Promise.race([
+      fetch(input, init),
+      new Promise<Response>((_, reject) => {
+        window.setTimeout(() => reject(new Error("Request timed out")), API_REQUEST_TIMEOUT_MS);
+      }),
+    ]);
+  }
+
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), API_REQUEST_TIMEOUT_MS);
+
+  try {
+    return await fetch(input, {
+      ...init,
+      signal: controller.signal,
+    });
+  } finally {
+    window.clearTimeout(timeoutId);
+  }
+};
+
 export async function getNotifications(currentUserId: string, take = 20): Promise<NotificationsListDto> {
-  const response = await fetch(`${API_BASE}/api/notifications?${currentUserQuery(currentUserId)}&take=${take}`, {
+  const response = await fetchWithTimeout(`${API_BASE}/api/notifications?${currentUserQuery(currentUserId)}&take=${take}`, {
     credentials: "include",
   });
 
@@ -17,7 +41,7 @@ export async function getNotifications(currentUserId: string, take = 20): Promis
 }
 
 export async function markNotificationRead(currentUserId: string, id: string): Promise<void> {
-  const response = await fetch(`${API_BASE}/api/notifications/${id}/read?${currentUserQuery(currentUserId)}`, {
+  const response = await fetchWithTimeout(`${API_BASE}/api/notifications/${id}/read?${currentUserQuery(currentUserId)}`, {
     method: "POST",
     credentials: "include",
   });
@@ -28,7 +52,7 @@ export async function markNotificationRead(currentUserId: string, id: string): P
 }
 
 export async function markAllNotificationsRead(currentUserId: string): Promise<void> {
-  const response = await fetch(`${API_BASE}/api/notifications/read-all?${currentUserQuery(currentUserId)}`, {
+  const response = await fetchWithTimeout(`${API_BASE}/api/notifications/read-all?${currentUserQuery(currentUserId)}`, {
     method: "POST",
     credentials: "include",
   });
@@ -39,7 +63,7 @@ export async function markAllNotificationsRead(currentUserId: string): Promise<v
 }
 
 export async function getNotificationPreferences(currentUserId: string): Promise<NotificationPreferencesDto> {
-  const response = await fetch(`${API_BASE}/api/notifications/preferences/me?${currentUserQuery(currentUserId)}`, {
+  const response = await fetchWithTimeout(`${API_BASE}/api/notifications/preferences/me?${currentUserQuery(currentUserId)}`, {
     credentials: "include",
   });
 
@@ -54,7 +78,7 @@ export async function updateNotificationPreferences(
   currentUserId: string,
   preferences: NotificationPreferencesDto,
 ): Promise<NotificationPreferencesDto> {
-  const response = await fetch(`${API_BASE}/api/notifications/preferences/me?${currentUserQuery(currentUserId)}`, {
+  const response = await fetchWithTimeout(`${API_BASE}/api/notifications/preferences/me?${currentUserQuery(currentUserId)}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     credentials: "include",
@@ -69,7 +93,7 @@ export async function updateNotificationPreferences(
 }
 
 export async function sendTestNotification(currentUserId: string): Promise<void> {
-  const response = await fetch(`${API_BASE}/api/notifications/test?${currentUserQuery(currentUserId)}`, {
+  const response = await fetchWithTimeout(`${API_BASE}/api/notifications/test?${currentUserQuery(currentUserId)}`, {
     method: "POST",
     credentials: "include",
   });
