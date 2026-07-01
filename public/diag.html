@@ -1,0 +1,1085 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <title>Hockey Planner Diagnostics</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f7f9;
+      --panel: #ffffff;
+      --text: #17202a;
+      --muted: #586575;
+      --line: #d9e0e8;
+      --ok: #137333;
+      --warn: #b06000;
+      --crit: #b3261e;
+      --blue: #0b57d0;
+      --soft: #eef2f7;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 15px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      -webkit-text-size-adjust: 100%;
+    }
+    main {
+      width: 100%;
+      max-width: 980px;
+      margin: 0 auto;
+      padding: env(safe-area-inset-top) 12px 24px;
+    }
+    header {
+      padding: 18px 0 12px;
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: 24px;
+      line-height: 1.15;
+    }
+    h2 {
+      margin: 0 0 10px;
+      font-size: 18px;
+      line-height: 1.2;
+    }
+    p { margin: 6px 0; }
+    .diag-id {
+      padding: 9px 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 13px;
+      overflow-wrap: anywhere;
+    }
+    .status {
+      display: inline-block;
+      margin: 8px 0;
+      padding: 7px 11px;
+      border-radius: 8px;
+      color: #fff;
+      font-weight: 800;
+      letter-spacing: .02em;
+    }
+    .status.ok { background: var(--ok); }
+    .status.warning { background: var(--warn); }
+    .status.critical { background: var(--crit); }
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+      margin: 12px 0;
+    }
+    button, a.button {
+      min-height: 44px;
+      border: 1px solid #0848ad;
+      border-radius: 8px;
+      padding: 10px 12px;
+      background: var(--blue);
+      color: #fff;
+      font: inherit;
+      font-weight: 750;
+      text-align: center;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    button.secondary, a.button.secondary {
+      border-color: var(--line);
+      background: var(--panel);
+      color: var(--text);
+    }
+    button.danger {
+      border-color: #8c1d18;
+      background: var(--crit);
+    }
+    section {
+      margin: 12px 0;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+    .muted { color: var(--muted); }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 6px;
+    }
+    .row {
+      display: grid;
+      grid-template-columns: minmax(120px, 38%) 1fr;
+      gap: 8px;
+      padding: 7px 0;
+      border-bottom: 1px solid var(--soft);
+    }
+    .row:last-child { border-bottom: 0; }
+    .key { color: var(--muted); overflow-wrap: anywhere; }
+    .val {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 13px;
+      overflow-wrap: anywhere;
+      white-space: pre-wrap;
+    }
+    ul {
+      margin: 6px 0 0;
+      padding-left: 20px;
+    }
+    li { margin: 4px 0; overflow-wrap: anywhere; }
+    pre, textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfe;
+      color: var(--text);
+      font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+    pre { margin: 8px 0 0; padding: 10px; }
+    textarea {
+      min-height: 360px;
+      padding: 10px;
+      resize: vertical;
+    }
+    .pill {
+      display: inline-block;
+      margin: 2px 4px 2px 0;
+      padding: 3px 6px;
+      border-radius: 6px;
+      background: var(--soft);
+      font-size: 12px;
+    }
+    @media (min-width: 720px) {
+      main { padding-left: 20px; padding-right: 20px; }
+      .actions { grid-template-columns: repeat(3, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Диагностика Hockey Planner</h1>
+      <div id="diagId" class="diag-id">diag-...</div>
+      <div id="status" class="status warning">WARNING</div>
+      <p class="muted">Скопируйте диагностику и отправьте разработчику.</p>
+      <div class="actions">
+        <button id="runAgain" type="button">Запустить диагностику снова</button>
+        <button id="copyReport" type="button">Скопировать диагностику</button>
+        <button id="downloadReport" type="button" class="secondary">Скачать .txt</button>
+        <button id="localReset" type="button" class="danger">Локальный сброс</button>
+        <a class="button secondary" href="/reset.html?v=4">Открыть /reset.html?v=4</a>
+        <a id="openLogin" class="button secondary" href="/login">Открыть вход</a>
+      </div>
+      <p id="copyState" class="muted"></p>
+    </header>
+
+    <section id="summary"><h2>1. Сводка</h2><div class="grid"></div></section>
+    <section id="warnings"><h2>2. Предупреждения</h2><div class="grid"></div></section>
+    <section id="environment"><h2>3. Окружение</h2><div class="grid"></div></section>
+    <section id="sw"><h2>4. Service Worker</h2><div class="grid"></div></section>
+    <section id="storage"><h2>5. Cache / Storage</h2><div class="grid"></div></section>
+    <section id="build"><h2>6. Frontend Build</h2><div class="grid"></div></section>
+    <section id="network"><h2>7. Network Probes</h2><div class="grid"></div><div class="actions"><button id="testTeams" type="button" class="secondary">Test /api/teams</button><button id="testEvents" type="button" class="secondary">Test /api/events</button></div></section>
+    <section id="errors"><h2>8. Runtime Errors</h2><div class="grid"></div><div class="actions"><button id="triggerError" type="button" class="secondary">Проверить перехват ошибки</button></div></section>
+    <section id="raw"><h2>9. Raw Report</h2><textarea id="rawReport" spellcheck="false"></textarea></section>
+  </main>
+
+  <script>
+    (function () {
+      var capturedErrors = [];
+      window.onerror = function (message, source, lineno, colno, error) {
+        capturedErrors.push({
+          type: "error",
+          message: String(message),
+          source: source || "",
+          lineno: lineno || 0,
+          colno: colno || 0,
+          errorName: error && error.name ? String(error.name) : "",
+          errorMessage: error && error.message ? String(error.message) : "",
+          stack: error && error.stack ? String(error.stack) : ""
+        });
+        renderErrorsOnly();
+        return false;
+      };
+      window.onunhandledrejection = function (event) {
+        var reason = event && event.reason;
+        capturedErrors.push({
+          type: "unhandledrejection",
+          reason: reason ? String(reason) : "",
+          stack: reason && reason.stack ? String(reason.stack) : ""
+        });
+        renderErrorsOnly();
+      };
+
+      var diagId = "diag-" + Date.now() + "-" + Math.random().toString(36).slice(2, 8);
+      var report = {};
+      var rawText = "";
+      var mainBundlePath = "";
+      var expectedMain = "main.6260e940.js";
+      var oldMain = "main.2dc255dc.js";
+      var statusRank = { OK: 0, WARNING: 1, CRITICAL: 2 };
+
+      function nowIso() {
+        try { return new Date().toISOString(); } catch (e) { return String(new Date()); }
+      }
+
+      function safe(fn, fallback) {
+        try { return fn(); } catch (e) { return typeof fallback === "undefined" ? "error: " + e.message : fallback; }
+      }
+
+      function has(name, root) {
+        root = root || window;
+        try { return typeof root[name] !== "undefined"; } catch (e) { return false; }
+      }
+
+      function addDiag(url) {
+        var sep = url.indexOf("?") === -1 ? "?" : "&";
+        return url + sep + "diag=" + encodeURIComponent(diagId);
+      }
+
+      function sanitizeUrlValue(value) {
+        if (!value) { return value; }
+        return String(value).replace(/([?&][^=]*(token|jwt|auth|user|refresh|access|currentUser)[^=]*=)([^&#]*)/ig, function (all, prefix) {
+          return prefix + "[redacted]";
+        });
+      }
+
+      function isApiUrl(url) {
+        return url.indexOf("/api/") === 0 || url.indexOf("api.hockeyplanner.ru") !== -1;
+      }
+
+      function isStaticTextAllowed(url) {
+        return !isApiUrl(url);
+      }
+
+      function withTimeout(promise, timeoutMs) {
+        if (!has("Promise")) { return promise; }
+        return new Promise(function (resolve, reject) {
+          var done = false;
+          var timer = setTimeout(function () {
+            if (done) { return; }
+            done = true;
+            reject({ name: "TimeoutError", message: "timeout after " + timeoutMs + "ms", timeout: true });
+          }, timeoutMs);
+          promise.then(function (value) {
+            if (done) { return; }
+            done = true;
+            clearTimeout(timer);
+            resolve(value);
+          }, function (err) {
+            if (done) { return; }
+            done = true;
+            clearTimeout(timer);
+            reject(err);
+          });
+        });
+      }
+
+      function fetchWithTimeout(url, options, timeoutMs) {
+        var started = Date.now();
+        var result = {
+          method: options && options.method ? options.method : "GET",
+          url: url,
+          ok: false,
+          status: 0,
+          statusText: "",
+          contentType: "",
+          contentLength: "",
+          elapsedMs: 0,
+          redirected: false,
+          finalUrl: "",
+          errorName: "",
+          errorMessage: "",
+          timeout: false,
+          textPreview: ""
+        };
+        if (!has("fetch")) {
+          result.errorName = "Unsupported";
+          result.errorMessage = "fetch is not available";
+          result.elapsedMs = Date.now() - started;
+          return Promise.resolve(result);
+        }
+        var opts = options || {};
+        if (!opts.cache) { opts.cache = "no-store"; }
+        return withTimeout(fetch(url, opts), timeoutMs || 10000).then(function (response) {
+          result.ok = response.ok;
+          result.status = response.status;
+          result.statusText = response.statusText || "";
+          result.contentType = response.headers && response.headers.get ? (response.headers.get("content-type") || "") : "";
+          result.contentLength = response.headers && response.headers.get ? (response.headers.get("content-length") || "") : "";
+          result.redirected = !!response.redirected;
+          result.finalUrl = response.url || "";
+          result.elapsedMs = Date.now() - started;
+          if (isStaticTextAllowed(url)) {
+            return response.clone().text().then(function (text) {
+              result.textPreview = text.slice(0, url.indexOf("/service-worker.js") !== -1 ? 240 : 200);
+              result._textForAnalysis = text;
+              result.textLength = text.length;
+              return result;
+            }, function () { return result; });
+          }
+          return result;
+        }, function (err) {
+          result.elapsedMs = Date.now() - started;
+          result.errorName = err && err.name ? String(err.name) : "Error";
+          result.errorMessage = err && err.message ? String(err.message) : String(err);
+          result.timeout = !!(err && err.timeout);
+          return result;
+        });
+      }
+
+      function makeRow(key, value) {
+        var row = document.createElement("div");
+        var k = document.createElement("div");
+        var v = document.createElement("div");
+        row.className = "row";
+        k.className = "key";
+        v.className = "val";
+        k.appendChild(document.createTextNode(key));
+        v.appendChild(document.createTextNode(formatValue(value)));
+        row.appendChild(k);
+        row.appendChild(v);
+        return row;
+      }
+
+      function formatValue(value) {
+        if (typeof value === "undefined") { return "undefined"; }
+        if (value === null) { return "null"; }
+        if (typeof value === "string") { return value; }
+        try { return JSON.stringify(value, null, 2); } catch (e) { return String(value); }
+      }
+
+      function setSection(id, data) {
+        var section = document.getElementById(id);
+        var grid = section ? section.getElementsByClassName("grid")[0] : null;
+        if (!grid) { return; }
+        grid.innerHTML = "";
+        if (data && data.length && typeof data[0] === "string") {
+          var ul = document.createElement("ul");
+          for (var i = 0; i < data.length; i++) {
+            var li = document.createElement("li");
+            li.appendChild(document.createTextNode(data[i]));
+            ul.appendChild(li);
+          }
+          grid.appendChild(ul);
+          return;
+        }
+        if (data && data.length) {
+          for (var j = 0; j < data.length; j++) {
+            grid.appendChild(makeRow(data[j][0], data[j][1]));
+          }
+        }
+      }
+
+      function statusFromWarnings(warnings) {
+        var s = "OK";
+        for (var i = 0; i < warnings.length; i++) {
+          if (warnings[i].severity === "CRITICAL") { return "CRITICAL"; }
+          if (warnings[i].severity === "WARNING") { s = "WARNING"; }
+        }
+        return s;
+      }
+
+      function renderAll() {
+        var warningsText = [];
+        var status = report.summaryStatus || "WARNING";
+        var statusEl = document.getElementById("status");
+        statusEl.className = "status " + status.toLowerCase();
+        statusEl.innerHTML = "";
+        statusEl.appendChild(document.createTextNode(status));
+
+        document.getElementById("diagId").innerHTML = "";
+        document.getElementById("diagId").appendChild(document.createTextNode(diagId));
+        document.getElementById("openLogin").href = "/login?fromDiag=" + encodeURIComponent(diagId);
+
+        if (report.warnings && report.warnings.length) {
+          for (var i = 0; i < report.warnings.length; i++) {
+            warningsText.push(report.warnings[i].severity + ": " + report.warnings[i].message);
+          }
+        } else {
+          warningsText.push("Критичных предупреждений не найдено.");
+        }
+
+        setSection("summary", [
+          ["diagId", diagId],
+          ["status", status],
+          ["timestamp", report.timestamp || ""],
+          ["instruction", "Скопируйте диагностику и отправьте разработчику."]
+        ]);
+        setSection("warnings", warningsText);
+        setSection("environment", objectRows(report.environment));
+        setSection("sw", objectRows(report.serviceWorker));
+        setSection("storage", objectRows({ storage: report.storage, indexedDB: report.indexedDB, caches: report.caches, push: report.push }));
+        setSection("build", objectRows(report.frontendBuild));
+        setSection("network", objectRows(report.network));
+        renderErrorsOnly();
+        rawText = JSON.stringify(report, null, 2);
+        document.getElementById("rawReport").value = rawText;
+      }
+
+      function renderErrorsOnly() {
+        if (!report) { return; }
+        report.runtimeErrors = capturedErrors;
+        setSection("errors", objectRows({ capturedErrors: capturedErrors }));
+        try {
+          rawText = JSON.stringify(report, null, 2);
+          document.getElementById("rawReport").value = rawText;
+        } catch (e) {}
+      }
+
+      function objectRows(obj) {
+        var rows = [];
+        if (!obj) { return rows; }
+        for (var key in obj) {
+          if (Object.prototype.hasOwnProperty.call(obj, key)) {
+            rows.push([key, obj[key]]);
+          }
+        }
+        return rows;
+      }
+
+      function addWarning(severity, message) {
+        report.warnings.push({ severity: severity, message: message });
+      }
+
+      function collectEnvironment() {
+        var ua = safe(function () { return navigator.userAgent; }, "");
+        var vendor = safe(function () { return navigator.vendor; }, "");
+        var platform = safe(function () { return navigator.platform; }, "");
+        var referrer = safe(function () { return document.referrer; }, "");
+        var isIOS = /iPad|iPhone|iPod/.test(ua) || (platform === "MacIntel" && safe(function () { return navigator.maxTouchPoints; }, 0) > 1);
+        var isCriOS = /CriOS/.test(ua);
+        var isFxiOS = /FxiOS/.test(ua);
+        var isSafari = /Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS/.test(ua);
+        var isTelegram = /Telegram|TelegramBot|TgWebView/i.test(ua + " " + referrer);
+        var modes = {};
+        var modeNames = ["browser", "standalone", "fullscreen", "minimal-ui"];
+        for (var i = 0; i < modeNames.length; i++) {
+          modes[modeNames[i]] = safe(function (m) { return window.matchMedia && window.matchMedia("(display-mode: " + m + ")").matches; }.bind(null, modeNames[i]), false);
+        }
+        report.environment = {
+          timestampISO: nowIso(),
+          href: safe(function () { return sanitizeUrlValue(location.href); }, ""),
+          origin: safe(function () { return location.origin; }, ""),
+          pathname: safe(function () { return location.pathname; }, ""),
+          search: safe(function () { return sanitizeUrlValue(location.search); }, ""),
+          referrer: sanitizeUrlValue(referrer),
+          visibilityState: safe(function () { return document.visibilityState; }, ""),
+          readyState: safe(function () { return document.readyState; }, ""),
+          userAgent: ua,
+          vendor: vendor,
+          platform: platform,
+          product: safe(function () { return navigator.product; }, ""),
+          language: safe(function () { return navigator.language; }, ""),
+          languages: safe(function () { return navigator.languages; }, []),
+          cookieEnabled: safe(function () { return navigator.cookieEnabled; }, ""),
+          onLine: safe(function () { return navigator.onLine; }, ""),
+          maxTouchPoints: safe(function () { return navigator.maxTouchPoints; }, ""),
+          devicePixelRatio: safe(function () { return window.devicePixelRatio; }, ""),
+          viewport: { width: safe(function () { return window.innerWidth; }, ""), height: safe(function () { return window.innerHeight; }, "") },
+          screen: {
+            width: safe(function () { return screen.width; }, ""),
+            height: safe(function () { return screen.height; }, ""),
+            availWidth: safe(function () { return screen.availWidth; }, ""),
+            availHeight: safe(function () { return screen.availHeight; }, "")
+          },
+          orientation: safe(function () { return screen.orientation ? { type: screen.orientation.type, angle: screen.orientation.angle } : window.orientation; }, ""),
+          timezone: safe(function () { return Intl.DateTimeFormat().resolvedOptions().timeZone; }, ""),
+          localTimeString: safe(function () { return new Date().toString(); }, ""),
+          utcTimeString: safe(function () { return new Date().toUTCString(); }, ""),
+          detection: {
+            isIOS: isIOS,
+            isIPhone: /iPhone/.test(ua),
+            isIPad: /iPad/.test(ua) || (platform === "MacIntel" && safe(function () { return navigator.maxTouchPoints; }, 0) > 1),
+            isSafari: isSafari,
+            isCriOS: isCriOS,
+            isFxiOS: isFxiOS,
+            isTelegramWebView: isTelegram,
+            isStandaloneNavigator: safe(function () { return navigator.standalone === true; }, false),
+            isStandaloneMedia: safe(function () { return window.matchMedia && window.matchMedia("(display-mode: standalone)").matches; }, false),
+            displayModes: modes,
+            openedFromTelegramHints: isTelegram,
+            openedAsHomeScreenPWA: safe(function () { return navigator.standalone === true || (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches); }, false)
+          },
+          features: {
+            fetch: has("fetch"),
+            AbortController: has("AbortController"),
+            Promise: has("Promise"),
+            asyncAwait: safe(function () { new Function("async function x(){await 1;}"); return true; }, false),
+            localStorage: safe(function () { return !!window.localStorage; }, false),
+            sessionStorage: safe(function () { return !!window.sessionStorage; }, false),
+            indexedDB: has("indexedDB"),
+            caches: has("caches"),
+            serviceWorker: !!(navigator && navigator.serviceWorker),
+            Notification: has("Notification"),
+            PushManager: has("PushManager"),
+            crypto: has("crypto"),
+            cryptoRandomUUID: !!(window.crypto && window.crypto.randomUUID),
+            performance: has("performance"),
+            performanceGetEntriesByType: !!(window.performance && performance.getEntriesByType),
+            navigatorStorage: !!(navigator && navigator.storage),
+            navigatorStorageEstimate: !!(navigator && navigator.storage && navigator.storage.estimate),
+            navigatorConnection: !!(navigator && navigator.connection),
+            WebSocket: has("WebSocket"),
+            EventSource: has("EventSource"),
+            BroadcastChannel: has("BroadcastChannel")
+          },
+          networkInformation: collectConnection(),
+          performance: collectPerformance()
+        };
+      }
+
+      function collectConnection() {
+        var c = safe(function () { return navigator.connection || navigator.mozConnection || navigator.webkitConnection; }, null);
+        if (!c) { return { available: false }; }
+        return {
+          available: true,
+          effectiveType: c.effectiveType || "",
+          downlink: c.downlink || "",
+          rtt: c.rtt || "",
+          saveData: !!c.saveData,
+          type: c.type || ""
+        };
+      }
+
+      function collectPerformance() {
+        var out = { available: !!window.performance };
+        var entries;
+        if (!window.performance) { return out; }
+        out.timeOrigin = performance.timeOrigin || "";
+        out.memory = performance.memory ? {
+          jsHeapSizeLimit: performance.memory.jsHeapSizeLimit,
+          totalJSHeapSize: performance.memory.totalJSHeapSize,
+          usedJSHeapSize: performance.memory.usedJSHeapSize
+        } : "not available";
+        entries = safe(function () { return performance.getEntriesByType ? performance.getEntriesByType("navigation") : []; }, []);
+        if (entries && entries.length) {
+          out.navigation = pickTiming(entries[0]);
+        }
+        out.resourceSummary = summarizeResources();
+        return out;
+      }
+
+      function pickTiming(e) {
+        return {
+          type: e.type || "",
+          startTime: e.startTime,
+          domContentLoadedEventEnd: e.domContentLoadedEventEnd,
+          loadEventEnd: e.loadEventEnd,
+          transferSize: e.transferSize,
+          encodedBodySize: e.encodedBodySize,
+          decodedBodySize: e.decodedBodySize
+        };
+      }
+
+      function summarizeResources() {
+        var entries = safe(function () { return performance.getEntriesByType ? performance.getEntriesByType("resource") : []; }, []);
+        var interesting = [];
+        var slow = [];
+        var failed = [];
+        for (var i = 0; i < entries.length; i++) {
+          var e = entries[i];
+          var name = e.name || "";
+          var item = {
+            name: name,
+            duration: Math.round(e.duration || 0),
+            transferSize: e.transferSize,
+            encodedBodySize: e.encodedBodySize
+          };
+          if (/\/static\/(js|css)\//.test(name) || /\/(service-worker\.js|asset-manifest\.json|reset\.html|diag\.html)/.test(name)) {
+            interesting.push(item);
+          }
+          if ((e.duration || 0) > 2000) { slow.push(item); }
+          if (typeof e.transferSize === "number" && e.transferSize === 0 && (e.encodedBodySize || 0) === 0) { failed.push(item); }
+        }
+        return { interesting: interesting, slowOver2000ms: slow, failedSuspected: failed };
+      }
+
+      function storageAvailable(name) {
+        try {
+          var s = window[name];
+          var k = "__hp_diag_test__";
+          s.setItem(k, "1");
+          s.removeItem(k);
+          return { available: true };
+        } catch (e) {
+          return { available: false, error: e.name + ": " + e.message };
+        }
+      }
+
+      function storageInfo(name) {
+        var info = storageAvailable(name);
+        var keys = [];
+        var suspicious = [];
+        var killSwitch = "";
+        if (!info.available) { return info; }
+        try {
+          var s = window[name];
+          for (var i = 0; i < s.length; i++) {
+            var key = s.key(i);
+            keys.push(key);
+            if (/token|jwt|auth|user|refresh|access|currentUser/i.test(key)) { suspicious.push(key); }
+          }
+          info.length = s.length;
+          info.keys = keys;
+          info.suspiciousKeyNamesOnly = suspicious;
+          if (name === "localStorage") {
+            killSwitch = s.getItem("hpSwKillSwitchApplied20260629");
+            info.hpSwKillSwitchApplied20260629 = killSwitch;
+          }
+        } catch (e) {
+          info.error = e.name + ": " + e.message;
+        }
+        return info;
+      }
+
+      function collectStorage() {
+        report.storage = {
+          localStorage: storageInfo("localStorage"),
+          sessionStorage: storageInfo("sessionStorage"),
+          cookieLengthOnly: safe(function () { return document.cookie ? document.cookie.length : 0; }, "error")
+        };
+        return collectIndexedDB().then(function (idb) {
+          report.indexedDB = idb;
+          return collectCaches().then(function (cacheInfo) {
+            report.caches = cacheInfo;
+            if (cacheInfo.exists && cacheInfo.keys && cacheInfo.keys.length) {
+              addWarning("WARNING", "После kill-switch остались Cache Storage entries: " + cacheInfo.keys.join(", "));
+            }
+            if (cacheInfo.suspiciousNames && cacheInfo.suspiciousNames.length) {
+              addWarning("WARNING", "Подозрительные cache names: " + cacheInfo.suspiciousNames.join(", "));
+            }
+          });
+        });
+      }
+
+      function collectIndexedDB() {
+        if (!window.indexedDB) { return Promise.resolve({ available: false }); }
+        if (!indexedDB.databases) { return Promise.resolve({ available: true, databasesSupported: false, message: "indexedDB.databases not supported" }); }
+        return indexedDB.databases().then(function (dbs) {
+          var list = [];
+          for (var i = 0; i < dbs.length; i++) {
+            list.push({ name: dbs[i].name || "", version: dbs[i].version || "" });
+          }
+          return { available: true, databasesSupported: true, databases: list };
+        }, function (e) {
+          return { available: true, databasesSupported: true, error: e.name + ": " + e.message };
+        });
+      }
+
+      function collectCaches() {
+        var out = { exists: !!window.caches, keys: [], entries: [], first50RequestUrls: [], suspiciousNames: [] };
+        if (!window.caches) { return Promise.resolve(out); }
+        return caches.keys().then(function (keys) {
+          out.keys = keys;
+          var jobs = [];
+          for (var i = 0; i < keys.length; i++) {
+            if (/hockey-planner-v2|workbox|precache|runtime/i.test(keys[i])) { out.suspiciousNames.push(keys[i]); }
+            jobs.push((function (name) {
+              return caches.open(name).then(function (cache) {
+                return cache.keys().then(function (reqs) {
+                  var urls = [];
+                  for (var j = 0; j < reqs.length; j++) {
+                    if (out.first50RequestUrls.length < 50) { out.first50RequestUrls.push(reqs[j].url); }
+                    if (j < 10) { urls.push(reqs[j].url); }
+                  }
+                  out.entries.push({ name: name, entryCount: reqs.length, firstUrlsInThisCache: urls });
+                });
+              });
+            })(keys[i]));
+          }
+          return Promise.all(jobs).then(function () { return out; });
+        }, function (e) {
+          out.error = e.name + ": " + e.message;
+          return out;
+        });
+      }
+
+      function collectServiceWorker() {
+        var sw = {
+          supported: !!(navigator && navigator.serviceWorker),
+          controllerExists: false,
+          registrations: [],
+          ready: {},
+          scriptFetch: {}
+        };
+        report.serviceWorker = sw;
+        if (!sw.supported) { return Promise.resolve(); }
+        sw.controllerExists = !!navigator.serviceWorker.controller;
+        sw.controller = navigator.serviceWorker.controller ? {
+          scriptURL: navigator.serviceWorker.controller.scriptURL || "",
+          state: navigator.serviceWorker.controller.state || ""
+        } : null;
+        if (sw.controllerExists) {
+          addWarning("WARNING", "navigator.serviceWorker.controller все еще присутствует.");
+        }
+        return navigator.serviceWorker.getRegistrations().then(function (regs) {
+          for (var i = 0; i < regs.length; i++) {
+            sw.registrations.push(regInfo(regs[i]));
+          }
+          return swReadyWithTimeout(3000).then(function (ready) {
+            sw.ready = ready;
+            return fetchServiceWorkerScript(sw);
+          });
+        }, function (e) {
+          sw.registrationsError = e.name + ": " + e.message;
+          return fetchServiceWorkerScript(sw);
+        });
+      }
+
+      function regInfo(reg) {
+        return {
+          scope: reg.scope || "",
+          active: workerInfo(reg.active),
+          waiting: workerInfo(reg.waiting),
+          installing: workerInfo(reg.installing)
+        };
+      }
+
+      function workerInfo(worker) {
+        return worker ? { scriptURL: worker.scriptURL || "", state: worker.state || "" } : null;
+      }
+
+      function swReadyWithTimeout(timeoutMs) {
+        return withTimeout(navigator.serviceWorker.ready, timeoutMs).then(function (reg) {
+          return { resolved: true, registration: regInfo(reg) };
+        }, function (e) {
+          return { resolved: false, error: e.name + ": " + e.message, timeout: !!e.timeout };
+        });
+      }
+
+      function fetchServiceWorkerScript(sw) {
+        return fetchWithTimeout(addDiag("/service-worker.js"), { cache: "no-store", credentials: "same-origin" }, 10000).then(function (res) {
+          sw.scriptFetch = res;
+          var text = res._textForAnalysis || res.textPreview || "";
+          sw.scriptAnalysis = {
+            first240Chars: text.slice(0, 240),
+            containsRegistrationUnregister: text.indexOf("registration.unregister") !== -1,
+            containsCachesDelete: text.indexOf("caches.delete") !== -1,
+            containsSkipWaiting: text.indexOf("skipWaiting") !== -1,
+            containsOldCacheName: text.indexOf("hockey-planner-v2") !== -1,
+            containsFetchListener: text.indexOf("fetch") !== -1
+          };
+          delete res._textForAnalysis;
+          if (!res.ok) { addWarning("CRITICAL", "service-worker.js missing or not OK: " + res.status); }
+          if (!sw.scriptAnalysis.containsRegistrationUnregister || !sw.scriptAnalysis.containsCachesDelete) {
+            addWarning("CRITICAL", "service-worker.js не похож на kill-switch.");
+          }
+        });
+      }
+
+      function collectFrontendBuild() {
+        var build = { assetManifest: {}, mainJs: {}, loadedResources: [] };
+        report.frontendBuild = build;
+        return fetchWithTimeout(addDiag("/asset-manifest.json"), { cache: "no-store", credentials: "same-origin" }, 10000).then(function (res) {
+          build.assetManifestFetch = res;
+          var manifestText = res._textForAnalysis || "";
+          delete res._textForAnalysis;
+          if (!res.ok || !manifestText) {
+            addWarning("CRITICAL", "asset-manifest missing or invalid.");
+            return null;
+          }
+          return manifestText;
+        }).then(function (text) {
+          var manifest = null;
+          if (text) {
+            try { manifest = JSON.parse(text); } catch (e) { addWarning("CRITICAL", "asset-manifest JSON parse error: " + e.message); }
+          }
+          build.assetManifest = manifest;
+          if (manifest) {
+            build.files = manifest.files || {};
+            build.entrypoints = manifest.entrypoints || [];
+            mainBundlePath = findMainBundle(manifest);
+            build.mainJsPath = mainBundlePath;
+            if (mainBundlePath && mainBundlePath.indexOf(expectedMain) !== -1) { build.expectedProductionBundle = true; }
+            if (mainBundlePath && mainBundlePath.indexOf(oldMain) !== -1) { addWarning("CRITICAL", "Manifest points to old main.2dc255dc.js."); }
+          }
+          return mainBundlePath ? fetchWithTimeout(addDiag(mainBundlePath), { cache: "no-store", credentials: "same-origin" }, 10000) : null;
+        }).then(function (mainRes) {
+          if (mainRes) {
+            mainRes.first160Chars = (mainRes._textForAnalysis || mainRes.textPreview || "").slice(0, 160);
+            delete mainRes._textForAnalysis;
+            build.mainJs = mainRes;
+            if (!mainRes.ok) { addWarning("CRITICAL", "static main.js fetch failed."); }
+          } else {
+            addWarning("CRITICAL", "main.js not found in asset-manifest.");
+          }
+          build.loadedResources = summarizeResources().interesting;
+          for (var i = 0; i < build.loadedResources.length; i++) {
+            if (String(build.loadedResources[i].name).indexOf(oldMain) !== -1) {
+              addWarning("CRITICAL", "Loaded resources contain old main.2dc255dc.js.");
+            }
+          }
+        });
+      }
+
+      function findMainBundle(manifest) {
+        var files = manifest.files || {};
+        var entrypoints = manifest.entrypoints || [];
+        if (files["main.js"]) { return files["main.js"]; }
+        for (var i = 0; i < entrypoints.length; i++) {
+          if (/\.js($|\?)/.test(entrypoints[i])) { return entrypoints[i]; }
+        }
+        return "";
+      }
+
+      function runNetworkProbes() {
+        var probes = [
+          { label: "Static /", url: "/" },
+          { label: "Static /index.html", url: "/index.html" },
+          { label: "Static /version", url: "/version" },
+          { label: "Static /reset.html", url: "/reset.html" },
+          { label: "Static /diag.html", url: "/diag.html" },
+          { label: "Static /manifest.json", url: "/manifest.json" },
+          { label: "Static /asset-manifest.json", url: "/asset-manifest.json" },
+          { label: "Static /service-worker.js", url: "/service-worker.js" },
+          { label: "API same-origin /api/auth/me", url: "/api/auth/me", api: true },
+          { label: "API direct health", url: "https://api.hockeyplanner.ru/health", api: true },
+          { label: "API direct /api/auth/me", url: "https://api.hockeyplanner.ru/api/auth/me", api: true }
+        ];
+        if (mainBundlePath) { probes.push({ label: "Static main bundle", url: mainBundlePath }); }
+        report.network = { probes: [] };
+        var jobs = [];
+        for (var i = 0; i < probes.length; i++) {
+          jobs.push(runProbe(probes[i]));
+        }
+        return Promise.all(jobs).then(function (results) {
+          report.network.probes = results;
+          evaluateProbes(results);
+        });
+      }
+
+      function runProbe(probe) {
+        var options = { cache: "no-store" };
+        if (probe.url.indexOf("/") === 0 || probe.url.indexOf(location.origin) === 0) {
+          options.credentials = "include";
+        } else {
+          options.credentials = "include";
+        }
+        return fetchWithTimeout(addDiag(probe.url), options, 10000).then(function (res) {
+          res.label = probe.label;
+          res.api = !!probe.api;
+          delete res._textForAnalysis;
+          if (probe.api) { delete res.textPreview; delete res.textLength; }
+          return res;
+        });
+      }
+
+      function evaluateProbes(results) {
+        for (var i = 0; i < results.length; i++) {
+          var r = results[i];
+          if (r.url.indexOf("/api/") !== -1 && /text\/html/i.test(r.contentType || "")) {
+            addWarning("CRITICAL", r.label + " returned text/html.");
+          }
+          if (r.url.indexOf("/api/auth/me") !== -1 && r.errorName) {
+            addWarning("CRITICAL", r.label + " network error: " + r.errorMessage);
+          }
+          if (r.label === "API direct health" && (!r.ok || r.errorName)) {
+            addWarning("CRITICAL", "Direct API health failed.");
+          }
+          if (r.label === "Static main bundle" && !r.ok) {
+            addWarning("CRITICAL", "Static main.js failed.");
+          }
+          if (String(r.url).indexOf(oldMain) !== -1 || String(r.finalUrl).indexOf(oldMain) !== -1 || String(r.textPreview).indexOf(oldMain) !== -1) {
+            addWarning("CRITICAL", "Old main.2dc255dc.js detected in network probe.");
+          }
+        }
+      }
+
+      function collectPush() {
+        var out = {
+          notificationPermission: has("Notification") ? Notification.permission : "Notification not supported",
+          pushManagerSupported: has("PushManager"),
+          subscription: "not checked"
+        };
+        report.push = out;
+        if (!(navigator && navigator.serviceWorker && navigator.serviceWorker.getRegistrations)) {
+          return Promise.resolve();
+        }
+        return navigator.serviceWorker.getRegistrations().then(function (regs) {
+          var jobs = [];
+          for (var i = 0; i < regs.length; i++) {
+            if (regs[i].pushManager && regs[i].pushManager.getSubscription) {
+              jobs.push(regs[i].pushManager.getSubscription());
+            }
+          }
+          return Promise.all(jobs).then(function (subs) {
+            var list = [];
+            for (var j = 0; j < subs.length; j++) {
+              if (subs[j]) {
+                list.push({ exists: true, endpointHostOnly: endpointHost(subs[j].endpoint || "") });
+              } else {
+                list.push({ exists: false });
+              }
+            }
+            out.subscription = list;
+          });
+        }, function (e) {
+          out.subscriptionError = e.name + ": " + e.message;
+        });
+      }
+
+      function endpointHost(endpoint) {
+        try {
+          var a = document.createElement("a");
+          a.href = endpoint;
+          return a.host || "";
+        } catch (e) {
+          return "";
+        }
+      }
+
+      function finalize() {
+        report.summaryStatus = statusFromWarnings(report.warnings);
+        report.timestampCompleted = nowIso();
+        renderAll();
+      }
+
+      function runDiagnostics() {
+        report = {
+          diagId: diagId,
+          timestamp: nowIso(),
+          pageUrl: "https://hockeyplanner.ru/diag.html",
+          summaryStatus: "WARNING",
+          warnings: [],
+          runtimeErrors: capturedErrors,
+          safety: {
+            cookieValuesPrinted: false,
+            localStorageValuesPrinted: "only hpSwKillSwitchApplied20260629",
+            sessionStorageValuesPrinted: false,
+            apiBodiesPrinted: false,
+            pushKeysPrinted: false
+          }
+        };
+        mainBundlePath = "";
+        renderAll();
+        collectEnvironment();
+        renderAll();
+        collectStorage()
+          .then(function () { renderAll(); return collectServiceWorker(); })
+          .then(function () { renderAll(); return collectFrontendBuild(); })
+          .then(function () { renderAll(); return runNetworkProbes(); })
+          .then(function () { renderAll(); return collectPush(); })
+          .then(function () {
+            report.environment.performance = collectPerformance();
+            finalize();
+          }, function (e) {
+            addWarning("CRITICAL", "Diagnostics runner error: " + (e && e.message ? e.message : String(e)));
+            finalize();
+          });
+      }
+
+      function copyReport() {
+        var text = rawText || document.getElementById("rawReport").value;
+        var state = document.getElementById("copyState");
+        function fallback() {
+          var ta = document.getElementById("rawReport");
+          ta.focus();
+          ta.select();
+          try {
+            var ok = document.execCommand("copy");
+            state.innerHTML = ok ? "Скопировано через textarea." : "Не удалось скопировать автоматически. Выделите текст в Raw Report вручную.";
+          } catch (e) {
+            state.innerHTML = "Не удалось скопировать автоматически. Выделите текст в Raw Report вручную.";
+          }
+        }
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(function () {
+            state.innerHTML = "Диагностика скопирована.";
+          }, fallback);
+        } else {
+          fallback();
+        }
+      }
+
+      function downloadReport() {
+        var text = rawText || document.getElementById("rawReport").value;
+        var blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement("a");
+        a.href = url;
+        a.download = diagId + ".txt";
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(function () {
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }, 1000);
+      }
+
+      function localReset() {
+        if (!confirm("Очистить localStorage/sessionStorage/cache, удалить service workers и перейти на страницу входа?")) { return; }
+        try { localStorage.clear(); } catch (e) {}
+        try { sessionStorage.clear(); } catch (e) {}
+        var jobs = [];
+        try {
+          if (window.caches) {
+            jobs.push(caches.keys().then(function (keys) {
+              var deletes = [];
+              for (var i = 0; i < keys.length; i++) { deletes.push(caches.delete(keys[i])); }
+              return Promise.all(deletes);
+            }));
+          }
+        } catch (e1) {}
+        try {
+          if (navigator.serviceWorker) {
+            jobs.push(navigator.serviceWorker.getRegistrations().then(function (regs) {
+              var unregs = [];
+              for (var j = 0; j < regs.length; j++) { unregs.push(regs[j].unregister()); }
+              return Promise.all(unregs);
+            }));
+          }
+        } catch (e2) {}
+        withTimeout(Promise.all(jobs), 1800).then(function () {}, function () {});
+        setTimeout(function () {
+          location.replace("/login?diagReset=" + Date.now());
+        }, 2000);
+      }
+
+      function runOptional(url, label) {
+        fetchWithTimeout(addDiag(url), { cache: "no-store", credentials: "include" }, 10000).then(function (res) {
+          delete res.textPreview;
+          delete res.textLength;
+          delete res._textForAnalysis;
+          res.label = label;
+          if (!report.network) { report.network = { probes: [] }; }
+          if (!report.network.manualProbes) { report.network.manualProbes = []; }
+          report.network.manualProbes.push(res);
+          if (/text\/html/i.test(res.contentType || "")) {
+            addWarning("CRITICAL", label + " returned text/html.");
+          }
+          finalize();
+        });
+      }
+
+      document.getElementById("runAgain").onclick = runDiagnostics;
+      document.getElementById("copyReport").onclick = copyReport;
+      document.getElementById("downloadReport").onclick = downloadReport;
+      document.getElementById("localReset").onclick = localReset;
+      document.getElementById("testTeams").onclick = function () { runOptional("/api/teams", "Manual /api/teams"); };
+      document.getElementById("testEvents").onclick = function () { runOptional("/api/events", "Manual /api/events"); };
+      document.getElementById("triggerError").onclick = function () {
+        setTimeout(function () { throw new Error("Hockey Planner diagnostics test error"); }, 0);
+      };
+
+      if (!window.Promise) {
+        report = {
+          diagId: diagId,
+          timestamp: nowIso(),
+          summaryStatus: "CRITICAL",
+          warnings: [{ severity: "CRITICAL", message: "Promise is not supported; full diagnostics cannot run." }],
+          runtimeErrors: capturedErrors
+        };
+        renderAll();
+      } else {
+        runDiagnostics();
+      }
+    })();
+  </script>
+</body>
+</html>
