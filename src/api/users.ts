@@ -40,6 +40,11 @@ const ensureOk = async (res: Response, fallbackMessage: string): Promise<void> =
   throw new Error(errorData?.message || `${fallbackMessage}: ${res.status}`);
 };
 
+const createFallbackUserId = (): string => {
+  const randomUuid = globalThis.crypto?.randomUUID;
+  return randomUuid ? randomUuid.call(globalThis.crypto) : `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+};
+
 export async function getUsers(): Promise<User[]> {
   const res = await fetch(buildApiUrl("/api/Users"));
   await ensureOk(res, "Не удалось загрузить пользователей");
@@ -70,7 +75,7 @@ export async function createUser(userData: CreateUserData): Promise<User> {
   if (!text) {
     return {
       ...userData,
-      id: crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(),
+      id: createFallbackUserId(),
       role: 3,
       createdAt: new Date().toISOString(),
       updatedAt: null,

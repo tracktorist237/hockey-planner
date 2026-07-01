@@ -34,6 +34,227 @@
   
   <!-- Название страницы -->
   <title>🏒 Хоккейный планировщик</title>
+  <script>
+    (function () {
+      var BOOT_LOG_KEY = "hpBootErrorLog";
+      var MAX_BOOT_EVENTS = 50;
+      var watchdogRendered = false;
+
+      function safeString(value) {
+        try {
+          if (value && value.name && value.message) {
+            return String(value.name) + ": " + String(value.message);
+          }
+          if (typeof value === "string") {
+            return value;
+          }
+          return JSON.stringify(value);
+        } catch (e) {
+          return String(value);
+        }
+      }
+
+      function sanitize(value) {
+        return safeString(value).replace(/([?&][^=]*(token|jwt|auth|password|cookie|refresh|access)[^=]*=)([^&#]*)/ig, "$1[redacted]").slice(0, 1800);
+      }
+
+      function readLog() {
+        try {
+          var raw = window.localStorage.getItem(BOOT_LOG_KEY);
+          var parsed = raw ? JSON.parse(raw) : [];
+          return parsed && parsed.length ? parsed : [];
+        } catch (e) {
+          return [];
+        }
+      }
+
+      function writeLog(event, details) {
+        try {
+          var log = readLog();
+          log.push({
+            ts: new Date().toISOString(),
+            event: event,
+            path: window.location.pathname,
+            details: details || {}
+          });
+          window.localStorage.setItem(BOOT_LOG_KEY, JSON.stringify(log.slice(-MAX_BOOT_EVENTS)));
+        } catch (e) {}
+      }
+
+      function storageKeys(storage) {
+        var keys = [];
+        try {
+          for (var i = 0; i < storage.length; i += 1) {
+            keys.push(storage.key(i));
+          }
+        } catch (e) {
+          keys.push("error: " + sanitize(e));
+        }
+        return keys;
+      }
+
+      function swState() {
+        try {
+          if (!("serviceWorker" in navigator)) {
+            return { supported: false };
+          }
+          return {
+            supported: true,
+            controller: !!navigator.serviceWorker.controller,
+            scriptURL: navigator.serviceWorker.controller ? navigator.serviceWorker.controller.scriptURL : "",
+            state: navigator.serviceWorker.controller ? navigator.serviceWorker.controller.state : ""
+          };
+        } catch (e) {
+          return { error: sanitize(e) };
+        }
+      }
+
+      function makeReport() {
+        return {
+          timestamp: new Date().toISOString(),
+          url: window.location.href,
+          userAgent: navigator.userAgent,
+          readyState: document.readyState,
+          visibilityState: document.visibilityState,
+          bootErrors: readLog(),
+          localStorageKeysOnly: storageKeys(window.localStorage),
+          sessionStorageKeysOnly: storageKeys(window.sessionStorage),
+          serviceWorker: swState()
+        };
+      }
+
+      function copyText(text, fallbackEl) {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).catch(function () {
+            fallbackEl.focus();
+            fallbackEl.select();
+          });
+          return;
+        }
+        fallbackEl.focus();
+        fallbackEl.select();
+      }
+
+      function clearSiteDataAndReload() {
+        if (!window.confirm("Очистить данные сайта и открыть вход заново?")) {
+          return;
+        }
+        try { window.localStorage.clear(); } catch (e) {}
+        try { window.sessionStorage.clear(); } catch (e) {}
+
+        var jobs = [];
+        try {
+          if ("caches" in window) {
+            jobs.push(caches.keys().then(function (keys) {
+              return Promise.all(keys.map(function (key) { return caches.delete(key); }));
+            }));
+          }
+        } catch (e1) {}
+        try {
+          if ("serviceWorker" in navigator && navigator.serviceWorker.getRegistrations) {
+            jobs.push(navigator.serviceWorker.getRegistrations().then(function (registrations) {
+              return Promise.all(registrations.map(function (registration) { return registration.unregister(); }));
+            }));
+          }
+        } catch (e2) {}
+
+        try {
+          Promise.race([
+            Promise.all(jobs),
+            new Promise(function (resolve) { window.setTimeout(resolve, 1800); })
+          ]).then(function () {
+            window.location.replace("/login?hardreset=" + Date.now());
+          }, function () {
+            window.location.replace("/login?hardreset=" + Date.now());
+          });
+        } catch (e3) {
+          window.setTimeout(function () {
+            window.location.replace("/login?hardreset=" + Date.now());
+          }, 500);
+        }
+      }
+
+      function rootHasVisibleUi(root) {
+        if (!root || !root.innerHTML || !root.innerHTML.replace(/\s/g, "")) {
+          return false;
+        }
+        try {
+          var rect = root.getBoundingClientRect();
+          if (rect.width > 0 && rect.height > 0 && root.children.length > 0) {
+            return true;
+          }
+        } catch (e) {}
+        return !!(root.textContent && root.textContent.replace(/\s/g, "").length > 0);
+      }
+
+      function escapeHtml(value) {
+        return String(value).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      }
+
+      function renderFallback() {
+        var root = document.getElementById("root");
+        if (watchdogRendered || rootHasVisibleUi(root)) {
+          return;
+        }
+        watchdogRendered = true;
+        writeLog("boot.watchdog.fallbackRendered", { readyState: document.readyState });
+
+        var report = makeReport();
+        var reportText = JSON.stringify(report, null, 2);
+        var wrapper = document.createElement("div");
+        wrapper.style.cssText = "min-height:100vh;box-sizing:border-box;padding:18px;background:#f6f7f9;color:#17202a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;line-height:1.45;";
+        wrapper.innerHTML =
+          '<div style="max-width:560px;margin:0 auto;padding:16px;border:1px solid #d9e0e8;border-radius:10px;background:#fff;box-shadow:0 14px 38px rgba(15,23,42,.12)">' +
+          '<h1 style="margin:0 0 8px;font-size:22px;line-height:1.2;color:#b3261e">Не удалось открыть приложение</h1>' +
+          '<p style="margin:0 0 12px;color:#586575">Скопируйте диагностику и отправьте разработчику. Затем можно очистить данные сайта и войти заново.</p>' +
+          '<div style="display:grid;gap:8px;margin:12px 0">' +
+          '<button id="hpBootCopy" type="button" style="min-height:44px;border:0;border-radius:8px;background:#0b57d0;color:#fff;font-weight:800">Скопировать диагностику</button>' +
+          '<button id="hpBootClear" type="button" style="min-height:44px;border:0;border-radius:8px;background:#b3261e;color:#fff;font-weight:800">Очистить данные и перезайти</button>' +
+          '<a href="/reset.html?v=4" style="display:block;min-height:44px;box-sizing:border-box;padding:11px 12px;border:1px solid #d9e0e8;border-radius:8px;background:#fff;color:#17202a;font-weight:800;text-align:center;text-decoration:none">Открыть /reset.html</a>' +
+          '</div>' +
+          '<div style="font-size:13px;color:#586575;overflow-wrap:anywhere"><strong>URL:</strong> ' + escapeHtml(sanitize(window.location.href)) + '</div>' +
+          '<div style="font-size:13px;color:#586575;overflow-wrap:anywhere"><strong>UA:</strong> ' + escapeHtml(sanitize(navigator.userAgent)) + '</div>' +
+          '<textarea id="hpBootReport" spellcheck="false" style="width:100%;min-height:260px;margin-top:12px;padding:10px;box-sizing:border-box;border:1px solid #d9e0e8;border-radius:8px;font:12px/1.4 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace">' +
+          escapeHtml(reportText) +
+          '</textarea>' +
+          '</div>';
+
+        if (root) {
+          root.innerHTML = "";
+          root.appendChild(wrapper);
+          document.getElementById("hpBootCopy").onclick = function () {
+            copyText(reportText, document.getElementById("hpBootReport"));
+          };
+          document.getElementById("hpBootClear").onclick = clearSiteDataAndReload;
+        }
+      }
+
+      window.__hpBootWriteLog = writeLog;
+      writeLog("app.boot.start", {
+        href: sanitize(window.location.href),
+        userAgent: sanitize(navigator.userAgent)
+      });
+
+      window.onerror = function (message, source, lineno, colno, error) {
+        writeLog("window.error", {
+          message: sanitize(message),
+          source: sanitize(source || ""),
+          lineno: lineno || 0,
+          colno: colno || 0,
+          error: sanitize(error || "")
+        });
+        return false;
+      };
+
+      window.onunhandledrejection = function (event) {
+        writeLog("window.unhandledrejection", {
+          reason: sanitize(event && event.reason ? event.reason : "")
+        });
+      };
+
+      window.setTimeout(renderFallback, 8000);
+    })();
+  </script>
 </head>
 <body>
   <noscript>Вам нужно включить JavaScript для работы этого приложения.</noscript>
