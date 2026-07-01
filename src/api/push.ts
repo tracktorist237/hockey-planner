@@ -1,6 +1,5 @@
 import { authFetch } from "src/api/auth";
-
-const API_BASE = process.env.REACT_APP_API_BASE || "";
+import { buildApiUrl } from "src/api/client";
 
 export interface PushSubscriptionPayload {
   endpoint: string;
@@ -28,7 +27,7 @@ export interface PushBroadcastResult {
 }
 
 export const getPushPublicKey = async (): Promise<string> => {
-  const response = await fetch(`${API_BASE}/api/push/public-key`);
+  const response = await fetch(buildApiUrl("/api/push/public-key"));
   if (!response.ok) {
     throw new Error(`Не удалось получить VAPID ключ: ${response.status}`);
   }
@@ -42,7 +41,7 @@ export const getPushPublicKey = async (): Promise<string> => {
 };
 
 export const subscribePush = async (payload: PushSubscriptionPayload): Promise<void> => {
-  const response = await fetch(`${API_BASE}/api/push/subscribe`, {
+  const response = await fetch(buildApiUrl("/api/push/subscribe"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
@@ -55,7 +54,7 @@ export const subscribePush = async (payload: PushSubscriptionPayload): Promise<v
 };
 
 export const unsubscribePush = async (endpoint: string): Promise<void> => {
-  const response = await fetch(`${API_BASE}/api/push/unsubscribe`, {
+  const response = await fetch(buildApiUrl("/api/push/unsubscribe"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ endpoint }),

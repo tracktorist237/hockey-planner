@@ -1,4 +1,4 @@
-const API_BASE = process.env.REACT_APP_API_BASE || "";
+import { buildApiUrl } from "src/api/client";
 
 export interface CreateUserData {
   firstName: string;
@@ -41,19 +41,19 @@ const ensureOk = async (res: Response, fallbackMessage: string): Promise<void> =
 };
 
 export async function getUsers(): Promise<User[]> {
-  const res = await fetch(`${API_BASE}/api/Users`);
+  const res = await fetch(buildApiUrl("/api/Users"));
   await ensureOk(res, "Не удалось загрузить пользователей");
   return res.json();
 }
 
 export async function getUserById(id: string): Promise<User> {
-  const res = await fetch(`${API_BASE}/api/Users/${id}`);
+  const res = await fetch(buildApiUrl(`/api/Users/${id}`));
   await ensureOk(res, "Не удалось загрузить пользователя");
   return res.json();
 }
 
 export async function createUser(userData: CreateUserData): Promise<User> {
-  const res = await fetch(`${API_BASE}/api/Users`, {
+  const res = await fetch(buildApiUrl("/api/Users"), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -82,7 +82,7 @@ export async function createUser(userData: CreateUserData): Promise<User> {
 }
 
 export async function updateUser(id: string, userData: UpdateUserData): Promise<User> {
-  const res = await fetch(`${API_BASE}/api/Users/${id}`, {
+  const res = await fetch(buildApiUrl(`/api/Users/${id}`), {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
@@ -98,7 +98,7 @@ export async function uploadUserAvatar(id: string, file: File): Promise<User> {
   const formData = new FormData();
   formData.append("file", file);
 
-  const res = await fetch(`${API_BASE}/api/Users/${id}/avatar/upload`, {
+  const res = await fetch(buildApiUrl(`/api/Users/${id}/avatar/upload`), {
     method: "POST",
     body: formData,
   });
@@ -108,7 +108,7 @@ export async function uploadUserAvatar(id: string, file: File): Promise<User> {
 }
 
 export async function deleteUser(id: string): Promise<void> {
-  const res = await fetch(`${API_BASE}/api/Users/${id}`, {
+  const res = await fetch(buildApiUrl(`/api/Users/${id}`), {
     method: "DELETE",
   });
 

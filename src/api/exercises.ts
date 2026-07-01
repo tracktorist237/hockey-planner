@@ -1,6 +1,5 @@
 import { ExerciseDto } from "src/types/events";
-
-const API_BASE = process.env.REACT_APP_API_BASE || "";
+import { buildApiUrl } from "src/api/client";
 
 export interface CreateExerciseDto {
   name: string;
@@ -15,13 +14,13 @@ export interface UpdateExerciseDto {
 
 export async function getExercises(teamId: string): Promise<ExerciseDto[]> {
   const query = new URLSearchParams({ teamId });
-  const res = await fetch(`${API_BASE}/api/exercises?${query.toString()}`, { credentials: "include" });
+  const res = await fetch(buildApiUrl(`/api/exercises?${query.toString()}`), { credentials: "include" });
   if (!res.ok) throw new Error(`GET /api/exercises failed: ${res.status}`);
   return res.json();
 }
 
 export async function createExercise(data: CreateExerciseDto, currentUserId: string): Promise<ExerciseDto> {
-  const res = await fetch(`${API_BASE}/api/exercises?currentUserId=${encodeURIComponent(currentUserId)}`, {
+  const res = await fetch(buildApiUrl(`/api/exercises?currentUserId=${encodeURIComponent(currentUserId)}`), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     credentials: "include",
@@ -37,7 +36,7 @@ export async function createExercise(data: CreateExerciseDto, currentUserId: str
 }
 
 export async function updateExercise(id: string, data: UpdateExerciseDto, currentUserId: string): Promise<ExerciseDto> {
-  const res = await fetch(`${API_BASE}/api/exercises/${encodeURIComponent(id)}?currentUserId=${encodeURIComponent(currentUserId)}`, {
+  const res = await fetch(buildApiUrl(`/api/exercises/${encodeURIComponent(id)}?currentUserId=${encodeURIComponent(currentUserId)}`), {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     credentials: "include",
@@ -53,7 +52,7 @@ export async function updateExercise(id: string, data: UpdateExerciseDto, curren
 }
 
 export async function deleteExercise(id: string, currentUserId: string): Promise<void> {
-  const res = await fetch(`${API_BASE}/api/exercises/${encodeURIComponent(id)}?currentUserId=${encodeURIComponent(currentUserId)}`, {
+  const res = await fetch(buildApiUrl(`/api/exercises/${encodeURIComponent(id)}?currentUserId=${encodeURIComponent(currentUserId)}`), {
     method: "DELETE",
     credentials: "include",
   });

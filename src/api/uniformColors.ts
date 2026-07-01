@@ -1,6 +1,5 @@
 import { UniformColorDto } from "src/types/events";
-
-const API_BASE = process.env.REACT_APP_API_BASE || "";
+import { buildApiUrl } from "src/api/client";
 
 export interface CreateUniformColorRequest {
   name: string;
@@ -15,7 +14,7 @@ export interface UpdateUniformColorRequest {
 
 export async function getUniformColors(teamId: string): Promise<UniformColorDto[]> {
   const query = new URLSearchParams({ teamId });
-  const res = await fetch(`${API_BASE}/api/uniform-colors?${query.toString()}`, {
+  const res = await fetch(buildApiUrl(`/api/uniform-colors?${query.toString()}`), {
     credentials: "include",
   });
 
@@ -31,7 +30,7 @@ export async function createUniformColor(
   currentUserId: string,
 ): Promise<UniformColorDto> {
   const res = await fetch(
-    `${API_BASE}/api/uniform-colors?currentUserId=${encodeURIComponent(currentUserId)}`,
+    buildApiUrl(`/api/uniform-colors?currentUserId=${encodeURIComponent(currentUserId)}`),
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -60,7 +59,7 @@ export async function createUniformColorWithUpload(
   formData.append("file", file);
 
   const res = await fetch(
-    `${API_BASE}/api/uniform-colors/upload?currentUserId=${encodeURIComponent(currentUserId)}`,
+    buildApiUrl(`/api/uniform-colors/upload?currentUserId=${encodeURIComponent(currentUserId)}`),
     {
       method: "POST",
       credentials: "include",
@@ -82,7 +81,7 @@ export async function updateUniformColor(
   currentUserId: string,
 ): Promise<UniformColorDto> {
   const res = await fetch(
-    `${API_BASE}/api/uniform-colors/${encodeURIComponent(id)}?currentUserId=${encodeURIComponent(currentUserId)}`,
+    buildApiUrl(`/api/uniform-colors/${encodeURIComponent(id)}?currentUserId=${encodeURIComponent(currentUserId)}`),
     {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -101,7 +100,7 @@ export async function updateUniformColor(
 
 export async function deleteUniformColor(id: string, currentUserId: string): Promise<void> {
   const res = await fetch(
-    `${API_BASE}/api/uniform-colors/${encodeURIComponent(id)}?currentUserId=${encodeURIComponent(currentUserId)}`,
+    buildApiUrl(`/api/uniform-colors/${encodeURIComponent(id)}?currentUserId=${encodeURIComponent(currentUserId)}`),
     {
       method: "DELETE",
       credentials: "include",

@@ -1,4 +1,4 @@
-const API_BASE = process.env.REACT_APP_API_BASE || "";
+import { buildApiUrl } from "src/api/client";
 
 export enum GoalieRequestVisibility {
   TeamGoaliesOnly = 1,
@@ -101,7 +101,7 @@ const ensureOk = async (response: Response, fallbackMessage: string): Promise<vo
 };
 
 const goalieUrl = (eventId: string, currentUserId: string, path = "") =>
-  `${API_BASE}/api/events/${encodeURIComponent(eventId)}/goalies${path}?currentUserId=${encodeURIComponent(currentUserId)}`;
+  buildApiUrl(`/api/events/${encodeURIComponent(eventId)}/goalies${path}?currentUserId=${encodeURIComponent(currentUserId)}`);
 
 export const getEventGoalies = async (eventId: string, currentUserId: string): Promise<EventGoaliesDto> => {
   const response = await fetch(goalieUrl(eventId, currentUserId));

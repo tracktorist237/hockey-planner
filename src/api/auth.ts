@@ -1,8 +1,8 @@
 import { normalizeAppRole, normalizeRole } from "src/constants/roles";
 import { User } from "src/types/user";
 import { writeClientDebugEvent } from "src/utils/clientDebugLog";
+import { buildApiUrl } from "src/api/client";
 
-const API_BASE = process.env.REACT_APP_API_BASE || "";
 const ACCESS_TOKEN_KEY = "authAccessToken";
 const REFRESH_TOKEN_KEY = "authRefreshToken";
 const ACCESS_TOKEN_EXPIRES_AT_KEY = "authAccessTokenExpiresAt";
@@ -156,7 +156,7 @@ const fetchWithTimeout = async (input: RequestInfo | URL, init: RequestInit = {}
 };
 
 const requestJson = async <T>(path: string, init: RequestInit): Promise<T> => {
-  const response = await fetchWithTimeout(`${API_BASE}${path}`, {
+  const response = await fetchWithTimeout(buildApiUrl(path), {
     ...init,
     headers: {
       "Content-Type": "application/json",
@@ -254,7 +254,7 @@ async function refreshAuthInternal(): Promise<User | null> {
   }
 
   writeClientDebugEvent("auth.refresh.start");
-  const response = await fetchWithTimeout(`${API_BASE}/api/auth/refresh`, {
+  const response = await fetchWithTimeout(buildApiUrl("/api/auth/refresh"), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -282,7 +282,7 @@ export async function authFetch(input: string, init: RequestInit = {}, retry = t
     headers.set("Authorization", `Bearer ${accessToken}`);
   }
 
-  const response = await fetchWithTimeout(`${API_BASE}${input}`, {
+  const response = await fetchWithTimeout(buildApiUrl(input), {
     ...init,
     headers,
   });

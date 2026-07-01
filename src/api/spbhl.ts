@@ -1,4 +1,4 @@
-const API_BASE = process.env.REACT_APP_API_BASE || "";
+import { buildApiUrl } from "src/api/client";
 
 export interface SpbhlPlayerSearchItem {
   playerId: string;
@@ -35,7 +35,7 @@ export async function searchSpbhlPlayers(
 
   query.set("page", String(params.page ?? 1));
 
-  const res = await fetch(`${API_BASE}/api/spbhl/players?${query.toString()}`);
+  const res = await fetch(buildApiUrl(`/api/spbhl/players?${query.toString()}`));
 
   if (!res.ok) {
     const errorData = await res.json().catch(() => null);

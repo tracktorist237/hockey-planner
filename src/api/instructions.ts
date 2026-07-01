@@ -1,4 +1,4 @@
-const API_BASE = process.env.REACT_APP_API_BASE || "";
+import { buildApiUrl } from "src/api/client";
 
 export interface InstructionListItemDto {
   id: string;
@@ -51,9 +51,9 @@ const requireJson = async <T>(response: Response): Promise<T> => {
 };
 
 export async function getInstructions(): Promise<InstructionListItemDto[]> {
-  return requireJson(await fetch(`${API_BASE}/api/instructions`, { credentials: "include" }));
+  return requireJson(await fetch(buildApiUrl("/api/instructions"), { credentials: "include" }));
 }
 
 export async function getInstruction(slug: string): Promise<InstructionArticleDto> {
-  return requireJson(await fetch(`${API_BASE}/api/instructions/${encodeURIComponent(slug)}`, { credentials: "include" }));
+  return requireJson(await fetch(buildApiUrl(`/api/instructions/${encodeURIComponent(slug)}`), { credentials: "include" }));
 }

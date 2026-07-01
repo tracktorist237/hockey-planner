@@ -1,6 +1,5 @@
 import { CreateUpdateRosterRequest } from "../types/lines";
-
-const API_BASE = process.env.REACT_APP_API_BASE || "";
+import { buildApiUrl } from "src/api/client";
 
 const getRosterErrorDescription = (status: number): string => {
   if (status === 0) return "нет соединения с сервером или запрос был прерван";
@@ -30,7 +29,7 @@ export async function createLineRoster(
 ): Promise<void> {
   let response: Response;
   try {
-    response = await fetch(`${API_BASE}/api/lines?currentUserId=${currentUserId}`, {
+    response = await fetch(buildApiUrl(`/api/lines?currentUserId=${currentUserId}`), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(request),
@@ -50,7 +49,7 @@ export async function updateLineRoster(
 ): Promise<void> {
   let response: Response;
   try {
-    response = await fetch(`${API_BASE}/api/lines?currentUserId=${currentUserId}`, {
+    response = await fetch(buildApiUrl(`/api/lines?currentUserId=${currentUserId}`), {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(request),
@@ -70,7 +69,7 @@ export async function deleteLineRoster(
 ): Promise<void> {
   let response: Response;
   try {
-    response = await fetch(`${API_BASE}/api/lines?eventId=${eventId}&currentUserId=${currentUserId}`, {
+    response = await fetch(buildApiUrl(`/api/lines?eventId=${eventId}&currentUserId=${currentUserId}`), {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
     });
