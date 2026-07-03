@@ -1,6 +1,5 @@
 import { useEffect } from "react";
 import { getPushPublicKey, subscribePush } from "src/api/push";
-import { SW_KILL_SWITCH_APPLIED_KEY } from "src/serviceWorkerRegistration";
 
 const base64UrlToUint8Array = (value: string): Uint8Array => {
   const padding = "=".repeat((4 - (value.length % 4)) % 4);
@@ -28,14 +27,6 @@ export function usePushSubscriptionSync(currentUserId?: string | null) {
     }
 
     if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
-      return;
-    }
-
-    try {
-      if (window.localStorage.getItem(SW_KILL_SWITCH_APPLIED_KEY) === "true") {
-        return;
-      }
-    } catch {
       return;
     }
 

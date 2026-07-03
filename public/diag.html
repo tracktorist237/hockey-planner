@@ -661,7 +661,7 @@
           return collectCaches().then(function (cacheInfo) {
             report.caches = cacheInfo;
             if (cacheInfo.exists && cacheInfo.keys && cacheInfo.keys.length) {
-              addWarning("WARNING", "После kill-switch остались Cache Storage entries: " + cacheInfo.keys.join(", "));
+              addWarning("WARNING", "Cache Storage entries present: " + cacheInfo.keys.join(", "));
             }
             if (cacheInfo.suspiciousNames && cacheInfo.suspiciousNames.length) {
               addWarning("WARNING", "Подозрительные cache names: " + cacheInfo.suspiciousNames.join(", "));
@@ -777,10 +777,13 @@
             containsOldCacheName: text.indexOf("hockey-planner-v2") !== -1,
             containsFetchListener: text.indexOf("fetch") !== -1
           };
+          sw.scriptAnalysis.mode = sw.scriptAnalysis.containsRegistrationUnregister
+            ? "kill-switch"
+            : (sw.scriptAnalysis.containsFetchListener ? "normal" : "unknown");
           delete res._textForAnalysis;
           if (!res.ok) { addWarning("CRITICAL", "service-worker.js missing or not OK: " + res.status); }
-          if (!sw.scriptAnalysis.containsRegistrationUnregister || !sw.scriptAnalysis.containsCachesDelete) {
-            addWarning("CRITICAL", "service-worker.js не похож на kill-switch.");
+          if (res.ok && sw.scriptAnalysis.mode === "unknown") {
+            addWarning("WARNING", "service-worker.js mode is unknown.");
           }
         });
       }

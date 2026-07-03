@@ -11,18 +11,8 @@ type Config = {
   onUpdate?: (registration: ServiceWorkerRegistration) => void;
 };
 
-export const SW_KILL_SWITCH_APPLIED_KEY = "hpSwKillSwitchApplied20260629";
-
 export function register(config?: Config) {
   if (process.env.NODE_ENV === "production" && "serviceWorker" in navigator) {
-    try {
-      if (window.localStorage.getItem(SW_KILL_SWITCH_APPLIED_KEY) === "true") {
-        return;
-      }
-    } catch {
-      return;
-    }
-
     const publicUrl = new URL(
       (process as { env: { PUBLIC_URL: string } }).env.PUBLIC_URL,
       window.location.href
@@ -34,11 +24,6 @@ export function register(config?: Config) {
 
     window.addEventListener("load", () => {
       const swUrl = `${process.env.PUBLIC_URL}/service-worker.js`;
-      try {
-        window.localStorage.setItem(SW_KILL_SWITCH_APPLIED_KEY, "true");
-      } catch {
-        // Continue anyway; the kill-switch service worker still performs the reset.
-      }
 
       if (isLocalhost) {
         checkValidServiceWorker(swUrl, config);
@@ -59,12 +44,6 @@ function registerValidSW(swUrl: string, config?: Config) {
   navigator.serviceWorker
     .register(swUrl)
     .then((registration) => {
-      try {
-        window.localStorage.setItem(SW_KILL_SWITCH_APPLIED_KEY, "true");
-      } catch {
-        // Ignore storage failures; the service worker still performs the reset.
-      }
-
       registration.onupdatefound = () => {
         const installingWorker = registration.installing;
         if (!installingWorker) return;
