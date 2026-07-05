@@ -729,18 +729,12 @@ export const RosterManager = ({
                         padding: "8px 10px",
                         borderBottom: "1px solid var(--hp-border)",
                         cursor: "pointer",
-                        transition: "background-color 0.2s ease",
+                        backgroundColor: "var(--hp-surface)",
                         display: "flex",
                         alignItems: "center",
-                        gap: "12px",
+                        gap: "9px",
                       }}
                       onClick={() => selectForSlot(player)}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = "var(--hp-surface-soft)";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = "var(--hp-surface)";
-                      }}
                     >
                       <PlayerAvatar
                         size={30}
@@ -1131,18 +1125,12 @@ export const RosterManager = ({
                               padding: "8px 10px",
                               borderBottom: "1px solid var(--hp-border)",
                               cursor: "pointer",
-                              transition: "background-color 0.2s ease",
+                              backgroundColor: "var(--hp-surface)",
                               display: "flex",
                               alignItems: "center",
-                              gap: "12px",
-                            }}
-                            onClick={() => selectForSlot(player)}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.backgroundColor = "var(--hp-surface-soft)";
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.backgroundColor = "var(--hp-surface)";
-                            }}
+                              gap: "9px",
+                      }}
+                      onClick={() => selectForSlot(player)}
                           >
                             <PlayerAvatar
                               size={30}
