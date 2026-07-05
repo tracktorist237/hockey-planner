@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { LoadingIndicator } from "src/components/LoadingIndicator";
 import { InternalPageHeader } from "src/components/InternalPageHeader";
+import { BottomNav } from "src/components/BottomNav";
 import { NotificationBell } from "src/components/NotificationBell";
 import { PlayerAvatar } from "src/components/PlayerAvatar";
 import { TeamTablesPanel } from "src/components/TeamTablesPanel";
@@ -565,7 +566,7 @@ export function TeamDetailsPage({ currentUser, currentTeamId, onTeamChange }: Te
       {...teamTabsSwipeHandlers}
       style={{
         minHeight: "100vh",
-        paddingBottom: "32px",
+        paddingBottom: "120px",
         background: "linear-gradient(135deg, var(--hp-surface-soft) 0%, var(--hp-info-soft) 100%)",
         boxSizing: "border-box",
         touchAction: "pan-y",
@@ -1395,6 +1396,7 @@ export function TeamDetailsPage({ currentUser, currentTeamId, onTeamChange }: Te
       )}
 
       <PlayerInfoModal player={playerModal.selectedPlayer} isOpen={playerModal.isPlayerModalOpen} onClose={playerModal.handleCloseModal} />
+      <BottomNav activeTab="teams" />
     </div>
   );
 }

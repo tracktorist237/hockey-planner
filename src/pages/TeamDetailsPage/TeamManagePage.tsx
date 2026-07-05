@@ -3,7 +3,6 @@ import { useNavigate, useParams } from "react-router-dom";
 import { AddressSearchInput } from "src/AddressSearchInput";
 import { LoadingIndicator } from "src/components/LoadingIndicator";
 import { InternalPageHeader } from "src/components/InternalPageHeader";
-import { BottomNav } from "src/components/BottomNav";
 import { getTeam, getTeamMembers, removeTeamMember, updateTeam, updateTeamMember, uploadTeamAvatar, uploadTeamCover } from "src/api/teams";
 import { TeamContactItem, TeamDto, TeamMemberDto, TeamVisibility } from "src/types/teams";
 import { User } from "src/types/user";
@@ -469,7 +468,7 @@ export function TeamManagePage({ currentUser }: TeamManagePageProps) {
   const isPublic = form.visibility === TeamVisibility.Public;
 
   return (
-    <div style={{ minHeight: "100vh", paddingBottom: "120px", background: "linear-gradient(135deg, var(--hp-surface-soft) 0%, var(--hp-info-soft) 100%)", boxSizing: "border-box" }}>
+    <div style={{ minHeight: "100vh", paddingBottom: "32px", background: "linear-gradient(135deg, var(--hp-surface-soft) 0%, var(--hp-info-soft) 100%)", boxSizing: "border-box" }}>
       <InternalPageHeader
         title="Настройки команды"
         subtitle={team?.name ?? "Оформление, права и приглашения"}
@@ -756,8 +755,6 @@ export function TeamManagePage({ currentUser }: TeamManagePageProps) {
           </>
         )}
       </main>
-
-      <BottomNav activeTab="teams" />
     </div>
   );
 }
