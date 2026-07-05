@@ -294,6 +294,19 @@ export const RosterManager = ({
   const [uniformColorsError, setUniformColorsError] = useState<string | null>(null);
   const canAssignLineUniformColors = canManage && eventType === EventType.Practice && Boolean(teamId);
   const duplicateLastNames = useMemo(() => findDuplicateLastNames(attendances), [attendances]);
+  const editingLine = editingLineIndex === null ? null : sortedRoster[editingLineIndex] ?? null;
+  const editorTitle = editingLineIndex === null
+    ? "Создание нового звена"
+    : `Редактирование: ${editingLine?.name || `звено ${editingLineIndex + 1}`}`;
+
+  const handleStartEditLine = (index: number) => {
+    if (editingLineIndex === index) {
+      cancelLineEditor();
+      return;
+    }
+
+    startEditLine(index);
+  };
 
   useEffect(() => {
     try {
@@ -445,7 +458,7 @@ export const RosterManager = ({
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "space-between",
-                    gap: "12px",
+                    gap: "9px",
                     fontSize: "14px",
                     fontWeight: 600,
                     textAlign: "left",
@@ -594,7 +607,7 @@ export const RosterManager = ({
         </div>
       )}
 
-      {canManage && creatingLine && (
+      {canManage && creatingLine && editingLineIndex === null && (
         <div
           style={{
             marginTop: "16px",
@@ -606,7 +619,7 @@ export const RosterManager = ({
         >
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
             <h4 style={{ margin: 0, fontSize: "16px", fontWeight: "600", color: "var(--hp-heading)" }}>
-              {editingLineIndex === null ? "Создание нового звена" : `Редактирование звена ${editingLineIndex + 1}`}
+              {editorTitle}
             </h4>
             <button
               onClick={cancelLineEditor}
@@ -707,13 +720,13 @@ export const RosterManager = ({
               <h4 style={{ margin: "0 0 12px 0", fontSize: "16px", fontWeight: "500", color: "var(--hp-text)" }}>
                 Выберите игрока для позиции {getSlotTitle(activeSlot)}
               </h4>
-              <div style={{ maxHeight: "200px", overflowY: "auto", border: "1px solid var(--hp-border)", borderRadius: "8px" }}>
+              <div style={{ maxHeight: "min(52vh, 420px)", overflowY: "auto", WebkitOverflowScrolling: "touch", overscrollBehavior: "contain", touchAction: "pan-y", border: "1px solid var(--hp-border)", borderRadius: "8px" }}>
                 {availablePlayers.length > 0 ? (
                   availablePlayers.map((player) => (
                     <div
                       key={player.userId}
                       style={{
-                        padding: "12px 16px",
+                        padding: "8px 10px",
                         borderBottom: "1px solid var(--hp-border)",
                         cursor: "pointer",
                         transition: "background-color 0.2s ease",
@@ -730,7 +743,7 @@ export const RosterManager = ({
                       }}
                     >
                       <PlayerAvatar
-                        size={36}
+                        size={30}
                         shape="rounded"
                         photoUrl={player.photoUrl ?? avatarUrls?.[player.userId]}
                         jerseyNumber={player.jerseyNumber}
@@ -738,15 +751,17 @@ export const RosterManager = ({
                         badgePrefix="#"
                         fallbackBg="var(--hp-primary)"
                         fallbackColor="white"
-                        fontSize={13}
+                        fontSize={12}
+                        badgeSizePx={13}
+                        badgeFontSizePx={8}
                       />
                       <div style={{ flex: 1 }}>
-                        <div style={{ fontWeight: "500", fontSize: "15px" }}>
+                        <div style={{ fontWeight: "600", fontSize: "14px", lineHeight: 1.2 }}>
                           {player.firstName} {player.lastName}
                         </div>
                         {showHandedness && (
-                          <div style={{ marginTop: "5px" }}>
-                            <HandednessBadge handedness={player.handedness} compact={false} />
+                          <div style={{ marginTop: "3px" }}>
+                            <HandednessBadge handedness={player.handedness} compact />
                           </div>
                         )}
                       </div>
@@ -956,12 +971,12 @@ export const RosterManager = ({
 
             <div style={{ display: canManage ? "flex" : "none", gap: "8px", marginBottom: "12px", flexWrap: "wrap" }}>
               <button
-                onClick={() => startEditLine(index)}
+                onClick={() => handleStartEditLine(index)}
                 style={{
                   padding: "8px 12px",
-                  backgroundColor: "var(--hp-primary)",
-                  color: "white",
-                  border: "none",
+                  backgroundColor: editingLineIndex === index ? "var(--hp-danger-soft)" : "var(--hp-primary)",
+                  color: editingLineIndex === index ? "var(--hp-danger)" : "white",
+                  border: editingLineIndex === index ? "1px solid var(--hp-danger-border)" : "none",
                   borderRadius: "8px",
                   cursor: "pointer",
                   fontSize: "13px",
@@ -970,7 +985,7 @@ export const RosterManager = ({
                   gap: "4px",
                 }}
               >
-                ✏ Редактировать
+                {editingLineIndex === index ? "Сбросить" : "Редактировать"}
               </button>
 
               <button
@@ -990,17 +1005,220 @@ export const RosterManager = ({
                   gap: "4px",
                 }}
               >
-                🗑 Удалить
+                Удалить
               </button>
             </div>
 
-            <LineCircles
-              members={line.members}
-              onPlayerClick={onPlayerClick}
-              avatarUrls={avatarUrls}
-              showHandedness={showHandedness}
-              duplicateLastNames={duplicateLastNames}
-            />
+            {canManage && creatingLine && editingLineIndex === index && (
+              <div
+                style={{
+                  marginTop: "16px",
+                  border: "1px solid var(--hp-border)",
+                  padding: "20px",
+                  borderRadius: "12px",
+                  backgroundColor: "var(--hp-surface-soft)",
+                }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+                  <h4 style={{ margin: 0, fontSize: "16px", fontWeight: "600", color: "var(--hp-heading)" }}>
+                    {editorTitle}
+                  </h4>
+                  <button
+                    onClick={cancelLineEditor}
+                    style={{
+                      width: "32px",
+                      height: "32px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      border: "1px solid var(--hp-border)",
+                      background: "var(--hp-surface)",
+                      borderRadius: "8px",
+                      cursor: "pointer",
+                      fontSize: "16px",
+                      transition: "all 0.2s ease",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = "var(--hp-surface-soft)";
+                      e.currentTarget.style.borderColor = "var(--hp-danger)";
+                      e.currentTarget.style.color = "var(--hp-danger)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = "var(--hp-surface)";
+                      e.currentTarget.style.borderColor = "var(--hp-border)";
+                      e.currentTarget.style.color = "inherit";
+                    }}
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                {editingLineIndex === null && (
+                  <label
+                    style={{
+                      display: "grid",
+                      gap: "6px",
+                      marginBottom: "16px",
+                      color: "var(--hp-heading)",
+                      fontSize: "13px",
+                      fontWeight: 800,
+                    }}
+                  >
+                    Название звена
+                    <input
+                      type="text"
+                      value={newLineName}
+                      onChange={(event) => setNewLineName(event.target.value)}
+                      placeholder="Например: Первое звено"
+                      style={{
+                        width: "100%",
+                        boxSizing: "border-box",
+                        padding: "11px 12px",
+                        border: "1px solid var(--hp-border)",
+                        borderRadius: "10px",
+                        backgroundColor: "var(--hp-input-bg)",
+                        color: "var(--hp-text)",
+                        fontSize: "15px",
+                        fontWeight: 700,
+                      }}
+                    />
+                  </label>
+                )}
+
+                <div style={{ display: "flex", gap: "12px", justifyContent: "center", marginBottom: "16px", flexWrap: "wrap" }}>
+                  {(["LW", "C", "RW"] as Slot[]).map((slot) =>
+                    renderEditableSlot(
+                      slot,
+                      lineSlots,
+                      activeSlot,
+                      setActiveSlot,
+                      onPlayerClick,
+                      clearSlot,
+                      avatarUrls,
+                      showHandedness,
+                      duplicateLastNames,
+                    ),
+                  )}
+                </div>
+
+                <div style={{ display: "flex", gap: "12px", justifyContent: "center", marginTop: "8px", marginBottom: "16px", flexWrap: "wrap" }}>
+                  {(["LD", "RD"] as Slot[]).map((slot) =>
+                    renderEditableSlot(
+                      slot,
+                      lineSlots,
+                      activeSlot,
+                      setActiveSlot,
+                      onPlayerClick,
+                      clearSlot,
+                      avatarUrls,
+                      showHandedness,
+                      duplicateLastNames,
+                    ),
+                  )}
+                </div>
+
+                {activeSlot && (
+                  <div style={{ marginTop: "16px", borderTop: "1px solid var(--hp-border)", paddingTop: "16px" }}>
+                    <h4 style={{ margin: "0 0 12px 0", fontSize: "16px", fontWeight: "500", color: "var(--hp-text)" }}>
+                      Выберите игрока для позиции {getSlotTitle(activeSlot)}
+                    </h4>
+                    <div style={{ maxHeight: "min(52vh, 420px)", overflowY: "auto", WebkitOverflowScrolling: "touch", overscrollBehavior: "contain", touchAction: "pan-y", border: "1px solid var(--hp-border)", borderRadius: "8px" }}>
+                      {availablePlayers.length > 0 ? (
+                        availablePlayers.map((player) => (
+                          <div
+                            key={player.userId}
+                            style={{
+                              padding: "8px 10px",
+                              borderBottom: "1px solid var(--hp-border)",
+                              cursor: "pointer",
+                              transition: "background-color 0.2s ease",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "12px",
+                            }}
+                            onClick={() => selectForSlot(player)}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = "var(--hp-surface-soft)";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = "var(--hp-surface)";
+                            }}
+                          >
+                            <PlayerAvatar
+                              size={30}
+                              shape="rounded"
+                              photoUrl={player.photoUrl ?? avatarUrls?.[player.userId]}
+                              jerseyNumber={player.jerseyNumber}
+                              fallbackPrefix="#"
+                              badgePrefix="#"
+                              fallbackBg="var(--hp-primary)"
+                              fallbackColor="white"
+                              fontSize={12}
+                              badgeSizePx={13}
+                              badgeFontSizePx={8}
+                            />
+                            <div style={{ flex: 1 }}>
+                              <div style={{ fontWeight: "600", fontSize: "14px", lineHeight: 1.2 }}>
+                                {player.firstName} {player.lastName}
+                              </div>
+                              {showHandedness && (
+                                <div style={{ marginTop: "3px" }}>
+                                  <HandednessBadge handedness={player.handedness} compact />
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div style={{ padding: "24px", textAlign: "center", color: "var(--hp-muted)" }}>Нет доступных игроков</div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                <button
+                  onClick={() => {
+                    void (editingLineIndex === null ? saveLine() : saveEditedLine());
+                  }}
+                  style={{
+                    width: "100%",
+                    padding: "14px",
+                    marginTop: "16px",
+                    backgroundColor: "var(--hp-success)",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "10px",
+                    fontSize: "16px",
+                    fontWeight: "600",
+                    cursor: "pointer",
+                    transition: "all 0.2s ease",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "8px",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = "#388e3c";
+                    e.currentTarget.style.transform = "translateY(-1px)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = "var(--hp-success)";
+                    e.currentTarget.style.transform = "translateY(0)";
+                  }}
+                >
+                  <span>{editingLineIndex === null ? "+ Добавить звено" : "✓ Зафиксировать изменения"}</span>
+                </button>
+              </div>
+            )}
+            {editingLineIndex !== index && (
+              <LineCircles
+                members={line.members}
+                onPlayerClick={onPlayerClick}
+                avatarUrls={avatarUrls}
+                showHandedness={showHandedness}
+                duplicateLastNames={duplicateLastNames}
+              />
+            )}
           </div>
         ))
       ) : (
