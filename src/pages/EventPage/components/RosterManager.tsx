@@ -974,9 +974,9 @@ export const RosterManager = ({
                 onClick={() => handleStartEditLine(index)}
                 style={{
                   padding: "8px 12px",
-                  backgroundColor: editingLineIndex === index ? "var(--hp-danger-soft)" : "var(--hp-primary)",
-                  color: editingLineIndex === index ? "var(--hp-danger)" : "white",
-                  border: editingLineIndex === index ? "1px solid var(--hp-danger-border)" : "none",
+                  backgroundColor: editingLineIndex === index ? "var(--hp-surface)" : "var(--hp-primary)",
+                  color: editingLineIndex === index ? "var(--hp-heading)" : "white",
+                  border: editingLineIndex === index ? "1px solid var(--hp-border)" : "none",
                   borderRadius: "8px",
                   cursor: "pointer",
                   fontSize: "13px",
@@ -1255,4 +1255,3 @@ export const RosterManager = ({
     </div>
   );
 };
-
