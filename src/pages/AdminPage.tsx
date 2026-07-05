@@ -44,6 +44,7 @@ import {
 import { CreateUpdateInstructionArticleRequest, InstructionArticleDto } from "src/api/instructions";
 import { broadcastPush, PushBroadcastResult } from "src/api/push";
 import { NotificationBell } from "src/components/NotificationBell";
+import { APP_VERSION } from "src/config/version";
 import { useAuth } from "src/hooks/useAuth";
 
 type AdminTab = "dashboard" | "reports" | "users" | "push" | "releases" | "notifications" | "instructions";
@@ -143,7 +144,7 @@ const teamMemberRoleLabels: Record<number, string> = {
 };
 
 const emptyReleaseForm: CreateUpdateReleaseNoticeRequest = {
-  version: "",
+  version: APP_VERSION,
   title: "",
   body: "",
   sendNotification: true,

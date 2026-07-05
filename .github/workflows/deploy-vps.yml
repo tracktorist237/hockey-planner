@@ -20,7 +20,10 @@ jobs:
             cd /opt/hockeyplanner/frontend-src
             git pull origin master
             npm ci
-            REACT_APP_API_BASE=/api npm run build
+            npm run version:sync
+            APP_VERSION="$(cat VERSION | tr -d '[:space:]')"
+            APP_BUILD_TIME="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+            REACT_APP_API_BASE=/api REACT_APP_VERSION="$APP_VERSION" REACT_APP_BUILD_TIME="$APP_BUILD_TIME" npm run build
             rm -rf /opt/hockeyplanner/frontend/build
             cp -r /opt/hockeyplanner/frontend-src/build /opt/hockeyplanner/frontend/build
             cd /opt/hockeyplanner

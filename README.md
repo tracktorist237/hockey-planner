@@ -6,6 +6,19 @@ This project was bootstrapped with [Create React App](https://github.com/faceboo
 
 In the project directory, you can run:
 
+### Versioning
+
+`VERSION` is the source of truth for the app version. Use:
+
+```bash
+npm run version:patch
+npm run version:minor
+npm run version:major
+npm run version:sync
+```
+
+Release/deploy steps are documented in [DEPLOYMENT_NOTES.md](DEPLOYMENT_NOTES.md).
+
 ### `npm start`
 
 Runs the app in the development mode.\
