@@ -294,6 +294,7 @@ export const RosterManager = ({
   const [uniformColorsError, setUniformColorsError] = useState<string | null>(null);
   const canAssignLineUniformColors = canManage && eventType === EventType.Practice && Boolean(teamId);
   const duplicateLastNames = useMemo(() => findDuplicateLastNames(attendances), [attendances]);
+  const isLineEditorOpen = editingLineIndex !== null;
   const editingLine = editingLineIndex === null ? null : sortedRoster[editingLineIndex] ?? null;
   const editorTitle = editingLineIndex === null
     ? "Создание нового звена"
@@ -905,14 +906,14 @@ export const RosterManager = ({
                   onClick={() => {
                     void moveLineUp(index);
                   }}
-                  disabled={index === 0}
+                  disabled={index === 0 || isLineEditorOpen}
                   style={{
                     padding: "6px 8px",
-                    backgroundColor: index === 0 ? "var(--hp-surface-soft)" : "var(--hp-primary-soft)",
-                    color: index === 0 ? "#999" : "var(--hp-primary)",
+                    backgroundColor: index === 0 || isLineEditorOpen ? "var(--hp-surface-soft)" : "var(--hp-primary-soft)",
+                    color: index === 0 || isLineEditorOpen ? "#999" : "var(--hp-primary)",
                     border: "none",
                     borderRadius: "6px",
-                    cursor: index === 0 ? "not-allowed" : "pointer",
+                    cursor: index === 0 || isLineEditorOpen ? "not-allowed" : "pointer",
                     fontSize: "12px",
                   }}
                   title="Поднять выше"
@@ -923,14 +924,14 @@ export const RosterManager = ({
                   onClick={() => {
                     void moveLineDown(index);
                   }}
-                  disabled={index === sortedRoster.length - 1}
+                  disabled={index === sortedRoster.length - 1 || isLineEditorOpen}
                   style={{
                     padding: "6px 8px",
-                    backgroundColor: index === sortedRoster.length - 1 ? "var(--hp-surface-soft)" : "var(--hp-primary-soft)",
-                    color: index === sortedRoster.length - 1 ? "#999" : "var(--hp-primary)",
+                    backgroundColor: index === sortedRoster.length - 1 || isLineEditorOpen ? "var(--hp-surface-soft)" : "var(--hp-primary-soft)",
+                    color: index === sortedRoster.length - 1 || isLineEditorOpen ? "#999" : "var(--hp-primary)",
                     border: "none",
                     borderRadius: "6px",
-                    cursor: index === sortedRoster.length - 1 ? "not-allowed" : "pointer",
+                    cursor: index === sortedRoster.length - 1 || isLineEditorOpen ? "not-allowed" : "pointer",
                     fontSize: "12px",
                   }}
                   title="Опустить ниже"
