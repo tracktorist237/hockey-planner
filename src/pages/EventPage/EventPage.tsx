@@ -106,7 +106,7 @@ export function EventPage({ eventId, onBack, currentUser }: EventPageProps) {
 
   const attendance = useAttendance({ event, selectedUserId, reloadEvent, onError: reportError });
   const lineManagement = useLineManagement({ event, currentUserId: selectedUserId, reloadEvent, onError: reportError });
-  const playerModal = usePlayerModal({ onError: reportError });
+  const playerModal = usePlayerModal({ onError: reportError, currentUserId: selectedUserId, teamId: event?.teamId });
   const currentEventJerseyNumber = event?.attendances?.find((item) => item.userId === selectedUserId)?.jerseyNumber ?? eventTeamJerseyNumber;
   const handleOpenEventPlayerInfo = (userId: string) => {
     const attendanceNumber = event?.attendances?.find((item) => item.userId === userId)?.jerseyNumber;

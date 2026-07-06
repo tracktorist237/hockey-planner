@@ -4,6 +4,8 @@ import { PlayerDetails } from "src/pages/EventPage/types";
 
 interface UsePlayerModalOptions {
   onError?: (message: string) => void;
+  currentUserId?: string | null;
+  teamId?: string | null;
 }
 
 interface UsePlayerModalResult {
@@ -14,7 +16,7 @@ interface UsePlayerModalResult {
   handleCloseModal: () => void;
 }
 
-export const usePlayerModal = ({ onError }: UsePlayerModalOptions = {}): UsePlayerModalResult => {
+export const usePlayerModal = ({ onError, currentUserId, teamId }: UsePlayerModalOptions = {}): UsePlayerModalResult => {
   const [selectedPlayer, setSelectedPlayer] = useState<PlayerDetails | null>(null);
   const [isPlayerModalOpen, setIsPlayerModalOpen] = useState(false);
   const [loadingPlayer, setLoadingPlayer] = useState(false);
@@ -24,7 +26,7 @@ export const usePlayerModal = ({ onError }: UsePlayerModalOptions = {}): UsePlay
       setLoadingPlayer(true);
 
       try {
-        const playerData = await getUserById(userId);
+        const playerData = await getUserById(userId, { currentUserId, teamId });
         setSelectedPlayer({
           ...playerData,
           jerseyNumber: jerseyNumberOverride ?? playerData.jerseyNumber,
@@ -37,7 +39,7 @@ export const usePlayerModal = ({ onError }: UsePlayerModalOptions = {}): UsePlay
         setLoadingPlayer(false);
       }
     },
-    [onError],
+    [currentUserId, onError, teamId],
   );
 
   const handleCloseModal = useCallback(() => {

@@ -201,7 +201,7 @@ export function TeamDetailsPage({ currentUser, currentTeamId, onTeamChange }: Te
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const { sheetRef: installSheetRef, handleProps: installSheetHandleProps } = useSwipeToDismiss(() => setIsTeamInstallDialogOpen(false));
-  const playerModal = usePlayerModal({ onError: setError });
+  const playerModal = usePlayerModal({ onError: setError, currentUserId: currentUser?.id, teamId: id });
   const loadedTeamId = team?.id ?? null;
   const loadedTeamName = team?.name ?? "";
   const teamPwaInstall = useTeamPwaInstall(team, {

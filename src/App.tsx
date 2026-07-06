@@ -23,6 +23,7 @@ import { EventsListPage } from "src/pages/EventsListPage/EventsListPage";
 import { InstructionArticlePage, InstructionsListPage } from "src/pages/InstructionsPage";
 import { NewsPage } from "src/pages/NewsPage";
 import { NotificationSettingsPage } from "src/pages/NotificationSettingsPage";
+import { PrivacySettingsPage } from "src/pages/PrivacySettingsPage";
 import { TeamPwaSettingsPage } from "src/pages/TeamPwaSettingsPage";
 import { PrivacyPolicyPage, TermsOfServicePage } from "src/pages/LegalPages";
 import { TeamDetailsPage } from "src/pages/TeamDetailsPage/TeamDetailsPage";
@@ -361,6 +362,15 @@ function AppRoutes() {
           element={
             <RequireAuth>
               <NotificationSettingsPage />
+            </RequireAuth>
+          }
+        />
+
+        <Route
+          path="/settings/privacy"
+          element={
+            <RequireAuth>
+              <PrivacySettingsPage />
             </RequireAuth>
           }
         />

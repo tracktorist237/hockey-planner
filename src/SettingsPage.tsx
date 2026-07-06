@@ -503,10 +503,7 @@ export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
 
             <button
               type="button"
-              onClick={() => {
-                setMessage("ℹ️ Настройки приватности пока находятся в разработке");
-                window.setTimeout(() => setMessage(null), 3000);
-              }}
+              onClick={() => navigate("/settings/privacy")}
               style={{
                 order: 4,
                 width: "100%",

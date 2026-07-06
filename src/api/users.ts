@@ -19,6 +19,28 @@ export interface UpdateUserData extends Partial<CreateUserData> {
   spbhlPlayerId?: string | null;
 }
 
+export enum UserDataVisibility {
+  Nobody = 0,
+  TeamAdmins = 1,
+  Teammates = 2,
+  Everyone = 3,
+}
+
+export interface UserPrivacySettings {
+  userId: string;
+  emailVisibility: UserDataVisibility;
+  phoneVisibility: UserDataVisibility;
+  birthDateVisibility: UserDataVisibility;
+  physicalVisibility: UserDataVisibility;
+  hockeyProfileVisibility: UserDataVisibility;
+  spbhlProfileVisibility: UserDataVisibility;
+}
+
+export interface UserProfileContext {
+  currentUserId?: string | null;
+  teamId?: string | null;
+}
+
 export interface User extends CreateUserData {
   id: string;
   role: number;
@@ -45,15 +67,50 @@ const createFallbackUserId = (): string => {
   return randomUuid ? randomUuid.call(globalThis.crypto) : `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 };
 
+const buildQuery = (params: { [key: string]: string | null | undefined }): string => {
+  const query = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value) {
+      query.set(key, value);
+    }
+  });
+
+  const queryString = query.toString();
+  return queryString ? `?${queryString}` : "";
+};
+
 export async function getUsers(): Promise<User[]> {
   const res = await fetch(buildApiUrl("/api/Users"));
   await ensureOk(res, "Не удалось загрузить пользователей");
   return res.json();
 }
 
-export async function getUserById(id: string): Promise<User> {
-  const res = await fetch(buildApiUrl(`/api/Users/${id}`));
+export async function getUserById(id: string, context: UserProfileContext = {}): Promise<User> {
+  const res = await fetch(buildApiUrl(`/api/Users/${id}${buildQuery({ currentUserId: context.currentUserId, teamId: context.teamId })}`));
   await ensureOk(res, "Не удалось загрузить пользователя");
+  return res.json();
+}
+
+export async function getUserPrivacySettings(id: string, currentUserId: string): Promise<UserPrivacySettings> {
+  const res = await fetch(buildApiUrl(`/api/Users/${id}/privacy-settings${buildQuery({ currentUserId })}`));
+  await ensureOk(res, "Не удалось загрузить настройки приватности");
+  return res.json();
+}
+
+export async function updateUserPrivacySettings(
+  id: string,
+  currentUserId: string,
+  settings: UserPrivacySettings,
+): Promise<UserPrivacySettings> {
+  const res = await fetch(buildApiUrl(`/api/Users/${id}/privacy-settings${buildQuery({ currentUserId })}`), {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(settings),
+  });
+
+  await ensureOk(res, "Не удалось сохранить настройки приватности");
   return res.json();
 }
 
