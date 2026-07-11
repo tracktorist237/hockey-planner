@@ -644,8 +644,14 @@ export function SettingsPage({ onOpenDebug }: SettingsPageProps) {
 
           <div style={{ display: "grid", gap: "10px" }}>
             {[
+              ["О сервисе", "/about"],
+              ["Оплата", "/payment"],
+              ["Условия оказания услуг", "/service-terms"],
+              ["Возврат денежных средств", "/refund"],
+              ["Контакты", "/contacts"],
               ["Пользовательское соглашение", "/terms"],
               ["Политика конфиденциальности", "/privacy"],
+              ["Реквизиты", "/seller-details"],
             ].map(([label, path]) => (
               <button
                 key={path}

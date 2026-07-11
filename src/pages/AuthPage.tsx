@@ -627,6 +627,24 @@ export function AuthPage() {
       </div>
       <footer style={authFooterStyle}>
         <div style={authFooterInnerStyle}>
+          <Link to="/about" style={{ ...legalLinkStyle, color: "var(--hp-muted)" }}>
+            О сервисе
+          </Link>
+          <Link to="/payment" style={{ ...legalLinkStyle, color: "var(--hp-muted)" }}>
+            Оплата
+          </Link>
+          <Link to="/service-terms" style={{ ...legalLinkStyle, color: "var(--hp-muted)" }}>
+            Условия оказания услуг
+          </Link>
+          <Link to="/refund" style={{ ...legalLinkStyle, color: "var(--hp-muted)" }}>
+            Возврат
+          </Link>
+          <Link to="/contacts" style={{ ...legalLinkStyle, color: "var(--hp-muted)" }}>
+            Контакты
+          </Link>
+          <Link to="/seller-details" style={{ ...legalLinkStyle, color: "var(--hp-muted)" }}>
+            Реквизиты
+          </Link>
           <Link to="/terms" style={{ ...legalLinkStyle, color: "var(--hp-muted)" }}>
             Пользовательское соглашение
           </Link>

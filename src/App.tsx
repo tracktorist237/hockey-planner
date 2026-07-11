@@ -25,7 +25,16 @@ import { NewsPage } from "src/pages/NewsPage";
 import { NotificationSettingsPage } from "src/pages/NotificationSettingsPage";
 import { PrivacySettingsPage } from "src/pages/PrivacySettingsPage";
 import { TeamPwaSettingsPage } from "src/pages/TeamPwaSettingsPage";
-import { PrivacyPolicyPage, TermsOfServicePage } from "src/pages/LegalPages";
+import {
+  ContactsPage,
+  PaymentInfoPage,
+  PrivacyPolicyPage,
+  ProductOverviewPage,
+  RefundPolicyPage,
+  SellerDetailsPage,
+  ServiceTermsPage,
+  TermsOfServicePage,
+} from "src/pages/legal";
 import { TeamDetailsPage } from "src/pages/TeamDetailsPage/TeamDetailsPage";
 import { TeamManagePage } from "src/pages/TeamDetailsPage/TeamManagePage";
 import { TeamsPage } from "src/pages/TeamsPage";
@@ -229,6 +238,31 @@ function AppRoutes() {
         />
 
         <Route
+          path="/about"
+          element={<ProductOverviewPage />}
+        />
+
+        <Route
+          path="/payment"
+          element={<PaymentInfoPage />}
+        />
+
+        <Route
+          path="/service-terms"
+          element={<ServiceTermsPage />}
+        />
+
+        <Route
+          path="/refund"
+          element={<RefundPolicyPage />}
+        />
+
+        <Route
+          path="/contacts"
+          element={<ContactsPage />}
+        />
+
+        <Route
           path="/privacy"
           element={<PrivacyPolicyPage />}
         />
@@ -236,6 +270,11 @@ function AppRoutes() {
         <Route
           path="/terms"
           element={<TermsOfServicePage />}
+        />
+
+        <Route
+          path="/seller-details"
+          element={<SellerDetailsPage />}
         />
 
         <Route
