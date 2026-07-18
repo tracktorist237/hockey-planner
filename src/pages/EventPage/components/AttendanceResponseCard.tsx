@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { AttendanceLookUpDto } from "src/types/events";
 
 interface AttendanceResponseCardProps {
@@ -25,6 +26,8 @@ export const AttendanceResponseCard = ({
   handleVote,
   handleAddNote,
 }: AttendanceResponseCardProps) => {
+  const [isCancelConfirmOpen, setIsCancelConfirmOpen] = useState(false);
+
   return (
     <div
       style={{
@@ -415,7 +418,7 @@ export const AttendanceResponseCard = ({
           <button
             disabled={submitting}
             onClick={() => {
-              void handleVote(1);
+              setIsCancelConfirmOpen(true);
             }}
             style={{
               width: "100%",
@@ -444,6 +447,116 @@ export const AttendanceResponseCard = ({
           >
             ↩ Отменить ответ
           </button>
+
+          {isCancelConfirmOpen && (
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-label="Подтверждение отмены ответа"
+              onClick={() => {
+                if (!submitting) setIsCancelConfirmOpen(false);
+              }}
+              style={{
+                position: "fixed",
+                inset: 0,
+                zIndex: 700,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: "18px",
+                backgroundColor: "rgba(15, 23, 42, 0.56)",
+                backdropFilter: "blur(4px)",
+              }}
+            >
+              <div
+                onClick={(event) => event.stopPropagation()}
+                style={{
+                  width: "100%",
+                  maxWidth: "420px",
+                  borderRadius: "18px",
+                  padding: "20px",
+                  backgroundColor: "var(--hp-surface)",
+                  border: "1px solid var(--hp-border)",
+                  boxShadow: "0 24px 70px rgba(15, 23, 42, 0.32)",
+                }}
+              >
+                <div
+                  style={{
+                    width: "44px",
+                    height: "44px",
+                    borderRadius: "14px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    marginBottom: "14px",
+                    backgroundColor: "var(--hp-warning-soft)",
+                    color: "var(--hp-warning)",
+                    border: "1px solid var(--hp-warning-border)",
+                    fontSize: "22px",
+                  }}
+                >
+                  ↩
+                </div>
+                <h4
+                  style={{
+                    margin: "0 0 8px",
+                    color: "var(--hp-heading)",
+                    fontSize: "18px",
+                    fontWeight: 900,
+                  }}
+                >
+                  Отменить ответ?
+                </h4>
+                <p
+                  style={{
+                    margin: "0 0 18px",
+                    color: "var(--hp-muted)",
+                    fontSize: "14px",
+                    lineHeight: 1.45,
+                  }}
+                >
+                  Ваш текущий ответ по явке будет сброшен. После отмены вы снова будете в списке ожидающих ответа.
+                </p>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                  <button
+                    type="button"
+                    disabled={submitting}
+                    onClick={() => setIsCancelConfirmOpen(false)}
+                    style={{
+                      padding: "12px",
+                      borderRadius: "12px",
+                      border: "1px solid var(--hp-border)",
+                      backgroundColor: "var(--hp-surface-soft)",
+                      color: "var(--hp-heading)",
+                      fontWeight: 900,
+                      cursor: submitting ? "not-allowed" : "pointer",
+                    }}
+                  >
+                    Оставить
+                  </button>
+                  <button
+                    type="button"
+                    disabled={submitting}
+                    onClick={() => {
+                      void handleVote(1).then(() => setIsCancelConfirmOpen(false));
+                    }}
+                    style={{
+                      padding: "12px",
+                      borderRadius: "12px",
+                      border: "1px solid var(--hp-danger-border)",
+                      backgroundColor: "var(--hp-danger-soft)",
+                      color: "var(--hp-danger)",
+                      fontWeight: 900,
+                      cursor: submitting ? "not-allowed" : "pointer",
+                      opacity: submitting ? 0.7 : 1,
+                    }}
+                  >
+                    Отменить ответ
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
