@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { getUniformColors } from "src/api/uniformColors";
-import { AttendanceLookUpDto, EventType, LineDto, UniformColorDto } from "src/types/events";
+import { AttendanceLookUpDto, EventType, LineDto, PlayerLookUpDto, UniformColorDto } from "src/types/events";
 import { Slot } from "src/pages/EventPage/types";
 import { LineCircles } from "src/pages/EventPage/components/LineCircles";
 import { PlayerAvatar } from "src/components/PlayerAvatar";
@@ -41,6 +41,7 @@ interface RosterManagerProps {
   selectForSlot: (player: AttendanceLookUpDto) => void;
   cancelLineEditor: () => void;
   onPlayerClick: (userId: string) => void;
+  onGuestClick?: (guest: PlayerLookUpDto) => void;
   avatarUrls?: Record<string, string>;
   eventType: EventType;
   teamId?: string | null;
@@ -274,6 +275,7 @@ export const RosterManager = ({
   selectForSlot,
   cancelLineEditor,
   onPlayerClick,
+  onGuestClick,
   avatarUrls,
   eventType,
   teamId,
@@ -1203,6 +1205,7 @@ export const RosterManager = ({
               <LineCircles
                 members={line.members}
                 onPlayerClick={onPlayerClick}
+                onGuestClick={onGuestClick}
                 avatarUrls={avatarUrls}
                 showHandedness={showHandedness}
                 duplicateLastNames={duplicateLastNames}

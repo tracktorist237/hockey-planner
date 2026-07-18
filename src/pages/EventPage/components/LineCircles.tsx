@@ -9,6 +9,7 @@ import { getRosterPlayerName } from "src/pages/EventPage/utils/playerDisplayName
 interface LineCirclesProps {
   members?: PlayerLookUpDto[] | null;
   onPlayerClick: (userId: string) => void;
+  onGuestClick?: (guest: PlayerLookUpDto) => void;
   avatarUrls?: Record<string, string>;
   showHandedness?: boolean;
   duplicateLastNames?: Set<string>;
@@ -34,6 +35,7 @@ const getSlotLabel = (slot: Slot): string => {
 export const LineCircles = ({
   members,
   onPlayerClick,
+  onGuestClick,
   avatarUrls,
   showHandedness = false,
   duplicateLastNames = new Set<string>(),
@@ -62,8 +64,12 @@ export const LineCircles = ({
       <div
         onClick={() => {
           const player = slots[slot];
-          if (player && !player.isGuest) {
-            onPlayerClick(player.userId);
+          if (player) {
+            if (player.isGuest) {
+              onGuestClick?.(player);
+            } else {
+              onPlayerClick(player.userId);
+            }
           }
         }}
         style={{
@@ -79,7 +85,7 @@ export const LineCircles = ({
           fontSize: "20px",
           fontWeight: "600",
           color: "var(--hp-heading)",
-          cursor: slots[slot] && !slots[slot]!.isGuest ? "pointer" : "default",
+          cursor: slots[slot] ? "pointer" : "default",
           transition: "all 0.2s ease",
           position: "relative",
         }}
@@ -173,11 +179,15 @@ export const LineCircles = ({
             lineHeight: "1.2",
             minHeight: "26px",
             whiteSpace: "nowrap",
-            cursor: slots[slot]!.isGuest ? "default" : "pointer",
+          cursor: "pointer",
             transition: "color 0.2s ease",
           }}
           onClick={() => {
-            if (!slots[slot]!.isGuest) onPlayerClick(slots[slot]!.userId);
+            if (slots[slot]!.isGuest) {
+              onGuestClick?.(slots[slot]!);
+            } else {
+              onPlayerClick(slots[slot]!.userId);
+            }
           }}
           onMouseEnter={(e) => {
             if (slots[slot]!.isGuest) return;

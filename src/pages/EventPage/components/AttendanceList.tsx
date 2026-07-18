@@ -6,6 +6,7 @@ import { getAdaptiveFontSize } from "src/utils/text";
 interface AttendanceListProps {
   attendances?: AttendanceLookUpDto[];
   onPlayerClick: (userId: string) => void;
+  onGuestClick?: (guest: AttendanceLookUpDto) => void;
   avatarUrls?: Record<string, string>;
   eventCreatedAt?: string;
   canManage?: boolean;
@@ -54,6 +55,7 @@ const formatResponseTime = (value: string): string => {
 export const AttendanceList = ({
   attendances,
   onPlayerClick,
+  onGuestClick,
   avatarUrls,
   eventCreatedAt,
   canManage = false,
@@ -353,11 +355,16 @@ export const AttendanceList = ({
                 display: "flex",
                 flexDirection: "column",
                 gap: "4px",
-                cursor: isEditingStatuses || attendance.isGuest ? "default" : "pointer",
+                cursor: isEditingStatuses ? "default" : "pointer",
                 transition: "background-color 0.2s ease",
               }}
               onClick={() => {
-                if (!isEditingStatuses && !attendance.isGuest) onPlayerClick(attendance.userId);
+                if (isEditingStatuses) return;
+                if (attendance.isGuest) {
+                  onGuestClick?.(attendance);
+                  return;
+                }
+                onPlayerClick(attendance.userId);
               }}
               onMouseEnter={(event) => {
                 event.currentTarget.style.backgroundColor = "var(--hp-surface-soft)";

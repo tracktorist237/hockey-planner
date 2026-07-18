@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createEventGuest, updateAttendance, updateEventGuestAttendance } from "src/api/events";
 import { getEventGoalies } from "src/api/goalies";
 import { getMyTeams } from "src/api/teams";
-import { getUsers } from "src/api/users";
+import { getUserById, getUsers } from "src/api/users";
 import { EventTableProtocolsPanel } from "src/components/EventTableProtocolsPanel";
 import { LoadingIndicator } from "src/components/LoadingIndicator";
 import { CurrentPlayerHeader } from "src/CurrentPlayerHeader";
@@ -13,6 +13,7 @@ import { EventAdditionalInfo } from "src/pages/EventPage/components/EventAdditio
 import { EventInfoCard } from "src/pages/EventPage/components/EventInfoCard";
 import { GoaliesPanel } from "src/pages/EventPage/components/GoaliesPanel";
 import { GoalieResponseCard } from "src/pages/EventPage/components/GoalieResponseCard";
+import { GuestInfoModal } from "src/pages/EventPage/components/GuestInfoModal";
 import { ErrorState, LoadingState, NotFoundState } from "src/pages/EventPage/components/PageState";
 import { PlayerInfoModal } from "src/pages/EventPage/components/PlayerInfoModal";
 import { RosterManager } from "src/pages/EventPage/components/RosterManager";
@@ -21,12 +22,13 @@ import { useEventData } from "src/pages/EventPage/hooks/useEventData";
 import { useLineManagement } from "src/pages/EventPage/hooks/useLineManagement";
 import { usePlayerModal } from "src/pages/EventPage/hooks/usePlayerModal";
 import { EventPageProps } from "src/pages/EventPage/types";
-import { AttendanceLookUpDto } from "src/types/events";
+import { AttendanceLookUpDto, PlayerLookUpDto } from "src/types/events";
 import { useSwipeTabs } from "src/hooks/useSwipeTabs";
 
 const GOALIE_POSITION = 1;
 type EventTab = "attendance" | "roster" | "goalies";
 const eventTabs: readonly EventTab[] = ["attendance", "roster", "goalies"];
+type EventGuest = Pick<PlayerLookUpDto, "userId" | "firstName" | "lastName" | "jerseyNumber" | "handedness" | "invitedByUserId">;
 
 export function EventPage({ eventId, onBack, currentUser }: EventPageProps) {
   const [isActionsOpen, setIsActionsOpen] = useState(false);
@@ -37,6 +39,10 @@ export function EventPage({ eventId, onBack, currentUser }: EventPageProps) {
   const [eventTeamJerseyNumber, setEventTeamJerseyNumber] = useState<number | null>(null);
   const [resolvedCurrentUserPosition, setResolvedCurrentUserPosition] = useState<number | null | undefined>(undefined);
   const [resolvedGoalieStatus, setResolvedGoalieStatus] = useState<boolean | undefined>(undefined);
+  const [selectedGuest, setSelectedGuest] = useState<EventGuest | null>(null);
+  const [guestInviterName, setGuestInviterName] = useState<string | null>(null);
+  const [isGuestInviterLoading, setIsGuestInviterLoading] = useState(false);
+  const guestInfoRequestId = useRef(0);
   const selectedUserId = useMemo(() => currentUser?.id ?? null, [currentUser?.id]);
   const currentUserPrimaryPosition = currentUser?.primaryPosition ?? resolvedCurrentUserPosition;
   const { event, loading, error, copySuccess, copyEventLink, reloadEvent, setError } = useEventData(eventId);
@@ -112,6 +118,48 @@ export function EventPage({ eventId, onBack, currentUser }: EventPageProps) {
     const attendanceNumber = event?.attendances?.find((item) => item.userId === userId)?.jerseyNumber;
     const rosterNumber = event?.roster?.flatMap((line) => line.members ?? []).find((member) => member.userId === userId)?.jerseyNumber;
     return playerModal.handleOpenPlayerInfo(userId, attendanceNumber ?? rosterNumber);
+  };
+
+  const handleOpenGuestInfo = async (guest: EventGuest) => {
+    const requestId = ++guestInfoRequestId.current;
+    setSelectedGuest(guest);
+    setGuestInviterName(null);
+
+    if (!guest.invitedByUserId) {
+      setIsGuestInviterLoading(false);
+      return;
+    }
+
+    const knownInviter = event?.attendances?.find((item) => item.userId === guest.invitedByUserId);
+    const knownInviterName = `${knownInviter?.lastName ?? ""} ${knownInviter?.firstName ?? ""}`.trim();
+    if (knownInviterName) {
+      setGuestInviterName(knownInviterName);
+      setIsGuestInviterLoading(false);
+      return;
+    }
+
+    setIsGuestInviterLoading(true);
+    try {
+      const inviter = await getUserById(guest.invitedByUserId, { currentUserId: selectedUserId, teamId: event?.teamId });
+      if (guestInfoRequestId.current === requestId) {
+        setGuestInviterName(`${inviter.lastName ?? ""} ${inviter.firstName ?? ""}`.trim() || inviter.fullName || null);
+      }
+    } catch {
+      if (guestInfoRequestId.current === requestId) {
+        setGuestInviterName(null);
+      }
+    } finally {
+      if (guestInfoRequestId.current === requestId) {
+        setIsGuestInviterLoading(false);
+      }
+    }
+  };
+
+  const handleCloseGuestInfo = () => {
+    guestInfoRequestId.current += 1;
+    setSelectedGuest(null);
+    setGuestInviterName(null);
+    setIsGuestInviterLoading(false);
   };
 
   useEffect(() => {
@@ -389,6 +437,7 @@ export function EventPage({ eventId, onBack, currentUser }: EventPageProps) {
           <AttendanceList
             attendances={playerAttendances}
             onPlayerClick={handleOpenEventPlayerInfo}
+            onGuestClick={handleOpenGuestInfo}
             avatarUrls={avatarUrls}
             eventCreatedAt={event.createdAt}
             canManage={canManageEvent}
@@ -403,6 +452,7 @@ export function EventPage({ eventId, onBack, currentUser }: EventPageProps) {
             canManage={canManageEvent}
             {...lineManagement}
             onPlayerClick={handleOpenEventPlayerInfo}
+            onGuestClick={handleOpenGuestInfo}
             avatarUrls={avatarUrls}
             eventType={event.type}
             teamId={event.teamId}
@@ -423,6 +473,7 @@ export function EventPage({ eventId, onBack, currentUser }: EventPageProps) {
       </div>
 
       <PlayerInfoModal player={playerModal.selectedPlayer} isOpen={playerModal.isPlayerModalOpen} onClose={playerModal.handleCloseModal} />
+      <GuestInfoModal guest={selectedGuest ? { ...selectedGuest, id: selectedGuest.userId } : null} inviterName={guestInviterName} isLoadingInviter={isGuestInviterLoading} onClose={handleCloseGuestInfo} />
 
       <style>{`
         @keyframes spin { 0% { transform: rotate(0deg);} 100% { transform: rotate(360deg);} }
