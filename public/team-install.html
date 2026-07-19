@@ -6,24 +6,35 @@
   <meta name="theme-color" content="#0b1220" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Hockey Planner" />
   <script>
     (function () {
       var params = new URLSearchParams(window.location.search);
       var manifestPath = params.get("manifest") || "";
       var iconPath = params.get("icon") || "";
-      var manifestPattern = /^\/pwa-assets\/teams\/[a-zA-Z0-9-]+\/manifest-\d+\.webmanifest$/;
-      var iconPattern = /^\/pwa-assets\/teams\/[a-zA-Z0-9-]+\/icon-192-\d+\.png$/;
+      var manifestPattern = /^\/api\/pwa\/teams\/[a-fA-F0-9-]+\/manifest\.webmanifest$/;
+      var iconPattern = /^\/api\/pwa\/teams\/[a-fA-F0-9-]+\/icons\/180\.png$/;
 
-      if (manifestPattern.test(manifestPath)) {
+      function isAllowedUrl(value, pattern) {
+        try {
+          var url = new URL(value, window.location.origin);
+          return url.origin === window.location.origin && pattern.test(url.pathname);
+        } catch (error) {
+          return false;
+        }
+      }
+
+      if (isAllowedUrl(manifestPath, manifestPattern)) {
         var manifestLink = document.createElement("link");
         manifestLink.rel = "manifest";
         manifestLink.href = manifestPath;
         document.head.appendChild(manifestLink);
       }
 
-      if (iconPattern.test(iconPath)) {
+      if (isAllowedUrl(iconPath, iconPattern)) {
         var touchIconLink = document.createElement("link");
         touchIconLink.rel = "apple-touch-icon";
+        touchIconLink.sizes = "180x180";
         touchIconLink.href = iconPath;
         document.head.appendChild(touchIconLink);
       }
@@ -140,6 +151,7 @@
 
       document.getElementById("app-name").textContent = appName;
       document.title = "Установить " + appName;
+      document.querySelector('meta[name="apple-mobile-web-app-title"]').setAttribute("content", appName);
       appIcon.src = iconPath;
 
       backButton.addEventListener("click", function () {
