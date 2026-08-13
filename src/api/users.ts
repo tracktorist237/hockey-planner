@@ -151,7 +151,7 @@ export async function createUser(userData: CreateUserData): Promise<User> {
 }
 
 export async function updateUser(id: string, userData: UpdateUserData): Promise<User> {
-  const res = await fetch(buildApiUrl(`/api/Users/${id}`), {
+  const res = await authFetch(`/api/Users/${id}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
@@ -167,7 +167,7 @@ export async function uploadUserAvatar(id: string, file: File): Promise<User> {
   const formData = new FormData();
   formData.append("file", file);
 
-  const res = await fetch(buildApiUrl(`/api/Users/${id}/avatar/upload`), {
+  const res = await authFetch(`/api/Users/${id}/avatar/upload`, {
     method: "POST",
     body: formData,
   });
@@ -177,7 +177,7 @@ export async function uploadUserAvatar(id: string, file: File): Promise<User> {
 }
 
 export async function deleteUser(id: string): Promise<void> {
-  const res = await fetch(buildApiUrl(`/api/Users/${id}`), {
+  const res = await authFetch(`/api/Users/${id}`, {
     method: "DELETE",
   });
 

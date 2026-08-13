@@ -9,7 +9,6 @@ import {
 } from "react-router-dom";
 import { CalendarPage } from "./CalendarPage";
 import { CreateEventPage } from "./CreateEventPage";
-import { CreatePlayerFormPage } from "./CreatePlayerFormPage";
 import { DeleteEventPage } from "./DeleteEventPage";
 import { SettingsPage } from "./SettingsPage";
 import { UpdateEventPage } from "./UpdateEventPage";
@@ -348,7 +347,6 @@ function AppRoutes() {
           }
         />
 
-        <Route path="/create-player" element={<CreatePlayerFormPage />} />
 
         <Route
           path="/users/:id/edit"

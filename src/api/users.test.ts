@@ -3,7 +3,10 @@ import {
   getUserById,
   getUserPrivacySettings,
   getUsers,
+  deleteUser,
   updateUserPrivacySettings,
+  updateUser,
+  uploadUserAvatar,
   UserDataVisibility,
   UserPrivacySettings,
 } from "src/api/users";
@@ -86,4 +89,44 @@ test("updateUserPrivacySettings preserves authFetch URL, method, headers and bod
       body: JSON.stringify(privacySettings),
     },
   );
+});
+
+test("updateUser preserves authFetch URL, method, headers and body", async () => {
+  const update = { firstName: "Updated", jerseyNumber: 74 };
+  const body = { id: userId, ...update };
+  mockedAuthFetch.mockResolvedValue(createResponse(body));
+
+  await expect(updateUser(userId, update)).resolves.toEqual(body);
+
+  expect(mockedAuthFetch).toHaveBeenCalledWith(`/api/Users/${userId}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(update),
+  });
+});
+
+test("uploadUserAvatar preserves multipart body without overriding its content type", async () => {
+  const file = new File(["avatar"], "avatar.png", { type: "image/png" });
+  const body = { id: userId, photoUrl: "https://example.test/avatar.png" };
+  mockedAuthFetch.mockResolvedValue(createResponse(body));
+
+  await expect(uploadUserAvatar(userId, file)).resolves.toEqual(body);
+
+  expect(mockedAuthFetch).toHaveBeenCalledTimes(1);
+  const [url, init] = mockedAuthFetch.mock.calls[0];
+  expect(url).toBe(`/api/Users/${userId}/avatar/upload`);
+  expect(init).toMatchObject({ method: "POST" });
+  expect(init?.headers).toBeUndefined();
+  expect(init?.body).toBeInstanceOf(FormData);
+  expect((init?.body as FormData).get("file")).toBe(file);
+});
+
+test("deleteUser preserves authFetch URL and method", async () => {
+  mockedAuthFetch.mockResolvedValue(createResponse(null, 204));
+
+  await expect(deleteUser(userId)).resolves.toBeUndefined();
+
+  expect(mockedAuthFetch).toHaveBeenCalledWith(`/api/Users/${userId}`, {
+    method: "DELETE",
+  });
 });
