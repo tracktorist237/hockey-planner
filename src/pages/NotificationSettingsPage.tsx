@@ -230,8 +230,23 @@ export function NotificationSettingsPage() {
 
       const existingSubscription = await registration.pushManager.getSubscription();
       if (existingSubscription) {
-        await unsubscribePush(existingSubscription.endpoint).catch(() => undefined);
-        await existingSubscription.unsubscribe().catch(() => undefined);
+        const existingJson = existingSubscription.toJSON();
+        const existingP256dh = existingJson.keys?.p256dh;
+        const existingAuth = existingJson.keys?.auth;
+
+        if (!existingP256dh || !existingAuth) {
+          throw new Error("Existing push subscription keys are missing.");
+        }
+
+        await subscribePush({
+          endpoint: existingSubscription.endpoint,
+          keys: { p256dh: existingP256dh, auth: existingAuth },
+          userAgent: navigator.userAgent,
+          platform: navigator.platform,
+          deviceName: navigator.userAgent.includes("Mobile") ? "Mobile" : "Desktop",
+        });
+        await unsubscribePush(existingSubscription.endpoint);
+        await existingSubscription.unsubscribe();
       }
 
       const subscription = await registration.pushManager.subscribe({
@@ -250,7 +265,6 @@ export function NotificationSettingsPage() {
       await subscribePush({
         endpoint: subscription.endpoint,
         keys: { p256dh, auth },
-        userId: currentUserId,
         userAgent: navigator.userAgent,
         platform: navigator.platform,
         deviceName: navigator.userAgent.includes("Mobile") ? "Mobile" : "Desktop",

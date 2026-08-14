@@ -7,7 +7,6 @@ export interface PushSubscriptionPayload {
     p256dh: string;
     auth: string;
   };
-  userId?: string | null;
   userAgent?: string;
   platform?: string;
   deviceName?: string;
@@ -41,7 +40,7 @@ export const getPushPublicKey = async (): Promise<string> => {
 };
 
 export const subscribePush = async (payload: PushSubscriptionPayload): Promise<void> => {
-  const response = await fetch(buildApiUrl("/api/push/subscribe"), {
+  const response = await authFetch("/api/push/subscribe", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
@@ -54,7 +53,7 @@ export const subscribePush = async (payload: PushSubscriptionPayload): Promise<v
 };
 
 export const unsubscribePush = async (endpoint: string): Promise<void> => {
-  const response = await fetch(buildApiUrl("/api/push/unsubscribe"), {
+  const response = await authFetch("/api/push/unsubscribe", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ endpoint }),
