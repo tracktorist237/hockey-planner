@@ -1,35 +1,8 @@
 import { NotificationPreferencesDto, NotificationsListDto } from "src/types/notifications";
-import { buildApiUrl } from "src/api/client";
+import { authFetch } from "src/api/auth";
 
-const API_REQUEST_TIMEOUT_MS = 10000;
-
-const currentUserQuery = (currentUserId: string): string => `currentUserId=${encodeURIComponent(currentUserId)}`;
-
-const fetchWithTimeout = async (input: RequestInfo | URL, init: RequestInit = {}): Promise<Response> => {
-  if (typeof AbortController === "undefined") {
-    return Promise.race([
-      fetch(input, init),
-      new Promise<Response>((_, reject) => {
-        window.setTimeout(() => reject(new Error("Request timed out")), API_REQUEST_TIMEOUT_MS);
-      }),
-    ]);
-  }
-
-  const controller = new AbortController();
-  const timeoutId = window.setTimeout(() => controller.abort(), API_REQUEST_TIMEOUT_MS);
-
-  try {
-    return await fetch(input, {
-      ...init,
-      signal: controller.signal,
-    });
-  } finally {
-    window.clearTimeout(timeoutId);
-  }
-};
-
-export async function getNotifications(currentUserId: string, take = 20): Promise<NotificationsListDto> {
-  const response = await fetchWithTimeout(buildApiUrl(`/api/notifications?${currentUserQuery(currentUserId)}&take=${take}`), {
+export async function getNotifications(take = 20): Promise<NotificationsListDto> {
+  const response = await authFetch(`/api/notifications?take=${take}`, {
     credentials: "include",
   });
 
@@ -40,8 +13,8 @@ export async function getNotifications(currentUserId: string, take = 20): Promis
   return response.json();
 }
 
-export async function markNotificationRead(currentUserId: string, id: string): Promise<void> {
-  const response = await fetchWithTimeout(buildApiUrl(`/api/notifications/${id}/read?${currentUserQuery(currentUserId)}`), {
+export async function markNotificationRead(id: string): Promise<void> {
+  const response = await authFetch(`/api/notifications/${id}/read`, {
     method: "POST",
     credentials: "include",
   });
@@ -51,8 +24,8 @@ export async function markNotificationRead(currentUserId: string, id: string): P
   }
 }
 
-export async function markAllNotificationsRead(currentUserId: string): Promise<void> {
-  const response = await fetchWithTimeout(buildApiUrl(`/api/notifications/read-all?${currentUserQuery(currentUserId)}`), {
+export async function markAllNotificationsRead(): Promise<void> {
+  const response = await authFetch("/api/notifications/read-all", {
     method: "POST",
     credentials: "include",
   });
@@ -62,8 +35,8 @@ export async function markAllNotificationsRead(currentUserId: string): Promise<v
   }
 }
 
-export async function getNotificationPreferences(currentUserId: string): Promise<NotificationPreferencesDto> {
-  const response = await fetchWithTimeout(buildApiUrl(`/api/notifications/preferences/me?${currentUserQuery(currentUserId)}`), {
+export async function getNotificationPreferences(): Promise<NotificationPreferencesDto> {
+  const response = await authFetch("/api/notifications/preferences/me", {
     credentials: "include",
   });
 
@@ -75,10 +48,9 @@ export async function getNotificationPreferences(currentUserId: string): Promise
 }
 
 export async function updateNotificationPreferences(
-  currentUserId: string,
   preferences: NotificationPreferencesDto,
 ): Promise<NotificationPreferencesDto> {
-  const response = await fetchWithTimeout(buildApiUrl(`/api/notifications/preferences/me?${currentUserQuery(currentUserId)}`), {
+  const response = await authFetch("/api/notifications/preferences/me", {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     credentials: "include",
@@ -92,8 +64,8 @@ export async function updateNotificationPreferences(
   return response.json();
 }
 
-export async function sendTestNotification(currentUserId: string): Promise<void> {
-  const response = await fetchWithTimeout(buildApiUrl(`/api/notifications/test?${currentUserQuery(currentUserId)}`), {
+export async function sendTestNotification(): Promise<void> {
+  const response = await authFetch("/api/notifications/test", {
     method: "POST",
     credentials: "include",
   });

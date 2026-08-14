@@ -36,7 +36,7 @@ export function NotificationBell({ currentUserId }: NotificationBellProps) {
 
     isLoadingRef.current = true;
     try {
-      const data = await getNotifications(currentUserId, 8);
+      const data = await getNotifications(8);
       setItems(data.items ?? []);
       setUnreadCount(data.unreadCount ?? 0);
     } catch {
@@ -83,7 +83,7 @@ export function NotificationBell({ currentUserId }: NotificationBellProps) {
 
   const openNotification = async (notification: NotificationDto) => {
     if (!notification.isRead) {
-      await markNotificationRead(currentUserId, notification.id).catch(() => undefined);
+      await markNotificationRead(notification.id).catch(() => undefined);
       setUnreadCount((value) => Math.max(0, value - 1));
       setItems((current) => current.map((item) => item.id === notification.id ? { ...item, isRead: true } : item));
     }
@@ -166,7 +166,7 @@ export function NotificationBell({ currentUserId }: NotificationBellProps) {
             <button
               type="button"
               onClick={() => {
-                void markAllNotificationsRead(currentUserId).then(loadNotifications);
+                void markAllNotificationsRead().then(loadNotifications);
               }}
               style={{ border: "none", background: "transparent", color: "var(--hp-primary)", cursor: "pointer", fontSize: "12px", fontWeight: 800 }}
             >

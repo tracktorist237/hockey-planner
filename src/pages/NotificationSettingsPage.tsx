@@ -149,7 +149,7 @@ export function NotificationSettingsPage() {
 
     let active = true;
     setIsLoading(true);
-    void getNotificationPreferences(currentUserId)
+    void getNotificationPreferences()
       .then((nextPreferences) => {
         if (active) setPreferences(nextPreferences);
       })
@@ -184,7 +184,7 @@ export function NotificationSettingsPage() {
     setMessage(null);
 
     try {
-      setPreferences(await updateNotificationPreferences(currentUserId, next));
+      setPreferences(await updateNotificationPreferences(next));
     } catch {
       setPreferences(previous);
       setMessage("Не удалось сохранить настройки уведомлений");
@@ -284,7 +284,7 @@ export function NotificationSettingsPage() {
 
     setMessage(null);
     try {
-      await sendTestNotification(currentUserId);
+      await sendTestNotification();
       setMessage("Готово: тестовое уведомление отправлено");
     } catch {
       setMessage("Не удалось отправить тестовое уведомление");
