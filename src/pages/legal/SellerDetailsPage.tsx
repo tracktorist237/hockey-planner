@@ -1,5 +1,5 @@
 import { LegalLayout, headingStyle, paragraphStyle, sectionStyle, listStyle } from "./LegalLayout";
-import { SUPPORT_EMAIL } from "./constants";
+import { SELLER_DETAILS, SUPPORT_EMAIL } from "./constants";
 
 export function SellerDetailsPage() {
   return (
@@ -7,20 +7,26 @@ export function SellerDetailsPage() {
       <section style={sectionStyle}>
         <h2 style={headingStyle}>Информация о продавце</h2>
         <p style={paragraphStyle}>
-          Реквизиты будут заполнены после завершения оформления продавца и подключения платёжной системы. Структура страницы подготовлена заранее,
-          чтобы данные можно было добавить без изменения документов.
+          Продавцом услуг Hockey Planner является {SELLER_DETAILS.name}.
         </p>
       </section>
 
       <section style={sectionStyle}>
-        <h2 style={headingStyle}>Реквизиты</h2>
+        <h2 style={headingStyle}>Реквизиты продавца</h2>
         <ul style={listStyle}>
-          <li>Организационно-правовая форма: будет указано дополнительно.</li>
-          <li>ФИО или название организации: будет указано дополнительно.</li>
-          <li>ИНН: будет указано дополнительно.</li>
-          <li>ОГРНИП / ОГРН: будет указано при наличии.</li>
-          <li>Юридический адрес: будет указан, если требуется.</li>
+          <li>Наименование: {SELLER_DETAILS.name}.</li>
+          <li>ИНН: {SELLER_DETAILS.inn}.</li>
           <li>Email для связи: {SUPPORT_EMAIL}.</li>
+        </ul>
+      </section>
+
+      <section style={sectionStyle}>
+        <h2 style={headingStyle}>Банковские реквизиты</h2>
+        <ul style={listStyle}>
+          <li>Банк: {SELLER_DETAILS.bank}.</li>
+          <li>БИК: {SELLER_DETAILS.bik}.</li>
+          <li>Корреспондентский счёт: {SELLER_DETAILS.correspondentAccount}.</li>
+          <li>Расчётный счёт: {SELLER_DETAILS.settlementAccount}.</li>
         </ul>
       </section>
     </LegalLayout>
