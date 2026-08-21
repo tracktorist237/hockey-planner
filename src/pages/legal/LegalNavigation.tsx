@@ -3,13 +3,9 @@ import { Link } from "react-router-dom";
 
 const legalLinks = [
   ["О сервисе", "/about"],
-  ["Оплата", "/payment"],
-  ["Условия оказания услуг", "/service-terms"],
-  ["Возврат денежных средств", "/refund"],
   ["Контакты", "/contacts"],
   ["Политика конфиденциальности", "/privacy"],
   ["Пользовательское соглашение", "/terms"],
-  ["Реквизиты", "/seller-details"],
 ] as const;
 
 const navStyle: CSSProperties = {

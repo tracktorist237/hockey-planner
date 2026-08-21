@@ -27,12 +27,8 @@ import { PrivacySettingsPage } from "src/pages/PrivacySettingsPage";
 import { TeamPwaSettingsPage } from "src/pages/TeamPwaSettingsPage";
 import {
   ContactsPage,
-  PaymentInfoPage,
   PrivacyPolicyPage,
   ProductOverviewPage,
-  RefundPolicyPage,
-  SellerDetailsPage,
-  ServiceTermsPage,
   TermsOfServicePage,
 } from "src/pages/legal";
 import { TeamDetailsPage } from "src/pages/TeamDetailsPage/TeamDetailsPage";
@@ -243,21 +239,6 @@ function AppRoutes() {
         />
 
         <Route
-          path="/payment"
-          element={<PaymentInfoPage />}
-        />
-
-        <Route
-          path="/service-terms"
-          element={<ServiceTermsPage />}
-        />
-
-        <Route
-          path="/refund"
-          element={<RefundPolicyPage />}
-        />
-
-        <Route
           path="/contacts"
           element={<ContactsPage />}
         />
@@ -270,11 +251,6 @@ function AppRoutes() {
         <Route
           path="/terms"
           element={<TermsOfServicePage />}
-        />
-
-        <Route
-          path="/seller-details"
-          element={<SellerDetailsPage />}
         />
 
         <Route
