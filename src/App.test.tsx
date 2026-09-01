@@ -2,8 +2,11 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import App from './App';
 
-test('renders learn react link', () => {
+jest.mock('src/components/DebugOverlay', () => ({
+  DebugOverlay: () => null,
+}));
+
+test('renders the sign-in page for an unauthenticated visitor', async () => {
   render(<App />);
-  const linkElement = screen.getByText(/learn react/i);
-  expect(linkElement).toBeInTheDocument();
+  expect(await screen.findByRole('heading', { name: 'Вход' })).toBeInTheDocument();
 });
