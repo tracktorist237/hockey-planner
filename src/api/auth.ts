@@ -483,7 +483,8 @@ export async function getCurrentAuthUser(): Promise<User | null> {
 
   const response = await authFetch("/api/auth/me", { method: "GET" });
 
-  if (response.status === 401) {
+  if (response.status === 400 || response.status === 401 || response.status === 403) {
+    clearAuthTokens();
     return null;
   }
 

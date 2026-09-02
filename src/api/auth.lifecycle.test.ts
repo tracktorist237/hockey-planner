@@ -2,6 +2,7 @@ import {
   authFetch,
   AuthResponse,
   getAccessToken,
+  getCurrentAuthUser,
   getRefreshToken,
   loginAuth,
   logoutAuth,
@@ -54,6 +55,18 @@ test("definitive refresh failure clears stored credentials", async () => {
   mockedFetch.mockResolvedValue(createResponse(401, { message: "Session expired." }));
 
   await expect(refreshAuth()).rejects.toThrow("Session expired.");
+
+  expect(getAccessToken()).toBeNull();
+  expect(getRefreshToken()).toBeNull();
+  expect(localStorage.getItem("currentUser")).toBeNull();
+});
+
+test("definitive current-user rejection clears stored credentials", async () => {
+  setAuthTokens(createAuthResponse("12"));
+  localStorage.setItem("currentUser", JSON.stringify(createAuthResponse("12").user));
+  mockedFetch.mockResolvedValue(createResponse(403, { message: "Forbidden." }));
+
+  await expect(getCurrentAuthUser()).resolves.toBeNull();
 
   expect(getAccessToken()).toBeNull();
   expect(getRefreshToken()).toBeNull();

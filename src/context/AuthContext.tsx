@@ -23,6 +23,21 @@ import { writeClientDebugEvent } from "src/utils/clientDebugLog";
 
 const AUTH_STORAGE_KEY = "currentUser";
 
+const readCachedCurrentUser = (): User | null => {
+  try {
+    const storedUser = localStorage.getItem(AUTH_STORAGE_KEY);
+    if (!storedUser) {
+      return null;
+    }
+
+    const parsedUser = JSON.parse(storedUser) as Partial<User>;
+    return typeof parsedUser.id === "string" ? (parsedUser as User) : null;
+  } catch (error) {
+    writeClientDebugEvent("auth.readCachedCurrentUser.failed", { error });
+    return null;
+  }
+};
+
 interface AuthContextValue {
   currentUser: User | null;
   isAuthenticated: boolean;
@@ -150,6 +165,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       } catch (error) {
         if (isMounted && generation === syncGeneration) {
+          const sessionUserId = getAuthSessionUserId();
+          const cachedUser = readCachedCurrentUser();
+          if (
+            (getAccessToken() || getRefreshToken()) &&
+            sessionUserId &&
+            cachedUser?.id === sessionUserId
+          ) {
+            setCurrentUser(cachedUser);
+          }
           console.warn("Unable to sync auth session from API:", error);
           writeClientDebugEvent("auth.syncSession.failed", { error });
         }
