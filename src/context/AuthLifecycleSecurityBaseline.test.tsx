@@ -90,6 +90,56 @@ test("cached currentUser alone does not establish an authenticated session", asy
   expect(screen.getByTestId("user-id")).toHaveTextContent("none");
 });
 
+test("matching cached user survives a transient startup failure with persisted credentials", async () => {
+  const warning = jest.spyOn(console, "warn").mockImplementation(() => undefined);
+  const persistedSession = JSON.stringify({
+    version: "persisted-session",
+    userId: cachedUser.id,
+    accessToken: "access-token",
+    refreshToken: "refresh-token",
+    accessTokenExpiresAt: "2099-01-01T00:00:00Z",
+  });
+  localStorage.setItem("authSession", persistedSession);
+  localStorage.setItem("currentUser", JSON.stringify(cachedUser));
+  mockedGetAccessToken.mockReturnValue("access-token");
+  mockedGetRefreshToken.mockReturnValue("refresh-token");
+  mockedGetAuthSessionUserId.mockReturnValue(cachedUser.id);
+  mockedGetCurrentAuthUser.mockRejectedValue(new TypeError("Failed to fetch"));
+
+  render(
+    <AuthProvider>
+      <AuthProbe />
+    </AuthProvider>,
+  );
+
+  await waitFor(() => expect(screen.getByTestId("loading")).toHaveTextContent("false"));
+  expect(screen.getByTestId("authenticated")).toHaveTextContent("true");
+  expect(screen.getByTestId("user-id")).toHaveTextContent(cachedUser.id);
+  expect(localStorage.getItem("authSession")).toBe(persistedSession);
+  expect(localStorage.getItem("currentUser")).toBe(JSON.stringify(cachedUser));
+  warning.mockRestore();
+});
+
+test("cached user from a different account is not trusted after a transient startup failure", async () => {
+  const warning = jest.spyOn(console, "warn").mockImplementation(() => undefined);
+  localStorage.setItem("currentUser", JSON.stringify(cachedUser));
+  mockedGetAccessToken.mockReturnValue("access-token");
+  mockedGetRefreshToken.mockReturnValue("refresh-token");
+  mockedGetAuthSessionUserId.mockReturnValue(newerUser.id);
+  mockedGetCurrentAuthUser.mockRejectedValue(new TypeError("Failed to fetch"));
+
+  render(
+    <AuthProvider>
+      <AuthProbe />
+    </AuthProvider>,
+  );
+
+  await waitFor(() => expect(screen.getByTestId("loading")).toHaveTextContent("false"));
+  expect(screen.getByTestId("authenticated")).toHaveTextContent("false");
+  expect(screen.getByTestId("user-id")).toHaveTextContent("none");
+  warning.mockRestore();
+});
+
 test("logout clears authenticated user state when the API call fails", async () => {
   const warning = jest.spyOn(console, "warn").mockImplementation(() => undefined);
   mockedGetAccessToken.mockReturnValue("access-token");
