@@ -6,7 +6,7 @@ export function ContactsPage() {
       <section style={sectionStyle}>
         <h2 style={headingStyle}>Служба поддержки</h2>
         <p style={paragraphStyle}>
-          Email для обращений пользователей, вопросов по работе сервиса, оплате, возвратам и данным: <SupportEmail />.
+          Email для обращений пользователей, вопросов по работе сервиса и персональным данным: <SupportEmail />.
         </p>
       </section>
 
