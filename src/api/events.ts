@@ -1,30 +1,5 @@
 import { AttendanceLookUpDto, CreateEventDto, EventDto, EventListDto } from "../types/events";
-import { buildApiUrl } from "src/api/client";
-
-const API_REQUEST_TIMEOUT_MS = 10000;
-
-const fetchWithTimeout = async (input: RequestInfo | URL, init: RequestInit = {}): Promise<Response> => {
-  if (typeof AbortController === "undefined") {
-    return Promise.race([
-      fetch(input, init),
-      new Promise<Response>((_, reject) => {
-        window.setTimeout(() => reject(new Error("Request timed out")), API_REQUEST_TIMEOUT_MS);
-      }),
-    ]);
-  }
-
-  const controller = new AbortController();
-  const timeoutId = window.setTimeout(() => controller.abort(), API_REQUEST_TIMEOUT_MS);
-
-  try {
-    return await fetch(input, {
-      ...init,
-      signal: controller.signal,
-    });
-  } finally {
-    window.clearTimeout(timeoutId);
-  }
-};
+import { authFetch } from "src/api/auth";
 
 const readStoredCurrentUserId = (): string | null => {
   try {
@@ -58,7 +33,7 @@ export async function getEvents(currentUserId?: string, teamId?: string | null):
     queryParts.push(`teamId=${encodeURIComponent(teamId)}`);
   }
   const query = queryParts.length > 0 ? `?${queryParts.join("&")}` : "";
-  const res = await fetchWithTimeout(buildApiUrl(`/api/events${query}`), { credentials: "include" });
+  const res = await authFetch(`/api/events${query}`, { credentials: "include" });
   if (!res.ok) {
     throw new Error(`GET /api/events failed: ${res.status}`);
   }
@@ -66,7 +41,7 @@ export async function getEvents(currentUserId?: string, teamId?: string | null):
 }
 
 export async function getEvent(id: string): Promise<EventDto> {
-  const res = await fetchWithTimeout(buildApiUrl(`/api/events/${id}`), { credentials: "include" });
+  const res = await authFetch(`/api/events/${id}`, { credentials: "include" });
   if (!res.ok) {
     throw new Error(`GET /api/events/${id} failed: ${res.status}`);
   }
@@ -75,7 +50,7 @@ export async function getEvent(id: string): Promise<EventDto> {
 
 export async function createEvent(data: CreateEventDto, currentUserId?: string): Promise<string> {
   const userId = resolveCurrentUserId(currentUserId);
-  const res = await fetchWithTimeout(buildApiUrl(`/api/events?currentUserId=${encodeURIComponent(userId)}`), {
+  const res = await authFetch(`/api/events?currentUserId=${encodeURIComponent(userId)}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     credentials: "include",
@@ -96,8 +71,8 @@ export async function updateEvent(
   currentUserId?: string,
 ): Promise<void> {
   const userId = resolveCurrentUserId(currentUserId);
-  const res = await fetchWithTimeout(
-    buildApiUrl(`/api/events?currentUserId=${encodeURIComponent(userId)}&eventId=${encodeURIComponent(eventId)}`),
+  const res = await authFetch(
+    `/api/events?currentUserId=${encodeURIComponent(userId)}&eventId=${encodeURIComponent(eventId)}`,
     {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -114,8 +89,8 @@ export async function updateEvent(
 
 export async function deleteEvent(eventId: string, currentUserId?: string): Promise<{ message: string }> {
   const userId = resolveCurrentUserId(currentUserId);
-  const res = await fetchWithTimeout(
-    buildApiUrl(`/api/events?currentUserId=${encodeURIComponent(userId)}&eventId=${encodeURIComponent(eventId)}`),
+  const res = await authFetch(
+    `/api/events?currentUserId=${encodeURIComponent(userId)}&eventId=${encodeURIComponent(eventId)}`,
     {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
@@ -140,7 +115,7 @@ export async function updateAttendance(
   currentUserId?: string | null,
 ): Promise<void> {
   const query = currentUserId ? `?currentUserId=${encodeURIComponent(currentUserId)}` : "";
-  const res = await fetchWithTimeout(buildApiUrl(`/api/events/${eventId}/attendance/${userId}${query}`), {
+  const res = await authFetch(`/api/events/${eventId}/attendance/${userId}${query}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -168,7 +143,7 @@ export async function createEventGuest(
   currentUserId?: string | null,
 ): Promise<AttendanceLookUpDto> {
   const userId = resolveCurrentUserId(currentUserId ?? undefined);
-  const res = await fetchWithTimeout(buildApiUrl(`/api/events/${eventId}/guests?currentUserId=${encodeURIComponent(userId)}`), {
+  const res = await authFetch(`/api/events/${eventId}/guests?currentUserId=${encodeURIComponent(userId)}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     credentials: "include",
@@ -191,7 +166,7 @@ export async function updateEventGuestAttendance(
   currentUserId?: string | null,
 ): Promise<void> {
   const userId = resolveCurrentUserId(currentUserId ?? undefined);
-  const res = await fetchWithTimeout(buildApiUrl(`/api/events/${eventId}/guests/${guestId}/attendance?currentUserId=${encodeURIComponent(userId)}`), {
+  const res = await authFetch(`/api/events/${eventId}/guests/${guestId}/attendance?currentUserId=${encodeURIComponent(userId)}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     credentials: "include",

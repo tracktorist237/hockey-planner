@@ -7,13 +7,11 @@ const manifest = self.__WB_MANIFEST;
 void manifest;
 
 const CACHE_NAME = "hockey-planner-v2";
-const TEAM_PWA_CACHE_NAME = "hockey-planner-team-pwa";
 
 const getPathname = (request: Request) => new URL(request.url).pathname;
 const isSameOrigin = (request: Request) => new URL(request.url).origin === self.location.origin;
 const isApiRequest = (request: Request) => getPathname(request).startsWith("/api/");
 const isServiceWorkerRequest = (request: Request) => getPathname(request).endsWith("/service-worker.js");
-const isTeamPwaAssetRequest = (request: Request) => getPathname(request).startsWith("/pwa-assets/teams/");
 const isNavigationRequest = (request: Request) =>
   request.mode === "navigate" || request.headers.get("accept")?.includes("text/html");
 const isStaticAssetRequest = (request: Request) => {
@@ -44,7 +42,7 @@ const cacheFirst = async (request: Request) => {
   return networkResponse;
 };
 
-const networkFirst = async (request: Request) => {
+const networkFirst = async (request: Request, fallbackToShell = false) => {
   try {
     const networkResponse = await fetch(request);
     if (networkResponse && networkResponse.status === 200) {
@@ -60,9 +58,11 @@ const networkFirst = async (request: Request) => {
       return cachedResponse;
     }
 
-    const cachedShell = await caches.match("/index.html");
-    if (cachedShell) {
-      return cachedShell;
+    if (fallbackToShell) {
+      const cachedShell = await caches.match("/index.html");
+      if (cachedShell) {
+        return cachedShell;
+      }
     }
 
     throw error;
@@ -90,7 +90,7 @@ self.addEventListener("activate", (event) => {
       .then((cacheNames) =>
         Promise.all(
           cacheNames
-            .filter((name) => name !== CACHE_NAME && name !== TEAM_PWA_CACHE_NAME)
+            .filter((name) => name !== CACHE_NAME)
             .map((name) => caches.delete(name)),
         ),
       )
@@ -114,16 +114,12 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  if (isTeamPwaAssetRequest(event.request)) {
-    event.respondWith(
-      caches.match(event.request).then((response) =>
-        response ?? new Response("Team PWA asset not found", { status: 404 }),
-      ),
-    );
+  if (isNavigationRequest(event.request)) {
+    event.respondWith(networkFirst(event.request, true));
     return;
   }
 
-  if (isNavigationRequest(event.request)) {
+  if (["/manifest.json", "/apple-touch-icon.png", "/maskable-icon-512.png"].includes(getPathname(event.request))) {
     event.respondWith(networkFirst(event.request));
     return;
   }

@@ -42,8 +42,18 @@ const fetchWithTimeout = async (input: RequestInfo | URL, init: RequestInit = {}
   }
 };
 
-export const getTeamPwaLogoUrl = (teamId: string): string =>
-  buildApiUrl(`/api/teams/${encodeURIComponent(teamId)}/pwa-logo`);
+export const getTeamPwaManifestUrl = (teamId: string, appName: string): string => {
+  const path = `/api/pwa/teams/${encodeURIComponent(teamId)}/manifest.webmanifest`;
+  const url = new URL(buildApiUrl(path), window.location.origin);
+  url.searchParams.set("name", appName);
+  return url.href;
+};
+
+export const getTeamPwaIconUrl = (teamId: string, size: 180 | 192 | 512): string =>
+  new URL(
+    buildApiUrl(`/api/pwa/teams/${encodeURIComponent(teamId)}/icons/${size}.png`),
+    window.location.origin,
+  ).href;
 
 const requireCurrentUserId = (): string => {
   const saved = localStorage.getItem("currentUser");

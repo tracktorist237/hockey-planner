@@ -1,4 +1,5 @@
 import { buildApiUrl } from "src/api/client";
+import { authFetch } from "src/api/auth";
 
 export interface CreateUserData {
   firstName: string;
@@ -53,6 +54,12 @@ export interface User extends CreateUserData {
   fullName: string;
 }
 
+export interface UserSummary {
+  id: string;
+  photoUrl?: string | null;
+  primaryPosition?: number | null;
+}
+
 const ensureOk = async (res: Response, fallbackMessage: string): Promise<void> => {
   if (res.ok) {
     return;
@@ -79,20 +86,20 @@ const buildQuery = (params: { [key: string]: string | null | undefined }): strin
   return queryString ? `?${queryString}` : "";
 };
 
-export async function getUsers(): Promise<User[]> {
-  const res = await fetch(buildApiUrl("/api/Users"));
+export async function getUsers(): Promise<UserSummary[]> {
+  const res = await authFetch("/api/Users");
   await ensureOk(res, "Не удалось загрузить пользователей");
   return res.json();
 }
 
 export async function getUserById(id: string, context: UserProfileContext = {}): Promise<User> {
-  const res = await fetch(buildApiUrl(`/api/Users/${id}${buildQuery({ currentUserId: context.currentUserId, teamId: context.teamId })}`));
+  const res = await authFetch(`/api/Users/${id}${buildQuery({ currentUserId: context.currentUserId, teamId: context.teamId })}`);
   await ensureOk(res, "Не удалось загрузить пользователя");
   return res.json();
 }
 
 export async function getUserPrivacySettings(id: string, currentUserId: string): Promise<UserPrivacySettings> {
-  const res = await fetch(buildApiUrl(`/api/Users/${id}/privacy-settings${buildQuery({ currentUserId })}`));
+  const res = await authFetch(`/api/Users/${id}/privacy-settings${buildQuery({ currentUserId })}`);
   await ensureOk(res, "Не удалось загрузить настройки приватности");
   return res.json();
 }
@@ -102,7 +109,7 @@ export async function updateUserPrivacySettings(
   currentUserId: string,
   settings: UserPrivacySettings,
 ): Promise<UserPrivacySettings> {
-  const res = await fetch(buildApiUrl(`/api/Users/${id}/privacy-settings${buildQuery({ currentUserId })}`), {
+  const res = await authFetch(`/api/Users/${id}/privacy-settings${buildQuery({ currentUserId })}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
@@ -144,7 +151,7 @@ export async function createUser(userData: CreateUserData): Promise<User> {
 }
 
 export async function updateUser(id: string, userData: UpdateUserData): Promise<User> {
-  const res = await fetch(buildApiUrl(`/api/Users/${id}`), {
+  const res = await authFetch(`/api/Users/${id}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
@@ -160,7 +167,7 @@ export async function uploadUserAvatar(id: string, file: File): Promise<User> {
   const formData = new FormData();
   formData.append("file", file);
 
-  const res = await fetch(buildApiUrl(`/api/Users/${id}/avatar/upload`), {
+  const res = await authFetch(`/api/Users/${id}/avatar/upload`, {
     method: "POST",
     body: formData,
   });
@@ -170,7 +177,7 @@ export async function uploadUserAvatar(id: string, file: File): Promise<User> {
 }
 
 export async function deleteUser(id: string): Promise<void> {
-  const res = await fetch(buildApiUrl(`/api/Users/${id}`), {
+  const res = await authFetch(`/api/Users/${id}`, {
     method: "DELETE",
   });
 

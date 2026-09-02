@@ -6,8 +6,19 @@ import { buildApiUrl } from "src/api/client";
 const ACCESS_TOKEN_KEY = "authAccessToken";
 const REFRESH_TOKEN_KEY = "authRefreshToken";
 const ACCESS_TOKEN_EXPIRES_AT_KEY = "authAccessTokenExpiresAt";
+const AUTH_SESSION_KEY = "authSession";
+const CURRENT_USER_KEY = "currentUser";
+const AUTH_SESSION_CHANGED_EVENT = "hockeyplanner:auth-session-changed";
 const AUTH_REQUEST_TIMEOUT_MS = 15_000;
 let refreshPromise: Promise<User | null> | null = null;
+
+interface AuthSessionSnapshot {
+  version: string;
+  userId: string | null;
+  accessToken: string | null;
+  refreshToken: string | null;
+  accessTokenExpiresAt: string | null;
+}
 
 export interface AuthResponse {
   accessToken: string;
@@ -84,8 +95,124 @@ const safeRemoveItem = (key: string): void => {
   }
 };
 
-export const getAccessToken = (): string | null => safeGetItem(ACCESS_TOKEN_KEY);
-export const getRefreshToken = (): string | null => safeGetItem(REFRESH_TOKEN_KEY);
+const newSessionVersion = (): string =>
+  `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+
+const readAuthSession = (): AuthSessionSnapshot => {
+  const storedSession = safeGetItem(AUTH_SESSION_KEY);
+  if (storedSession) {
+    try {
+      const parsed = JSON.parse(storedSession) as Partial<AuthSessionSnapshot>;
+      if (typeof parsed.version === "string") {
+        return {
+          version: parsed.version,
+          userId: typeof parsed.userId === "string" ? parsed.userId : null,
+          accessToken: typeof parsed.accessToken === "string" ? parsed.accessToken : null,
+          refreshToken: typeof parsed.refreshToken === "string" ? parsed.refreshToken : null,
+          accessTokenExpiresAt:
+            typeof parsed.accessTokenExpiresAt === "string" ? parsed.accessTokenExpiresAt : null,
+        };
+      }
+    } catch (error) {
+      writeClientDebugEvent("auth.session.parse.failed", { error });
+    }
+  }
+
+  return {
+    version: "legacy",
+    userId: null,
+    accessToken: safeGetItem(ACCESS_TOKEN_KEY),
+    refreshToken: safeGetItem(REFRESH_TOKEN_KEY),
+    accessTokenExpiresAt: safeGetItem(ACCESS_TOKEN_EXPIRES_AT_KEY),
+  };
+};
+
+const isSameSession = (left: AuthSessionSnapshot, right: AuthSessionSnapshot): boolean =>
+  left.version === right.version &&
+  left.userId === right.userId &&
+  left.accessToken === right.accessToken &&
+  left.refreshToken === right.refreshToken &&
+  left.accessTokenExpiresAt === right.accessTokenExpiresAt;
+
+const dispatchSessionChanged = (): void => {
+  window.dispatchEvent(new Event(AUTH_SESSION_CHANGED_EVENT));
+};
+
+const writeAuthSession = (session: AuthSessionSnapshot): void => {
+  safeSetItem(AUTH_SESSION_KEY, JSON.stringify(session));
+  if (session.accessToken && session.refreshToken && session.accessTokenExpiresAt) {
+    safeSetItem(ACCESS_TOKEN_KEY, session.accessToken);
+    safeSetItem(REFRESH_TOKEN_KEY, session.refreshToken);
+    safeSetItem(ACCESS_TOKEN_EXPIRES_AT_KEY, session.accessTokenExpiresAt);
+  } else {
+    safeRemoveItem(ACCESS_TOKEN_KEY);
+    safeRemoveItem(REFRESH_TOKEN_KEY);
+    safeRemoveItem(ACCESS_TOKEN_EXPIRES_AT_KEY);
+  }
+  dispatchSessionChanged();
+};
+
+const clearSession = (expected?: AuthSessionSnapshot): boolean => {
+  if (expected && !isSameSession(readAuthSession(), expected)) {
+    writeClientDebugEvent("auth.session.clear.skippedNewerSession");
+    return false;
+  }
+
+  writeAuthSession({
+    version: newSessionVersion(),
+    userId: null,
+    accessToken: null,
+    refreshToken: null,
+    accessTokenExpiresAt: null,
+  });
+  safeRemoveItem(CURRENT_USER_KEY);
+  return true;
+};
+
+const replaceSession = (expected: AuthSessionSnapshot, response: AuthResponse): boolean => {
+  if (!isSameSession(readAuthSession(), expected)) {
+    writeClientDebugEvent("auth.session.replace.skippedNewerSession");
+    return false;
+  }
+
+  writeAuthSession({
+    version: newSessionVersion(),
+    userId: response.user.id,
+    accessToken: response.accessToken,
+    refreshToken: response.refreshToken,
+    accessTokenExpiresAt: response.accessTokenExpiresAt,
+  });
+  return true;
+};
+
+export const getAccessToken = (): string | null => readAuthSession().accessToken;
+export const getRefreshToken = (): string | null => readAuthSession().refreshToken;
+export const getAuthSessionUserId = (): string | null => readAuthSession().userId;
+
+export const subscribeToAuthSession = (listener: (source: "local" | "storage") => void): (() => void) => {
+  const handleLocalChange = () => listener("local");
+  const handleStorageChange = (event: StorageEvent) => {
+    if (event.key === null || event.key === AUTH_SESSION_KEY) {
+      listener("storage");
+      return;
+    }
+
+    const isLegacyTokenKey =
+      event.key === ACCESS_TOKEN_KEY ||
+      event.key === REFRESH_TOKEN_KEY ||
+      event.key === ACCESS_TOKEN_EXPIRES_AT_KEY;
+    if (isLegacyTokenKey && !safeGetItem(AUTH_SESSION_KEY)) {
+      listener("storage");
+    }
+  };
+
+  window.addEventListener(AUTH_SESSION_CHANGED_EVENT, handleLocalChange);
+  window.addEventListener("storage", handleStorageChange);
+  return () => {
+    window.removeEventListener(AUTH_SESSION_CHANGED_EVENT, handleLocalChange);
+    window.removeEventListener("storage", handleStorageChange);
+  };
+};
 
 export const setAuthTokens = (response: AuthResponse): User => {
   if (!response?.accessToken || !response.refreshToken || !response.accessTokenExpiresAt || !response.user?.id) {
@@ -98,16 +225,18 @@ export const setAuthTokens = (response: AuthResponse): User => {
     throw new Error("Invalid authentication response.");
   }
 
-  safeSetItem(ACCESS_TOKEN_KEY, response.accessToken);
-  safeSetItem(REFRESH_TOKEN_KEY, response.refreshToken);
-  safeSetItem(ACCESS_TOKEN_EXPIRES_AT_KEY, response.accessTokenExpiresAt);
+  writeAuthSession({
+    version: newSessionVersion(),
+    userId: response.user.id,
+    accessToken: response.accessToken,
+    refreshToken: response.refreshToken,
+    accessTokenExpiresAt: response.accessTokenExpiresAt,
+  });
   return mapAuthUser(response.user);
 };
 
 export const clearAuthTokens = (): void => {
-  safeRemoveItem(ACCESS_TOKEN_KEY);
-  safeRemoveItem(REFRESH_TOKEN_KEY);
-  safeRemoveItem(ACCESS_TOKEN_EXPIRES_AT_KEY);
+  clearSession();
 };
 
 const readErrorMessage = async (response: Response): Promise<string> => {
@@ -247,9 +376,10 @@ export async function refreshAuth(): Promise<User | null> {
 }
 
 async function refreshAuthInternal(): Promise<User | null> {
-  const refreshToken = getRefreshToken();
+  const sessionAtStart = readAuthSession();
+  const refreshToken = sessionAtStart.refreshToken;
   if (!refreshToken) {
-    clearAuthTokens();
+    clearSession(sessionAtStart);
     return null;
   }
 
@@ -263,20 +393,33 @@ async function refreshAuthInternal(): Promise<User | null> {
   });
 
   if (!response.ok) {
+    const errorMessage = await readErrorMessage(response);
     if (response.status === 400 || response.status === 401 || response.status === 403) {
-      clearAuthTokens();
+      if (!isSameSession(readAuthSession(), sessionAtStart)) {
+        writeClientDebugEvent("auth.refresh.rejectedSupersededSession");
+        if (getAccessToken() || getRefreshToken()) {
+          return null;
+        }
+      } else {
+        clearSession(sessionAtStart);
+      }
     }
 
-    throw new Error(await readErrorMessage(response));
+    throw new Error(errorMessage);
   }
 
-  const user = setAuthTokens((await response.json()) as AuthResponse);
+  const authResponse = (await response.json()) as AuthResponse;
+  const user = mapAuthUser(authResponse.user);
+  if (!replaceSession(sessionAtStart, authResponse)) {
+    return null;
+  }
   writeClientDebugEvent("auth.refresh.success", { hasUser: Boolean(user.id) });
   return user;
 }
 
 export async function authFetch(input: string, init: RequestInit = {}, retry = true): Promise<Response> {
-  const accessToken = getAccessToken();
+  const sessionAtStart = readAuthSession();
+  const accessToken = sessionAtStart.accessToken;
   const headers = new Headers(init.headers);
   if (accessToken) {
     headers.set("Authorization", `Bearer ${accessToken}`);
@@ -287,12 +430,27 @@ export async function authFetch(input: string, init: RequestInit = {}, retry = t
     headers,
   });
 
-  if (response.status !== 401 || !retry || !getRefreshToken()) {
+  if (response.status !== 401) {
     return response;
   }
 
-  const refreshedUser = await refreshAuth();
-  if (!refreshedUser) {
+  if (!retry) {
+    clearSession(sessionAtStart);
+    return response;
+  }
+
+  const currentSession = readAuthSession();
+  if (!isSameSession(currentSession, sessionAtStart) && currentSession.accessToken) {
+    return authFetch(input, init, false);
+  }
+
+  if (!currentSession.refreshToken) {
+    clearSession(currentSession);
+    return response;
+  }
+
+  await refreshAuth();
+  if (!getAccessToken()) {
     return response;
   }
   return authFetch(input, init, false);
@@ -325,7 +483,7 @@ export async function getCurrentAuthUser(): Promise<User | null> {
 
   const response = await authFetch("/api/auth/me", { method: "GET" });
 
-  if (response.status === 401) {
+  if (response.status === 400 || response.status === 401 || response.status === 403) {
     clearAuthTokens();
     return null;
   }

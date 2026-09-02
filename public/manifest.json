@@ -1,6 +1,8 @@
 {
   "short_name": "Hockey",
   "name": "Hockey Planner",
+  "id": "/",
+  "description": "Хоккейный планировщик для команды: тренировки, матчи, встречи, состав и явка игроков.",
   "icons": [
     {
       "src": "logo192.png",
@@ -11,9 +13,16 @@
       "src": "logo512.png",
       "type": "image/png",
       "sizes": "512x512"
+    },
+    {
+      "src": "maskable-icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "maskable"
     }
   ],
-  "start_url": ".",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "theme_color": "#0b1220",
   "background_color": "#ffffff"

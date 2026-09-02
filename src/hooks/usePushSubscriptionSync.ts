@@ -62,7 +62,6 @@ export function usePushSubscriptionSync(currentUserId?: string | null) {
         await subscribePush({
           endpoint: subscription.endpoint,
           keys: { p256dh, auth },
-          userId: currentUserId,
           userAgent: navigator.userAgent,
           platform: navigator.platform,
           deviceName: buildDeviceName(),

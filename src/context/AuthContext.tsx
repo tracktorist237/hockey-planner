@@ -1,11 +1,11 @@
-import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import {
   ChangeEmailRequest,
   changeEmailAuth,
   ChangePasswordRequest,
   changePasswordAuth,
-  clearAuthTokens,
   confirmEmailAuth,
+  getAuthSessionUserId,
   getAccessToken,
   forgotPasswordAuth,
   getCurrentAuthUser,
@@ -16,23 +16,32 @@ import {
   RegisterAuthRequest,
   resendEmailConfirmationAuth,
   resetPasswordAuth,
+  subscribeToAuthSession,
 } from "src/api/auth";
-import { normalizeAppRole, normalizeRole } from "src/constants/roles";
 import { User } from "src/types/user";
 import { writeClientDebugEvent } from "src/utils/clientDebugLog";
 
 const AUTH_STORAGE_KEY = "currentUser";
 
-type StoredUser = Partial<User> & {
-  role?: number | string | null;
-  appRole?: number | string | null;
+const readCachedCurrentUser = (): User | null => {
+  try {
+    const storedUser = localStorage.getItem(AUTH_STORAGE_KEY);
+    if (!storedUser) {
+      return null;
+    }
+
+    const parsedUser = JSON.parse(storedUser) as Partial<User>;
+    return typeof parsedUser.id === "string" ? (parsedUser as User) : null;
+  } catch (error) {
+    writeClientDebugEvent("auth.readCachedCurrentUser.failed", { error });
+    return null;
+  }
 };
 
 interface AuthContextValue {
   currentUser: User | null;
   isAuthenticated: boolean;
   authLoading: boolean;
-  login: (user: User) => Promise<void>;
   loginWithPassword: (email: string, password: string) => Promise<void>;
   registerWithPassword: (request: RegisterAuthRequest) => Promise<User>;
   changeEmail: (request: ChangeEmailRequest) => Promise<User>;
@@ -46,44 +55,6 @@ interface AuthContextValue {
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
-
-const mapStoredUser = (raw: StoredUser): User | null => {
-  if (!raw?.id) {
-    return null;
-  }
-
-  return {
-    id: raw.id,
-    firstName: raw.firstName ?? null,
-    lastName: raw.lastName ?? null,
-    jerseyNumber: raw.jerseyNumber ?? null,
-    fullName: raw.fullName,
-    photoUrl: raw.photoUrl ?? null,
-    spbhlPlayerId: raw.spbhlPlayerId ?? null,
-    primaryPosition: raw.primaryPosition ?? null,
-    birthDate: raw.birthDate ?? null,
-    phone: raw.phone ?? null,
-    email: raw.email ?? null,
-    emailConfirmed: Boolean(raw.emailConfirmed),
-    role: normalizeRole(raw.role),
-    appRole: normalizeAppRole(raw.appRole),
-  };
-};
-
-const readStoredUser = (): User | null => {
-  try {
-    const raw = localStorage.getItem(AUTH_STORAGE_KEY);
-    return raw ? mapStoredUser(JSON.parse(raw) as StoredUser) : null;
-  } catch (error) {
-    writeClientDebugEvent("auth.readStoredUser.failed", { error });
-    try {
-      localStorage.removeItem(AUTH_STORAGE_KEY);
-    } catch (removeError) {
-      writeClientDebugEvent("auth.readStoredUser.removeFailed", { error: removeError });
-    }
-    return null;
-  }
-};
 
 const persistCurrentUser = (user: User | null): void => {
   try {
@@ -99,23 +70,15 @@ const persistCurrentUser = (user: User | null): void => {
 };
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [currentUser, setCurrentUserState] = useState<User | null>(() => readStoredUser());
+  const [currentUser, setCurrentUserState] = useState<User | null>(null);
+  const currentUserIdRef = useRef<string | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
 
   const setCurrentUser = useCallback((user: User | null) => {
+    currentUserIdRef.current = user?.id ?? null;
     setCurrentUserState(user);
     persistCurrentUser(user);
   }, []);
-
-  // Legacy player selection is kept temporarily so the old player-search flow does not break mid-refactor.
-  const login = useCallback(
-    async (user: User) => {
-      const fallbackUser = mapStoredUser(user) ?? user;
-      clearAuthTokens();
-      setCurrentUser(fallbackUser);
-    },
-    [setCurrentUser],
-  );
 
   const loginWithPassword = useCallback(
     async (email: string, password: string) => {
@@ -183,6 +146,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let isMounted = true;
+    let syncGeneration = 0;
     const timeoutId = window.setTimeout(() => {
       if (isMounted) {
         writeClientDebugEvent("auth.syncSession.timeout");
@@ -191,30 +155,59 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, 20000);
 
     const syncSession = async () => {
+      const generation = ++syncGeneration;
       try {
         writeClientDebugEvent("auth.syncSession.start");
         const serverUser = await getCurrentAuthUser();
-        if (isMounted) {
+        if (isMounted && generation === syncGeneration) {
           setCurrentUser(serverUser);
           writeClientDebugEvent("auth.syncSession.success", { hasUser: Boolean(serverUser?.id) });
         }
       } catch (error) {
-        if (isMounted) {
+        if (isMounted && generation === syncGeneration) {
+          const sessionUserId = getAuthSessionUserId();
+          const cachedUser = readCachedCurrentUser();
+          if (
+            (getAccessToken() || getRefreshToken()) &&
+            sessionUserId &&
+            cachedUser?.id === sessionUserId
+          ) {
+            setCurrentUser(cachedUser);
+          }
           console.warn("Unable to sync auth session from API:", error);
           writeClientDebugEvent("auth.syncSession.failed", { error });
         }
       } finally {
-        if (isMounted) {
+        if (isMounted && generation === syncGeneration) {
           window.clearTimeout(timeoutId);
           setAuthLoading(false);
         }
       }
     };
 
+    const unsubscribe = subscribeToAuthSession((source) => {
+      if (!getAccessToken() && !getRefreshToken()) {
+        syncGeneration += 1;
+        setCurrentUser(null);
+        setAuthLoading(false);
+        return;
+      }
+
+      if (source === "storage") {
+        const sessionUserId = getAuthSessionUserId();
+        if (!sessionUserId || sessionUserId !== currentUserIdRef.current) {
+          setCurrentUser(null);
+          setAuthLoading(true);
+        }
+        void syncSession();
+      }
+    });
+
     void syncSession();
 
     return () => {
       isMounted = false;
+      unsubscribe();
       window.clearTimeout(timeoutId);
     };
   }, [setCurrentUser]);
@@ -224,7 +217,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       currentUser,
       isAuthenticated: Boolean(currentUser?.id && (getAccessToken() || getRefreshToken())),
       authLoading,
-      login,
       loginWithPassword,
       registerWithPassword,
       changeEmail,
@@ -239,7 +231,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [
       currentUser,
       authLoading,
-      login,
       loginWithPassword,
       registerWithPassword,
       changeEmail,
