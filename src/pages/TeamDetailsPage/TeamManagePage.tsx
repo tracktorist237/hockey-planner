@@ -8,6 +8,7 @@ import { TeamContactItem, TeamDto, TeamMemberDto, TeamVisibility } from "src/typ
 import { User } from "src/types/user";
 import { TeamMembersSection } from "src/pages/TeamsPage/components/TeamMembersSection";
 import { ExerciseBankManager, UniformColorsManager } from "src/pages/TeamDetailsPage/TeamLibrarySections";
+import { TeamSpbhlSettings } from "src/pages/TeamDetailsPage/TeamSpbhlSettings";
 import { cardStyle, inputStyle } from "src/pages/TeamsPage/components/styles";
 
 const TeamRole = {
@@ -33,7 +34,7 @@ interface TeamFormState {
   blockedJerseyNumbers: number[];
 }
 
-type ManageTab = "profile" | "invite" | "members" | "exercises" | "uniforms" | "privacy";
+type ManageTab = "profile" | "invite" | "members" | "exercises" | "uniforms" | "spbhl" | "privacy";
 
 const manageTabs: Array<{ key: ManageTab; label: string; hint: string }> = [
   { key: "profile", label: "Профиль", hint: "Название, описание, контакты" },
@@ -41,6 +42,7 @@ const manageTabs: Array<{ key: ManageTab; label: string; hint: string }> = [
   { key: "members", label: "Участники", hint: "Роли и бейджи" },
   { key: "exercises", label: "Упражнения", hint: "Банк упражнений" },
   { key: "uniforms", label: "Форма", hint: "Справочник цветов формы" },
+  { key: "spbhl", label: "СПбХЛ", hint: "Привязка и синхронизация расписания" },
   { key: "privacy", label: "Доступ", hint: "Публичность команды" },
 ];
 
@@ -709,6 +711,8 @@ export function TeamManagePage({ currentUser }: TeamManagePageProps) {
                 onMessage={showMessage}
               />
             )}
+
+            {activeTab === "spbhl" && <TeamSpbhlSettings teamId={team.id} />}
 
             {activeTab === "privacy" && (
               <section style={{ ...cardStyle, marginTop: 14, borderColor: "var(--hp-danger-border)", background: "linear-gradient(180deg, var(--hp-surface) 0%, var(--hp-danger-soft) 100%)" }}>
