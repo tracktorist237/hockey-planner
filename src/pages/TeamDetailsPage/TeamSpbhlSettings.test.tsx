@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { bindTeamSpbhl, getTeamSpbhlStatus, searchSpbhlTeams, syncTeamSpbhlNow, unbindTeamSpbhl } from "src/api/teamSpbhl";
 import { TeamSpbhlSettings } from "src/pages/TeamDetailsPage/TeamSpbhlSettings";
 
@@ -83,6 +83,36 @@ test("rapid repeated sync starts only one request", async () => {
   expect(sync).toHaveBeenCalledTimes(1);
   resolveSync(summary);
   await screen.findByText("Расписание обновлено.");
+});
+
+test("stale sync from previous team cannot overwrite or unlock the current team", async () => {
+  const linkedA = { ...linked, teamId: "team-a", spbhlTeamName: "Команда A" };
+  const linkedB = { ...linked, teamId: "team-b", spbhlTeamName: "Команда B" };
+  const summaryA = { ...summary, teamId: "team-a", receivedCount: 99 };
+  const summaryB = { ...summary, teamId: "team-b", receivedCount: 4 };
+  getStatus.mockImplementation((teamId) => Promise.resolve(teamId === "team-a" ? linkedA : linkedB));
+  let resolveA!: (value: typeof summaryA) => void;
+  let resolveB!: (value: typeof summaryB) => void;
+  sync.mockImplementation((teamId) => new Promise((resolve) => {
+    if (teamId === "team-a") resolveA = resolve;
+    else resolveB = resolve;
+  }));
+
+  const { rerender } = render(<TeamSpbhlSettings teamId="team-a" />);
+  fireEvent.click(await screen.findByRole("button", { name: "Синхронизировать сейчас" }));
+  rerender(<TeamSpbhlSettings teamId="team-b" />);
+  expect(await screen.findByText("Команда B")).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Синхронизировать сейчас" }));
+
+  await act(async () => { resolveA(summaryA); });
+
+  expect(screen.getByText("Команда B")).toBeInTheDocument();
+  expect(screen.queryByText("Команда A")).not.toBeInTheDocument();
+  expect(screen.queryByText(/Получено:/)).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Синхронизируем..." })).toBeDisabled();
+
+  await act(async () => { resolveB(summaryB); });
+  expect(await screen.findByText(/Получено:/)).toHaveTextContent("Получено: 4");
 });
 
 test("failed status refresh after sync preserves linked state and summary", async () => {

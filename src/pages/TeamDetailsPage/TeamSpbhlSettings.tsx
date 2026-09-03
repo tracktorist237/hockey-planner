@@ -60,8 +60,10 @@ export function TeamSpbhlSettings({ teamId }: TeamSpbhlSettingsProps) {
   const [warning, setWarning] = useState<string | null>(null);
   const [summary, setSummary] = useState<SpbhlTeamSyncResult | null>(null);
   const operationLocked = useRef(false);
+  const operationGeneration = useRef(0);
   const statusGeneration = useRef(0);
   const searchGeneration = useRef(0);
+  const activeTeamId = useRef(teamId);
   const mounted = useRef(true);
 
   const loadStatus = useCallback(async () => {
@@ -82,24 +84,41 @@ export function TeamSpbhlSettings({ teamId }: TeamSpbhlSettingsProps) {
 
   useEffect(() => {
     mounted.current = true;
+    activeTeamId.current = teamId;
+    operationLocked.current = false;
+    setBusy(null);
+    setStatus(null);
+    setTitle("");
+    setResults([]);
+    setError(null);
+    setMessage(null);
+    setWarning(null);
+    setSummary(null);
     void loadStatus();
     return () => {
       mounted.current = false;
+      operationGeneration.current += 1;
       statusGeneration.current += 1;
       searchGeneration.current += 1;
     };
-  }, [loadStatus]);
+  }, [loadStatus, teamId]);
 
-  const beginOperation = (operation: BusyOperation): boolean => {
-    if (operationLocked.current) return false;
+  const beginOperation = (operation: BusyOperation): number | null => {
+    if (operationLocked.current) return null;
     operationLocked.current = true;
     setBusy(operation);
-    return true;
+    return ++operationGeneration.current;
   };
 
-  const finishOperation = () => {
+  const isCurrentOperation = (generation: number, operationTeamId: string) =>
+    mounted.current &&
+    generation === operationGeneration.current &&
+    operationTeamId === activeTeamId.current;
+
+  const finishOperation = (generation: number, operationTeamId: string) => {
+    if (!isCurrentOperation(generation, operationTeamId)) return;
     operationLocked.current = false;
-    if (mounted.current) setBusy(null);
+    setBusy(null);
   };
 
   const handleSearch = async (event: FormEvent) => {
@@ -112,28 +131,34 @@ export function TeamSpbhlSettings({ teamId }: TeamSpbhlSettingsProps) {
       setError("Введите от 2 до 100 символов.");
       return;
     }
-    if (!beginOperation("search")) return;
-    const generation = ++searchGeneration.current;
+    const operationTeamId = teamId;
+    const operation = beginOperation("search");
+    if (operation === null) return;
+    const search = ++searchGeneration.current;
     setError(null);
     try {
       const found = await searchSpbhlTeams(teamId, normalized);
-      if (mounted.current && generation === searchGeneration.current) setResults(found);
+      if (isCurrentOperation(operation, operationTeamId) && search === searchGeneration.current) setResults(found);
     } catch (requestError) {
-      if (mounted.current && generation === searchGeneration.current) setError(requestError instanceof Error ? requestError.message : "Не удалось найти команду СПбХЛ.");
+      if (isCurrentOperation(operation, operationTeamId) && search === searchGeneration.current) {
+        setError(requestError instanceof Error ? requestError.message : "Не удалось найти команду СПбХЛ.");
+      }
     } finally {
-      finishOperation();
+      finishOperation(operation, operationTeamId);
     }
   };
 
   const handleBind = async (item: SpbhlTeamSearchItem) => {
     if (!window.confirm(`Привязать HockeyPlanner-команду к «${item.name}»?`)) return;
-    if (!beginOperation("bind")) return;
+    const operationTeamId = teamId;
+    const operation = beginOperation("bind");
+    if (operation === null) return;
     setError(null);
     setMessage(null);
     setWarning(null);
     try {
       const result = await bindTeamSpbhl(teamId, { spbhlTeamId: item.teamId, spbhlTeamName: item.name });
-      if (!mounted.current) return;
+      if (!isCurrentOperation(operation, operationTeamId)) return;
       setStatus(result.link);
       setResults([]);
       setSummary(result.sync);
@@ -143,27 +168,33 @@ export function TeamSpbhlSettings({ teamId }: TeamSpbhlSettingsProps) {
         setWarning(result.syncError || "Команда привязана, но расписание пока не удалось загрузить.");
       }
     } catch (requestError) {
-      if (mounted.current) setError(requestError instanceof Error ? requestError.message : "Не удалось привязать команду.");
+      if (isCurrentOperation(operation, operationTeamId)) {
+        setError(requestError instanceof Error ? requestError.message : "Не удалось привязать команду.");
+      }
     } finally {
-      finishOperation();
+      finishOperation(operation, operationTeamId);
     }
   };
 
   const handleSync = async () => {
-    if (!beginOperation("sync")) return;
+    const operationTeamId = teamId;
+    const operation = beginOperation("sync");
+    if (operation === null) return;
     setError(null);
     setMessage(null);
     setWarning(null);
     try {
       const result = await syncTeamSpbhlNow(teamId);
-      if (!mounted.current) return;
+      if (!isCurrentOperation(operation, operationTeamId)) return;
       setSummary(result);
       setMessage("Расписание обновлено.");
       await loadStatus();
     } catch (requestError) {
-      if (mounted.current) setError(requestError instanceof Error ? requestError.message : "Не удалось синхронизировать расписание.");
+      if (isCurrentOperation(operation, operationTeamId)) {
+        setError(requestError instanceof Error ? requestError.message : "Не удалось синхронизировать расписание.");
+      }
     } finally {
-      finishOperation();
+      finishOperation(operation, operationTeamId);
     }
   };
 
@@ -172,21 +203,25 @@ export function TeamSpbhlSettings({ teamId }: TeamSpbhlSettingsProps) {
       "Удалить привязку к СПбХЛ?\n\nРанее импортированные матчи останутся в HockeyPlanner.\nНовые изменения расписания больше не будут синхронизироваться.",
     );
     if (!confirmed) return;
-    if (!beginOperation("unbind")) return;
+    const operationTeamId = teamId;
+    const operation = beginOperation("unbind");
+    if (operation === null) return;
     setError(null);
     setWarning(null);
     setSummary(null);
     try {
       const nextStatus = await unbindTeamSpbhl(teamId);
-      if (!mounted.current) return;
+      if (!isCurrentOperation(operation, operationTeamId)) return;
       setStatus(nextStatus);
       setResults([]);
       setTitle("");
       setMessage("Привязка к СПбХЛ удалена.");
     } catch (requestError) {
-      if (mounted.current) setError(requestError instanceof Error ? requestError.message : "Не удалось удалить привязку.");
+      if (isCurrentOperation(operation, operationTeamId)) {
+        setError(requestError instanceof Error ? requestError.message : "Не удалось удалить привязку.");
+      }
     } finally {
-      finishOperation();
+      finishOperation(operation, operationTeamId);
     }
   };
 
