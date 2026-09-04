@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { AddressSearchInput } from "src/AddressSearchInput";
 import { LoadingIndicator } from "src/components/LoadingIndicator";
 import { InternalPageHeader } from "src/components/InternalPageHeader";
@@ -217,6 +217,7 @@ function AddressItemsEditor({
 }
 
 export function TeamManagePage({ currentUser }: TeamManagePageProps) {
+  const location = useLocation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [team, setTeam] = useState<TeamDto | null>(null);
@@ -479,6 +480,11 @@ export function TeamManagePage({ currentUser }: TeamManagePageProps) {
 
         {error && <div style={{ marginBottom: 12, background: "var(--hp-danger-soft)", color: "var(--hp-danger)", borderRadius: 14, padding: "12px 14px" }}>{error}</div>}
         {message && <div style={{ marginBottom: 12, background: "var(--hp-success-soft)", color: "var(--hp-success)", borderRadius: 14, padding: "12px 14px", fontWeight: 800 }}>{message}</div>}
+        {typeof location.state?.teamCreationNotice === "string" && (
+          <div role="status" style={{ marginBottom: 12, background: location.state.teamCreationWarning ? "var(--hp-warning-soft)" : "var(--hp-success-soft)", color: location.state.teamCreationWarning ? "var(--hp-warning)" : "var(--hp-success)", borderRadius: 14, padding: "12px 14px", fontWeight: 800 }}>
+            {location.state.teamCreationNotice}
+          </div>
+        )}
         {loading && <section style={cardStyle}><LoadingIndicator text="Загружаем настройки..." /></section>}
 
         {isDenied && (
