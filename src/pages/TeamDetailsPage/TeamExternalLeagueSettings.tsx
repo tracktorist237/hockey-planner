@@ -54,7 +54,14 @@ function CandidateGroup({ title, candidates, selected, setSelected, existing, di
 }) {
   return <div style={{ display: "grid", gap: 7 }}><strong>{title}</strong>{candidates.map((candidate) => {
     const exists = existing.some((item) => normalizeValue(item.value) === normalizeValue(candidate.value));
-    return <CheckboxControl key={candidate.candidateId} checked={selected.includes(candidate.candidateId)} disabled={disabled || exists} onChange={() => toggleCandidate(candidate.candidateId, selected, setSelected)} label={candidate.value} description={exists ? "Уже добавлено" : undefined} />;
+    return <CheckboxControl
+      key={candidate.candidateId}
+      checked={selected.includes(candidate.candidateId)}
+      disabled={disabled || exists}
+      onChange={() => toggleCandidate(candidate.candidateId, selected, setSelected)}
+      label={candidate.label || candidate.value}
+      description={`${candidate.label ? `${candidate.value}${exists ? " · " : ""}` : ""}${exists ? "Уже добавлено" : ""}` || undefined}
+    />;
   })}</div>;
 }
 
@@ -135,7 +142,7 @@ export function TeamExternalLeagueSettings({ teamId, teamName: _teamName, teamAv
       }
     } catch (requestError) {
       if (mounted.current && generation === loadGeneration.current && requestedTeamId === activeTeamId.current) {
-        setError(requestError instanceof Error ? requestError.message : "Не удалось загрузить внешние профили.");
+        setError(requestError instanceof Error ? requestError.message : "Не удалось загрузить данные лиги.");
       }
     } finally {
       if (mounted.current && generation === loadGeneration.current && requestedTeamId === activeTeamId.current) {
@@ -249,10 +256,10 @@ export function TeamExternalLeagueSettings({ teamId, teamName: _teamName, teamAv
       setLinks((current) => current.map((value) => value.provider === primary.provider
         ? { ...value, isPrimary: value.id === primary.id, ...(value.id === primary.id ? primary : {}) }
         : value));
-      setMessage(`«${primary.externalTeamName}» теперь основной профиль.`);
+      setMessage(`«${primary.externalTeamName}» теперь основная команда.`);
     } catch (requestError) {
       if (isCurrentOperation(operation, requestedTeamId)) {
-        setError(requestError instanceof Error ? requestError.message : "Не удалось изменить основной профиль.");
+        setError(requestError instanceof Error ? requestError.message : "Не удалось выбрать основную команду.");
       }
     } finally {
       finishOperation(operation, requestedTeamId);
@@ -270,10 +277,10 @@ export function TeamExternalLeagueSettings({ teamId, teamName: _teamName, teamAv
       setLinks((current) => current.map((value) => value.id === link.id
         ? { ...value, lastSyncAttemptAt: result.syncedAt, lastSuccessfulSyncAt: result.syncedAt }
         : value));
-      setMessage(`Расписание «${link.externalTeamName}» обновлено.`);
+      setMessage(`Данные «${link.externalTeamName}» обновлены.`);
     } catch (requestError) {
       if (isCurrentOperation(operation, requestedTeamId)) {
-        setError(requestError instanceof Error ? requestError.message : "Не удалось синхронизировать расписание.");
+        setError(requestError instanceof Error ? requestError.message : "Не удалось обновить данные.");
       }
     } finally {
       finishOperation(operation, requestedTeamId);
@@ -293,10 +300,10 @@ export function TeamExternalLeagueSettings({ teamId, teamName: _teamName, teamAv
         const result = nextSummaries[link.id];
         return result ? { ...link, lastSyncAttemptAt: result.syncedAt, lastSuccessfulSyncAt: result.syncedAt } : link;
       }));
-      setMessage("Расписания привязанных команд обновлены.");
+      setMessage("Данные всех команд обновлены.");
     } catch (requestError) {
       if (isCurrentOperation(operation, requestedTeamId)) {
-        setError(requestError instanceof Error ? requestError.message : "Не удалось синхронизировать расписания.");
+        setError(requestError instanceof Error ? requestError.message : "Не удалось обновить данные.");
       }
     } finally {
       finishOperation(operation, requestedTeamId);
@@ -304,7 +311,7 @@ export function TeamExternalLeagueSettings({ teamId, teamName: _teamName, teamAv
   };
 
   const handleRemove = async (link: ExternalLeagueLink) => {
-    if (!window.confirm(`Удалить привязку «${link.externalTeamName}»?\n\nРанее импортированные матчи останутся в HockeyPlanner.`)) return;
+    if (!window.confirm(`Убрать команду «${link.externalTeamName}»?\n\nКоманда будет убрана из связи с сайтом лиги. Уже добавленные матчи останутся в HockeyPlanner.`)) return;
     const requestedTeamId = teamId;
     const operation = beginOperation("remove");
     if (operation === null) return;
@@ -317,10 +324,10 @@ export function TeamExternalLeagueSettings({ teamId, teamName: _teamName, teamAv
         delete next[link.id];
         return next;
       });
-      setMessage(`Привязка «${link.externalTeamName}» удалена.`);
+      setMessage(`Команда «${link.externalTeamName}» убрана.`);
     } catch (requestError) {
       if (isCurrentOperation(operation, requestedTeamId)) {
-        setError(requestError instanceof Error ? requestError.message : "Не удалось удалить привязку.");
+        setError(requestError instanceof Error ? requestError.message : "Не удалось убрать команду.");
       }
     } finally {
       finishOperation(operation, requestedTeamId);
@@ -353,13 +360,13 @@ export function TeamExternalLeagueSettings({ teamId, teamName: _teamName, teamAv
 
   const handleApplyProfile = async (link: ExternalLeagueLink) => {
     if (!applyName && !applyLogo && !applyCover && !applyDescription && selectedPhones.length === 0 && selectedWebsites.length === 0 && selectedAddresses.length === 0) {
-      setError("Выберите данные профиля для применения.");
+      setError("Выберите данные, которые нужно добавить в профиль.");
       return;
     }
     if ((applyLogo && teamAvatarUrl) || (applyCover && teamCoverImageUrl)) {
       if (!window.confirm("Выбранные изображения заменят текущие изображения профиля команды. Продолжить?")) return;
     }
-    if (applyDescription && teamDescription && !window.confirm("В описание команды будет добавлена информация из официального профиля. Ваш текущий текст сохранится.")) return;
+    if (applyDescription && teamDescription && !window.confirm("В описание команды будет добавлена информация с сайта лиги. Ваш текущий текст сохранится.")) return;
     const requestedTeamId = teamId;
     const operation = beginOperation("apply");
     if (operation === null) return;
@@ -376,10 +383,10 @@ export function TeamExternalLeagueSettings({ teamId, teamName: _teamName, teamAv
       if (!isCurrentOperation(operation, requestedTeamId)) return;
       await onTeamProfileApplied(applied);
       setApplyLinkId(null);
-      setMessage(`Данные профиля «${link.externalTeamName}» применены.`);
+      setMessage(`Данные «${link.externalTeamName}» добавлены в профиль.`);
     } catch (requestError) {
       if (isCurrentOperation(operation, requestedTeamId)) {
-        setError(requestError instanceof Error ? requestError.message : "Не удалось применить данные профиля.");
+        setError(requestError instanceof Error ? requestError.message : "Не удалось добавить данные в профиль.");
       }
     } finally {
       finishOperation(operation, requestedTeamId);
@@ -391,7 +398,7 @@ export function TeamExternalLeagueSettings({ teamId, teamName: _teamName, teamAv
       <div>
         <h2 style={{ margin: "0 0 5px", fontSize: 20, color: "var(--hp-text-strong)" }}>Лига и официальный профиль</h2>
         <p style={{ margin: 0, color: "var(--hp-muted)", fontSize: 14, lineHeight: 1.45 }}>
-          Привяжите официальные профили команд, чтобы загружать расписание, переносы и результаты.
+          Добавьте команды с сайта лиги, чтобы получать расписание, переносы и результаты.
         </p>
       </div>
 
@@ -415,18 +422,18 @@ export function TeamExternalLeagueSettings({ teamId, teamName: _teamName, teamAv
       {error && <div role="alert" style={{ padding: 10, borderRadius: 8, background: "var(--hp-danger-soft)", color: "var(--hp-danger)" }}>{error}</div>}
       {message && <div role="status" style={{ padding: 10, borderRadius: 8, background: "var(--hp-success-soft)", color: "var(--hp-success)" }}>{message}</div>}
 
-      {loading && links.length === 0 ? <LoadingIndicator text="Загружаем официальные профили..." /> : (
+      {loading && links.length === 0 ? <LoadingIndicator text="Загружаем данные лиги..." /> : (
         <>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
-            <h3 style={{ margin: 0, fontSize: 17, color: "var(--hp-heading)" }}>Привязанные команды</h3>
+            <h3 style={{ margin: 0, fontSize: 17, color: "var(--hp-heading)" }}>Добавленные команды</h3>
             {links.length > 0 && (
               <button type="button" onClick={() => void handleSyncAll()} disabled={busy !== null} style={{ ...secondaryButtonStyle, flex: "0 1 auto" }}>
-                {busy === "sync-all" ? "Синхронизируем..." : "Синхронизировать все"}
+                {busy === "sync-all" ? "Обновляем..." : "Обновить все данные"}
               </button>
             )}
           </div>
 
-          {links.length === 0 && <div style={{ color: "var(--hp-muted)", fontSize: 14 }}>Официальные профили пока не привязаны.</div>}
+          {links.length === 0 && <div style={{ color: "var(--hp-muted)", fontSize: 14 }}>Команды с сайта лиги пока не добавлены.</div>}
           <div style={{ display: "grid", gap: 10 }}>
             {links.map((link) => (
               <article key={link.id} data-testid={`external-link-${link.id}`} style={{ border: "1px solid var(--hp-border)", borderRadius: 8, padding: 12, display: "grid", gap: 10, minWidth: 0 }}>
@@ -438,18 +445,21 @@ export function TeamExternalLeagueSettings({ teamId, teamName: _teamName, teamAv
                       <ExternalLeagueBadge provider={link.provider} division={link.divisionName} />
                     </span>
                     {(link.city || link.country) && <span style={{ color: "var(--hp-muted)", fontSize: 13 }}>{[link.city, link.country].filter(Boolean).join(", ")}</span>}
-                    {link.isPrimary && <span style={{ color: "var(--hp-success)", fontSize: 13, fontWeight: 800 }}>Основной профиль</span>}
+                    {link.isPrimary && <span style={{ color: "var(--hp-success)", fontSize: 13, fontWeight: 800 }}>Основная команда</span>}
                     <span style={{ color: "var(--hp-muted)", fontSize: 13 }}>
-                      {link.lastSuccessfulSyncAt ? `Последняя синхронизация: ${formatTimestamp(link.lastSuccessfulSyncAt)}` : "Расписание ещё не синхронизировалось"}
+                      {link.lastSuccessfulSyncAt ? `Данные обновлены: ${formatTimestamp(link.lastSuccessfulSyncAt)}` : "Данные ещё не обновлялись"}
                     </span>
                   </div>
                 </div>
                 {summaries[link.id] && <SyncSummary result={summaries[link.id]} />}
                 {applyLinkId === link.id && (
                   <div style={{ display: "grid", gap: 9, padding: 10, borderRadius: 8, background: "var(--hp-surface-soft)" }}>
-                    {link.coverUrl && <img src={link.coverUrl} alt="Обложка официального профиля" style={{ width: "100%", maxHeight: 140, objectFit: "cover", borderRadius: 6 }} />}
-                    {link.logoUrl && <img src={link.logoUrl} alt="Логотип официального профиля" width={64} height={64} style={{ objectFit: "contain" }} />}
-                    <strong style={{ color: "var(--hp-heading)" }}>Данные официального профиля</strong>
+                    {link.coverUrl && <img src={link.coverUrl} alt="Обложка с сайта лиги" onError={(event) => { event.currentTarget.style.display = "none"; }} style={{ width: "100%", maxHeight: 140, objectFit: "cover", borderRadius: 6, overflowWrap: "anywhere" }} />}
+                    {link.logoUrl && <img src={link.logoUrl} alt="Логотип с сайта лиги" onError={(event) => { event.currentTarget.style.display = "none"; }} width={64} height={64} style={{ objectFit: "contain" }} />}
+                    <strong style={{ color: "var(--hp-heading)" }}>Данные с сайта лиги</strong>
+                    <div style={{ border: "1px solid var(--hp-info-border)", borderRadius: 8, padding: 10, background: "var(--hp-info-soft)", color: "var(--hp-info)", fontSize: 13, lineHeight: 1.45 }}>
+                      Данные получены автоматически с сайта лиги. В них могут быть неточности — перед добавлением проверьте название, контакты и адреса.
+                    </div>
                     <div style={{ display: "grid", gap: 8 }}>
                       <strong>Профиль команды</strong>
                       <CheckboxControl checked={applyName} onChange={setApplyName} label={`Название: ${link.externalTeamName}`} disabled={busy !== null} />
@@ -468,7 +478,7 @@ export function TeamExternalLeagueSettings({ teamId, teamName: _teamName, teamAv
                     {(link.websiteCandidates ?? []).length > 0 && <CandidateGroup title="Ссылки" candidates={link.websiteCandidates ?? []} selected={selectedWebsites} setSelected={setSelectedWebsites} existing={teamLinks} disabled={busy !== null} />}
                     <div style={{ display: "grid", gap: 7 }}>
                       <strong>Адреса из матчей</strong>
-                      <span style={{ color: "var(--hp-muted)", fontSize: 13 }}>Мы нашли эти адреса в синхронизированных матчах команды. Выберите, какие добавить в профиль HockeyPlanner.</span>
+                      <span style={{ color: "var(--hp-muted)", fontSize: 13 }}>Мы нашли эти адреса в матчах команды. Выберите подходящие и проверьте их перед добавлением.</span>
                       {addressLoading && <span>Загружаем адреса...</span>}
                       {addressCandidates.map((candidate) => {
                         const exists = teamAddresses.some((item) => normalizeValue(item.value) === normalizeValue(candidate.address));
@@ -476,17 +486,17 @@ export function TeamExternalLeagueSettings({ teamId, teamName: _teamName, teamAv
                       })}
                     </div>
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                      <button type="button" onClick={() => void handleApplyProfile(link)} disabled={busy !== null} style={buttonStyle}>{busy === "apply" ? "Импортируем..." : "Импортировать выбранное"}</button>
+                      <button type="button" onClick={() => void handleApplyProfile(link)} disabled={busy !== null} style={buttonStyle}>{busy === "apply" ? "Добавляем..." : "Добавить выбранное в профиль"}</button>
                       <button type="button" onClick={() => setApplyLinkId(null)} disabled={busy !== null} style={secondaryButtonStyle}>Отмена</button>
                     </div>
                   </div>
                 )}
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                  {link.profileUrl && <a href={link.profileUrl} target="_blank" rel="noopener noreferrer" style={{ ...secondaryButtonStyle, textAlign: "center", textDecoration: "none", boxSizing: "border-box" }}>Открыть</a>}
-                  <button type="button" onClick={() => void handleSync(link)} disabled={busy !== null} style={buttonStyle}>Синхронизировать</button>
-                  {!link.isPrimary && <button type="button" onClick={() => void handleMakePrimary(link)} disabled={busy !== null} style={secondaryButtonStyle}>Сделать основным</button>}
-                  <button type="button" onClick={() => void openProfileImport(link)} disabled={busy !== null} style={secondaryButtonStyle}>Импортировать данные</button>
-                  <button type="button" onClick={() => void handleRemove(link)} disabled={busy !== null} style={{ ...secondaryButtonStyle, background: "var(--hp-danger-soft)", color: "var(--hp-danger)" }}>Удалить</button>
+                  {link.profileUrl && <a href={link.profileUrl} target="_blank" rel="noopener noreferrer" style={{ ...secondaryButtonStyle, textAlign: "center", textDecoration: "none", boxSizing: "border-box" }}>Открыть на сайте лиги</a>}
+                  <button type="button" onClick={() => void handleSync(link)} disabled={busy !== null} style={buttonStyle}>Обновить данные</button>
+                  {!link.isPrimary && <button type="button" onClick={() => void handleMakePrimary(link)} disabled={busy !== null} style={secondaryButtonStyle}>Сделать основной командой</button>}
+                  <button type="button" onClick={() => void openProfileImport(link)} disabled={busy !== null} style={secondaryButtonStyle}>Перенести данные в профиль</button>
+                  <button type="button" onClick={() => void handleRemove(link)} disabled={busy !== null} style={{ ...secondaryButtonStyle, background: "var(--hp-danger-soft)", color: "var(--hp-danger)" }}>Убрать команду</button>
                 </div>
               </article>
             ))}
@@ -509,7 +519,7 @@ export function TeamExternalLeagueSettings({ teamId, teamName: _teamName, teamAv
                 {(item.city || item.country) && <span style={{ color: "var(--hp-muted)", fontSize: 13 }}>{[item.city, item.country].filter(Boolean).join(", ")}</span>}
                 {item.divisionName && <span style={{ color: "var(--hp-muted)", fontSize: 13 }}>{item.divisionName}</span>}
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                  {item.profileUrl && <a href={item.profileUrl} target="_blank" rel="noopener noreferrer" style={{ ...secondaryButtonStyle, textAlign: "center", textDecoration: "none", boxSizing: "border-box" }}>Открыть</a>}
+                  {item.profileUrl && <a href={item.profileUrl} target="_blank" rel="noopener noreferrer" style={{ ...secondaryButtonStyle, textAlign: "center", textDecoration: "none", boxSizing: "border-box" }}>Открыть на сайте лиги</a>}
                   <button type="button" onClick={() => void handleAdd(item)} disabled={busy !== null} style={buttonStyle}>Добавить</button>
                 </div>
               </div>

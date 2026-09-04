@@ -91,8 +91,26 @@ test("defaults to SPBHL and renders two linked teams with their divisions", asyn
   expect(screen.getByText("СПбХЛ · Любитель 1")).toBeInTheDocument();
   expect(screen.getByText("СПбХЛ · Любитель 3")).toBeInTheDocument();
   expect(screen.getAllByText("Санкт-Петербург, Россия").length).toBe(2);
-  expect(screen.getByText("Основной профиль")).toBeInTheDocument();
+  expect(screen.getByText("Основная команда")).toBeInTheDocument();
   expect(screen.getByText(/3 сентября/)).toBeInTheDocument();
+  expect(screen.getByText(/Данные обновлены:/)).toBeInTheDocument();
+  expect(screen.getAllByRole("link", { name: "Открыть на сайте лиги" })).toHaveLength(2);
+  expect(screen.getAllByRole("button", { name: "Обновить данные" })).toHaveLength(2);
+  expect(screen.getByRole("button", { name: "Обновить все данные" })).toBeInTheDocument();
+  expect(screen.queryByText(/Синхронизировать/)).not.toBeInTheDocument();
+  expect(screen.getAllByRole("button", { name: "Убрать команду" })).toHaveLength(2);
+});
+
+test("hides the cover choice when the league has no cover", async () => {
+  api.getLinks.mockResolvedValue([link("one", "Северная столица", "Любитель 1", true)]);
+  renderSettings();
+  const card = await screen.findByTestId("external-link-one");
+
+  fireEvent.click(within(card).getByRole("button", { name: "Перенести данные в профиль" }));
+
+  expect(within(card).queryByRole("checkbox", { name: "Обложка" })).not.toBeInTheDocument();
+  expect(within(card).getByText(/Данные получены автоматически с сайта лиги/)).toBeInTheDocument();
+  await waitFor(() => expect(within(card).queryByText("Загружаем адреса...")).not.toBeInTheDocument());
 });
 
 test("adds a second external team without replacing the first", async () => {
@@ -136,9 +154,9 @@ test("switches primary through the authoritative create-link endpoint", async ()
   renderSettings();
   const secondCard = await screen.findByTestId("external-link-two");
 
-  fireEvent.click(within(secondCard).getByRole("button", { name: "Сделать основным" }));
+  fireEvent.click(within(secondCard).getByRole("button", { name: "Сделать основной командой" }));
 
-  await waitFor(() => expect(within(secondCard).getByText("Основной профиль")).toBeInTheDocument());
+  await waitFor(() => expect(within(secondCard).getByText("Основная команда")).toBeInTheDocument());
   expect(api.create).toHaveBeenCalledWith("team-a", {
     provider: ExternalLeagueProvider.Spbhl,
     externalTeamId: second.externalTeamId,
@@ -155,9 +173,9 @@ test("synchronizes one link and all links without hiding cards", async () => {
   renderSettings();
   const firstCard = await screen.findByTestId("external-link-one");
 
-  fireEvent.click(within(firstCard).getByRole("button", { name: "Синхронизировать" }));
+  fireEvent.click(within(firstCard).getByRole("button", { name: "Обновить данные" }));
   expect(await within(firstCard).findByText("Получено:")).toBeInTheDocument();
-  fireEvent.click(screen.getByRole("button", { name: "Синхронизировать все" }));
+  fireEvent.click(screen.getByRole("button", { name: "Обновить все данные" }));
 
   await waitFor(() => expect(api.syncAll).toHaveBeenCalledWith("team-a"));
   expect(screen.getByText(first.externalTeamName)).toBeInTheDocument();
@@ -172,10 +190,10 @@ test("removes only the selected link and keeps imported-match warning", async ()
   renderSettings();
   const secondCard = await screen.findByTestId("external-link-two");
 
-  fireEvent.click(within(secondCard).getByRole("button", { name: "Удалить" }));
+  fireEvent.click(within(secondCard).getByRole("button", { name: "Убрать команду" }));
 
   await waitFor(() => expect(api.remove).toHaveBeenCalledWith("team-a", "two"));
-  expect(window.confirm).toHaveBeenCalledWith(expect.stringContaining("Ранее импортированные матчи останутся"));
+  expect(window.confirm).toHaveBeenCalledWith(expect.stringContaining("Уже добавленные матчи останутся"));
   expect(screen.getByText(first.externalTeamName)).toBeInTheDocument();
   await waitFor(() => expect(screen.queryByText(second.externalTeamName)).not.toBeInTheDocument());
 });
@@ -188,7 +206,7 @@ test("ignores a stale link operation after teamId changes", async () => {
   api.sync.mockReturnValue(delayedSync);
   const view = renderSettings();
   const firstCard = await screen.findByTestId("external-link-one");
-  fireEvent.click(within(firstCard).getByRole("button", { name: "Синхронизировать" }));
+  fireEvent.click(within(firstCard).getByRole("button", { name: "Обновить данные" }));
 
   view.rerender(<TeamExternalLeagueSettings teamId="team-b" teamName="Team B" teamAvatarUrl={null} teamCoverImageUrl={null} onTeamProfileApplied={jest.fn()} />);
   expect(await screen.findByText("Команда B")).toBeInTheDocument();
@@ -196,7 +214,7 @@ test("ignores a stale link operation after teamId changes", async () => {
 
   expect(screen.getByText("Команда B")).toBeInTheDocument();
   expect(screen.queryByText("Команда A")).not.toBeInTheDocument();
-  expect(screen.queryByText("Расписание «Команда A» обновлено.")).not.toBeInTheDocument();
+  expect(screen.queryByText("Данные «Команда A» обновлены.")).not.toBeInTheDocument();
 });
 
 test("applies official logo and cover without silently overwriting custom images", async () => {
@@ -206,17 +224,17 @@ test("applies official logo and cover without silently overwriting custom images
   renderSettings("team-a", "https://local/avatar.png", "https://local/cover.jpg");
   const card = await screen.findByTestId("external-link-one");
 
-  fireEvent.click(within(card).getByRole("button", { name: "Импортировать данные" }));
+  fireEvent.click(within(card).getByRole("button", { name: "Перенести данные в профиль" }));
   expect(within(card).getByRole("checkbox", { name: "Логотип" })).not.toBeChecked();
   expect(within(card).getByRole("checkbox", { name: "Обложка" })).not.toBeChecked();
   fireEvent.click(within(card).getByRole("checkbox", { name: "Логотип" }));
   fireEvent.click(within(card).getByRole("checkbox", { name: "Обложка" }));
-  fireEvent.click(within(card).getByRole("button", { name: "Импортировать выбранное" }));
+  fireEvent.click(within(card).getByRole("button", { name: "Добавить выбранное в профиль" }));
 
   await waitFor(() => expect(window.confirm).toHaveBeenCalledWith(expect.stringContaining("заменят текущие изображения")));
   expect(api.apply).toHaveBeenCalledWith("team-a", "one", { useName: false, useLogo: true, useCover: true, useDescriptionMetadata: false, selectedPhoneCandidateIds: [], selectedWebsiteCandidateIds: [], selectedAddressCandidateIds: [] });
-  expect(within(card).getByAltText("Логотип официального профиля")).toHaveAttribute("src", official.logoUrl);
-  expect(within(card).getByAltText("Обложка официального профиля")).toHaveAttribute("src", official.coverUrl);
+  expect(within(card).getByAltText("Логотип с сайта лиги")).toHaveAttribute("src", official.logoUrl);
+  expect(within(card).getByAltText("Обложка с сайта лиги")).toHaveAttribute("src", official.coverUrl);
 });
 
 test("imports authoritative metadata and structured candidates then refreshes the team", async () => {
@@ -225,8 +243,8 @@ test("imports authoritative metadata and structured candidates then refreshes th
     foundedYear: 2015,
     coachName: "Тренер",
     administratorName: "Администратор",
-    phoneCandidates: [{ candidateId: "phone-1", value: "8 (911) 139-02-69" }],
-    websiteCandidates: [{ candidateId: "web-1", value: "https://example.ru" }],
+    phoneCandidates: [{ candidateId: "phone-1", value: "8 (911) 139-02-69", label: "Администратор" }],
+    websiteCandidates: [{ candidateId: "web-1", value: "https://example.ru", label: "Сайт команды" }],
   };
   const refreshed = jest.fn().mockResolvedValue(undefined);
   api.getLinks.mockResolvedValue([official]);
@@ -234,15 +252,18 @@ test("imports authoritative metadata and structured candidates then refreshes th
   api.apply.mockResolvedValue({ teamId: "team-a", name: "Official team", avatarUrl: null, coverImageUrl: null });
   render(<TeamExternalLeagueSettings teamId="team-a" teamName="Local team" teamAvatarUrl={null} teamCoverImageUrl={null} teamDescription="Мой текст" teamPhones={[]} teamLinks={[]} teamAddresses={[]} onTeamProfileApplied={refreshed} />);
   const card = await screen.findByTestId("external-link-one");
-  fireEvent.click(within(card).getByRole("button", { name: "Импортировать данные" }));
+  fireEvent.click(within(card).getByRole("button", { name: "Перенести данные в профиль" }));
+  expect(within(card).getByText(/могут быть неточности/)).toBeInTheDocument();
+  expect(within(card).getByText("Администратор")).toBeInTheDocument();
+  expect(within(card).getByText("Сайт команды")).toBeInTheDocument();
   expect(await within(card).findByText("8 (911) 139-02-69")).toBeInTheDocument();
   expect(within(card).getByText("https://example.ru")).toBeInTheDocument();
   expect(await within(card).findByText(/Фронтовая ул., 3/)).toBeInTheDocument();
   fireEvent.click(within(card).getByRole("checkbox", { name: /Информация о команде/ }));
-  fireEvent.click(within(card).getByRole("checkbox", { name: "8 (911) 139-02-69" }));
-  fireEvent.click(within(card).getByRole("checkbox", { name: "https://example.ru" }));
+  fireEvent.click(within(card).getByRole("checkbox", { name: /Администратор.*8 \(911\) 139-02-69/ }));
+  fireEvent.click(within(card).getByRole("checkbox", { name: /Сайт команды.*https:\/\/example.ru/ }));
   fireEvent.click(within(card).getByRole("checkbox", { name: /АСК-С/ }));
-  fireEvent.click(within(card).getByRole("button", { name: "Импортировать выбранное" }));
+  fireEvent.click(within(card).getByRole("button", { name: "Добавить выбранное в профиль" }));
   await waitFor(() => expect(api.apply).toHaveBeenCalledWith("team-a", "one", expect.objectContaining({
     useDescriptionMetadata: true,
     selectedPhoneCandidateIds: ["phone-1"],
@@ -259,7 +280,7 @@ test("marks existing structured candidates as disabled", async () => {
   api.addresses.mockResolvedValue([{ candidateId: "a", venueName: "Арена", address: "Фронтовая ул., 3", matchCount: 2 }]);
   render(<TeamExternalLeagueSettings teamId="team-a" teamName="Local" teamAvatarUrl={null} teamCoverImageUrl={null} teamPhones={[{ title: "Ручной", value: " 8 (911) 139-02-69 " }]} teamLinks={[{ title: "Сайт", value: "https://example.ru" }]} teamAddresses={[{ title: "Адрес", value: "фронтовая   ул., 3" }]} onTeamProfileApplied={jest.fn()} />);
   const card = await screen.findByTestId("external-link-one");
-  fireEvent.click(within(card).getByRole("button", { name: "Импортировать данные" }));
+  fireEvent.click(within(card).getByRole("button", { name: "Перенести данные в профиль" }));
   await within(card).findByText(/Фронтовая/);
   expect(within(card).getByRole("checkbox", { name: /8 \(911\) 139-02-69/ })).toBeDisabled();
   expect(within(card).getByRole("checkbox", { name: /https:\/\/example.ru\// })).toBeDisabled();
@@ -275,13 +296,13 @@ test("does not apply a completed Team A import after switching to Team B", async
   const appliedA = jest.fn();
   const view = render(<TeamExternalLeagueSettings teamId="team-a" teamName="A" teamAvatarUrl={null} teamCoverImageUrl={null} onTeamProfileApplied={appliedA} />);
   const cardA = await screen.findByTestId("external-link-one");
-  fireEvent.click(within(cardA).getByRole("button", { name: "Импортировать данные" }));
+  fireEvent.click(within(cardA).getByRole("button", { name: "Перенести данные в профиль" }));
   fireEvent.click(within(cardA).getByRole("checkbox", { name: /Название/ }));
-  fireEvent.click(within(cardA).getByRole("button", { name: "Импортировать выбранное" }));
+  fireEvent.click(within(cardA).getByRole("button", { name: "Добавить выбранное в профиль" }));
   view.rerender(<TeamExternalLeagueSettings teamId="team-b" teamName="B" teamAvatarUrl={null} teamCoverImageUrl={null} onTeamProfileApplied={jest.fn()} />);
   expect(await screen.findByText("Команда B")).toBeInTheDocument();
   await act(async () => resolveApply({ teamId: "team-a", name: "Команда A", avatarUrl: null, coverImageUrl: null }));
   expect(appliedA).not.toHaveBeenCalled();
   expect(screen.getByText("Команда B")).toBeInTheDocument();
-  expect(screen.queryByText("Данные профиля «Команда A» применены.")).not.toBeInTheDocument();
+  expect(screen.queryByText("Данные «Команда A» добавлены в профиль.")).not.toBeInTheDocument();
 });

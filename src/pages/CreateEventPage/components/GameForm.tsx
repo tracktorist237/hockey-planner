@@ -52,7 +52,7 @@ export const GameForm = ({
 
       <div style={{ marginBottom: "16px", width: "100%", boxSizing: "border-box" }}>
         <label style={{ display: "block", marginBottom: "8px", fontWeight: "500", fontSize: "15px" }}>
-          Лига (дивизион)
+          Лига
         </label>
         <input
           value={leagueName}

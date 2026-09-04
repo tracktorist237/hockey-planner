@@ -5,6 +5,8 @@ import {
   searchExternalLeagueTeams,
 } from "src/api/externalLeagueTeams";
 import { CheckboxControl } from "src/components/CheckboxControl";
+import { ExternalLeagueBadge } from "src/components/ExternalLeagueBadge";
+import { RadioControl } from "src/components/RadioControl";
 import type { SelectedExternalTeam } from "src/pages/TeamsPage/types";
 import { buttonStyle, inputStyle } from "./styles";
 
@@ -80,7 +82,7 @@ export function CreateTeamTab({ name, isPublic, loading, onNameChange, onPublicC
       <section style={{ borderTop: "1px solid var(--hp-border)", paddingTop: 12, display: "grid", gap: 10 }}>
         <div>
           <h3 style={{ margin: 0, fontSize: 17, color: "var(--hp-heading)" }}>Официальная лига — необязательно</h3>
-          <div style={{ color: "var(--hp-muted)", fontSize: 13, marginTop: 3 }}>Можно привязать несколько официальных профилей.</div>
+          <div style={{ color: "var(--hp-muted)", fontSize: 13, marginTop: 3 }}>Можно добавить несколько команд с сайта лиги.</div>
         </div>
         <label style={{ display: "grid", gap: 5, color: "var(--hp-muted)", fontSize: 13, fontWeight: 800 }}>
           Лига
@@ -98,18 +100,18 @@ export function CreateTeamTab({ name, isPublic, loading, onNameChange, onPublicC
             const choice = selected.find((value) => value.provider === item.provider && value.externalTeamId === item.externalTeamId);
             return (
               <article key={`${item.provider}:${item.externalTeamId}`} style={{ border: "1px solid var(--hp-border)", borderRadius: 8, padding: 10, display: "grid", gap: 8 }}>
-                <label style={{ display: "flex", gap: 9, alignItems: "flex-start", cursor: "pointer" }}>
-                  <input type="checkbox" checked={Boolean(choice)} onChange={() => toggleSelected(item)} disabled={loading} />
-                  <span style={{ minWidth: 0 }}>
+                <CheckboxControl
+                  checked={Boolean(choice)}
+                  onChange={() => toggleSelected(item)}
+                  disabled={loading}
+                  label={<span style={{ minWidth: 0 }}>
                     <strong style={{ display: "block", color: "var(--hp-heading)", overflowWrap: "anywhere" }}>{item.name}</strong>
-                    {item.divisionName && <span style={{ color: "var(--hp-muted)", fontSize: 13 }}>{item.divisionName}</span>}
-                  </span>
-                </label>
+                    <span style={{ display: "inline-flex", marginTop: 4, maxWidth: "100%" }}><ExternalLeagueBadge provider={item.provider} division={item.divisionName} /></span>
+                  </span>}
+                />
                 {choice && (
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
-                    <label style={{ color: "var(--hp-muted)", fontSize: 13 }}>
-                      <input type="radio" name="primary-external-team" checked={choice.isPrimary} onChange={() => setPrimary(choice.provider, choice.externalTeamId)} disabled={loading} /> Основной профиль
-                    </label>
+                    <RadioControl name="primary-external-team" checked={choice.isPrimary} onChange={() => setPrimary(choice.provider, choice.externalTeamId)} disabled={loading} label="Основная команда" />
                     <button type="button" onClick={() => onNameChange(item.name)} disabled={loading} style={{ border: 0, background: "transparent", color: "var(--hp-primary)", cursor: "pointer", fontWeight: 800 }}>Использовать название</button>
                   </div>
                 )}

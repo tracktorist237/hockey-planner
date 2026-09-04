@@ -23,13 +23,20 @@ test("searches before team creation, selects multiple profiles and chooses prima
   fireEvent.change(screen.getByPlaceholderText("Название команды в лиге"), { target: { value: "Северная столица" } });
   fireEvent.click(screen.getByRole("button", { name: "Найти" }));
 
-  expect(await screen.findByText("Любитель 1")).toBeInTheDocument();
+  expect(await screen.findByText("СПбХЛ · Любитель 1")).toBeInTheDocument();
   expect(search).toHaveBeenCalledWith(ExternalLeagueProvider.Spbhl, "Северная столица");
-  fireEvent.click(screen.getByRole("checkbox", { name: /Северная столица Любитель 1/ }));
-  fireEvent.click(screen.getByRole("checkbox", { name: /Северная столица-2 Любитель 3/ }));
-  const radios = screen.getAllByRole("radio", { name: "Основной профиль" });
+  const firstChoice = screen.getByRole("checkbox", { name: /Северная столица.*СПбХЛ.*Любитель 1/ });
+  const secondChoice = screen.getByRole("checkbox", { name: /Северная столица-2.*СПбХЛ.*Любитель 3/ });
+  expect(firstChoice.closest(".hp-checkbox")).not.toBeNull();
+  fireEvent.click(firstChoice);
+  fireEvent.click(secondChoice);
+  expect(firstChoice).toBeChecked();
+  expect(secondChoice).toBeChecked();
+  const radios = screen.getAllByRole("radio", { name: "Основная команда" });
   expect(radios[0]).toBeChecked();
   fireEvent.click(radios[1]);
+  expect(radios[0]).not.toBeChecked();
+  expect(radios[1]).toBeChecked();
   fireEvent.click(screen.getByRole("button", { name: "Создать команду" }));
 
   expect(onCreate).toHaveBeenCalledWith([
@@ -45,8 +52,29 @@ test("does not overwrite the HockeyPlanner name unless requested", async () => {
 
   fireEvent.change(screen.getByPlaceholderText("Название команды в лиге"), { target: { value: "Лига" } });
   fireEvent.click(screen.getByRole("button", { name: "Найти" }));
-  fireEvent.click(await screen.findByRole("checkbox", { name: "Лига-команда" }));
+  fireEvent.click(await screen.findByRole("checkbox", { name: /Лига-команда.*СПбХЛ/ }));
   expect(onNameChange).not.toHaveBeenCalled();
   fireEvent.click(screen.getByRole("button", { name: "Использовать название" }));
   expect(onNameChange).toHaveBeenCalledWith("Лига-команда");
+});
+
+test("uses visible shared controls for public and league-team choices", async () => {
+  const onPublicChange = jest.fn();
+  search.mockResolvedValue([{ provider: ExternalLeagueProvider.Spbhl, externalTeamId: "one", name: "Ладога" }]);
+  const view = render(<CreateTeamTab name="Команда" isPublic={false} loading={false} onNameChange={jest.fn()} onPublicChange={onPublicChange} onCreate={jest.fn()} />);
+  const publicCheckbox = screen.getByRole("checkbox", { name: "Публичная команда" });
+  expect(publicCheckbox.closest(".hp-checkbox")).not.toBeNull();
+  fireEvent.click(screen.getByText("Публичная команда"));
+  expect(onPublicChange).toHaveBeenCalledWith(true);
+
+  fireEvent.change(screen.getByPlaceholderText("Название команды в лиге"), { target: { value: "Ладога" } });
+  fireEvent.click(screen.getByRole("button", { name: "Найти" }));
+  const leagueCheckbox = await screen.findByRole("checkbox", { name: /Ладога.*СПбХЛ/ });
+  expect(leagueCheckbox.closest(".hp-checkbox")).not.toBeNull();
+  fireEvent.click(leagueCheckbox);
+  expect(leagueCheckbox).toBeChecked();
+
+  view.rerender(<CreateTeamTab name="Команда" isPublic={false} loading onNameChange={jest.fn()} onPublicChange={onPublicChange} onCreate={jest.fn()} />);
+  expect(screen.getByRole("checkbox", { name: /Ладога.*СПбХЛ/ })).toBeDisabled();
+  expect(screen.getByRole("radio", { name: "Основная команда" })).toBeDisabled();
 });

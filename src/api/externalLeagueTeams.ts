@@ -66,7 +66,7 @@ export interface ApplyExternalLeagueProfileRequest {
   selectedAddressCandidateIds: string[];
 }
 
-export interface ExternalProfileCandidate { candidateId: string; value: string; }
+export interface ExternalProfileCandidate { candidateId: string; value: string; label?: string; }
 export interface ExternalAddressCandidate {
   candidateId: string;
   venueName: string;

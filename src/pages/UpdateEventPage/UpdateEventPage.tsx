@@ -33,7 +33,7 @@ export function UpdateEventPage() {
       <div style={{ padding: "16px", paddingTop: "92px", paddingBottom: "120px", maxWidth: "100%", margin: "0 auto", boxSizing: "border-box" }}>
         <div style={{ maxWidth: "100%", margin: "0 auto", boxSizing: "border-box" }}>
           {error && <ErrorMessage error={error} />}
-          {isExternalEvent && <div style={{ marginBottom: 12, padding: 12, borderRadius: 10, background: "var(--hp-info-soft)", color: "var(--hp-info)", fontWeight: 800 }}>Дата, команды и место синхронизируются с официальной лигой. Описание и внутренние настройки можно редактировать.</div>}
+          {isExternalEvent && <div style={{ marginBottom: 12, padding: 12, borderRadius: 10, background: "var(--hp-info-soft)", color: "var(--hp-info)", fontWeight: 800 }}>Дата, команды и место обновляются по данным официальной лиги. Описание и внутренние настройки можно редактировать.</div>}
           <div style={{ backgroundColor: "var(--hp-surface)", borderRadius: "16px", padding: "20px", boxShadow: "var(--hp-shadow-sm)", width: "100%", boxSizing: "border-box" }}>
             <EventTypeSelector currentType={formData.type} onChange={handleTypeChange} />
             {isMeeting && <MeetingForm title={formData.title} onChange={(value) => updateField("title", value)} />}
