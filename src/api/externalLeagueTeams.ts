@@ -1,0 +1,111 @@
+import { authFetch } from "src/api/auth";
+
+export enum ExternalLeagueProvider {
+  Spbhl = 1,
+}
+
+export interface ExternalTeamSearchItem {
+  provider: ExternalLeagueProvider;
+  externalTeamId: string;
+  name: string;
+  city?: string | null;
+  country?: string | null;
+  logoUrl?: string | null;
+  profileUrl?: string | null;
+  divisionName?: string | null;
+}
+
+export interface ExternalLeagueLink {
+  id: string;
+  teamId: string;
+  provider: ExternalLeagueProvider;
+  externalTeamId: string;
+  externalTeamName: string;
+  divisionName: string | null;
+  profileUrl: string | null;
+  logoUrl: string | null;
+  coverUrl: string | null;
+  city: string | null;
+  country: string | null;
+  isPrimary: boolean;
+  lastSyncAttemptAt: string | null;
+  lastSuccessfulSyncAt: string | null;
+}
+
+export interface ExternalLeagueSyncResult {
+  teamId: string;
+  linkId: string;
+  provider: ExternalLeagueProvider;
+  externalTeamId: string;
+  receivedCount: number;
+  createdCount: number;
+  updatedCount: number;
+  unchangedCount: number;
+  enrichmentRequestCount: number;
+  syncedAt: string;
+}
+
+export interface CreateExternalLeagueLinkRequest {
+  provider: ExternalLeagueProvider;
+  externalTeamId: string;
+  isPrimary: boolean;
+}
+
+const providerSlugs: Record<ExternalLeagueProvider, string> = {
+  [ExternalLeagueProvider.Spbhl]: "spbhl",
+};
+
+const upstreamFallback = "Не удалось получить данные внешней лиги. Попробуйте позже.";
+
+async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+  let response: Response;
+  try {
+    response = await authFetch(path, { ...init, credentials: "include" });
+  } catch {
+    throw new Error("Не удалось связаться с сервером.");
+  }
+
+  if (!response.ok) {
+    if (response.status === 502) throw new Error(upstreamFallback);
+
+    let payload: unknown;
+    try {
+      payload = await response.json();
+    } catch {
+      payload = null;
+    }
+    const data = payload && typeof payload === "object" ? payload as Record<string, unknown> : {};
+    const message = [data.message, data.error, data.detail, data.title]
+      .find((value): value is string => typeof value === "string" && value.trim().length > 0);
+    throw new Error(message?.trim() || "Не удалось выполнить запрос.");
+  }
+
+  if (response.status === 204) return undefined as T;
+  return response.json() as Promise<T>;
+}
+
+const linksPath = (teamId: string) => `/api/teams/${encodeURIComponent(teamId)}/external-links`;
+
+export const searchExternalLeagueTeams = (provider: ExternalLeagueProvider, title: string) =>
+  request<ExternalTeamSearchItem[]>(
+    `/api/external-leagues/${providerSlugs[provider]}/teams/search?title=${encodeURIComponent(title)}`,
+  );
+
+export const getTeamExternalLeagueLinks = (teamId: string) =>
+  request<ExternalLeagueLink[]>(linksPath(teamId));
+
+export const createTeamExternalLeagueLink = (teamId: string, link: CreateExternalLeagueLinkRequest) =>
+  request<ExternalLeagueLink>(linksPath(teamId), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(link),
+  });
+
+export const deleteTeamExternalLeagueLink = (teamId: string, linkId: string) =>
+  request<void>(`${linksPath(teamId)}/${encodeURIComponent(linkId)}`, { method: "DELETE" });
+
+export const syncTeamExternalLeagueLink = (teamId: string, linkId: string) =>
+  request<ExternalLeagueSyncResult>(`${linksPath(teamId)}/${encodeURIComponent(linkId)}/sync`, { method: "POST" });
+
+export const syncAllTeamExternalLeagueLinks = (teamId: string) =>
+  request<ExternalLeagueSyncResult[]>(`${linksPath(teamId)}/sync`, { method: "POST" });
