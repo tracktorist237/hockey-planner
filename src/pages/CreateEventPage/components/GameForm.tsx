@@ -13,6 +13,7 @@ interface GameFormProps {
   onHomeChange: (value: string) => void;
   onAwayChange: (value: string) => void;
   onUniformColorChange: (value: string) => void;
+  sourceLocked?: boolean;
 }
 
 export const GameForm = ({
@@ -27,6 +28,7 @@ export const GameForm = ({
   onHomeChange,
   onAwayChange,
   onUniformColorChange,
+  sourceLocked = false,
 }: GameFormProps) => {
   const TEAM_HINT = "Северная Столица";
   const homeSuggestionsId = "home-team-suggestions";
@@ -56,6 +58,7 @@ export const GameForm = ({
           value={leagueName}
           onChange={(e) => onLeagueChange(e.target.value)}
           placeholder="Например: Д4"
+          disabled={sourceLocked}
           style={{
             width: "100%",
             padding: "14px",
@@ -80,6 +83,7 @@ export const GameForm = ({
             onChange={(e) => onHomeChange(e.target.value)}
             placeholder="Например: Медведи"
             list={homeSuggestionsId}
+            disabled={sourceLocked}
             style={{
               width: "100%",
               padding: "14px",
@@ -106,6 +110,7 @@ export const GameForm = ({
             onChange={(e) => onAwayChange(e.target.value)}
             placeholder="Например: Волки"
             list={awaySuggestionsId}
+            disabled={sourceLocked}
             style={{
               width: "100%",
               padding: "14px",
@@ -134,6 +139,7 @@ export const GameForm = ({
           backgroundColor="var(--hp-success-soft)"
           borderColor="var(--hp-success-border)"
           color="var(--hp-success)"
+          disabled={sourceLocked}
         />
       )}
     </div>

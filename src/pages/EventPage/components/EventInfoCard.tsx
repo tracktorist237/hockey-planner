@@ -1,4 +1,4 @@
-import { EventDto, EventType } from "src/types/events";
+import { EventDto, EventType, ExternalLeagueProvider } from "src/types/events";
 import { getEventTypeColor, getLeagueColor } from "src/utils/colors";
 import { formatRuDateLabel } from "src/utils/date";
 
@@ -29,6 +29,8 @@ const formatDuration = (durationMinutes?: number | null): string => {
 };
 
 export const EventInfoCard = ({ event, copySuccess, copyEventLink }: EventInfoCardProps) => {
+  const isSpbhl = event.externalLeagueProvider === ExternalLeagueProvider.Spbhl;
+  const hasScore = event.homeScore != null && event.awayScore != null;
   return (
     <div
       style={{
@@ -182,11 +184,27 @@ export const EventInfoCard = ({ event, copySuccess, copyEventLink }: EventInfoCa
               fontWeight: "600",
             }}
           >
-            VS
+            {hasScore ? `${event.homeScore} : ${event.awayScore}` : "VS"}
           </span>
           <span style={{ fontSize: "18px", fontWeight: "700", color: "var(--hp-heading)", flex: 1, textAlign: "center" }}>
             {event.awayTeamName}
           </span>
+        </div>
+      )}
+
+      {isSpbhl && (
+        <div style={{ display: "grid", gap: 8, marginBottom: 12, padding: 12, borderRadius: 10, border: "1px solid var(--hp-border)", background: "var(--hp-surface-soft)" }}>
+          <strong style={{ color: "var(--hp-primary)" }}>СПбХЛ</strong>
+          {event.externalDivisionName && <div><strong>Дивизион:</strong> {event.externalDivisionName}</div>}
+          {event.externalTournamentName && <div><strong>Турнир:</strong> {event.externalTournamentName}</div>}
+          {hasScore && <div><strong>Счёт:</strong> {event.homeScore} : {event.awayScore}</div>}
+          {event.locationName && <div><strong>Арена:</strong> {event.locationName}</div>}
+          {event.locationAddress && <div><strong>Адрес:</strong> {event.locationAddress}</div>}
+          {event.spbhlMatchUrl && (
+            <a href={event.spbhlMatchUrl} target="_blank" rel="noopener noreferrer" style={{ color: "var(--hp-primary)", fontWeight: 800 }}>
+              Официальный матч СПбХЛ ↗
+            </a>
+          )}
         </div>
       )}
 

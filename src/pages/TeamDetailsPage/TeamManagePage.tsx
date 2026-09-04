@@ -621,7 +621,26 @@ export function TeamManagePage({ currentUser }: TeamManagePageProps) {
                   </button>
                   </div>
                 </section>
-                <TeamExternalLeagueSettings teamId={team.id} />
+                <TeamExternalLeagueSettings
+                  teamId={team.id}
+                  teamName={team.name}
+                  teamAvatarUrl={team.avatarUrl ?? null}
+                  teamCoverImageUrl={team.coverImageUrl ?? null}
+                  onTeamProfileApplied={(profile) => {
+                    setTeam((current) => current ? {
+                      ...current,
+                      name: profile.name,
+                      avatarUrl: profile.avatarUrl,
+                      coverImageUrl: profile.coverImageUrl,
+                    } : current);
+                    setForm((current) => ({
+                      ...current,
+                      name: profile.name,
+                      avatarUrl: profile.avatarUrl ?? "",
+                      coverImageUrl: profile.coverImageUrl ?? "",
+                    }));
+                  }}
+                />
               </>
             )}
 

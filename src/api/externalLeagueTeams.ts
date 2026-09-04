@@ -51,6 +51,19 @@ export interface CreateExternalLeagueLinkRequest {
   isPrimary: boolean;
 }
 
+export interface ApplyExternalLeagueProfileRequest {
+  useName: boolean;
+  useLogo: boolean;
+  useCover: boolean;
+}
+
+export interface AppliedTeamProfile {
+  teamId: string;
+  name: string;
+  avatarUrl: string | null;
+  coverImageUrl: string | null;
+}
+
 const providerSlugs: Record<ExternalLeagueProvider, string> = {
   [ExternalLeagueProvider.Spbhl]: "spbhl",
 };
@@ -103,6 +116,16 @@ export const createTeamExternalLeagueLink = (teamId: string, link: CreateExterna
 
 export const deleteTeamExternalLeagueLink = (teamId: string, linkId: string) =>
   request<void>(`${linksPath(teamId)}/${encodeURIComponent(linkId)}`, { method: "DELETE" });
+
+export const applyExternalLeagueProfile = (
+  teamId: string,
+  linkId: string,
+  profile: ApplyExternalLeagueProfileRequest,
+) => request<AppliedTeamProfile>(`${linksPath(teamId)}/${encodeURIComponent(linkId)}/apply-profile`, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify(profile),
+});
 
 export const syncTeamExternalLeagueLink = (teamId: string, linkId: string) =>
   request<ExternalLeagueSyncResult>(`${linksPath(teamId)}/${encodeURIComponent(linkId)}/sync`, { method: "POST" });

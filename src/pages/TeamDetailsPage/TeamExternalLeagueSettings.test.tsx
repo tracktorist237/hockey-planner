@@ -1,5 +1,6 @@
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import {
+  applyExternalLeagueProfile,
   createTeamExternalLeagueLink,
   deleteTeamExternalLeagueLink,
   ExternalLeagueLink,
@@ -20,7 +21,18 @@ const api = {
   remove: deleteTeamExternalLeagueLink as jest.MockedFunction<typeof deleteTeamExternalLeagueLink>,
   sync: syncTeamExternalLeagueLink as jest.MockedFunction<typeof syncTeamExternalLeagueLink>,
   syncAll: syncAllTeamExternalLeagueLinks as jest.MockedFunction<typeof syncAllTeamExternalLeagueLinks>,
+  apply: applyExternalLeagueProfile as jest.MockedFunction<typeof applyExternalLeagueProfile>,
 };
+
+const renderSettings = (teamId = "team-a", avatarUrl: string | null = null, coverUrl: string | null = null) => render(
+  <TeamExternalLeagueSettings
+    teamId={teamId}
+    teamName="Local team"
+    teamAvatarUrl={avatarUrl}
+    teamCoverImageUrl={coverUrl}
+    onTeamProfileApplied={jest.fn()}
+  />,
+);
 
 const link = (id: string, name: string, division: string, isPrimary: boolean): ExternalLeagueLink => ({
   id,
@@ -68,13 +80,14 @@ test("defaults to SPBHL and renders two linked teams with their divisions", asyn
     link("two", "Северная столица-2", "Любитель 3", false),
   ]);
 
-  render(<TeamExternalLeagueSettings teamId="team-a" />);
+  renderSettings();
 
   expect(await screen.findByText("Северная столица")).toBeInTheDocument();
   expect(screen.getByText("Северная столица-2")).toBeInTheDocument();
   expect(screen.getByRole("combobox", { name: "Лига" })).toHaveValue("1");
   expect(screen.getByText("СПбХЛ · Любитель 1")).toBeInTheDocument();
   expect(screen.getByText("СПбХЛ · Любитель 3")).toBeInTheDocument();
+  expect(screen.getAllByText("Санкт-Петербург, Россия").length).toBe(2);
   expect(screen.getByText("Основной профиль")).toBeInTheDocument();
   expect(screen.getByText(/3 сентября/)).toBeInTheDocument();
 });
@@ -93,7 +106,7 @@ test("adds a second external team without replacing the first", async () => {
     profileUrl: second.profileUrl,
   }]);
   api.create.mockResolvedValue(second);
-  render(<TeamExternalLeagueSettings teamId="team-a" />);
+  renderSettings();
   await screen.findByText(first.externalTeamName);
 
   fireEvent.click(screen.getByText("+ Добавить команду"));
@@ -117,7 +130,7 @@ test("switches primary through the authoritative create-link endpoint", async ()
   const second = link("two", "Северная столица-2", "Любитель 3", false);
   api.getLinks.mockResolvedValue([first, second]);
   api.create.mockResolvedValue({ ...second, isPrimary: true });
-  render(<TeamExternalLeagueSettings teamId="team-a" />);
+  renderSettings();
   const secondCard = await screen.findByTestId("external-link-two");
 
   fireEvent.click(within(secondCard).getByRole("button", { name: "Сделать основным" }));
@@ -136,7 +149,7 @@ test("synchronizes one link and all links without hiding cards", async () => {
   api.getLinks.mockResolvedValue([first, second]);
   api.sync.mockResolvedValue(syncResult("one"));
   api.syncAll.mockResolvedValue([syncResult("one"), syncResult("two")]);
-  render(<TeamExternalLeagueSettings teamId="team-a" />);
+  renderSettings();
   const firstCard = await screen.findByTestId("external-link-one");
 
   fireEvent.click(within(firstCard).getByRole("button", { name: "Синхронизировать" }));
@@ -153,7 +166,7 @@ test("removes only the selected link and keeps imported-match warning", async ()
   const first = link("one", "Северная столица", "Любитель 1", true);
   const second = link("two", "Северная столица-2", "Любитель 3", false);
   api.getLinks.mockResolvedValue([first, second]);
-  render(<TeamExternalLeagueSettings teamId="team-a" />);
+  renderSettings();
   const secondCard = await screen.findByTestId("external-link-two");
 
   fireEvent.click(within(secondCard).getByRole("button", { name: "Удалить" }));
@@ -170,15 +183,35 @@ test("ignores a stale link operation after teamId changes", async () => {
   api.getLinks.mockResolvedValueOnce([link("one", "Команда A", "A", true)])
     .mockResolvedValueOnce([{ ...link("two", "Команда B", "B", true), teamId: "team-b" }]);
   api.sync.mockReturnValue(delayedSync);
-  const view = render(<TeamExternalLeagueSettings teamId="team-a" />);
+  const view = renderSettings();
   const firstCard = await screen.findByTestId("external-link-one");
   fireEvent.click(within(firstCard).getByRole("button", { name: "Синхронизировать" }));
 
-  view.rerender(<TeamExternalLeagueSettings teamId="team-b" />);
+  view.rerender(<TeamExternalLeagueSettings teamId="team-b" teamName="Team B" teamAvatarUrl={null} teamCoverImageUrl={null} onTeamProfileApplied={jest.fn()} />);
   expect(await screen.findByText("Команда B")).toBeInTheDocument();
   await act(async () => resolveSync(syncResult("one")));
 
   expect(screen.getByText("Команда B")).toBeInTheDocument();
   expect(screen.queryByText("Команда A")).not.toBeInTheDocument();
   expect(screen.queryByText("Расписание «Команда A» обновлено.")).not.toBeInTheDocument();
+});
+
+test("applies official logo and cover without silently overwriting custom images", async () => {
+  const official = { ...link("one", "Official team", "Любитель 1", true), logoUrl: "https://spbhl.ru/logo.png", coverUrl: "https://spbhl.ru/cover.jpg" };
+  api.getLinks.mockResolvedValue([official]);
+  api.apply.mockResolvedValue({ teamId: "team-a", name: "Local team", avatarUrl: official.logoUrl, coverImageUrl: official.coverUrl });
+  renderSettings("team-a", "https://local/avatar.png", "https://local/cover.jpg");
+  const card = await screen.findByTestId("external-link-one");
+
+  fireEvent.click(within(card).getByRole("button", { name: "Использовать данные профиля" }));
+  expect(within(card).getByRole("checkbox", { name: "Логотип" })).not.toBeChecked();
+  expect(within(card).getByRole("checkbox", { name: "Обложка" })).not.toBeChecked();
+  fireEvent.click(within(card).getByRole("checkbox", { name: "Логотип" }));
+  fireEvent.click(within(card).getByRole("checkbox", { name: "Обложка" }));
+  fireEvent.click(within(card).getByRole("button", { name: "Применить" }));
+
+  await waitFor(() => expect(window.confirm).toHaveBeenCalledWith(expect.stringContaining("заменят текущие изображения")));
+  expect(api.apply).toHaveBeenCalledWith("team-a", "one", { useName: true, useLogo: true, useCover: true });
+  expect(within(card).getByAltText("Логотип официального профиля")).toHaveAttribute("src", official.logoUrl);
+  expect(within(card).getByAltText("Обложка официального профиля")).toHaveAttribute("src", official.coverUrl);
 });

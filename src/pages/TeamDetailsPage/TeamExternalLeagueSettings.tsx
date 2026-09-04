@@ -1,6 +1,8 @@
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import {
   createTeamExternalLeagueLink,
+  applyExternalLeagueProfile,
+  AppliedTeamProfile,
   deleteTeamExternalLeagueLink,
   ExternalLeagueLink,
   ExternalLeagueProvider,
@@ -16,9 +18,13 @@ import { cardStyle, inputStyle } from "src/pages/TeamsPage/components/styles";
 
 interface TeamExternalLeagueSettingsProps {
   teamId: string;
+  teamName: string;
+  teamAvatarUrl: string | null;
+  teamCoverImageUrl: string | null;
+  onTeamProfileApplied: (profile: AppliedTeamProfile) => void;
 }
 
-type BusyOperation = "search" | "add" | "primary" | "sync" | "sync-all" | "remove";
+type BusyOperation = "search" | "add" | "primary" | "sync" | "sync-all" | "remove" | "apply";
 
 const providerOptions = [
   { value: ExternalLeagueProvider.Spbhl, label: "СПбХЛ" },
@@ -65,7 +71,7 @@ const SyncSummary = ({ result }: { result: ExternalLeagueSyncResult }) => (
   </div>
 );
 
-export function TeamExternalLeagueSettings({ teamId }: TeamExternalLeagueSettingsProps) {
+export function TeamExternalLeagueSettings({ teamId, teamName, teamAvatarUrl, teamCoverImageUrl, onTeamProfileApplied }: TeamExternalLeagueSettingsProps) {
   const [provider, setProvider] = useState(ExternalLeagueProvider.Spbhl);
   const [links, setLinks] = useState<ExternalLeagueLink[]>([]);
   const [loading, setLoading] = useState(true);
@@ -75,6 +81,10 @@ export function TeamExternalLeagueSettings({ teamId }: TeamExternalLeagueSetting
   const [summaries, setSummaries] = useState<Record<string, ExternalLeagueSyncResult>>({});
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [applyLinkId, setApplyLinkId] = useState<string | null>(null);
+  const [applyName, setApplyName] = useState(true);
+  const [applyLogo, setApplyLogo] = useState(false);
+  const [applyCover, setApplyCover] = useState(false);
   const operationLocked = useRef(false);
   const operationGeneration = useRef(0);
   const loadGeneration = useRef(0);
@@ -117,6 +127,7 @@ export function TeamExternalLeagueSettings({ teamId }: TeamExternalLeagueSetting
     setSummaries({});
     setError(null);
     setMessage(null);
+    setApplyLinkId(null);
     void loadLinks();
     return () => {
       mounted.current = false;
@@ -285,6 +296,43 @@ export function TeamExternalLeagueSettings({ teamId }: TeamExternalLeagueSetting
     }
   };
 
+  const openProfileImport = (link: ExternalLeagueLink) => {
+    setApplyLinkId(link.id);
+    setApplyName(link.externalTeamName !== teamName);
+    setApplyLogo(Boolean(link.logoUrl) && !teamAvatarUrl);
+    setApplyCover(Boolean(link.coverUrl) && !teamCoverImageUrl);
+  };
+
+  const handleApplyProfile = async (link: ExternalLeagueLink) => {
+    if (!applyName && !applyLogo && !applyCover) {
+      setError("Выберите данные профиля для применения.");
+      return;
+    }
+    if ((applyLogo && teamAvatarUrl) || (applyCover && teamCoverImageUrl)) {
+      if (!window.confirm("Выбранные изображения заменят текущие изображения профиля команды. Продолжить?")) return;
+    }
+    const requestedTeamId = teamId;
+    const operation = beginOperation("apply");
+    if (operation === null) return;
+    try {
+      const applied = await applyExternalLeagueProfile(teamId, link.id, {
+        useName: applyName,
+        useLogo: applyLogo,
+        useCover: applyCover,
+      });
+      if (!isCurrentOperation(operation, requestedTeamId)) return;
+      onTeamProfileApplied(applied);
+      setApplyLinkId(null);
+      setMessage(`Данные профиля «${link.externalTeamName}» применены.`);
+    } catch (requestError) {
+      if (isCurrentOperation(operation, requestedTeamId)) {
+        setError(requestError instanceof Error ? requestError.message : "Не удалось применить данные профиля.");
+      }
+    } finally {
+      finishOperation(operation, requestedTeamId);
+    }
+  };
+
   return (
     <section style={{ ...cardStyle, marginTop: 14, display: "grid", gap: 14 }}>
       <div>
@@ -336,6 +384,7 @@ export function TeamExternalLeagueSettings({ teamId }: TeamExternalLeagueSetting
                     <span style={{ color: "var(--hp-muted)", fontSize: 13 }}>
                       {[providerLabel(link.provider), link.divisionName].filter(Boolean).join(" · ")}
                     </span>
+                    {(link.city || link.country) && <span style={{ color: "var(--hp-muted)", fontSize: 13 }}>{[link.city, link.country].filter(Boolean).join(", ")}</span>}
                     {link.isPrimary && <span style={{ color: "var(--hp-success)", fontSize: 13, fontWeight: 800 }}>Основной профиль</span>}
                     <span style={{ color: "var(--hp-muted)", fontSize: 13 }}>
                       {link.lastSuccessfulSyncAt ? `Последняя синхронизация: ${formatTimestamp(link.lastSuccessfulSyncAt)}` : "Расписание ещё не синхронизировалось"}
@@ -343,10 +392,25 @@ export function TeamExternalLeagueSettings({ teamId }: TeamExternalLeagueSetting
                   </div>
                 </div>
                 {summaries[link.id] && <SyncSummary result={summaries[link.id]} />}
+                {applyLinkId === link.id && (
+                  <div style={{ display: "grid", gap: 9, padding: 10, borderRadius: 8, background: "var(--hp-surface-soft)" }}>
+                    {link.coverUrl && <img src={link.coverUrl} alt="Обложка официального профиля" style={{ width: "100%", maxHeight: 140, objectFit: "cover", borderRadius: 6 }} />}
+                    {link.logoUrl && <img src={link.logoUrl} alt="Логотип официального профиля" width={64} height={64} style={{ objectFit: "contain" }} />}
+                    <strong style={{ color: "var(--hp-heading)" }}>Использовать данные профиля</strong>
+                    <label><input type="checkbox" checked={applyName} onChange={(event) => setApplyName(event.target.checked)} disabled={busy !== null} /> Название</label>
+                    <label><input type="checkbox" checked={applyLogo} onChange={(event) => setApplyLogo(event.target.checked)} disabled={busy !== null || !link.logoUrl} /> Логотип</label>
+                    <label><input type="checkbox" checked={applyCover} onChange={(event) => setApplyCover(event.target.checked)} disabled={busy !== null || !link.coverUrl} /> Обложка</label>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                      <button type="button" onClick={() => void handleApplyProfile(link)} disabled={busy !== null} style={buttonStyle}>{busy === "apply" ? "Применяем..." : "Применить"}</button>
+                      <button type="button" onClick={() => setApplyLinkId(null)} disabled={busy !== null} style={secondaryButtonStyle}>Отмена</button>
+                    </div>
+                  </div>
+                )}
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                   {link.profileUrl && <a href={link.profileUrl} target="_blank" rel="noopener noreferrer" style={{ ...secondaryButtonStyle, textAlign: "center", textDecoration: "none", boxSizing: "border-box" }}>Открыть</a>}
                   <button type="button" onClick={() => void handleSync(link)} disabled={busy !== null} style={buttonStyle}>Синхронизировать</button>
                   {!link.isPrimary && <button type="button" onClick={() => void handleMakePrimary(link)} disabled={busy !== null} style={secondaryButtonStyle}>Сделать основным</button>}
+                  <button type="button" onClick={() => openProfileImport(link)} disabled={busy !== null} style={secondaryButtonStyle}>Использовать данные профиля</button>
                   <button type="button" onClick={() => void handleRemove(link)} disabled={busy !== null} style={{ ...secondaryButtonStyle, background: "var(--hp-danger-soft)", color: "var(--hp-danger)" }}>Удалить</button>
                 </div>
               </article>

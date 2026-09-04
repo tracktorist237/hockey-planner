@@ -12,6 +12,7 @@ interface EventDetailsFieldsProps {
   onDescriptionChange: (value: string) => void;
   onStartTimeChange: (value: string) => void;
   onDurationChange: (value: number) => void;
+  startTimeLocked?: boolean;
 }
 
 export const EventDetailsFields = ({
@@ -24,6 +25,7 @@ export const EventDetailsFields = ({
   onDescriptionChange,
   onStartTimeChange,
   onDurationChange,
+  startTimeLocked = false,
 }: EventDetailsFieldsProps) => {
   const [isDescriptionVisible, setIsDescriptionVisible] = useState(Boolean(description));
 
@@ -80,6 +82,7 @@ export const EventDetailsFields = ({
           value={startTime}
           onChange={(e) => onStartTimeChange(e.target.value)}
           required
+          disabled={startTimeLocked}
           style={{
             width: "100%",
             padding: "14px",

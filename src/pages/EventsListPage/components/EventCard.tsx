@@ -1,5 +1,5 @@
 import { memo, useMemo } from "react";
-import { EventLookUpDto, EventType } from "../../../types/events";
+import { EventLookUpDto, EventType, ExternalLeagueProvider } from "../../../types/events";
 import { formatRuDateLabel } from "../../../utils/date";
 import { getEventTypeColor, getLeagueColor } from "../../../utils/colors";
 
@@ -76,6 +76,8 @@ const EventCardComponent = ({ event, onOpen }: EventCardProps) => {
     event.goalieNeededCount !== undefined &&
     event.goalieNeededCount > 0;
   const goalieConfirmedCount = event.goalieConfirmedCount ?? 0;
+  const isSpbhl = event.externalLeagueProvider === ExternalLeagueProvider.Spbhl;
+  const hasScore = event.status === 3 && event.homeScore != null && event.awayScore != null;
 
   return (
     <div
@@ -221,7 +223,18 @@ const EventCardComponent = ({ event, onOpen }: EventCardProps) => {
             <span>{event.leagueName}</span>
           </div>
         )}
+        {isSpbhl && (
+          <span style={{ fontSize: 12, fontWeight: 800, color: "var(--hp-primary)", background: "var(--hp-primary-soft)", borderRadius: 10, padding: "3px 8px" }}>
+            {event.externalDivisionName ? `СПбХЛ · ${event.externalDivisionName}` : "СПбХЛ"}
+          </span>
+        )}
       </div>
+
+      {hasScore && event.homeTeamName && event.awayTeamName && (
+        <div style={{ marginBottom: 8, color: "var(--hp-heading)", fontWeight: 800, overflowWrap: "anywhere" }}>
+          {event.homeTeamName} {event.homeScore} : {event.awayScore} {event.awayTeamName}
+        </div>
+      )}
       
       {attendanceStatusMeta && (
         <div

@@ -11,6 +11,7 @@ interface LocationFormProps {
   onLocationAddressChange: (value: string) => void;
   onIceRinkNumberChange: (value: string) => void;
   onToggleSearch: () => void;
+  sourceLocked?: boolean;
 }
 
 export const LocationForm = ({
@@ -22,6 +23,7 @@ export const LocationForm = ({
   onLocationAddressChange,
   onIceRinkNumberChange,
   onToggleSearch,
+  sourceLocked = false,
 }: LocationFormProps) => {
   const [isIceRinkNumberVisible, setIsIceRinkNumberVisible] = useState(Boolean(iceRinkNumber));
 
@@ -55,6 +57,7 @@ export const LocationForm = ({
           value={locationName}
           onChange={(e) => onLocationNameChange(e.target.value)}
           placeholder="Например: Ледовый дворец 'Арена'"
+          disabled={sourceLocked}
           style={{
             width: "100%",
             padding: "14px",
@@ -76,14 +79,14 @@ export const LocationForm = ({
           <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
             <span style={{ fontSize: "14px", color: !useAddressSearch ? "var(--hp-text)" : "var(--hp-muted)" }}>✏️ Ручной</span>
             <div
-              onClick={onToggleSearch}
+              onClick={() => { if (!sourceLocked) onToggleSearch(); }}
               style={{
                 position: "relative",
                 width: "52px",
                 height: "28px",
                 backgroundColor: useAddressSearch ? "var(--hp-success)" : "var(--hp-border)",
                 borderRadius: "28px",
-                cursor: "pointer",
+                cursor: sourceLocked ? "not-allowed" : "pointer",
                 transition: "all 0.3s ease",
                 flexShrink: 0,
               }}
@@ -120,6 +123,7 @@ export const LocationForm = ({
               onLocationNameChange={onLocationNameChange}
               locationName={locationName}
               placeholder="Начните вводить адрес..."
+              disabled={sourceLocked}
             />
           </div>
         ) : (
@@ -128,6 +132,7 @@ export const LocationForm = ({
             onChange={(e) => onLocationAddressChange(e.target.value)}
             placeholder="Страна, город, улица, дом..."
             rows={3}
+            disabled={sourceLocked}
             style={{
               width: "100%",
               padding: "14px",

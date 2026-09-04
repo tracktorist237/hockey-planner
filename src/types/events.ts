@@ -4,7 +4,22 @@ export enum EventType {
   Meeting = 3,
 }
 
-export interface EventLookUpDto {
+export enum ExternalLeagueProvider {
+  Spbhl = 1,
+}
+
+export interface ExternalEventFields {
+  externalLeagueProvider?: ExternalLeagueProvider | null;
+  externalDivisionName?: string | null;
+  externalTournamentName?: string | null;
+  spbhlTournamentId?: number | null;
+  spbhlMatchId?: number | null;
+  spbhlMatchUrl?: string | null;
+  homeScore?: number | null;
+  awayScore?: number | null;
+}
+
+export interface EventLookUpDto extends ExternalEventFields {
   id: string;
   title?: string;
   description?: string;
@@ -23,6 +38,8 @@ export interface EventLookUpDto {
   goalieNeededCount?: number | null;
   goalieConfirmedCount?: number | null;
   goalieApplicationStatus?: number | null;
+  homeTeamName?: string | null;
+  awayTeamName?: string | null;
 }
 
 export interface EventListDto {
@@ -66,7 +83,7 @@ export interface AttendanceLookUpDto {
   invitedByUserId?: string | null;
 }
 
-export interface EventDto {
+export interface EventDto extends ExternalEventFields {
   id: string;
   title?: string;
   description?: string;
