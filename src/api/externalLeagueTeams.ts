@@ -86,11 +86,14 @@ const providerSlugs: Record<ExternalLeagueProvider, string> = {
 };
 
 const upstreamFallback = "Не удалось получить данные внешней лиги. Попробуйте позже.";
+const syncAllTimeoutMs = 60_000;
 
-async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+async function request<T>(path: string, init: RequestInit = {}, timeoutMs?: number): Promise<T> {
   let response: Response;
   try {
-    response = await authFetch(path, { ...init, credentials: "include" });
+    response = timeoutMs === undefined
+      ? await authFetch(path, { ...init, credentials: "include" })
+      : await authFetch(path, { ...init, credentials: "include" }, true, timeoutMs);
   } catch {
     throw new Error("Не удалось связаться с сервером.");
   }
@@ -151,4 +154,4 @@ export const syncTeamExternalLeagueLink = (teamId: string, linkId: string) =>
   request<ExternalLeagueSyncResult>(`${linksPath(teamId)}/${encodeURIComponent(linkId)}/sync`, { method: "POST" });
 
 export const syncAllTeamExternalLeagueLinks = (teamId: string) =>
-  request<ExternalLeagueSyncResult[]>(`${linksPath(teamId)}/sync`, { method: "POST" });
+  request<ExternalLeagueSyncResult[]>(`${linksPath(teamId)}/sync`, { method: "POST" }, syncAllTimeoutMs);

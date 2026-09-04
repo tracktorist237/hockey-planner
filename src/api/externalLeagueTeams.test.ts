@@ -63,7 +63,7 @@ test("link management uses generic protected team routes", async () => {
     credentials: "include",
   });
   expect(mockedFetch).toHaveBeenNthCalledWith(6, "/api/teams/team%20id/external-links/link%20id/sync", { method: "POST", credentials: "include" });
-  expect(mockedFetch).toHaveBeenNthCalledWith(7, "/api/teams/team%20id/external-links/sync", { method: "POST", credentials: "include" });
+  expect(mockedFetch).toHaveBeenNthCalledWith(7, "/api/teams/team%20id/external-links/sync", { method: "POST", credentials: "include" }, true, 60_000);
   expect(JSON.stringify(mockedFetch.mock.calls)).not.toMatch(/currentUserId|userId/i);
 });
 
