@@ -543,6 +543,17 @@ export function TeamManagePage({ currentUser }: TeamManagePageProps) {
 
             {activeTab === "profile" && (
               <>
+                <TeamExternalLeagueSettings
+                  teamId={team.id}
+                  teamName={form.name}
+                  teamAvatarUrl={form.avatarUrl || null}
+                  teamCoverImageUrl={form.coverImageUrl || null}
+                  teamDescription={form.description}
+                  teamPhones={form.phones}
+                  teamLinks={form.links}
+                  teamAddresses={form.addresses}
+                  onTeamProfileApplied={async () => { await loadTeam(); }}
+                />
                 <section style={{ ...cardStyle, marginTop: 14 }}>
                   <h2 style={{ margin: "0 0 4px", fontSize: 20, color: "var(--hp-text-strong)" }}>Профиль команды</h2>
                   <div style={{ marginBottom: 12, color: "var(--hp-muted)", fontSize: 14, lineHeight: 1.4 }}>Видимая информация на странице команды.</div>
@@ -621,26 +632,6 @@ export function TeamManagePage({ currentUser }: TeamManagePageProps) {
                   </button>
                   </div>
                 </section>
-                <TeamExternalLeagueSettings
-                  teamId={team.id}
-                  teamName={team.name}
-                  teamAvatarUrl={team.avatarUrl ?? null}
-                  teamCoverImageUrl={team.coverImageUrl ?? null}
-                  onTeamProfileApplied={(profile) => {
-                    setTeam((current) => current ? {
-                      ...current,
-                      name: profile.name,
-                      avatarUrl: profile.avatarUrl,
-                      coverImageUrl: profile.coverImageUrl,
-                    } : current);
-                    setForm((current) => ({
-                      ...current,
-                      name: profile.name,
-                      avatarUrl: profile.avatarUrl ?? "",
-                      coverImageUrl: profile.coverImageUrl ?? "",
-                    }));
-                  }}
-                />
               </>
             )}
 

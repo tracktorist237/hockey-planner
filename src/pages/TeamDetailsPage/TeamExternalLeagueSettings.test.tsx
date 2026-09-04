@@ -6,6 +6,7 @@ import {
   ExternalLeagueLink,
   ExternalLeagueProvider,
   getTeamExternalLeagueLinks,
+  getExternalLeagueAddressCandidates,
   searchExternalLeagueTeams,
   syncAllTeamExternalLeagueLinks,
   syncTeamExternalLeagueLink,
@@ -22,6 +23,7 @@ const api = {
   sync: syncTeamExternalLeagueLink as jest.MockedFunction<typeof syncTeamExternalLeagueLink>,
   syncAll: syncAllTeamExternalLeagueLinks as jest.MockedFunction<typeof syncAllTeamExternalLeagueLinks>,
   apply: applyExternalLeagueProfile as jest.MockedFunction<typeof applyExternalLeagueProfile>,
+  addresses: getExternalLeagueAddressCandidates as jest.MockedFunction<typeof getExternalLeagueAddressCandidates>,
 };
 
 const renderSettings = (teamId = "team-a", avatarUrl: string | null = null, coverUrl: string | null = null) => render(
@@ -69,6 +71,7 @@ beforeEach(() => {
   api.getLinks.mockResolvedValue([]);
   api.search.mockResolvedValue([]);
   api.remove.mockResolvedValue(undefined);
+  api.addresses.mockResolvedValue([]);
   jest.spyOn(window, "confirm").mockReturnValue(true);
 });
 
@@ -203,15 +206,82 @@ test("applies official logo and cover without silently overwriting custom images
   renderSettings("team-a", "https://local/avatar.png", "https://local/cover.jpg");
   const card = await screen.findByTestId("external-link-one");
 
-  fireEvent.click(within(card).getByRole("button", { name: "Использовать данные профиля" }));
+  fireEvent.click(within(card).getByRole("button", { name: "Импортировать данные" }));
   expect(within(card).getByRole("checkbox", { name: "Логотип" })).not.toBeChecked();
   expect(within(card).getByRole("checkbox", { name: "Обложка" })).not.toBeChecked();
   fireEvent.click(within(card).getByRole("checkbox", { name: "Логотип" }));
   fireEvent.click(within(card).getByRole("checkbox", { name: "Обложка" }));
-  fireEvent.click(within(card).getByRole("button", { name: "Применить" }));
+  fireEvent.click(within(card).getByRole("button", { name: "Импортировать выбранное" }));
 
   await waitFor(() => expect(window.confirm).toHaveBeenCalledWith(expect.stringContaining("заменят текущие изображения")));
-  expect(api.apply).toHaveBeenCalledWith("team-a", "one", { useName: true, useLogo: true, useCover: true });
+  expect(api.apply).toHaveBeenCalledWith("team-a", "one", { useName: false, useLogo: true, useCover: true, useDescriptionMetadata: false, selectedPhoneCandidateIds: [], selectedWebsiteCandidateIds: [], selectedAddressCandidateIds: [] });
   expect(within(card).getByAltText("Логотип официального профиля")).toHaveAttribute("src", official.logoUrl);
   expect(within(card).getByAltText("Обложка официального профиля")).toHaveAttribute("src", official.coverUrl);
+});
+
+test("imports authoritative metadata and structured candidates then refreshes the team", async () => {
+  const official = {
+    ...link("one", "Official team", "Любитель 1", true),
+    foundedYear: 2015,
+    coachName: "Тренер",
+    administratorName: "Администратор",
+    phoneCandidates: [{ candidateId: "phone-1", value: "8 (911) 139-02-69" }],
+    websiteCandidates: [{ candidateId: "web-1", value: "https://example.ru" }],
+  };
+  const refreshed = jest.fn().mockResolvedValue(undefined);
+  api.getLinks.mockResolvedValue([official]);
+  api.addresses.mockResolvedValue([{ candidateId: "address-1", venueName: "АСК-С", address: "Фронтовая ул., 3", matchCount: 8 }]);
+  api.apply.mockResolvedValue({ teamId: "team-a", name: "Official team", avatarUrl: null, coverImageUrl: null });
+  render(<TeamExternalLeagueSettings teamId="team-a" teamName="Local team" teamAvatarUrl={null} teamCoverImageUrl={null} teamDescription="Мой текст" teamPhones={[]} teamLinks={[]} teamAddresses={[]} onTeamProfileApplied={refreshed} />);
+  const card = await screen.findByTestId("external-link-one");
+  fireEvent.click(within(card).getByRole("button", { name: "Импортировать данные" }));
+  expect(await within(card).findByText("8 (911) 139-02-69")).toBeInTheDocument();
+  expect(within(card).getByText("https://example.ru")).toBeInTheDocument();
+  expect(await within(card).findByText(/Фронтовая ул., 3/)).toBeInTheDocument();
+  fireEvent.click(within(card).getByRole("checkbox", { name: /Информация о команде/ }));
+  fireEvent.click(within(card).getByRole("checkbox", { name: "8 (911) 139-02-69" }));
+  fireEvent.click(within(card).getByRole("checkbox", { name: "https://example.ru" }));
+  fireEvent.click(within(card).getByRole("checkbox", { name: /АСК-С/ }));
+  fireEvent.click(within(card).getByRole("button", { name: "Импортировать выбранное" }));
+  await waitFor(() => expect(api.apply).toHaveBeenCalledWith("team-a", "one", expect.objectContaining({
+    useDescriptionMetadata: true,
+    selectedPhoneCandidateIds: ["phone-1"],
+    selectedWebsiteCandidateIds: ["web-1"],
+    selectedAddressCandidateIds: ["address-1"],
+  })));
+  expect(window.confirm).toHaveBeenCalledWith(expect.stringContaining("Ваш текущий текст сохранится"));
+  await waitFor(() => expect(refreshed).toHaveBeenCalled());
+});
+
+test("marks existing structured candidates as disabled", async () => {
+  const official = { ...link("one", "Official team", "Любитель 1", true), phoneCandidates: [{ candidateId: "p", value: "8 (911) 139-02-69" }], websiteCandidates: [{ candidateId: "w", value: "https://example.ru/" }] };
+  api.getLinks.mockResolvedValue([official]);
+  api.addresses.mockResolvedValue([{ candidateId: "a", venueName: "Арена", address: "Фронтовая ул., 3", matchCount: 2 }]);
+  render(<TeamExternalLeagueSettings teamId="team-a" teamName="Local" teamAvatarUrl={null} teamCoverImageUrl={null} teamPhones={[{ title: "Ручной", value: " 8 (911) 139-02-69 " }]} teamLinks={[{ title: "Сайт", value: "https://example.ru" }]} teamAddresses={[{ title: "Адрес", value: "фронтовая   ул., 3" }]} onTeamProfileApplied={jest.fn()} />);
+  const card = await screen.findByTestId("external-link-one");
+  fireEvent.click(within(card).getByRole("button", { name: "Импортировать данные" }));
+  await within(card).findByText(/Фронтовая/);
+  expect(within(card).getByRole("checkbox", { name: /8 \(911\) 139-02-69/ })).toBeDisabled();
+  expect(within(card).getByRole("checkbox", { name: /https:\/\/example.ru\// })).toBeDisabled();
+  expect(within(card).getByRole("checkbox", { name: /Арена/ })).toBeDisabled();
+  expect(within(card).getAllByText(/Уже добавлен/).length).toBeGreaterThanOrEqual(3);
+});
+
+test("does not apply a completed Team A import after switching to Team B", async () => {
+  let resolveApply: (value: { teamId: string; name: string; avatarUrl: null; coverImageUrl: null }) => void = () => undefined;
+  const delayedApply = new Promise<{ teamId: string; name: string; avatarUrl: null; coverImageUrl: null }>((resolve) => { resolveApply = resolve; });
+  api.getLinks.mockResolvedValueOnce([link("one", "Команда A", "A", true)]).mockResolvedValueOnce([{ ...link("two", "Команда B", "B", true), teamId: "team-b" }]);
+  api.apply.mockReturnValue(delayedApply);
+  const appliedA = jest.fn();
+  const view = render(<TeamExternalLeagueSettings teamId="team-a" teamName="A" teamAvatarUrl={null} teamCoverImageUrl={null} onTeamProfileApplied={appliedA} />);
+  const cardA = await screen.findByTestId("external-link-one");
+  fireEvent.click(within(cardA).getByRole("button", { name: "Импортировать данные" }));
+  fireEvent.click(within(cardA).getByRole("checkbox", { name: /Название/ }));
+  fireEvent.click(within(cardA).getByRole("button", { name: "Импортировать выбранное" }));
+  view.rerender(<TeamExternalLeagueSettings teamId="team-b" teamName="B" teamAvatarUrl={null} teamCoverImageUrl={null} onTeamProfileApplied={jest.fn()} />);
+  expect(await screen.findByText("Команда B")).toBeInTheDocument();
+  await act(async () => resolveApply({ teamId: "team-a", name: "Команда A", avatarUrl: null, coverImageUrl: null }));
+  expect(appliedA).not.toHaveBeenCalled();
+  expect(screen.getByText("Команда B")).toBeInTheDocument();
+  expect(screen.queryByText("Данные профиля «Команда A» применены.")).not.toBeInTheDocument();
 });

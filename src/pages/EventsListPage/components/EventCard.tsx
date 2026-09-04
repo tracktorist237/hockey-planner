@@ -1,7 +1,9 @@
 import { memo, useMemo } from "react";
-import { EventLookUpDto, EventType, ExternalLeagueProvider } from "../../../types/events";
+import { EventLookUpDto, EventType } from "../../../types/events";
 import { formatRuDateLabel } from "../../../utils/date";
 import { getEventTypeColor, getLeagueColor } from "../../../utils/colors";
+import { ExternalLeagueBadge } from "src/components/ExternalLeagueBadge";
+import { EventStatusBadge } from "src/components/EventStatusBadge";
 
 interface EventCardProps {
   event: EventLookUpDto;
@@ -76,7 +78,6 @@ const EventCardComponent = ({ event, onOpen }: EventCardProps) => {
     event.goalieNeededCount !== undefined &&
     event.goalieNeededCount > 0;
   const goalieConfirmedCount = event.goalieConfirmedCount ?? 0;
-  const isSpbhl = event.externalLeagueProvider === ExternalLeagueProvider.Spbhl;
   const hasScore = event.status === 3 && event.homeScore != null && event.awayScore != null;
 
   return (
@@ -223,11 +224,8 @@ const EventCardComponent = ({ event, onOpen }: EventCardProps) => {
             <span>{event.leagueName}</span>
           </div>
         )}
-        {isSpbhl && (
-          <span style={{ fontSize: 12, fontWeight: 800, color: "var(--hp-primary)", background: "var(--hp-primary-soft)", borderRadius: 10, padding: "3px 8px" }}>
-            {event.externalDivisionName ? `СПбХЛ · ${event.externalDivisionName}` : "СПбХЛ"}
-          </span>
-        )}
+        {event.externalLeagueProvider != null && <ExternalLeagueBadge provider={event.externalLeagueProvider} division={event.externalDivisionName} />}
+        <EventStatusBadge status={event.status} />
       </div>
 
       {hasScore && event.homeTeamName && event.awayTeamName && (

@@ -27,6 +27,11 @@ export interface ExternalLeagueLink {
   coverUrl: string | null;
   city: string | null;
   country: string | null;
+  foundedYear?: number | null;
+  coachName?: string | null;
+  administratorName?: string | null;
+  phoneCandidates?: ExternalProfileCandidate[];
+  websiteCandidates?: ExternalProfileCandidate[];
   isPrimary: boolean;
   lastSyncAttemptAt: string | null;
   lastSuccessfulSyncAt: string | null;
@@ -55,6 +60,18 @@ export interface ApplyExternalLeagueProfileRequest {
   useName: boolean;
   useLogo: boolean;
   useCover: boolean;
+  useDescriptionMetadata: boolean;
+  selectedPhoneCandidateIds: string[];
+  selectedWebsiteCandidateIds: string[];
+  selectedAddressCandidateIds: string[];
+}
+
+export interface ExternalProfileCandidate { candidateId: string; value: string; }
+export interface ExternalAddressCandidate {
+  candidateId: string;
+  venueName: string;
+  address: string;
+  matchCount: number;
 }
 
 export interface AppliedTeamProfile {
@@ -106,6 +123,9 @@ export const searchExternalLeagueTeams = (provider: ExternalLeagueProvider, titl
 
 export const getTeamExternalLeagueLinks = (teamId: string) =>
   request<ExternalLeagueLink[]>(linksPath(teamId));
+
+export const getExternalLeagueAddressCandidates = (teamId: string) =>
+  request<ExternalAddressCandidate[]>(`${linksPath(teamId)}/address-candidates`);
 
 export const createTeamExternalLeagueLink = (teamId: string, link: CreateExternalLeagueLinkRequest) =>
   request<ExternalLeagueLink>(linksPath(teamId), {

@@ -41,10 +41,24 @@ test("event details show tournament, arena, address, score and safe official lin
   render(<EventInfoCard event={{ ...externalEvent, createdAt: "2026-09-01T00:00:00Z" } as EventDto} copySuccess={false} copyEventLink={jest.fn()} />);
 
   expect(screen.getByText("Любитель 3")).toBeInTheDocument();
+  expect(screen.getByText("Лига:")).toBeInTheDocument();
+  expect(screen.queryByText("Лига (дивизион)")).not.toBeInTheDocument();
   expect(screen.getByText("Кубок СПбХЛ")).toBeInTheDocument();
   expect(screen.getByText("Ледовый комплекс «АСК-С»")).toBeInTheDocument();
   expect(screen.getByText("Санкт-Петербург, Стрельна, Фронтовая ул., 3")).toBeInTheDocument();
   expect(screen.getAllByText("4 : 2").length).toBeGreaterThan(0);
   expect(screen.getByRole("link", { name: "Официальный матч СПбХЛ ↗" })).toHaveAttribute("href", externalEvent.spbhlMatchUrl);
   expect(screen.getByRole("link", { name: "Официальный матч СПбХЛ ↗" })).toHaveAttribute("rel", "noopener noreferrer");
+});
+
+test("rescheduled status is visible separately from the league badge", () => {
+  render(<EventCard event={{ ...externalEvent, status: 5 } as EventLookUpDto} onOpen={jest.fn()} />);
+  expect(screen.getByText("СПбХЛ · Любитель 3")).toBeInTheDocument();
+  expect(screen.getByText("Перенесён")).toBeInTheDocument();
+});
+
+test("external badge omits an absent division and details omit an absent address", () => {
+  render(<EventInfoCard event={{ ...externalEvent, externalDivisionName: null, locationAddress: undefined, createdAt: "2026-09-01T00:00:00Z" } as EventDto} copySuccess={false} copyEventLink={jest.fn()} />);
+  expect(screen.getAllByText("СПбХЛ").length).toBeGreaterThan(0);
+  expect(screen.queryByText("Адрес:")).not.toBeInTheDocument();
 });

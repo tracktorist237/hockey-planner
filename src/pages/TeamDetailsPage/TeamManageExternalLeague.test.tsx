@@ -48,5 +48,6 @@ test("external league settings are inside Profile and the separate SPBHL tab is 
 
   expect(await screen.findByText("Профиль команды")).toBeInTheDocument();
   expect(screen.getByTestId("external-league-settings")).toHaveTextContent("external:team");
+  expect(screen.getByTestId("external-league-settings").compareDocumentPosition(screen.getByText("Профиль команды")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   expect(screen.queryByRole("button", { name: "СПбХЛ" })).not.toBeInTheDocument();
 });

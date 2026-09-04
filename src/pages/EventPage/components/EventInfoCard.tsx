@@ -1,6 +1,8 @@
-import { EventDto, EventType, ExternalLeagueProvider } from "src/types/events";
+import { EventDto, EventType } from "src/types/events";
 import { getEventTypeColor, getLeagueColor } from "src/utils/colors";
 import { formatRuDateLabel } from "src/utils/date";
+import { ExternalLeagueBadge, externalLeagueProviderLabel } from "src/components/ExternalLeagueBadge";
+import { EventStatusBadge } from "src/components/EventStatusBadge";
 
 interface EventInfoCardProps {
   event: EventDto;
@@ -29,7 +31,6 @@ const formatDuration = (durationMinutes?: number | null): string => {
 };
 
 export const EventInfoCard = ({ event, copySuccess, copyEventLink }: EventInfoCardProps) => {
-  const isSpbhl = event.externalLeagueProvider === ExternalLeagueProvider.Spbhl;
   const hasScore = event.homeScore != null && event.awayScore != null;
   return (
     <div
@@ -64,6 +65,8 @@ export const EventInfoCard = ({ event, copySuccess, copyEventLink }: EventInfoCa
           >
             {getEventTypeName(event.type as EventType)}
           </span>
+          {event.externalLeagueProvider != null && <ExternalLeagueBadge provider={event.externalLeagueProvider} division={event.externalDivisionName} />}
+          <EventStatusBadge status={event.status} />
           <span
             style={{
               fontSize: "18px",
@@ -192,9 +195,9 @@ export const EventInfoCard = ({ event, copySuccess, copyEventLink }: EventInfoCa
         </div>
       )}
 
-      {isSpbhl && (
+      {event.externalLeagueProvider != null && (
         <div style={{ display: "grid", gap: 8, marginBottom: 12, padding: 12, borderRadius: 10, border: "1px solid var(--hp-border)", background: "var(--hp-surface-soft)" }}>
-          <strong style={{ color: "var(--hp-primary)" }}>СПбХЛ</strong>
+          <div><strong>Лига:</strong> {externalLeagueProviderLabel(event.externalLeagueProvider)}</div>
           {event.externalDivisionName && <div><strong>Дивизион:</strong> {event.externalDivisionName}</div>}
           {event.externalTournamentName && <div><strong>Турнир:</strong> {event.externalTournamentName}</div>}
           {hasScore && <div><strong>Счёт:</strong> {event.homeScore} : {event.awayScore}</div>}
