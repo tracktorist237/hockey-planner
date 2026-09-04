@@ -1,7 +1,7 @@
 import { EventDto, EventType } from "src/types/events";
 import { getEventTypeColor, getLeagueColor } from "src/utils/colors";
 import { formatRuDateLabel } from "src/utils/date";
-import { ExternalLeagueBadge, externalLeagueProviderLabel } from "src/components/ExternalLeagueBadge";
+import { ExternalLeagueBadge } from "src/components/ExternalLeagueBadge";
 import { EventStatusBadge } from "src/components/EventStatusBadge";
 
 interface EventInfoCardProps {
@@ -197,8 +197,7 @@ export const EventInfoCard = ({ event, copySuccess, copyEventLink }: EventInfoCa
 
       {event.externalLeagueProvider != null && (
         <div style={{ display: "grid", gap: 8, marginBottom: 12, padding: 12, borderRadius: 10, border: "1px solid var(--hp-border)", background: "var(--hp-surface-soft)" }}>
-          <div><strong>Лига:</strong> {externalLeagueProviderLabel(event.externalLeagueProvider)}</div>
-          {event.externalDivisionName && <div><strong>Дивизион:</strong> {event.externalDivisionName}</div>}
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}><strong>Лига:</strong> <ExternalLeagueBadge provider={event.externalLeagueProvider} division={event.externalDivisionName} /></div>
           {event.externalTournamentName && <div><strong>Турнир:</strong> {event.externalTournamentName}</div>}
           {hasScore && <div><strong>Счёт:</strong> {event.homeScore} : {event.awayScore}</div>}
           {event.locationName && <div><strong>Арена:</strong> {event.locationName}</div>}

@@ -40,8 +40,9 @@ test("event list does not render an unknown nullable score", () => {
 test("event details show tournament, arena, address, score and safe official link", () => {
   render(<EventInfoCard event={{ ...externalEvent, createdAt: "2026-09-01T00:00:00Z" } as EventDto} copySuccess={false} copyEventLink={jest.fn()} />);
 
-  expect(screen.getByText("Любитель 3")).toBeInTheDocument();
   expect(screen.getByText("Лига:")).toBeInTheDocument();
+  expect(screen.getAllByText("СПбХЛ · Любитель 3").length).toBeGreaterThan(0);
+  expect(screen.queryByText("Дивизион:")).not.toBeInTheDocument();
   expect(screen.queryByText("Лига (дивизион)")).not.toBeInTheDocument();
   expect(screen.getByText("Кубок СПбХЛ")).toBeInTheDocument();
   expect(screen.getByText("Ледовый комплекс «АСК-С»")).toBeInTheDocument();

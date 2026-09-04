@@ -398,7 +398,7 @@ export function TeamExternalLeagueSettings({ teamId, teamName: _teamName, teamAv
       <div>
         <h2 style={{ margin: "0 0 5px", fontSize: 20, color: "var(--hp-text-strong)" }}>Лига и официальный профиль</h2>
         <p style={{ margin: 0, color: "var(--hp-muted)", fontSize: 14, lineHeight: 1.45 }}>
-          Добавьте команды с сайта лиги, чтобы получать расписание, переносы и результаты.
+          Добавьте команды с сайта лиги, чтобы получать расписание, переносы и результаты. Здесь можно обновить данные вручную.
         </p>
       </div>
 
@@ -458,7 +458,7 @@ export function TeamExternalLeagueSettings({ teamId, teamName: _teamName, teamAv
                     {link.logoUrl && <img src={link.logoUrl} alt="Логотип с сайта лиги" onError={(event) => { event.currentTarget.style.display = "none"; }} width={64} height={64} style={{ objectFit: "contain" }} />}
                     <strong style={{ color: "var(--hp-heading)" }}>Данные с сайта лиги</strong>
                     <div style={{ border: "1px solid var(--hp-info-border)", borderRadius: 8, padding: 10, background: "var(--hp-info-soft)", color: "var(--hp-info)", fontSize: 13, lineHeight: 1.45 }}>
-                      Данные получены автоматически с сайта лиги. В них могут быть неточности — перед добавлением проверьте название, контакты и адреса.
+                      Данные получены автоматически с сайта лиги. В них могут быть неточности — перепроверьте информацию перед добавлением в профиль.
                     </div>
                     <div style={{ display: "grid", gap: 8 }}>
                       <strong>Профиль команды</strong>

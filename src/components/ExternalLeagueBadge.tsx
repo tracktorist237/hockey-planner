@@ -1,13 +1,24 @@
 import { ExternalLeagueProvider } from "src/types/events";
+import "src/components/ExternalLeagueBadge.css";
 
-const providerMeta: Record<number, { label: string; background: string; color: string; border: string }> = {
-  [ExternalLeagueProvider.Spbhl]: { label: "СПбХЛ", background: "var(--hp-info-soft)", color: "var(--hp-info)", border: "var(--hp-info-border)" },
+const providerMeta: Record<number, { label: string }> = {
+  [ExternalLeagueProvider.Spbhl]: { label: "СПбХЛ" },
+};
+
+const paletteSize = 6;
+
+export const externalLeagueBadgePalette = (provider: ExternalLeagueProvider | number, division?: string | null) => {
+  const key = `${provider}:${division?.trim().toLocaleLowerCase("ru-RU") ?? ""}`;
+  let hash = 0;
+  for (const character of key) hash = ((hash * 31) + character.charCodeAt(0)) | 0;
+  return Math.abs(hash) % paletteSize;
 };
 
 export const externalLeagueProviderLabel = (provider: ExternalLeagueProvider | number) =>
   providerMeta[provider]?.label ?? "Внешняя лига";
 
 export function ExternalLeagueBadge({ provider, division }: { provider: ExternalLeagueProvider | number; division?: string | null }) {
-  const meta = providerMeta[provider] ?? { label: "Внешняя лига", background: "var(--hp-surface-soft)", color: "var(--hp-muted)", border: "var(--hp-border)" };
-  return <span data-provider={provider} style={{ display: "inline-flex", maxWidth: "100%", width: "fit-content", padding: "3px 8px", borderRadius: 8, border: `1px solid ${meta.border}`, background: meta.background, color: meta.color, fontSize: 12, fontWeight: 800, overflowWrap: "anywhere" }}>{meta.label}{division ? ` · ${division}` : ""}</span>;
+  const meta = providerMeta[provider] ?? { label: "Внешняя лига" };
+  const palette = externalLeagueBadgePalette(provider, division);
+  return <span data-provider={provider} data-palette={palette} className={`hp-external-league-badge hp-external-league-badge--${palette}`}>{meta.label}{division ? ` · ${division}` : ""}</span>;
 }

@@ -1,0 +1,27 @@
+.hp-external-league-badge {
+  display: inline-flex;
+  max-width: 100%;
+  width: fit-content;
+  padding: 3px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--hp-badge-border);
+  background: var(--hp-badge-bg);
+  color: var(--hp-badge-text);
+  font-size: 12px;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.hp-external-league-badge--0 { --hp-badge-bg: #dbeafe; --hp-badge-text: #1e3a8a; --hp-badge-border: #93c5fd; }
+.hp-external-league-badge--1 { --hp-badge-bg: #dcfce7; --hp-badge-text: #14532d; --hp-badge-border: #86efac; }
+.hp-external-league-badge--2 { --hp-badge-bg: #fef3c7; --hp-badge-text: #78350f; --hp-badge-border: #fcd34d; }
+.hp-external-league-badge--3 { --hp-badge-bg: #fce7f3; --hp-badge-text: #831843; --hp-badge-border: #f9a8d4; }
+.hp-external-league-badge--4 { --hp-badge-bg: #ede9fe; --hp-badge-text: #4c1d95; --hp-badge-border: #c4b5fd; }
+.hp-external-league-badge--5 { --hp-badge-bg: #cffafe; --hp-badge-text: #164e63; --hp-badge-border: #67e8f9; }
+
+[data-theme="dark"] .hp-external-league-badge--0 { --hp-badge-bg: #172554; --hp-badge-text: #bfdbfe; --hp-badge-border: #1d4ed8; }
+[data-theme="dark"] .hp-external-league-badge--1 { --hp-badge-bg: #052e16; --hp-badge-text: #bbf7d0; --hp-badge-border: #15803d; }
+[data-theme="dark"] .hp-external-league-badge--2 { --hp-badge-bg: #451a03; --hp-badge-text: #fde68a; --hp-badge-border: #b45309; }
+[data-theme="dark"] .hp-external-league-badge--3 { --hp-badge-bg: #500724; --hp-badge-text: #fbcfe8; --hp-badge-border: #be185d; }
+[data-theme="dark"] .hp-external-league-badge--4 { --hp-badge-bg: #2e1065; --hp-badge-text: #ddd6fe; --hp-badge-border: #7c3aed; }
+[data-theme="dark"] .hp-external-league-badge--5 { --hp-badge-bg: #083344; --hp-badge-text: #cffafe; --hp-badge-border: #0e7490; }

@@ -73,3 +73,9 @@ test("502 and network failures expose safe messages", async () => {
   await expect(getTeamExternalLeagueLinks("team")).rejects.toThrow("Не удалось получить данные внешней лиги. Попробуйте позже.");
   await expect(getTeamExternalLeagueLinks("team")).rejects.toThrow("Не удалось связаться с сервером.");
 });
+
+test("controlled backend errors are not reported as network failures", async () => {
+  mockedFetch.mockResolvedValue(response({ error: "Одна из команд лиги временно недоступна." }, 409));
+
+  await expect(syncAllTeamExternalLeagueLinks("team")).rejects.toThrow("Одна из команд лиги временно недоступна.");
+});
