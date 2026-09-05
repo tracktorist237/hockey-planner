@@ -106,7 +106,10 @@ test("hides the cover choice when the league has no cover", async () => {
   renderSettings();
   const card = await screen.findByTestId("external-link-one");
 
-  fireEvent.click(within(card).getByRole("button", { name: "Перенести данные в профиль" }));
+  fireEvent.click(within(card).getByRole("button", { name: "Добавить данные с СПбХЛ" }));
+
+  expect(within(card).getByText("Добавить данные СПбХЛ в профиль команды")).toBeInTheDocument();
+  expect(within(card).getByText("Выберите, какие данные с официальной страницы «Северная столица» добавить в профиль вашей команды.")).toBeInTheDocument();
 
   expect(within(card).queryByRole("checkbox", { name: "Обложка" })).not.toBeInTheDocument();
   expect(within(card).getByText(/Данные получены автоматически с сайта лиги/)).toBeInTheDocument();
@@ -224,7 +227,7 @@ test("applies official logo and cover without silently overwriting custom images
   renderSettings("team-a", "https://local/avatar.png", "https://local/cover.jpg");
   const card = await screen.findByTestId("external-link-one");
 
-  fireEvent.click(within(card).getByRole("button", { name: "Перенести данные в профиль" }));
+  fireEvent.click(within(card).getByRole("button", { name: "Добавить данные с СПбХЛ" }));
   expect(within(card).getByRole("checkbox", { name: "Логотип" })).not.toBeChecked();
   expect(within(card).getByRole("checkbox", { name: "Обложка" })).not.toBeChecked();
   fireEvent.click(within(card).getByRole("checkbox", { name: "Логотип" }));
@@ -252,7 +255,7 @@ test("imports authoritative metadata and structured candidates then refreshes th
   api.apply.mockResolvedValue({ teamId: "team-a", name: "Official team", avatarUrl: null, coverImageUrl: null });
   render(<TeamExternalLeagueSettings teamId="team-a" teamName="Local team" teamAvatarUrl={null} teamCoverImageUrl={null} teamDescription="Мой текст" teamPhones={[]} teamLinks={[]} teamAddresses={[]} onTeamProfileApplied={refreshed} />);
   const card = await screen.findByTestId("external-link-one");
-  fireEvent.click(within(card).getByRole("button", { name: "Перенести данные в профиль" }));
+  fireEvent.click(within(card).getByRole("button", { name: "Добавить данные с СПбХЛ" }));
   expect(within(card).getByText(/могут быть неточности/)).toBeInTheDocument();
   expect(within(card).getByText("Администратор")).toBeInTheDocument();
   expect(within(card).getByText("Сайт команды")).toBeInTheDocument();
@@ -280,7 +283,7 @@ test("marks existing structured candidates as disabled", async () => {
   api.addresses.mockResolvedValue([{ candidateId: "a", venueName: "Арена", address: "Фронтовая ул., 3", matchCount: 2 }]);
   render(<TeamExternalLeagueSettings teamId="team-a" teamName="Local" teamAvatarUrl={null} teamCoverImageUrl={null} teamPhones={[{ title: "Ручной", value: " 8 (911) 139-02-69 " }]} teamLinks={[{ title: "Сайт", value: "https://example.ru" }]} teamAddresses={[{ title: "Адрес", value: "фронтовая   ул., 3" }]} onTeamProfileApplied={jest.fn()} />);
   const card = await screen.findByTestId("external-link-one");
-  fireEvent.click(within(card).getByRole("button", { name: "Перенести данные в профиль" }));
+  fireEvent.click(within(card).getByRole("button", { name: "Добавить данные с СПбХЛ" }));
   await within(card).findByText(/Фронтовая/);
   expect(within(card).getByRole("checkbox", { name: /8 \(911\) 139-02-69/ })).toBeDisabled();
   expect(within(card).getByRole("checkbox", { name: /https:\/\/example.ru\// })).toBeDisabled();
@@ -296,7 +299,7 @@ test("does not apply a completed Team A import after switching to Team B", async
   const appliedA = jest.fn();
   const view = render(<TeamExternalLeagueSettings teamId="team-a" teamName="A" teamAvatarUrl={null} teamCoverImageUrl={null} onTeamProfileApplied={appliedA} />);
   const cardA = await screen.findByTestId("external-link-one");
-  fireEvent.click(within(cardA).getByRole("button", { name: "Перенести данные в профиль" }));
+  fireEvent.click(within(cardA).getByRole("button", { name: "Добавить данные с СПбХЛ" }));
   fireEvent.click(within(cardA).getByRole("checkbox", { name: /Название/ }));
   fireEvent.click(within(cardA).getByRole("button", { name: "Добавить выбранное в профиль" }));
   view.rerender(<TeamExternalLeagueSettings teamId="team-b" teamName="B" teamAvatarUrl={null} teamCoverImageUrl={null} onTeamProfileApplied={jest.fn()} />);

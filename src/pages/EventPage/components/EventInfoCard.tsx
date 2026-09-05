@@ -195,13 +195,9 @@ export const EventInfoCard = ({ event, copySuccess, copyEventLink }: EventInfoCa
         </div>
       )}
 
-      {event.externalLeagueProvider != null && (
-        <div style={{ display: "grid", gap: 8, marginBottom: 12, padding: 12, borderRadius: 10, border: "1px solid var(--hp-border)", background: "var(--hp-surface-soft)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}><strong>Лига:</strong> <ExternalLeagueBadge provider={event.externalLeagueProvider} division={event.externalDivisionName} /></div>
+      {event.externalLeagueProvider != null && (event.externalTournamentName || event.spbhlMatchUrl) && (
+        <div data-testid="external-match-details" style={{ display: "grid", gap: 8, marginBottom: 12, padding: 12, borderRadius: 10, border: "1px solid var(--hp-border)", background: "var(--hp-surface-soft)" }}>
           {event.externalTournamentName && <div><strong>Турнир:</strong> {event.externalTournamentName}</div>}
-          {hasScore && <div><strong>Счёт:</strong> {event.homeScore} : {event.awayScore}</div>}
-          {event.locationName && <div><strong>Арена:</strong> {event.locationName}</div>}
-          {event.locationAddress && <div><strong>Адрес:</strong> {event.locationAddress}</div>}
           {event.spbhlMatchUrl && (
             <a href={event.spbhlMatchUrl} target="_blank" rel="noopener noreferrer" style={{ color: "var(--hp-primary)", fontWeight: 800 }}>
               Официальный матч СПбХЛ ↗

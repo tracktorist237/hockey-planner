@@ -17,7 +17,7 @@ import {
   syncTeamExternalLeagueLink,
 } from "src/api/externalLeagueTeams";
 import { CheckboxControl } from "src/components/CheckboxControl";
-import { ExternalLeagueBadge } from "src/components/ExternalLeagueBadge";
+import { ExternalLeagueBadge, externalLeagueProviderLabel } from "src/components/ExternalLeagueBadge";
 import { TeamContactItem } from "src/types/teams";
 import { LoadingIndicator } from "src/components/LoadingIndicator";
 import { cardStyle, inputStyle } from "src/pages/TeamsPage/components/styles";
@@ -435,8 +435,9 @@ export function TeamExternalLeagueSettings({ teamId, teamName: _teamName, teamAv
 
           {links.length === 0 && <div style={{ color: "var(--hp-muted)", fontSize: 14 }}>Команды с сайта лиги пока не добавлены.</div>}
           <div style={{ display: "grid", gap: 10 }}>
-            {links.map((link) => (
-              <article key={link.id} data-testid={`external-link-${link.id}`} style={{ border: "1px solid var(--hp-border)", borderRadius: 8, padding: 12, display: "grid", gap: 10, minWidth: 0 }}>
+            {links.map((link) => {
+              const leagueName = externalLeagueProviderLabel(link.provider);
+              return <article key={link.id} data-testid={`external-link-${link.id}`} style={{ border: "1px solid var(--hp-border)", borderRadius: 8, padding: 12, display: "grid", gap: 10, minWidth: 0 }}>
                 <div style={{ display: "grid", gridTemplateColumns: link.logoUrl ? "52px minmax(0, 1fr)" : "minmax(0, 1fr)", gap: 12, alignItems: "center" }}>
                   {link.logoUrl && <img src={link.logoUrl} alt="" width={52} height={52} style={{ objectFit: "contain", maxWidth: "100%" }} />}
                   <div style={{ minWidth: 0, display: "grid", gap: 4 }}>
@@ -456,7 +457,10 @@ export function TeamExternalLeagueSettings({ teamId, teamName: _teamName, teamAv
                   <div style={{ display: "grid", gap: 9, padding: 10, borderRadius: 8, background: "var(--hp-surface-soft)" }}>
                     {link.coverUrl && <img src={link.coverUrl} alt="Обложка с сайта лиги" onError={(event) => { event.currentTarget.style.display = "none"; }} style={{ width: "100%", maxHeight: 140, objectFit: "cover", borderRadius: 6, overflowWrap: "anywhere" }} />}
                     {link.logoUrl && <img src={link.logoUrl} alt="Логотип с сайта лиги" onError={(event) => { event.currentTarget.style.display = "none"; }} width={64} height={64} style={{ objectFit: "contain" }} />}
-                    <strong style={{ color: "var(--hp-heading)" }}>Данные с сайта лиги</strong>
+                    <strong style={{ color: "var(--hp-heading)" }}>Добавить данные {leagueName} в профиль команды</strong>
+                    <span style={{ color: "var(--hp-muted)", fontSize: 14, lineHeight: 1.45 }}>
+                      Выберите, какие данные с официальной страницы «{link.externalTeamName}» добавить в профиль вашей команды.
+                    </span>
                     <div style={{ border: "1px solid var(--hp-info-border)", borderRadius: 8, padding: 10, background: "var(--hp-info-soft)", color: "var(--hp-info)", fontSize: 13, lineHeight: 1.45 }}>
                       Данные получены автоматически с сайта лиги. В них могут быть неточности — перепроверьте информацию перед добавлением в профиль.
                     </div>
@@ -495,11 +499,11 @@ export function TeamExternalLeagueSettings({ teamId, teamName: _teamName, teamAv
                   {link.profileUrl && <a href={link.profileUrl} target="_blank" rel="noopener noreferrer" style={{ ...secondaryButtonStyle, textAlign: "center", textDecoration: "none", boxSizing: "border-box" }}>Открыть на сайте лиги</a>}
                   <button type="button" onClick={() => void handleSync(link)} disabled={busy !== null} style={buttonStyle}>Обновить данные</button>
                   {!link.isPrimary && <button type="button" onClick={() => void handleMakePrimary(link)} disabled={busy !== null} style={secondaryButtonStyle}>Сделать основной командой</button>}
-                  <button type="button" onClick={() => void openProfileImport(link)} disabled={busy !== null} style={secondaryButtonStyle}>Перенести данные в профиль</button>
+                  <button type="button" onClick={() => void openProfileImport(link)} disabled={busy !== null} style={secondaryButtonStyle}>Добавить данные с {leagueName}</button>
                   <button type="button" onClick={() => void handleRemove(link)} disabled={busy !== null} style={{ ...secondaryButtonStyle, background: "var(--hp-danger-soft)", color: "var(--hp-danger)" }}>Убрать команду</button>
                 </div>
-              </article>
-            ))}
+              </article>;
+            })}
           </div>
         </>
       )}
