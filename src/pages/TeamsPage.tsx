@@ -115,7 +115,18 @@ export function TeamsPage({ currentUser, currentTeamId, onTeamChange }: TeamsPag
                 loading={teamsPage.loading}
                 onNameChange={teamsPage.setCreateName}
                 onPublicChange={teamsPage.setCreatePublic}
-                onCreate={() => void teamsPage.createNewTeam()}
+                onCreate={(externalTeams) => void teamsPage.createNewTeam(externalTeams).then((outcome) => {
+                  if (!outcome) return;
+                  if (outcome.linked.length === 0 && outcome.failed.length === 0) return;
+                  navigate(`/teams/${outcome.team.id}/manage`, {
+                    state: {
+                      teamCreationNotice: outcome.failed.length > 0
+                        ? `Команда создана, но не удалось добавить: ${outcome.failed.map((item) => item.name).join(", ")}. Успешно добавлены: ${outcome.linked.map((item) => item.name).join(", ") || "нет"}.`
+                        : "Команда создана. Официальные профили успешно добавлены.",
+                      teamCreationWarning: outcome.failed.length > 0,
+                    },
+                  });
+                })}
               />
             )}
             </div>

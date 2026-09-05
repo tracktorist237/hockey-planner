@@ -47,6 +47,7 @@ const mapEventToFormData = (event: Awaited<ReturnType<typeof getEvent>>): EventF
 export const useUpdateEventForm = ({ eventId, onUpdated }: UseUpdateEventFormOptions) => {
   const [loadingInitial, setLoadingInitial] = useState(true);
   const [teamId, setTeamId] = useState<string | null>(null);
+  const [isExternalEvent, setIsExternalEvent] = useState(false);
 
   const {
     formData,
@@ -87,6 +88,7 @@ export const useUpdateEventForm = ({ eventId, onUpdated }: UseUpdateEventFormOpt
           return;
         }
         setTeamId(event.teamId ?? null);
+        setIsExternalEvent(event.externalLeagueProvider != null);
         setFormData(mapEventToFormData(event));
       })
       .catch((err) => {
@@ -125,6 +127,7 @@ export const useUpdateEventForm = ({ eventId, onUpdated }: UseUpdateEventFormOpt
     isMeeting,
     isPractice,
     teamId,
+    isExternalEvent,
     handleSubmit,
   };
 };

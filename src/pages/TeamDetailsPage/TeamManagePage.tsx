@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { AddressSearchInput } from "src/AddressSearchInput";
 import { LoadingIndicator } from "src/components/LoadingIndicator";
 import { InternalPageHeader } from "src/components/InternalPageHeader";
@@ -8,6 +8,7 @@ import { TeamContactItem, TeamDto, TeamMemberDto, TeamVisibility } from "src/typ
 import { User } from "src/types/user";
 import { TeamMembersSection } from "src/pages/TeamsPage/components/TeamMembersSection";
 import { ExerciseBankManager, UniformColorsManager } from "src/pages/TeamDetailsPage/TeamLibrarySections";
+import { TeamExternalLeagueSettings } from "src/pages/TeamDetailsPage/TeamExternalLeagueSettings";
 import { cardStyle, inputStyle } from "src/pages/TeamsPage/components/styles";
 
 const TeamRole = {
@@ -216,6 +217,7 @@ function AddressItemsEditor({
 }
 
 export function TeamManagePage({ currentUser }: TeamManagePageProps) {
+  const location = useLocation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [team, setTeam] = useState<TeamDto | null>(null);
@@ -478,6 +480,11 @@ export function TeamManagePage({ currentUser }: TeamManagePageProps) {
 
         {error && <div style={{ marginBottom: 12, background: "var(--hp-danger-soft)", color: "var(--hp-danger)", borderRadius: 14, padding: "12px 14px" }}>{error}</div>}
         {message && <div style={{ marginBottom: 12, background: "var(--hp-success-soft)", color: "var(--hp-success)", borderRadius: 14, padding: "12px 14px", fontWeight: 800 }}>{message}</div>}
+        {typeof location.state?.teamCreationNotice === "string" && (
+          <div role="status" style={{ marginBottom: 12, background: location.state.teamCreationWarning ? "var(--hp-warning-soft)" : "var(--hp-success-soft)", color: location.state.teamCreationWarning ? "var(--hp-warning)" : "var(--hp-success)", borderRadius: 14, padding: "12px 14px", fontWeight: 800 }}>
+            {location.state.teamCreationNotice}
+          </div>
+        )}
         {loading && <section style={cardStyle}><LoadingIndicator text="Загружаем настройки..." /></section>}
 
         {isDenied && (
@@ -535,10 +542,22 @@ export function TeamManagePage({ currentUser }: TeamManagePageProps) {
             </section>
 
             {activeTab === "profile" && (
-              <section style={{ ...cardStyle, marginTop: 14 }}>
-                <h2 style={{ margin: "0 0 4px", fontSize: 20, color: "var(--hp-text-strong)" }}>Профиль команды</h2>
-                <div style={{ marginBottom: 12, color: "var(--hp-muted)", fontSize: 14, lineHeight: 1.4 }}>Видимая информация на странице команды.</div>
-                <div style={{ display: "grid", gap: 10 }}>
+              <>
+                <TeamExternalLeagueSettings
+                  teamId={team.id}
+                  teamName={form.name}
+                  teamAvatarUrl={form.avatarUrl || null}
+                  teamCoverImageUrl={form.coverImageUrl || null}
+                  teamDescription={form.description}
+                  teamPhones={form.phones}
+                  teamLinks={form.links}
+                  teamAddresses={form.addresses}
+                  onTeamProfileApplied={async () => { await loadTeam(); }}
+                />
+                <section style={{ ...cardStyle, marginTop: 14 }}>
+                  <h2 style={{ margin: "0 0 4px", fontSize: 20, color: "var(--hp-text-strong)" }}>Профиль команды</h2>
+                  <div style={{ marginBottom: 12, color: "var(--hp-muted)", fontSize: 14, lineHeight: 1.4 }}>Видимая информация на странице команды.</div>
+                  <div style={{ display: "grid", gap: 10 }}>
                   <input value={form.name} onChange={(event) => setForm((value) => ({ ...value, name: event.target.value }))} placeholder="Название команды" style={inputStyle} />
                   <textarea value={form.description} onChange={(event) => setForm((value) => ({ ...value, description: event.target.value }))} placeholder="Описание команды" style={{ ...inputStyle, minHeight: 82, resize: "vertical", fontFamily: "inherit" }} />
                   <div style={{ display: "grid", gridTemplateColumns: "96px 1fr", gap: 12, alignItems: "center", border: "1px solid var(--hp-border)", borderRadius: 14, padding: 12, background: "var(--hp-surface-soft)" }}>
@@ -611,8 +630,9 @@ export function TeamManagePage({ currentUser }: TeamManagePageProps) {
                   <button type="button" onClick={handleSaveTeam} disabled={teamSaving} style={{ border: 0, borderRadius: 14, padding: "13px 14px", background: "var(--hp-primary)", color: "white", fontWeight: 900, cursor: teamSaving ? "wait" : "pointer", opacity: teamSaving ? 0.72 : 1 }}>
                     {teamSaving ? "Сохраняем..." : "Сохранить профиль"}
                   </button>
-                </div>
-              </section>
+                  </div>
+                </section>
+              </>
             )}
 
             {activeTab === "invite" && (

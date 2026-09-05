@@ -1,4 +1,5 @@
 import { ReactNode } from "react";
+import "src/components/CheckboxControl.css";
 
 interface CheckboxControlProps {
   checked: boolean;
@@ -10,7 +11,7 @@ interface CheckboxControlProps {
 
 export function CheckboxControl({ checked, onChange, label, description, disabled = false }: CheckboxControlProps) {
   return (
-    <label
+    <label className={`hp-checkbox${disabled ? " hp-checkbox--disabled" : ""}`}
       style={{
         display: "flex",
         alignItems: "flex-start",
@@ -24,39 +25,17 @@ export function CheckboxControl({ checked, onChange, label, description, disable
         opacity: disabled ? 0.65 : 1,
       }}
     >
-      <span style={{ position: "relative", width: 22, height: 22, flexShrink: 0, marginTop: 1 }}>
+      <span className="hp-checkbox__control">
         <input
           type="checkbox"
           checked={checked}
           disabled={disabled}
           onChange={(event) => onChange(event.target.checked)}
-          style={{
-            position: "absolute",
-            inset: 0,
-            width: "100%",
-            height: "100%",
-            margin: 0,
-            opacity: 0,
-            cursor: disabled ? "not-allowed" : "pointer",
-          }}
+          className="hp-checkbox__input"
         />
         <span
           aria-hidden="true"
-          style={{
-            width: 22,
-            height: 22,
-            borderRadius: 7,
-            border: checked ? "1px solid var(--hp-primary)" : "1px solid var(--hp-border)",
-            background: checked ? "var(--hp-primary)" : "var(--hp-input-bg)",
-            color: "white",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: 15,
-            fontWeight: 900,
-            lineHeight: 1,
-            boxShadow: checked ? "var(--hp-shadow-sm)" : "inset 0 0 0 1px var(--hp-surface-soft)",
-          }}
+          className={`hp-checkbox__box${checked ? " hp-checkbox__box--checked" : ""}`}
         >
           {checked ? "✓" : ""}
         </span>

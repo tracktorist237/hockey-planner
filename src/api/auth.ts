@@ -256,19 +256,23 @@ const readErrorMessage = async (response: Response): Promise<string> => {
 const createNetworkError = (): Error =>
   new Error("Сервер временно недоступен. Проверьте интернет и попробуйте ещё раз.");
 
-const fetchWithTimeout = async (input: RequestInfo | URL, init: RequestInit = {}): Promise<Response> => {
+const fetchWithTimeout = async (
+  input: RequestInfo | URL,
+  init: RequestInit = {},
+  timeoutMs = AUTH_REQUEST_TIMEOUT_MS,
+): Promise<Response> => {
   if (typeof AbortController === "undefined") {
     writeClientDebugEvent("auth.fetch.noAbortController", { input: String(input) });
     return Promise.race([
       fetch(input, init),
       new Promise<Response>((_, reject) => {
-        window.setTimeout(() => reject(createNetworkError()), AUTH_REQUEST_TIMEOUT_MS);
+        window.setTimeout(() => reject(createNetworkError()), timeoutMs);
       }),
     ]);
   }
 
   const controller = new AbortController();
-  const timeoutId = window.setTimeout(() => controller.abort(), AUTH_REQUEST_TIMEOUT_MS);
+  const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
 
   try {
     writeClientDebugEvent("auth.fetch.start", { input: String(input), method: init.method ?? "GET" });
@@ -417,7 +421,12 @@ async function refreshAuthInternal(): Promise<User | null> {
   return user;
 }
 
-export async function authFetch(input: string, init: RequestInit = {}, retry = true): Promise<Response> {
+export async function authFetch(
+  input: string,
+  init: RequestInit = {},
+  retry = true,
+  timeoutMs = AUTH_REQUEST_TIMEOUT_MS,
+): Promise<Response> {
   const sessionAtStart = readAuthSession();
   const accessToken = sessionAtStart.accessToken;
   const headers = new Headers(init.headers);
@@ -428,7 +437,7 @@ export async function authFetch(input: string, init: RequestInit = {}, retry = t
   const response = await fetchWithTimeout(buildApiUrl(input), {
     ...init,
     headers,
-  });
+  }, timeoutMs);
 
   if (response.status !== 401) {
     return response;
@@ -441,7 +450,7 @@ export async function authFetch(input: string, init: RequestInit = {}, retry = t
 
   const currentSession = readAuthSession();
   if (!isSameSession(currentSession, sessionAtStart) && currentSession.accessToken) {
-    return authFetch(input, init, false);
+    return authFetch(input, init, false, timeoutMs);
   }
 
   if (!currentSession.refreshToken) {
@@ -453,7 +462,7 @@ export async function authFetch(input: string, init: RequestInit = {}, retry = t
   if (!getAccessToken()) {
     return response;
   }
-  return authFetch(input, init, false);
+  return authFetch(input, init, false, timeoutMs);
 }
 
 export async function logoutAuth(): Promise<void> {

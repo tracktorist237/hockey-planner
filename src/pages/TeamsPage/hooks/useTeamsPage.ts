@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import {
   createTeam,
   getMyTeams,
@@ -9,9 +9,17 @@ import {
   TeamsApiError,
   updateTeamMember,
 } from "src/api/teams";
+import { createTeamExternalLeagueLink, syncTeamExternalLeagueLink } from "src/api/externalLeagueTeams";
 import { TeamDto, TeamMemberDto, TeamVisibility, UpdateTeamMemberRequest } from "src/types/teams";
 import { User } from "src/types/user";
 import { TeamsTab } from "../types";
+import type { SelectedExternalTeam } from "../types";
+
+export interface CreateTeamOutcome {
+  team: TeamDto;
+  linked: SelectedExternalTeam[];
+  failed: SelectedExternalTeam[];
+}
 
 export function useTeamsPage(currentUser: User | null) {
   const [myTeams, setMyTeams] = useState<TeamDto[]>([]);
@@ -32,6 +40,7 @@ export function useTeamsPage(currentUser: User | null) {
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [apiUnavailable, setApiUnavailable] = useState(false);
+  const creatingTeam = useRef(false);
   const [pinnedTeamIds, setPinnedTeamIds] = useState<string[]>(() => {
     try {
       const saved = localStorage.getItem("pinnedTeamIds");
@@ -147,17 +156,20 @@ export function useTeamsPage(currentUser: User | null) {
     [currentUser?.id, managedTeam, reloadTeams],
   );
 
-  const createNewTeam = useCallback(async () => {
+  const createNewTeam = useCallback(async (externalTeams: SelectedExternalTeam[]): Promise<CreateTeamOutcome | null> => {
+    if (creatingTeam.current) return null;
+
     if (!currentUser?.id) {
       setError("Сначала войдите в профиль.");
-      return;
+      return null;
     }
 
     if (!createName.trim()) {
       setError("Введите название команды.");
-      return;
+      return null;
     }
 
+    creatingTeam.current = true;
     setLoading(true);
     setError(null);
     setMessage(null);
@@ -169,13 +181,33 @@ export function useTeamsPage(currentUser: User | null) {
         },
         currentUser.id,
       );
+      const linked: SelectedExternalTeam[] = [];
+      const failed: SelectedExternalTeam[] = [];
+      for (const externalTeam of externalTeams) {
+        try {
+          const link = await createTeamExternalLeagueLink(created.id, {
+            provider: externalTeam.provider,
+            externalTeamId: externalTeam.externalTeamId,
+            isPrimary: externalTeam.isPrimary,
+          });
+          await syncTeamExternalLeagueLink(created.id, link.id);
+          linked.push(externalTeam);
+        } catch {
+          failed.push(externalTeam);
+        }
+      }
       setCreateName("");
-      setMessage(`Команда "${created.name}" создана и добавлена в "Мои команды".`);
+      setMessage(failed.length > 0
+        ? "Команда создана, но часть привязок лиги не удалось добавить."
+        : `Команда "${created.name}" создана и добавлена в "Мои команды".`);
       setActiveTab("my");
       await reloadTeams();
+      return { team: created, linked, failed };
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Не удалось создать команду.");
+      return null;
     } finally {
+      creatingTeam.current = false;
       setLoading(false);
     }
   }, [createName, createPublic, currentUser?.id, reloadTeams]);

@@ -17,7 +17,7 @@ export function UpdateEventPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { isHeaderVisible, isFooterVisible } = useScrollVisibility();
-  const { formData, updateField, handleTypeChange, handleSubmit, loading, loadingInitial, error, isGame, isMeeting, isPractice, teamId } =
+  const { formData, updateField, handleTypeChange, handleSubmit, loading, loadingInitial, error, isGame, isMeeting, isPractice, teamId, isExternalEvent } =
     useUpdateEventForm({ eventId: id, onUpdated: () => id && navigate(`/events/${id}`) });
 
   if (!id) {
@@ -33,6 +33,7 @@ export function UpdateEventPage() {
       <div style={{ padding: "16px", paddingTop: "92px", paddingBottom: "120px", maxWidth: "100%", margin: "0 auto", boxSizing: "border-box" }}>
         <div style={{ maxWidth: "100%", margin: "0 auto", boxSizing: "border-box" }}>
           {error && <ErrorMessage error={error} />}
+          {isExternalEvent && <div style={{ marginBottom: 12, padding: 12, borderRadius: 10, background: "var(--hp-info-soft)", color: "var(--hp-info)", fontWeight: 800 }}>Эти данные получены с сайта лиги. При следующем обновлении часть изменений может быть заменена данными лиги.</div>}
           <div style={{ backgroundColor: "var(--hp-surface)", borderRadius: "16px", padding: "20px", boxShadow: "var(--hp-shadow-sm)", width: "100%", boxSizing: "border-box" }}>
             <EventTypeSelector currentType={formData.type} onChange={handleTypeChange} />
             {isMeeting && <MeetingForm title={formData.title} onChange={(value) => updateField("title", value)} />}

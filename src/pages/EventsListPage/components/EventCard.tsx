@@ -2,6 +2,8 @@ import { memo, useMemo } from "react";
 import { EventLookUpDto, EventType } from "../../../types/events";
 import { formatRuDateLabel } from "../../../utils/date";
 import { getEventTypeColor, getLeagueColor } from "../../../utils/colors";
+import { ExternalLeagueBadge } from "src/components/ExternalLeagueBadge";
+import { EventStatusBadge } from "src/components/EventStatusBadge";
 
 interface EventCardProps {
   event: EventLookUpDto;
@@ -76,6 +78,7 @@ const EventCardComponent = ({ event, onOpen }: EventCardProps) => {
     event.goalieNeededCount !== undefined &&
     event.goalieNeededCount > 0;
   const goalieConfirmedCount = event.goalieConfirmedCount ?? 0;
+  const hasScore = event.status === 3 && event.homeScore != null && event.awayScore != null;
 
   return (
     <div
@@ -221,7 +224,15 @@ const EventCardComponent = ({ event, onOpen }: EventCardProps) => {
             <span>{event.leagueName}</span>
           </div>
         )}
+        {event.externalLeagueProvider != null && <ExternalLeagueBadge provider={event.externalLeagueProvider} division={event.externalDivisionName} />}
+        <EventStatusBadge status={event.status} />
       </div>
+
+      {hasScore && event.homeTeamName && event.awayTeamName && (
+        <div style={{ marginBottom: 8, color: "var(--hp-heading)", fontWeight: 800, overflowWrap: "anywhere" }}>
+          {event.homeTeamName} {event.homeScore} : {event.awayScore} {event.awayTeamName}
+        </div>
+      )}
       
       {attendanceStatusMeta && (
         <div

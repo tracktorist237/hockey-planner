@@ -8,6 +8,7 @@ interface EditableEventTitleProps {
   borderColor: string;
   color: string;
   quoted?: boolean;
+  disabled?: boolean;
 }
 
 export const EditableEventTitle = ({
@@ -18,6 +19,7 @@ export const EditableEventTitle = ({
   borderColor,
   color,
   quoted = false,
+  disabled = false,
 }: EditableEventTitleProps) => {
   const [isEditing, setIsEditing] = useState(false);
 
@@ -69,7 +71,7 @@ export const EditableEventTitle = ({
           <span style={{ fontSize: "15px", fontWeight: "600", overflowWrap: "anywhere" }}>
             {quoted ? `"${value}"` : value}
           </span>
-          <button
+          {!disabled && <button
             type="button"
             aria-label={`Редактировать ${label.toLocaleLowerCase("ru-RU")}`}
             title="Редактировать название"
@@ -95,7 +97,7 @@ export const EditableEventTitle = ({
             }}
           >
             ✏️
-          </button>
+          </button>}
         </div>
       )}
     </div>
