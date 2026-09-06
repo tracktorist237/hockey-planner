@@ -49,12 +49,16 @@ test("selects a nearby target, shows conflicts and navigates after transactional
 
   expect(await screen.findByText("Текущий состав целевого мероприятия будет заменён.")).toBeInTheDocument();
   expect(screen.getByText("Текущее описание целевого мероприятия будет заменено.")).toBeInTheDocument();
-  expect(screen.getByRole("radio", { name: "Объединить" })).toBeChecked();
+  expect(screen.getByRole("heading", { name: "Как объединить ответы участников" })).toBeInTheDocument();
+  expect(screen.getByRole("radio", { name: /^Объединить/ })).toBeChecked();
+  expect(screen.getByText("Ответы из исходного мероприятия считаются основными и заменяют ответы в целевом. «Не ответил» не перезаписывает уже выбранный ответ.")).toBeInTheDocument();
+  expect(screen.getByText("Уже выбранные ответы в целевом мероприятии сохраняются. Из исходного переносятся только ответы вместо «Не ответил» или отсутствующих.")).toBeInTheDocument();
+  expect(screen.getByText("Все отметки «Смогу» из исходного мероприятия переносятся в целевое, даже если там было «Не смогу». Остальные ответы не меняются.")).toBeInTheDocument();
   expect(await screen.findByText("Изменится явка 1 участников")).toBeInTheDocument();
   expect(screen.getByText("1: Не смогу → Смогу")).toBeInTheDocument();
   fireEvent.click(screen.getByText("Показать участников"));
   expect(screen.getByText("Иван Иванов: Не смогу → Смогу")).toBeInTheDocument();
-  fireEvent.click(screen.getByRole("radio", { name: "Перенести только «Смогу»" }));
+  fireEvent.click(screen.getByRole("radio", { name: /^Перенести только «Смогу»/ }));
   await waitFor(() => expect(mockedPreview).toHaveBeenLastCalledWith("source", "target", AttendanceTransferMode.ConfirmedOnly));
   fireEvent.click(screen.getByRole("checkbox", { name: /Состав и звенья/ }));
   fireEvent.click(screen.getByRole("checkbox", { name: /Гости/ }));
