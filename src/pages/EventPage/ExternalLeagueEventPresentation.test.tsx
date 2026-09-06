@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { EventInfoCard } from "src/pages/EventPage/components/EventInfoCard";
 import { EventAdditionalInfo } from "src/pages/EventPage/components/EventAdditionalInfo";
 import { EventCard } from "src/pages/EventsListPage/components/EventCard";
@@ -65,4 +65,17 @@ test("external badge omits an absent division and details omit an absent address
   render(<EventInfoCard event={{ ...externalEvent, externalDivisionName: null, locationAddress: undefined, createdAt: "2026-09-01T00:00:00Z" } as EventDto} copySuccess={false} copyEventLink={jest.fn()} />);
   expect(screen.getAllByText("СПбХЛ").length).toBeGreaterThan(0);
   expect(within(screen.getByTestId("external-match-details")).queryByText("Адрес:")).not.toBeInTheDocument();
+});
+
+test("event overlap badge opens every conflicting event with its actual time range", () => {
+  render(<EventCard event={{ ...externalEvent, conflicts: [
+    { id: "one", title: "Тренировка", startTime: "2026-09-04T17:00:00Z", durationMinutes: 60, status: 1 },
+    { id: "two", title: "Собрание", startTime: "2026-09-04T18:30:00Z", durationMinutes: 30, status: 1 },
+  ] } as EventLookUpDto} onOpen={jest.fn()} />);
+
+  fireEvent.click(screen.getByRole("button", { name: "Пересечение" }));
+  const dialog = screen.getByRole("dialog", { name: "Пересекающиеся мероприятия" });
+  expect(within(dialog).getByRole("link", { name: "Тренировка" })).toHaveAttribute("href", "/events/one");
+  expect(within(dialog).getByRole("link", { name: "Собрание" })).toHaveAttribute("href", "/events/two");
+  expect(within(dialog).getByText(/20:00–21:00/)).toBeInTheDocument();
 });

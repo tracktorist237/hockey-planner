@@ -3,6 +3,7 @@ import { getEventTypeColor, getLeagueColor } from "src/utils/colors";
 import { formatRuDateLabel } from "src/utils/date";
 import { ExternalLeagueBadge } from "src/components/ExternalLeagueBadge";
 import { EventStatusBadge } from "src/components/EventStatusBadge";
+import { EventConflictBadge } from "src/components/EventConflictBadge";
 
 interface EventInfoCardProps {
   event: EventDto;
@@ -67,6 +68,7 @@ export const EventInfoCard = ({ event, copySuccess, copyEventLink }: EventInfoCa
           </span>
           {event.externalLeagueProvider != null && <ExternalLeagueBadge provider={event.externalLeagueProvider} division={event.externalDivisionName} />}
           <EventStatusBadge status={event.status} />
+          <EventConflictBadge conflicts={event.conflicts} />
           <span
             style={{
               fontSize: "18px",

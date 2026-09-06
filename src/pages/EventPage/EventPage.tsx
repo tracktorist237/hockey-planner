@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { createEventGuest, updateAttendance, updateEventGuestAttendance } from "src/api/events";
+import { AttendanceConflictError, createEventGuest, updateAttendance, updateEventGuestAttendance } from "src/api/events";
 import { getEventGoalies } from "src/api/goalies";
 import { getMyTeams } from "src/api/teams";
 import { getUserById, getUsers } from "src/api/users";
@@ -93,7 +93,16 @@ export function EventPage({ eventId, onBack, currentUser }: EventPageProps) {
         if (!canManageEvent) {
           return;
         }
-        await updateAttendance(event.id, attendanceItem.userId, status, notes, selectedUserId);
+        try {
+          await updateAttendance(event.id, attendanceItem.userId, status, notes, selectedUserId);
+        } catch (attendanceError) {
+          if (!(attendanceError instanceof AttendanceConflictError)) throw attendanceError;
+          const conflictNames = attendanceError.conflicts
+            .map(conflict => `${conflict.title}${conflict.teamName ? ` (${conflict.teamName})` : ""}`)
+            .join("\n");
+          if (!window.confirm(`В это время у участника уже есть мероприятие:\n\n${conflictNames}\n\nВсё равно отметить «Смогу»?`)) return;
+          await updateAttendance(event.id, attendanceItem.userId, status, notes, selectedUserId, true);
+        }
       }
       await reloadEvent();
     } catch (err) {

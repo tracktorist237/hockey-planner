@@ -4,6 +4,7 @@ import { formatRuDateLabel } from "../../../utils/date";
 import { getEventTypeColor, getLeagueColor } from "../../../utils/colors";
 import { ExternalLeagueBadge } from "src/components/ExternalLeagueBadge";
 import { EventStatusBadge } from "src/components/EventStatusBadge";
+import { EventConflictBadge } from "src/components/EventConflictBadge";
 
 interface EventCardProps {
   event: EventLookUpDto;
@@ -226,6 +227,7 @@ const EventCardComponent = ({ event, onOpen }: EventCardProps) => {
         )}
         {event.externalLeagueProvider != null && <ExternalLeagueBadge provider={event.externalLeagueProvider} division={event.externalDivisionName} />}
         <EventStatusBadge status={event.status} />
+        <EventConflictBadge conflicts={event.conflicts} />
       </div>
 
       {hasScore && event.homeTeamName && event.awayTeamName && (

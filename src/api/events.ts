@@ -1,4 +1,4 @@
-import { AttendanceLookUpDto, CreateEventDto, EventDto, EventListDto } from "../types/events";
+import { AttendanceLookUpDto, CreateEventDto, EventConflictDto, EventDto, EventListDto } from "../types/events";
 import { authFetch } from "src/api/auth";
 
 const readStoredCurrentUserId = (): string | null => {
@@ -137,6 +137,7 @@ export async function updateAttendance(
   status: number,
   notes?: string | null,
   currentUserId?: string | null,
+  ignoreConflicts = false,
 ): Promise<void> {
   const query = currentUserId ? `?currentUserId=${encodeURIComponent(currentUserId)}` : "";
   const res = await authFetch(`/api/events/${eventId}/attendance/${userId}${query}`, {
@@ -145,12 +146,24 @@ export async function updateAttendance(
     body: JSON.stringify({
       status,
       notes: notes ?? null,
+      ignoreConflicts,
     }),
   });
 
   if (!res.ok) {
-    const text = await res.text();
-    throw new Error(text || "Ошибка обновления явки");
+    const data = await res.json().catch(() => null) as { message?: string; error?: string; conflicts?: EventConflictDto[] } | null;
+    if (res.status === 409 && data?.conflicts?.length) {
+      throw new AttendanceConflictError(data.message || "В это время у вас уже есть мероприятие", data.conflicts);
+    }
+    throw new Error(data?.message || data?.error || "Ошибка обновления явки");
+  }
+}
+
+export class AttendanceConflictError extends Error {
+  constructor(message: string, public readonly conflicts: EventConflictDto[]) {
+    super(message);
+    Object.setPrototypeOf(this, AttendanceConflictError.prototype);
+    this.name = "AttendanceConflictError";
   }
 }
 

@@ -9,6 +9,7 @@ import {
   updateAttendance,
   updateEvent,
   updateEventGuestAttendance,
+  AttendanceConflictError,
 } from "src/api/events";
 import { CreateEventDto, EventDto, EventType } from "src/types/events";
 
@@ -157,8 +158,17 @@ test("updateAttendance preserves actor query, target route and body", async () =
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: 2, notes: "Ready" }),
+      body: JSON.stringify({ status: 2, notes: "Ready", ignoreConflicts: false }),
     },
+  );
+});
+
+test("updateAttendance exposes a controlled 409 conflict payload", async () => {
+  const conflicts = [{ id: "other", title: "Other", startTime: "2026-09-10T18:00:00Z", durationMinutes: 60, status: 1 }];
+  mockedAuthFetch.mockResolvedValue(createResponse({ message: "В это время у вас уже есть мероприятие", conflicts }, 409));
+
+  await expect(updateAttendance(eventId, userId, 2, null, userId)).rejects.toEqual(
+    expect.objectContaining<Partial<AttendanceConflictError>>({ name: "AttendanceConflictError", conflicts }),
   );
 });
 
