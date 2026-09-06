@@ -64,8 +64,14 @@ test("selects a nearby target, shows conflicts and navigates after transactional
   fireEvent.click(screen.getByRole("checkbox", { name: /Гости/ }));
   fireEvent.click(screen.getByRole("checkbox", { name: /Цвет формы/ }));
   fireEvent.click(screen.getByRole("checkbox", { name: /Описание мероприятия/ }));
-  fireEvent.click(screen.getByRole("checkbox", { name: /Удалить исходное мероприятие после переноса/ }));
-  fireEvent.click(screen.getByRole("button", { name: "Перенести выбранное" }));
+  expect(screen.getByText("При переносе явки в состав попадут только участники с итоговой отметкой «Смогу». Если часть игроков после объединения явки не сможет участвовать, в звеньях могут появиться свободные места.")).toBeInTheDocument();
+  const submit = screen.getByRole("button", { name: "Перенести выбранное" });
+  expect(screen.getByRole("radio", { name: /^Да/ })).not.toBeChecked();
+  expect(screen.getByRole("radio", { name: /^Нет/ })).not.toBeChecked();
+  expect(submit).toBeDisabled();
+  fireEvent.click(screen.getByRole("radio", { name: /^Да/ }));
+  expect(submit).toBeEnabled();
+  fireEvent.click(submit);
 
   await waitFor(() => expect(mockedTransfer).toHaveBeenCalledWith("source", {
     targetEventId: "target", attendance: true, roster: true, guests: true,
@@ -73,4 +79,26 @@ test("selects a nearby target, shows conflicts and navigates after transactional
     attendanceTransferMode: AttendanceTransferMode.ConfirmedOnly,
   }));
   expect(await screen.findByText("Целевое мероприятие открыто")).toBeInTheDocument();
+});
+
+test("keeps both events only after an explicit No choice", async () => {
+  render(<MemoryRouter initialEntries={["/events/source/transfer"]}><Routes>
+    <Route path="/events/:id/transfer" element={<EventDataTransferPage />} />
+    <Route path="/events/:id" element={<div>Целевое мероприятие открыто</div>} />
+  </Routes></MemoryRouter>);
+
+  expect(await screen.findByText("Матч лиги")).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Выбрать" }));
+  expect(await screen.findByText("Изменится явка 1 участников")).toBeInTheDocument();
+  const submit = screen.getByRole("button", { name: "Перенести выбранное" });
+  expect(submit).toBeDisabled();
+
+  fireEvent.click(screen.getByRole("radio", { name: /^Нет/ }));
+  expect(submit).toBeEnabled();
+  fireEvent.click(submit);
+
+  await waitFor(() => expect(mockedTransfer).toHaveBeenCalledWith("source", expect.objectContaining({
+    targetEventId: "target",
+    deleteSourceEvent: false,
+  })));
 });

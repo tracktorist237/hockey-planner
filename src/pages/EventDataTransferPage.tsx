@@ -21,7 +21,7 @@ type TransferOptions = {
   guests: boolean;
   uniformColor: boolean;
   description: boolean;
-  deleteSourceEvent: boolean;
+  deleteSourceEvent: boolean | null;
   attendanceTransferMode: AttendanceTransferMode;
 };
 type BooleanTransferOption = Exclude<keyof TransferOptions, "attendanceTransferMode">;
@@ -32,7 +32,7 @@ const initialOptions: TransferOptions = {
   guests: false,
   uniformColor: false,
   description: false,
-  deleteSourceEvent: false,
+  deleteSourceEvent: null,
   attendanceTransferMode: AttendanceTransferMode.MergePreferTarget,
 };
 
@@ -129,6 +129,7 @@ export function EventDataTransferPage() {
   const chooseTarget = async (id: string) => {
     setError(null);
     setLoading(true);
+    setOptions(current => ({ ...current, deleteSourceEvent: null }));
     try { setTarget(await getEvent(id)); }
     catch (value) { setError(value instanceof Error ? value.message : "Не удалось загрузить мероприятие."); }
     finally { setLoading(false); }
@@ -136,11 +137,11 @@ export function EventDataTransferPage() {
 
   const setOption = (key: BooleanTransferOption) => (checked: boolean) => setOptions(current => ({ ...current, [key]: checked }));
   const submit = async () => {
-    if (!sourceEventId || !target || submitting) return;
+    if (!sourceEventId || !target || submitting || options.deleteSourceEvent === null) return;
     setSubmitting(true);
     setError(null);
     try {
-      await transferEventData(sourceEventId, { targetEventId: target.id, ...options });
+      await transferEventData(sourceEventId, { targetEventId: target.id, ...options, deleteSourceEvent: options.deleteSourceEvent });
       navigate(`/events/${target.id}`, { replace: true });
     } catch (value) {
       setError(value instanceof Error ? value.message : "Не удалось перенести данные мероприятия.");
@@ -170,7 +171,7 @@ export function EventDataTransferPage() {
         <h2 style={{ margin: 0, color: "var(--hp-heading)", fontSize: 18 }}>2. Что перенести</h2>
         <article style={{ ...cardStyle, display: "grid", gap: 6 }}><strong>{target.title}</strong><span style={{ color: "var(--hp-muted)" }}>{formatDate(target.startTime)}</span>
           {target.externalLeagueProvider != null && <span style={{ justifySelf: "start" }}><ExternalLeagueBadge provider={target.externalLeagueProvider} division={target.externalDivisionName} /></span>}
-          <button type="button" onClick={() => setTarget(null)} style={{ justifySelf: "start", border: 0, padding: 0, background: "transparent", color: "var(--hp-primary-text)", cursor: "pointer" }}>Выбрать другое</button></article>
+          <button type="button" onClick={() => { setTarget(null); setOptions(current => ({ ...current, deleteSourceEvent: null })); }} style={{ justifySelf: "start", border: 0, padding: 0, background: "transparent", color: "var(--hp-primary-text)", cursor: "pointer" }}>Выбрать другое</button></article>
         <div style={{ ...cardStyle, display: "grid", gap: 14 }}>
           <CheckboxControl checked={options.attendance} onChange={setOption("attendance")} label="Ответы участников" description={conflicts?.attendance ? "В целевом мероприятии уже есть ответы. Выберите, как их объединить." : undefined} disabled={submitting} />
           {options.attendance && <div style={{ marginLeft: 30, display: "grid", gap: 12, minWidth: 0 }}>
@@ -195,13 +196,19 @@ export function EventDataTransferPage() {
               </details>}
             </div>}
           </div>}
-          <CheckboxControl checked={options.roster} onChange={setOption("roster")} label="Состав и звенья" description={conflicts?.roster ? "Текущий состав целевого мероприятия будет заменён." : undefined} disabled={submitting} />
+          <CheckboxControl checked={options.roster} onChange={setOption("roster")} label="Состав и звенья" description={<span style={{ display: "grid", gap: 4 }}>{conflicts?.roster && <span>Текущий состав целевого мероприятия будет заменён.</span>}<span>При переносе явки в состав попадут только участники с итоговой отметкой «Смогу». Если часть игроков после объединения явки не сможет участвовать, в звеньях могут появиться свободные места.</span></span>} disabled={submitting} />
           <CheckboxControl checked={options.guests} onChange={setOption("guests")} label="Гости" description={conflicts?.guests ? "Совпадающие гости не будут добавлены повторно." : undefined} disabled={submitting} />
           <CheckboxControl checked={options.uniformColor} onChange={setOption("uniformColor")} label="Цвет формы" description={conflicts?.uniform ? "Текущий цвет формы будет заменён." : undefined} disabled={submitting} />
           <CheckboxControl checked={options.description} onChange={setOption("description")} label="Описание мероприятия" description={conflicts?.description ? "Текущее описание целевого мероприятия будет заменено." : undefined} disabled={submitting} />
-          <div style={{ borderTop: "1px solid var(--hp-border)", paddingTop: 14 }}><CheckboxControl checked={options.deleteSourceEvent} onChange={setOption("deleteSourceEvent")} label="Удалить исходное мероприятие после переноса" description="Удаление нельзя отменить." disabled={submitting} /></div>
+          <div style={{ borderTop: "1px solid var(--hp-border)", paddingTop: 14, display: "grid", gap: 10 }}>
+            <h3 style={{ margin: 0, color: "var(--hp-heading)", fontSize: 15 }}>Удалить исходное мероприятие после переноса?</h3>
+            <div role="radiogroup" aria-label="Удалить исходное мероприятие после переноса?" style={{ display: "grid", gap: 10 }}>
+              <RadioControl name="delete-source-event" checked={options.deleteSourceEvent === true} onChange={() => setOptions(current => ({ ...current, deleteSourceEvent: true }))} label={<span style={{ display: "grid", gap: 3 }}><strong>Да</strong><span style={{ color: "var(--hp-muted)", fontSize: 13, fontWeight: 600 }}>Исходное мероприятие будет удалено после успешного переноса данных.</span></span>} disabled={submitting} />
+              <RadioControl name="delete-source-event" checked={options.deleteSourceEvent === false} onChange={() => setOptions(current => ({ ...current, deleteSourceEvent: false }))} label={<span style={{ display: "grid", gap: 3 }}><strong>Нет</strong><span style={{ color: "var(--hp-muted)", fontSize: 13, fontWeight: 600 }}>Оба мероприятия останутся.</span></span>} disabled={submitting} />
+            </div>
+          </div>
         </div>
-        <button type="button" disabled={submitting || (options.attendance && (previewLoading || !attendancePreview))} onClick={() => void submit()} style={{ width: "100%", padding: 13, borderRadius: 8, border: 0, background: "var(--hp-primary)", color: "white", fontWeight: 800, cursor: submitting ? "wait" : "pointer", opacity: submitting || (options.attendance && (previewLoading || !attendancePreview)) ? .65 : 1 }}>{submitting ? "Переносим..." : "Перенести выбранное"}</button>
+        <button type="button" disabled={submitting || options.deleteSourceEvent === null || (options.attendance && (previewLoading || !attendancePreview))} onClick={() => void submit()} style={{ width: "100%", padding: 13, borderRadius: 8, border: 0, background: "var(--hp-primary)", color: "white", fontWeight: 800, cursor: submitting ? "wait" : "pointer", opacity: submitting || options.deleteSourceEvent === null || (options.attendance && (previewLoading || !attendancePreview)) ? .65 : 1 }}>{submitting ? "Переносим..." : "Перенести выбранное"}</button>
       </section>}
     </div>
   </main>;
