@@ -18,6 +18,7 @@ import { AdminPage } from "src/pages/AdminPage";
 import { AuthPage } from "src/pages/AuthPage";
 import { ConfirmEmailPage } from "src/pages/ConfirmEmailPage";
 import { EventPage } from "src/pages/EventPage/EventPage";
+import { EventDataTransferPage } from "src/pages/EventDataTransferPage";
 import { EventsListPage } from "src/pages/EventsListPage/EventsListPage";
 import { InstructionArticlePage, InstructionsListPage } from "src/pages/InstructionsPage";
 import { NewsPage } from "src/pages/NewsPage";
@@ -307,6 +308,17 @@ function AppRoutes() {
             <RequireAuth>
               <RequireEventManager>
                 <DeleteEventPage />
+              </RequireEventManager>
+            </RequireAuth>
+          }
+        />
+
+        <Route
+          path="/events/:id/transfer"
+          element={
+            <RequireAuth>
+              <RequireEventManager>
+                <EventDataTransferPage />
               </RequireEventManager>
             </RequireAuth>
           }

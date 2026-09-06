@@ -48,6 +48,30 @@ export async function getEvent(id: string): Promise<EventDto> {
   return res.json();
 }
 
+export interface TransferEventDataRequest {
+  targetEventId: string;
+  attendance: boolean;
+  roster: boolean;
+  guests: boolean;
+  uniformColor: boolean;
+  description: boolean;
+  deleteSourceEvent: boolean;
+}
+
+export async function transferEventData(sourceEventId: string, request: TransferEventDataRequest): Promise<{ targetEventId: string }> {
+  const res = await authFetch(`/api/events/${encodeURIComponent(sourceEventId)}/transfer`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify(request),
+  });
+  if (!res.ok) {
+    const error = await res.json().catch(() => null) as { message?: string; error?: string; detail?: string; title?: string } | null;
+    throw new Error(error?.message || error?.error || error?.detail || error?.title || "Не удалось перенести данные мероприятия.");
+  }
+  return res.json();
+}
+
 export async function createEvent(data: CreateEventDto, currentUserId?: string): Promise<string> {
   const userId = resolveCurrentUserId(currentUserId);
   const res = await authFetch(`/api/events?currentUserId=${encodeURIComponent(userId)}`, {

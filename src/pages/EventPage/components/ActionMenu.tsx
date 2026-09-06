@@ -111,6 +111,26 @@ export const ActionMenu = ({ eventId, isOpen, onToggle, canManage }: ActionMenuP
 
             <button
               onClick={() => {
+                window.location.href = `/events/${eventId}/transfer`;
+              }}
+              style={{
+                flex: 1,
+                minWidth: "140px",
+                padding: "14px 20px",
+                backgroundColor: "var(--hp-surface)",
+                color: "var(--hp-heading)",
+                border: "1px solid var(--hp-border)",
+                borderRadius: "10px",
+                fontSize: "15px",
+                fontWeight: "600",
+                cursor: "pointer",
+              }}
+            >
+              Перенести данные
+            </button>
+
+            <button
+              onClick={() => {
                 window.location.href = `/events/${eventId}/delete`;
               }}
               style={{

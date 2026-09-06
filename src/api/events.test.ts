@@ -5,6 +5,7 @@ import {
   deleteEvent,
   getEvent,
   getEvents,
+  transferEventData,
   updateAttendance,
   updateEvent,
   updateEventGuestAttendance,
@@ -81,6 +82,24 @@ test("getEvent uses authFetch without requiring a user ID or token", async () =>
   await expect(getEvent(eventId)).resolves.toEqual(body);
 
   expect(mockedAuthFetch).toHaveBeenCalledWith(`/api/events/${eventId}`, { credentials: "include" });
+});
+
+test("transferEventData posts selected categories without actor identity", async () => {
+  const request = {
+    targetEventId: "target-event", attendance: true, roster: true, guests: false,
+    uniformColor: false, description: true, deleteSourceEvent: false,
+  };
+  mockedAuthFetch.mockResolvedValue(createResponse({ targetEventId: request.targetEventId }));
+
+  await expect(transferEventData(eventId, request)).resolves.toEqual({ targetEventId: request.targetEventId });
+
+  expect(mockedAuthFetch).toHaveBeenCalledWith(`/api/events/${eventId}/transfer`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify(request),
+  });
+  expect(JSON.stringify(mockedAuthFetch.mock.calls[0])).not.toContain("currentUserId");
 });
 
 test("createEvent preserves URL, method, headers and body", async () => {
