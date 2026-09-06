@@ -56,6 +56,45 @@ export interface TransferEventDataRequest {
   uniformColor: boolean;
   description: boolean;
   deleteSourceEvent: boolean;
+  attendanceTransferMode: AttendanceTransferMode;
+}
+
+export enum AttendanceTransferMode {
+  ReplaceTarget = 1,
+  MergePreferTarget = 2,
+  ConfirmedOnly = 3,
+}
+
+export interface AttendanceTransferPreviewItem {
+  userId: string;
+  userDisplayName: string | null;
+  sourceStatus: number;
+  targetStatus: number | null;
+  resultingStatus: number | null;
+  willChange: boolean;
+}
+
+export interface AttendanceTransferPreview {
+  items: AttendanceTransferPreviewItem[];
+  changedCount: number;
+}
+
+export async function previewEventAttendanceTransfer(
+  sourceEventId: string,
+  targetEventId: string,
+  attendanceTransferMode: AttendanceTransferMode,
+): Promise<AttendanceTransferPreview> {
+  const res = await authFetch(`/api/events/${encodeURIComponent(sourceEventId)}/transfer/preview`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ targetEventId, attendanceTransferMode }),
+  });
+  if (!res.ok) {
+    const error = await res.json().catch(() => null) as { message?: string; error?: string; detail?: string; title?: string } | null;
+    throw new Error(error?.message || error?.error || error?.detail || error?.title || "Не удалось проверить перенос явки.");
+  }
+  return res.json();
 }
 
 export async function transferEventData(sourceEventId: string, request: TransferEventDataRequest): Promise<{ targetEventId: string }> {

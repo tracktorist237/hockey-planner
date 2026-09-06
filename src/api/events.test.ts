@@ -5,11 +5,13 @@ import {
   deleteEvent,
   getEvent,
   getEvents,
+  previewEventAttendanceTransfer,
   transferEventData,
   updateAttendance,
   updateEvent,
   updateEventGuestAttendance,
   AttendanceConflictError,
+  AttendanceTransferMode,
 } from "src/api/events";
 import { CreateEventDto, EventDto, EventType } from "src/types/events";
 
@@ -89,6 +91,7 @@ test("transferEventData posts selected categories without actor identity", async
   const request = {
     targetEventId: "target-event", attendance: true, roster: true, guests: false,
     uniformColor: false, description: true, deleteSourceEvent: false,
+    attendanceTransferMode: AttendanceTransferMode.MergePreferTarget,
   };
   mockedAuthFetch.mockResolvedValue(createResponse({ targetEventId: request.targetEventId }));
 
@@ -101,6 +104,20 @@ test("transferEventData posts selected categories without actor identity", async
     body: JSON.stringify(request),
   });
   expect(JSON.stringify(mockedAuthFetch.mock.calls[0])).not.toContain("currentUserId");
+});
+
+test("previewEventAttendanceTransfer posts target and selected merge mode", async () => {
+  const preview = { changedCount: 1, items: [] };
+  mockedAuthFetch.mockResolvedValue(createResponse(preview));
+
+  await expect(previewEventAttendanceTransfer(eventId, "target-event", AttendanceTransferMode.ConfirmedOnly)).resolves.toEqual(preview);
+
+  expect(mockedAuthFetch).toHaveBeenCalledWith(`/api/events/${eventId}/transfer/preview`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ targetEventId: "target-event", attendanceTransferMode: AttendanceTransferMode.ConfirmedOnly }),
+  });
 });
 
 test("createEvent preserves URL, method, headers and body", async () => {

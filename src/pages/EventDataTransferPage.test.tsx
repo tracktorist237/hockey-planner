@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
-import { getEvent, getEvents, transferEventData } from "src/api/events";
+import { AttendanceTransferMode, getEvent, getEvents, previewEventAttendanceTransfer, transferEventData } from "src/api/events";
 import { EventDataTransferPage } from "src/pages/EventDataTransferPage";
 import { ExternalLeagueProvider, EventDto, EventType } from "src/types/events";
 
@@ -22,11 +22,19 @@ const target: EventDto = {
 const mockedGetEvent = getEvent as jest.MockedFunction<typeof getEvent>;
 const mockedGetEvents = getEvents as jest.MockedFunction<typeof getEvents>;
 const mockedTransfer = transferEventData as jest.MockedFunction<typeof transferEventData>;
+const mockedPreview = previewEventAttendanceTransfer as jest.MockedFunction<typeof previewEventAttendanceTransfer>;
 
 beforeEach(() => {
   mockedGetEvent.mockReset().mockImplementation(id => Promise.resolve(id === source.id ? source : target));
   mockedGetEvents.mockReset().mockResolvedValue({ events: [target, source] });
   mockedTransfer.mockReset().mockResolvedValue({ targetEventId: target.id });
+  mockedPreview.mockReset().mockResolvedValue({
+    changedCount: 1,
+    items: [{
+      userId: "guest", userDisplayName: "Иван Иванов", sourceStatus: 2,
+      targetStatus: 3, resultingStatus: 2, willChange: true,
+    }],
+  });
 });
 
 test("selects a nearby target, shows conflicts and navigates after transactional transfer", async () => {
@@ -41,6 +49,13 @@ test("selects a nearby target, shows conflicts and navigates after transactional
 
   expect(await screen.findByText("Текущий состав целевого мероприятия будет заменён.")).toBeInTheDocument();
   expect(screen.getByText("Текущее описание целевого мероприятия будет заменено.")).toBeInTheDocument();
+  expect(screen.getByRole("radio", { name: "Объединить" })).toBeChecked();
+  expect(await screen.findByText("Изменится явка 1 участников")).toBeInTheDocument();
+  expect(screen.getByText("1: Не смогу → Смогу")).toBeInTheDocument();
+  fireEvent.click(screen.getByText("Показать участников"));
+  expect(screen.getByText("Иван Иванов: Не смогу → Смогу")).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("radio", { name: "Перенести только «Смогу»" }));
+  await waitFor(() => expect(mockedPreview).toHaveBeenLastCalledWith("source", "target", AttendanceTransferMode.ConfirmedOnly));
   fireEvent.click(screen.getByRole("checkbox", { name: /Состав и звенья/ }));
   fireEvent.click(screen.getByRole("checkbox", { name: /Гости/ }));
   fireEvent.click(screen.getByRole("checkbox", { name: /Цвет формы/ }));
@@ -51,6 +66,7 @@ test("selects a nearby target, shows conflicts and navigates after transactional
   await waitFor(() => expect(mockedTransfer).toHaveBeenCalledWith("source", {
     targetEventId: "target", attendance: true, roster: true, guests: true,
     uniformColor: true, description: true, deleteSourceEvent: true,
+    attendanceTransferMode: AttendanceTransferMode.ConfirmedOnly,
   }));
   expect(await screen.findByText("Целевое мероприятие открыто")).toBeInTheDocument();
 });
