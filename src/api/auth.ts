@@ -10,6 +10,7 @@ const AUTH_SESSION_KEY = "authSession";
 const CURRENT_USER_KEY = "currentUser";
 const AUTH_SESSION_CHANGED_EVENT = "hockeyplanner:auth-session-changed";
 const AUTH_REQUEST_TIMEOUT_MS = 15_000;
+const PROACTIVE_REFRESH_WINDOW_MS = 60_000;
 let refreshPromise: Promise<User | null> | null = null;
 
 interface AuthSessionSnapshot {
@@ -133,6 +134,17 @@ const isSameSession = (left: AuthSessionSnapshot, right: AuthSessionSnapshot): b
   left.accessToken === right.accessToken &&
   left.refreshToken === right.refreshToken &&
   left.accessTokenExpiresAt === right.accessTokenExpiresAt;
+
+const shouldRefreshBeforeRequest = (session: AuthSessionSnapshot): boolean => {
+  if (!session.refreshToken || !session.accessTokenExpiresAt) return false;
+  const expiresAt = Date.parse(session.accessTokenExpiresAt);
+  return Number.isFinite(expiresAt) && expiresAt <= Date.now() + PROACTIVE_REFRESH_WINDOW_MS;
+};
+
+const skipsProactiveRefresh = (input: string): boolean => {
+  const path = input.toLowerCase().split("?", 1)[0].replace(/\/$/, "");
+  return path === "/api/auth/refresh" || path === "/api/auth/logout";
+};
 
 const dispatchSessionChanged = (): void => {
   window.dispatchEvent(new Event(AUTH_SESSION_CHANGED_EVENT));
@@ -427,6 +439,10 @@ export async function authFetch(
   retry = true,
   timeoutMs = AUTH_REQUEST_TIMEOUT_MS,
 ): Promise<Response> {
+  if (retry && !skipsProactiveRefresh(input) && shouldRefreshBeforeRequest(readAuthSession())) {
+    await refreshAuth();
+  }
+
   const sessionAtStart = readAuthSession();
   const accessToken = sessionAtStart.accessToken;
   const headers = new Headers(init.headers);
