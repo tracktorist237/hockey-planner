@@ -10,6 +10,7 @@ import {
 } from "src/api/events";
 import { CheckboxControl } from "src/components/CheckboxControl";
 import { ExternalLeagueBadge } from "src/components/ExternalLeagueBadge";
+import { InternalPageHeader } from "src/components/InternalPageHeader";
 import { LoadingIndicator } from "src/components/LoadingIndicator";
 import { RadioControl } from "src/components/RadioControl";
 import { useAuth } from "src/hooks/useAuth";
@@ -154,13 +155,17 @@ export function EventDataTransferPage() {
     }
   };
 
-  if (loading && !source) return <LoadingIndicator text="Загружаем мероприятия..." block />;
+  if (loading && !source) return <main style={{ minHeight: "100vh", background: "var(--hp-bg-gradient)", paddingBottom: 80 }}>
+    <InternalPageHeader title="Перенести данные" onBack={() => navigate(sourceEventId ? `/events/${sourceEventId}` : "/events")} maxWidth={680} />
+    <div style={{ maxWidth: 680, margin: "0 auto", padding: "16px 12px 0" }}>
+      <LoadingIndicator text="Загружаем мероприятия..." block />
+    </div>
+  </main>;
 
-  return <main style={{ minHeight: "100vh", background: "var(--hp-bg-gradient)", padding: "16px 12px 80px" }}>
-    <div style={{ maxWidth: 680, margin: "0 auto", display: "grid", gap: 16 }}>
-      <button type="button" onClick={() => navigate(sourceEventId ? `/events/${sourceEventId}` : "/events")} style={{ justifySelf: "start", border: 0, background: "transparent", color: "var(--hp-primary-text)", fontWeight: 800, cursor: "pointer" }}>← Назад</button>
-      <header><h1 style={{ margin: 0, color: "var(--hp-heading)", fontSize: 24 }}>Перенести данные</h1>
-        <p style={{ color: "var(--hp-muted)", marginBottom: 0 }}>Выберите мероприятие, в которое нужно перенести данные из «{source?.title}».</p></header>
+  return <main style={{ minHeight: "100vh", background: "var(--hp-bg-gradient)", paddingBottom: 80 }}>
+    <InternalPageHeader title="Перенести данные" onBack={() => navigate(sourceEventId ? `/events/${sourceEventId}` : "/events")} maxWidth={680} />
+    <div style={{ maxWidth: 680, margin: "0 auto", padding: "16px 12px 0", display: "grid", gap: 16 }}>
+      <p style={{ color: "var(--hp-muted)", margin: 0 }}>Выберите мероприятие, в которое нужно перенести данные из «{source?.title}».</p>
       {error && <div role="alert" style={{ ...cardStyle, color: "var(--hp-danger)", borderColor: "var(--hp-danger-border)", background: "var(--hp-danger-soft)" }}>{error}</div>}
 
       {!target ? <section style={{ display: "grid", gap: 10 }}>

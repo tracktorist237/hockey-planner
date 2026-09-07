@@ -43,6 +43,8 @@ test("selects a nearby target, shows conflicts and navigates after transactional
     <Route path="/events/:id" element={<div>Целевое мероприятие открыто</div>} />
   </Routes></MemoryRouter>);
 
+  expect(screen.getByRole("heading", { level: 1, name: "Перенести данные" })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Назад" })).toBeInTheDocument();
   expect(await screen.findByText("Матч лиги")).toBeInTheDocument();
   expect(screen.getByText("СПбХЛ · Любитель 3")).toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: "Выбрать" }));
