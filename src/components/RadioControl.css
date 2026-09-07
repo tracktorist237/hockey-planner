@@ -1,4 +1,4 @@
-.hp-radio { display: flex; align-items: center; gap: 10px; min-width: 0; min-height: 32px; color: var(--hp-heading); font-size: 13px; font-weight: 800; line-height: 1.35; cursor: pointer; user-select: none; }
+.hp-radio { display: flex; align-items: flex-start; gap: 8px; min-width: 0; min-height: 32px; color: var(--hp-heading); font-size: 13px; font-weight: 800; line-height: 1.35; cursor: pointer; user-select: none; }
 .hp-radio__control { position: relative; width: 28px; height: 28px; flex: 0 0 28px; display: grid; place-items: center; }
 .hp-radio__input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
 .hp-radio__circle { width: 20px; height: 20px; border: 2px solid var(--hp-muted); border-radius: 50%; background: var(--hp-input-bg); box-sizing: border-box; box-shadow: inset 0 0 0 4px var(--hp-input-bg); transition: border-color 120ms ease, background 120ms ease, box-shadow 120ms ease; }
@@ -8,4 +8,4 @@
 .hp-radio--disabled .hp-radio__circle { border-color: var(--hp-border); background: var(--hp-surface-soft); }
 .hp-radio--disabled .hp-radio__circle--checked { background: var(--hp-muted); }
 .hp-radio--disabled .hp-radio__input { cursor: not-allowed; }
-.hp-radio__label { min-width: 0; overflow-wrap: anywhere; }
+.hp-radio__label { min-width: 0; padding-top: 5px; overflow-wrap: anywhere; }

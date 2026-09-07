@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { AttendanceLookUpDto } from "src/types/events";
+import { AttendanceLookUpDto, EventConflictDto } from "src/types/events";
 
 interface AttendanceResponseCardProps {
   myAttendance?: AttendanceLookUpDto;
@@ -12,6 +12,9 @@ interface AttendanceResponseCardProps {
   submitting: boolean;
   handleVote: (status: number, notes?: string | null) => Promise<void>;
   handleAddNote: () => Promise<void>;
+  attendanceConflicts: EventConflictDto[];
+  confirmAttendanceDespiteConflicts: () => Promise<void>;
+  cancelAttendanceConflict: () => void;
 }
 
 export const AttendanceResponseCard = ({
@@ -25,6 +28,9 @@ export const AttendanceResponseCard = ({
   submitting,
   handleVote,
   handleAddNote,
+  attendanceConflicts,
+  confirmAttendanceDespiteConflicts,
+  cancelAttendanceConflict,
 }: AttendanceResponseCardProps) => {
   const [isCancelConfirmOpen, setIsCancelConfirmOpen] = useState(false);
 
@@ -584,6 +590,31 @@ export const AttendanceResponseCard = ({
             }}
           />
           Отправка ответа...
+        </div>
+      )}
+      {attendanceConflicts.length > 0 && (
+        <div role="dialog" aria-modal="true" aria-labelledby="attendance-conflict-title" style={{ position: "fixed", inset: 0, zIndex: 750, display: "flex", alignItems: "center", justifyContent: "center", padding: 18, background: "rgba(15, 23, 42, 0.58)" }}>
+          <div style={{ width: "100%", maxWidth: 480, maxHeight: "85vh", overflowY: "auto", borderRadius: 14, padding: 20, background: "var(--hp-surface)", border: "1px solid var(--hp-border)", boxShadow: "var(--hp-shadow-md)" }}>
+            <h4 id="attendance-conflict-title" style={{ margin: "0 0 8px", color: "var(--hp-heading)", fontSize: 19 }}>В это время у вас уже есть мероприятие</h4>
+            <p style={{ margin: "0 0 14px", color: "var(--hp-muted)" }}>Проверьте расписание перед ответом:</p>
+            <div style={{ display: "grid", gap: 10, marginBottom: 18 }}>
+              {attendanceConflicts.map(conflict => {
+                const start = new Date(conflict.startTime);
+                const end = new Date(start.getTime() + conflict.durationMinutes * 60_000);
+                const date = new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "long", year: "numeric" }).format(start);
+                const time = new Intl.DateTimeFormat("ru-RU", { hour: "2-digit", minute: "2-digit" });
+                return <div key={conflict.id} style={{ padding: 12, border: "1px solid var(--hp-border)", borderRadius: 8, overflowWrap: "anywhere" }}>
+                  <a href={`/events/${conflict.id}`} style={{ color: "var(--hp-primary-text)", fontWeight: 900 }}>{conflict.title}</a>
+                  {conflict.teamName && <div style={{ color: "var(--hp-muted)", fontSize: 13 }}>{conflict.teamName}</div>}
+                  <div style={{ color: "var(--hp-muted)", fontSize: 13 }}>{date} · {time.format(start)}–{time.format(end)}</div>
+                </div>;
+              })}
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 10 }}>
+              <button type="button" disabled={submitting} onClick={cancelAttendanceConflict} style={{ padding: 12, borderRadius: 8, border: "1px solid var(--hp-border)", background: "var(--hp-surface-soft)", color: "var(--hp-heading)", fontWeight: 800 }}>Отмена</button>
+              <button type="button" disabled={submitting} onClick={() => void confirmAttendanceDespiteConflicts()} style={{ padding: 12, borderRadius: 8, border: 0, background: "var(--hp-success)", color: "white", fontWeight: 800 }}>Всё равно смогу</button>
+            </div>
+          </div>
         </div>
       )}
     </div>

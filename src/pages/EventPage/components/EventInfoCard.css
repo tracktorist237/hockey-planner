@@ -1,0 +1,38 @@
+.event-info-team-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  padding: 4px 10px;
+  border: 1px solid var(--hp-border);
+  border-radius: 999px;
+  background: var(--hp-surface-soft);
+  color: var(--hp-muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.event-info-team-badge--link {
+  cursor: pointer;
+  text-decoration: none;
+  transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+}
+
+.event-info-team-badge--link:hover {
+  border-color: var(--hp-primary);
+  background: var(--hp-primary-soft);
+  color: var(--hp-primary-text);
+  text-decoration: none;
+}
+
+.event-info-team-badge--link:focus-visible {
+  outline: 3px solid var(--hp-primary-soft);
+  outline-offset: 2px;
+}
+
+.event-info-team-badge__name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

@@ -19,6 +19,15 @@ export interface ExternalEventFields {
   awayScore?: number | null;
 }
 
+export interface EventConflictDto {
+  id: string;
+  title: string;
+  startTime: string;
+  durationMinutes: number;
+  status: number;
+  teamName?: string | null;
+}
+
 export interface EventLookUpDto extends ExternalEventFields {
   id: string;
   title?: string;
@@ -40,6 +49,7 @@ export interface EventLookUpDto extends ExternalEventFields {
   goalieApplicationStatus?: number | null;
   homeTeamName?: string | null;
   awayTeamName?: string | null;
+  conflicts?: EventConflictDto[];
 }
 
 export interface EventListDto {
@@ -106,6 +116,7 @@ export interface EventDto extends ExternalEventFields {
   teamId?: string | null;
   teamName?: string | null;
   exercises?: ExerciseDto[];
+  conflicts?: EventConflictDto[];
 }
 
 

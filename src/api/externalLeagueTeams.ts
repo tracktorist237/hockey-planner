@@ -74,6 +74,17 @@ export interface ExternalAddressCandidate {
   matchCount: number;
 }
 
+export interface ExternalEventSuppression {
+  id: string;
+  teamId: string;
+  provider: ExternalLeagueProvider;
+  externalCompetitionId: string;
+  externalMatchId: string;
+  title: string | null;
+  startTime: string | null;
+  competitionName: string | null;
+}
+
 export interface AppliedTeamProfile {
   teamId: string;
   name: string;
@@ -129,6 +140,12 @@ export const getTeamExternalLeagueLinks = (teamId: string) =>
 
 export const getExternalLeagueAddressCandidates = (teamId: string) =>
   request<ExternalAddressCandidate[]>(`${linksPath(teamId)}/address-candidates`);
+
+export const getExternalEventSuppressions = (teamId: string, provider?: ExternalLeagueProvider) =>
+  request<ExternalEventSuppression[]>(`${linksPath(teamId)}/suppressions${provider ? `?provider=${provider}` : ""}`);
+
+export const restoreExternalEventSuppression = (teamId: string, suppressionId: string) =>
+  request<void>(`${linksPath(teamId)}/suppressions/${encodeURIComponent(suppressionId)}`, { method: "DELETE" });
 
 export const createTeamExternalLeagueLink = (teamId: string, link: CreateExternalLeagueLinkRequest) =>
   request<ExternalLeagueLink>(linksPath(teamId), {

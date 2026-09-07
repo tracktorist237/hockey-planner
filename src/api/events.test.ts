@@ -5,9 +5,13 @@ import {
   deleteEvent,
   getEvent,
   getEvents,
+  previewEventAttendanceTransfer,
+  transferEventData,
   updateAttendance,
   updateEvent,
   updateEventGuestAttendance,
+  AttendanceConflictError,
+  AttendanceTransferMode,
 } from "src/api/events";
 import { CreateEventDto, EventDto, EventType } from "src/types/events";
 
@@ -83,6 +87,40 @@ test("getEvent uses authFetch without requiring a user ID or token", async () =>
   expect(mockedAuthFetch).toHaveBeenCalledWith(`/api/events/${eventId}`, { credentials: "include" });
 });
 
+test("transferEventData posts selected categories without actor identity", async () => {
+  const request = {
+    targetEventId: "target-event", attendance: true, roster: true, guests: false,
+    uniformColor: false, description: true, deleteSourceEvent: false,
+    attendanceTransferMode: AttendanceTransferMode.MergePreferTarget,
+    attendanceOverrides: [],
+  };
+  mockedAuthFetch.mockResolvedValue(createResponse({ targetEventId: request.targetEventId }));
+
+  await expect(transferEventData(eventId, request)).resolves.toEqual({ targetEventId: request.targetEventId });
+
+  expect(mockedAuthFetch).toHaveBeenCalledWith(`/api/events/${eventId}/transfer`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify(request),
+  });
+  expect(JSON.stringify(mockedAuthFetch.mock.calls[0])).not.toContain("currentUserId");
+});
+
+test("previewEventAttendanceTransfer posts target and selected merge mode", async () => {
+  const preview = { changedCount: 1, items: [] };
+  mockedAuthFetch.mockResolvedValue(createResponse(preview));
+
+  await expect(previewEventAttendanceTransfer(eventId, "target-event", AttendanceTransferMode.ConfirmedOnly)).resolves.toEqual(preview);
+
+  expect(mockedAuthFetch).toHaveBeenCalledWith(`/api/events/${eventId}/transfer/preview`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ targetEventId: "target-event", attendanceTransferMode: AttendanceTransferMode.ConfirmedOnly }),
+  });
+});
+
 test("createEvent preserves URL, method, headers and body", async () => {
   mockedAuthFetch.mockResolvedValue(createResponse(eventId, 201));
 
@@ -138,8 +176,17 @@ test("updateAttendance preserves actor query, target route and body", async () =
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: 2, notes: "Ready" }),
+      body: JSON.stringify({ status: 2, notes: "Ready", ignoreConflicts: false }),
     },
+  );
+});
+
+test("updateAttendance exposes a controlled 409 conflict payload", async () => {
+  const conflicts = [{ id: "other", title: "Other", startTime: "2026-09-10T18:00:00Z", durationMinutes: 60, status: 1 }];
+  mockedAuthFetch.mockResolvedValue(createResponse({ message: "В это время у вас уже есть мероприятие", conflicts }, 409));
+
+  await expect(updateAttendance(eventId, userId, 2, null, userId)).rejects.toEqual(
+    expect.objectContaining<Partial<AttendanceConflictError>>({ name: "AttendanceConflictError", conflicts }),
   );
 });
 

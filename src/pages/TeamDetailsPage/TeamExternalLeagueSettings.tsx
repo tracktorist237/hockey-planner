@@ -10,8 +10,11 @@ import {
   ExternalTeamSearchItem,
   ExternalAddressCandidate,
   ExternalProfileCandidate,
+  ExternalEventSuppression,
   getExternalLeagueAddressCandidates,
   getTeamExternalLeagueLinks,
+  getExternalEventSuppressions,
+  restoreExternalEventSuppression,
   searchExternalLeagueTeams,
   syncAllTeamExternalLeagueLinks,
   syncTeamExternalLeagueLink,
@@ -34,7 +37,7 @@ interface TeamExternalLeagueSettingsProps {
   onTeamProfileApplied: (profile: AppliedTeamProfile) => void | Promise<void>;
 }
 
-type BusyOperation = "search" | "add" | "primary" | "sync" | "sync-all" | "remove" | "apply";
+type BusyOperation = "search" | "add" | "primary" | "sync" | "sync-all" | "remove" | "apply" | "restore";
 
 const providerOptions = [
   { value: ExternalLeagueProvider.Spbhl, label: "СПбХЛ" },
@@ -106,6 +109,7 @@ const SyncSummary = ({ result }: { result: ExternalLeagueSyncResult }) => (
 export function TeamExternalLeagueSettings({ teamId, teamName: _teamName, teamAvatarUrl, teamCoverImageUrl, teamDescription = "", teamPhones = [], teamLinks = [], teamAddresses = [], onTeamProfileApplied }: TeamExternalLeagueSettingsProps) {
   const [provider, setProvider] = useState(ExternalLeagueProvider.Spbhl);
   const [links, setLinks] = useState<ExternalLeagueLink[]>([]);
+  const [suppressions, setSuppressions] = useState<ExternalEventSuppression[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<BusyOperation | null>(null);
   const [title, setTitle] = useState("");
@@ -136,9 +140,13 @@ export function TeamExternalLeagueSettings({ teamId, teamName: _teamName, teamAv
     setLoading(true);
     setError(null);
     try {
-      const nextLinks = await getTeamExternalLeagueLinks(teamId);
+      const [nextLinks, nextSuppressions] = await Promise.all([
+        getTeamExternalLeagueLinks(teamId),
+        getExternalEventSuppressions(teamId),
+      ]);
       if (mounted.current && generation === loadGeneration.current && requestedTeamId === activeTeamId.current) {
         setLinks(nextLinks);
+        setSuppressions(nextSuppressions);
       }
     } catch (requestError) {
       if (mounted.current && generation === loadGeneration.current && requestedTeamId === activeTeamId.current) {
@@ -159,6 +167,7 @@ export function TeamExternalLeagueSettings({ teamId, teamName: _teamName, teamAv
     loadGeneration.current += 1;
     searchGeneration.current += 1;
     setLinks([]);
+    setSuppressions([]);
     setBusy(null);
     setTitle("");
     setResults([]);
@@ -329,6 +338,22 @@ export function TeamExternalLeagueSettings({ teamId, teamName: _teamName, teamAv
       if (isCurrentOperation(operation, requestedTeamId)) {
         setError(requestError instanceof Error ? requestError.message : "Не удалось убрать команду.");
       }
+    } finally {
+      finishOperation(operation, requestedTeamId);
+    }
+  };
+
+  const handleRestoreSuppression = async (suppression: ExternalEventSuppression) => {
+    const requestedTeamId = teamId;
+    const operation = beginOperation("restore");
+    if (operation === null) return;
+    try {
+      await restoreExternalEventSuppression(teamId, suppression.id);
+      if (!isCurrentOperation(operation, requestedTeamId)) return;
+      setSuppressions(current => current.filter(item => item.id !== suppression.id));
+      setMessage("Мероприятие снова будет добавлено при следующем обновлении лиги.");
+    } catch (requestError) {
+      if (isCurrentOperation(operation, requestedTeamId)) setError(requestError instanceof Error ? requestError.message : "Не удалось вернуть мероприятие.");
     } finally {
       finishOperation(operation, requestedTeamId);
     }
@@ -507,6 +532,16 @@ export function TeamExternalLeagueSettings({ teamId, teamName: _teamName, teamAv
           </div>
         </>
       )}
+
+      {suppressions.length > 0 && <section style={{ display: "grid", gap: 9 }}>
+        <h3 style={{ margin: 0, fontSize: 17, color: "var(--hp-heading)" }}>Исключённые мероприятия</h3>
+        {suppressions.map(item => <article key={item.id} style={{ border: "1px solid var(--hp-border)", borderRadius: 8, padding: 10, display: "grid", gap: 5 }}>
+          <strong>{item.title || "Матч лиги"}</strong>
+          {item.startTime && <span style={{ color: "var(--hp-muted)", fontSize: 13 }}>{formatTimestamp(item.startTime)}</span>}
+          {item.competitionName && <span style={{ color: "var(--hp-muted)", fontSize: 13 }}>{item.competitionName}</span>}
+          <button type="button" disabled={busy !== null} onClick={() => void handleRestoreSuppression(item)} style={{ ...secondaryButtonStyle, justifySelf: "start" }}>Вернуть в синхронизацию</button>
+        </article>)}
+      </section>}
 
       <details>
         <summary style={{ cursor: "pointer", color: "var(--hp-primary)", fontWeight: 800 }}>+ Добавить команду</summary>

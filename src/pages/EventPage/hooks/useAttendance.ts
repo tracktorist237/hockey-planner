@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { updateAttendance } from "src/api/events";
-import { AttendanceLookUpDto, EventDto } from "src/types/events";
+import { AttendanceConflictError, updateAttendance } from "src/api/events";
+import { AttendanceLookUpDto, EventConflictDto, EventDto } from "src/types/events";
 
 interface UseAttendanceOptions {
   event: EventDto | null;
@@ -21,6 +21,9 @@ interface UseAttendanceResult {
   handleVote: (status: number, notes?: string | null) => Promise<void>;
   handleAddNote: () => Promise<void>;
   availablePlayers: AttendanceLookUpDto[];
+  attendanceConflicts: EventConflictDto[];
+  confirmAttendanceDespiteConflicts: () => Promise<void>;
+  cancelAttendanceConflict: () => void;
 }
 
 export const useAttendance = ({
@@ -33,6 +36,8 @@ export const useAttendance = ({
   const [showNoteInput, setShowNoteInput] = useState(false);
   const [isEditingNote, setIsEditingNote] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [attendanceConflicts, setAttendanceConflicts] = useState<EventConflictDto[]>([]);
+  const [pendingVote, setPendingVote] = useState<{ status: number; notes?: string | null } | null>(null);
 
   const myAttendance = useMemo(() => {
     return event?.attendances?.find((attendance) => attendance.userId === selectedUserId);
@@ -68,6 +73,11 @@ export const useAttendance = ({
         setShowNoteInput(false);
         setIsEditingNote(false);
       } catch (err) {
+        if (err instanceof AttendanceConflictError) {
+          setAttendanceConflicts(err.conflicts);
+          setPendingVote({ status, notes });
+          return;
+        }
         const message = err instanceof Error ? err.message : "Ошибка обновления явки";
         onError?.(message);
       } finally {
@@ -76,6 +86,27 @@ export const useAttendance = ({
     },
     [event, onError, reloadEvent, selectedUserId],
   );
+
+  const confirmAttendanceDespiteConflicts = useCallback(async () => {
+    if (!event || !selectedUserId || !pendingVote) return;
+    setSubmitting(true);
+    try {
+      await updateAttendance(event.id, selectedUserId, pendingVote.status, pendingVote.notes, selectedUserId, true);
+      setAttendanceConflicts([]);
+      setPendingVote(null);
+      await reloadEvent();
+    } catch (err) {
+      onError?.(err instanceof Error ? err.message : "Ошибка обновления явки");
+    } finally {
+      setSubmitting(false);
+    }
+  }, [event, onError, pendingVote, reloadEvent, selectedUserId]);
+
+  const cancelAttendanceConflict = useCallback(() => {
+    if (submitting) return;
+    setAttendanceConflicts([]);
+    setPendingVote(null);
+  }, [submitting]);
 
   const handleAddNote = useCallback(async () => {
     if (!event || !myAttendance) {
@@ -97,5 +128,8 @@ export const useAttendance = ({
     handleVote,
     handleAddNote,
     availablePlayers,
+    attendanceConflicts,
+    confirmAttendanceDespiteConflicts,
+    cancelAttendanceConflict,
   };
 };

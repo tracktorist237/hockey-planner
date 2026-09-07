@@ -1,4 +1,4 @@
-import { AttendanceLookUpDto, CreateEventDto, EventDto, EventListDto } from "../types/events";
+import { AttendanceLookUpDto, CreateEventDto, EventConflictDto, EventDto, EventListDto } from "../types/events";
 import { authFetch } from "src/api/auth";
 
 const readStoredCurrentUserId = (): string | null => {
@@ -44,6 +44,75 @@ export async function getEvent(id: string): Promise<EventDto> {
   const res = await authFetch(`/api/events/${id}`, { credentials: "include" });
   if (!res.ok) {
     throw new Error(`GET /api/events/${id} failed: ${res.status}`);
+  }
+  return res.json();
+}
+
+export interface TransferEventDataRequest {
+  targetEventId: string;
+  attendance: boolean;
+  roster: boolean;
+  guests: boolean;
+  uniformColor: boolean;
+  description: boolean;
+  deleteSourceEvent: boolean;
+  attendanceTransferMode: AttendanceTransferMode;
+  attendanceOverrides?: AttendanceTransferOverride[];
+}
+
+export interface AttendanceTransferOverride { userId: string; resultingStatus: 1 | 2 | 3; }
+
+export enum AttendanceTransferMode {
+  ReplaceTarget = 1,
+  MergePreferTarget = 2,
+  ConfirmedOnly = 3,
+}
+
+export interface AttendanceTransferPreviewItem {
+  userId: string;
+  userDisplayName: string | null;
+  sourceStatus: number;
+  targetStatus: number | null;
+  resultingStatus: number | null;
+  automaticResultStatus?: number | null;
+  finalResultStatus?: number | null;
+  isOverridden?: boolean;
+  willChange: boolean;
+}
+
+export interface AttendanceTransferPreview {
+  items: AttendanceTransferPreviewItem[];
+  changedCount: number;
+}
+
+export async function previewEventAttendanceTransfer(
+  sourceEventId: string,
+  targetEventId: string,
+  attendanceTransferMode: AttendanceTransferMode,
+): Promise<AttendanceTransferPreview> {
+  const res = await authFetch(`/api/events/${encodeURIComponent(sourceEventId)}/transfer/preview`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ targetEventId, attendanceTransferMode }),
+  });
+  if (!res.ok) {
+    const error = await res.json().catch(() => null) as { message?: string; error?: string; detail?: string; title?: string } | null;
+    throw new Error(error?.message || error?.error || error?.detail || error?.title || "Не удалось проверить перенос явки.");
+  }
+  return res.json();
+}
+
+export async function transferEventData(sourceEventId: string, request: TransferEventDataRequest): Promise<{ targetEventId: string }> {
+  const res = await authFetch(`/api/events/${encodeURIComponent(sourceEventId)}/transfer`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify(request),
+  });
+  if (!res.ok) {
+    const error = await res.json().catch(() => null) as { message?: string; error?: string; detail?: string; title?: string } | null;
+    throw new Error(error?.message || error?.error || error?.detail || error?.title || "Не удалось перенести данные мероприятия.");
   }
   return res.json();
 }
@@ -113,6 +182,7 @@ export async function updateAttendance(
   status: number,
   notes?: string | null,
   currentUserId?: string | null,
+  ignoreConflicts = false,
 ): Promise<void> {
   const query = currentUserId ? `?currentUserId=${encodeURIComponent(currentUserId)}` : "";
   const res = await authFetch(`/api/events/${eventId}/attendance/${userId}${query}`, {
@@ -121,12 +191,24 @@ export async function updateAttendance(
     body: JSON.stringify({
       status,
       notes: notes ?? null,
+      ignoreConflicts,
     }),
   });
 
   if (!res.ok) {
-    const text = await res.text();
-    throw new Error(text || "Ошибка обновления явки");
+    const data = await res.json().catch(() => null) as { message?: string; error?: string; conflicts?: EventConflictDto[] } | null;
+    if (res.status === 409 && data?.conflicts?.length) {
+      throw new AttendanceConflictError(data.message || "В это время у вас уже есть мероприятие", data.conflicts);
+    }
+    throw new Error(data?.message || data?.error || "Ошибка обновления явки");
+  }
+}
+
+export class AttendanceConflictError extends Error {
+  constructor(message: string, public readonly conflicts: EventConflictDto[]) {
+    super(message);
+    Object.setPrototypeOf(this, AttendanceConflictError.prototype);
+    this.name = "AttendanceConflictError";
   }
 }
 
