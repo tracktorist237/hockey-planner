@@ -56,8 +56,9 @@ test("selects a nearby target, shows conflicts and navigates after transactional
   expect(screen.getByText("Все отметки «Смогу» из исходного мероприятия переносятся в целевое, даже если там было «Не смогу». Остальные ответы не меняются.")).toBeInTheDocument();
   expect(await screen.findByText("Изменится явка 1 участников")).toBeInTheDocument();
   expect(screen.getByText("1: Не смогу → Смогу")).toBeInTheDocument();
-  fireEvent.click(screen.getByText("Показать участников"));
-  expect(screen.getByText("Иван Иванов: Не смогу → Смогу")).toBeInTheDocument();
+  expect(screen.getByRole("table", { name: "Предпросмотр явки" })).toBeInTheDocument();
+  expect(screen.getByText("Иван Иванов")).toBeInTheDocument();
+  expect(screen.getByRole("combobox", { name: "Итог для Иван Иванов" })).toHaveValue("2");
   fireEvent.click(screen.getByRole("radio", { name: /^Перенести только «Смогу»/ }));
   await waitFor(() => expect(mockedPreview).toHaveBeenLastCalledWith("source", "target", AttendanceTransferMode.ConfirmedOnly));
   fireEvent.click(screen.getByRole("checkbox", { name: /Состав и звенья/ }));
@@ -77,6 +78,7 @@ test("selects a nearby target, shows conflicts and navigates after transactional
     targetEventId: "target", attendance: true, roster: true, guests: true,
     uniformColor: true, description: true, deleteSourceEvent: true,
     attendanceTransferMode: AttendanceTransferMode.ConfirmedOnly,
+    attendanceOverrides: [],
   }));
   expect(await screen.findByText("Целевое мероприятие открыто")).toBeInTheDocument();
 });
@@ -101,4 +103,35 @@ test("keeps both events only after an explicit No choice", async () => {
     targetEventId: "target",
     deleteSourceEvent: false,
   })));
+});
+
+test("edits and resets a per-user attendance result and sends only current overrides", async () => {
+  render(<MemoryRouter initialEntries={["/events/source/transfer"]}><Routes>
+    <Route path="/events/:id/transfer" element={<EventDataTransferPage />} />
+    <Route path="/events/:id" element={<div>Готово</div>} />
+  </Routes></MemoryRouter>);
+  fireEvent.click(await screen.findByRole("button", { name: "Выбрать" }));
+  const result = await screen.findByRole("combobox", { name: "Итог для Иван Иванов" });
+  fireEvent.change(result, { target: { value: "3" } });
+  expect(screen.getByRole("button", { name: "Сбросить к стратегии" })).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("radio", { name: /^Нет/ }));
+  fireEvent.click(screen.getByRole("button", { name: "Перенести выбранное" }));
+  await waitFor(() => expect(mockedTransfer).toHaveBeenCalledWith("source", expect.objectContaining({
+    attendanceOverrides: [{ userId: "guest", resultingStatus: 3 }],
+  })));
+});
+
+test("allows deleting an external source only after explicit choice and explains suppression", async () => {
+  mockedGetEvent.mockImplementation(id => Promise.resolve(id === source.id
+    ? { ...source, externalLeagueProvider: ExternalLeagueProvider.Spbhl, externalCompetitionId: "cup", externalMatchId: "game" }
+    : target));
+  render(<MemoryRouter initialEntries={["/events/source/transfer"]}><Routes>
+    <Route path="/events/:id/transfer" element={<EventDataTransferPage />} />
+  </Routes></MemoryRouter>);
+  fireEvent.click(await screen.findByRole("button", { name: "Выбрать" }));
+  await screen.findByRole("heading", { name: "2. Что перенести" });
+  fireEvent.click(screen.getByRole("radio", { name: /^Да/ }));
+  expect(screen.getByText(/не будет добавлять этот матч снова/)).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("radio", { name: /^Нет/ }));
+  expect(screen.queryByText(/не будет добавлять этот матч снова/)).not.toBeInTheDocument();
 });

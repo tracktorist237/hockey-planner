@@ -7,6 +7,8 @@ import {
   ExternalLeagueProvider,
   getTeamExternalLeagueLinks,
   getExternalLeagueAddressCandidates,
+  getExternalEventSuppressions,
+  restoreExternalEventSuppression,
   searchExternalLeagueTeams,
   syncAllTeamExternalLeagueLinks,
   syncTeamExternalLeagueLink,
@@ -24,6 +26,8 @@ const api = {
   syncAll: syncAllTeamExternalLeagueLinks as jest.MockedFunction<typeof syncAllTeamExternalLeagueLinks>,
   apply: applyExternalLeagueProfile as jest.MockedFunction<typeof applyExternalLeagueProfile>,
   addresses: getExternalLeagueAddressCandidates as jest.MockedFunction<typeof getExternalLeagueAddressCandidates>,
+  suppressions: getExternalEventSuppressions as jest.MockedFunction<typeof getExternalEventSuppressions>,
+  restore: restoreExternalEventSuppression as jest.MockedFunction<typeof restoreExternalEventSuppression>,
 };
 
 const renderSettings = (teamId = "team-a", avatarUrl: string | null = null, coverUrl: string | null = null) => render(
@@ -72,6 +76,8 @@ beforeEach(() => {
   api.search.mockResolvedValue([]);
   api.remove.mockResolvedValue(undefined);
   api.addresses.mockResolvedValue([]);
+  api.suppressions.mockResolvedValue([]);
+  api.restore.mockResolvedValue(undefined);
   jest.spyOn(window, "confirm").mockReturnValue(true);
 });
 
@@ -99,6 +105,20 @@ test("defaults to SPBHL and renders two linked teams with their divisions", asyn
   expect(screen.getByRole("button", { name: "Обновить все данные" })).toBeInTheDocument();
   expect(screen.queryByText(/Синхронизировать/)).not.toBeInTheDocument();
   expect(screen.getAllByRole("button", { name: "Убрать команду" })).toHaveLength(2);
+});
+
+test("restores an excluded event and removes it from the local list", async () => {
+  api.suppressions.mockResolvedValue([{
+    id: "suppression", teamId: "team-a", provider: ExternalLeagueProvider.Spbhl,
+    externalCompetitionId: "competition", externalMatchId: "match", title: "Исключённый матч",
+    startTime: "2026-09-10T17:00:00Z", competitionName: "Кубок",
+  }]);
+  renderSettings();
+  expect(await screen.findByText("Исключённый матч")).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Вернуть в синхронизацию" }));
+  await waitFor(() => expect(api.restore).toHaveBeenCalledWith("team-a", "suppression"));
+  await waitFor(() => expect(screen.queryByText("Исключённый матч")).not.toBeInTheDocument());
+  expect(screen.getByText("Мероприятие снова будет добавлено при следующем обновлении лиги.")).toBeInTheDocument();
 });
 
 test("hides the cover choice when the league has no cover", async () => {

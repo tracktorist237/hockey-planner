@@ -40,7 +40,6 @@ const attendanceStatusLabel = (status: number | null) => status === null ? "Не
   1: "Не ответил",
   2: "Смогу",
   3: "Не смогу",
-  4: "Опоздаю",
 }[status] ?? "Не ответил");
 
 const formatDate = (value: string) => new Intl.DateTimeFormat("ru-RU", {
@@ -66,6 +65,7 @@ export function EventDataTransferPage() {
   const [attendancePreview, setAttendancePreview] = useState<AttendanceTransferPreview | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewError, setPreviewError] = useState<string | null>(null);
+  const [attendanceOverrides, setAttendanceOverrides] = useState<Record<string, 1 | 2 | 3>>({});
 
   useEffect(() => {
     let active = true;
@@ -97,6 +97,7 @@ export function EventDataTransferPage() {
 
     setPreviewLoading(true);
     setAttendancePreview(null);
+    setAttendanceOverrides({});
     setPreviewError(null);
     void previewEventAttendanceTransfer(sourceEventId, target.id, options.attendanceTransferMode)
       .then(value => { if (active) setAttendancePreview(value); })
@@ -119,12 +120,14 @@ export function EventDataTransferPage() {
 
   const attendanceChanges = useMemo(() => {
     const groups = new Map<string, number>();
-    for (const item of attendancePreview?.items.filter(value => value.willChange) ?? []) {
-      const label = `${attendanceStatusLabel(item.targetStatus)} → ${attendanceStatusLabel(item.resultingStatus)}`;
+    for (const item of attendancePreview?.items ?? []) {
+      const finalStatus = attendanceOverrides[item.userId] ?? item.finalResultStatus ?? item.automaticResultStatus ?? item.resultingStatus;
+      if (finalStatus === item.targetStatus) continue;
+      const label = `${attendanceStatusLabel(item.targetStatus)} → ${attendanceStatusLabel(finalStatus)}`;
       groups.set(label, (groups.get(label) ?? 0) + 1);
     }
     return Array.from(groups.entries());
-  }, [attendancePreview]);
+  }, [attendancePreview, attendanceOverrides]);
 
   const chooseTarget = async (id: string) => {
     setError(null);
@@ -141,7 +144,8 @@ export function EventDataTransferPage() {
     setSubmitting(true);
     setError(null);
     try {
-      await transferEventData(sourceEventId, { targetEventId: target.id, ...options, deleteSourceEvent: options.deleteSourceEvent });
+      await transferEventData(sourceEventId, { targetEventId: target.id, ...options, deleteSourceEvent: options.deleteSourceEvent,
+        attendanceOverrides: Object.entries(attendanceOverrides).map(([userId, resultingStatus]) => ({ userId, resultingStatus })) });
       navigate(`/events/${target.id}`, { replace: true });
     } catch (value) {
       setError(value instanceof Error ? value.message : "Не удалось перенести данные мероприятия.");
@@ -184,16 +188,23 @@ export function EventDataTransferPage() {
             {previewLoading && <span style={{ color: "var(--hp-muted)", fontSize: 14 }}>Проверяем изменения явки...</span>}
             {previewError && <span role="alert" style={{ color: "var(--hp-danger)", fontSize: 14 }}>{previewError}</span>}
             {!previewLoading && attendancePreview && <div style={{ display: "grid", gap: 6, color: "var(--hp-text)", fontSize: 14 }}>
-              <strong>Изменится явка {attendancePreview.changedCount} участников</strong>
+              <strong>Изменится явка {attendanceChanges.reduce((total, [, count]) => total + count, 0)} участников</strong>
               {attendanceChanges.map(([label, count]) => <span key={label}>{count}: {label}</span>)}
-              {attendancePreview.changedCount > 0 && <details>
-                <summary style={{ cursor: "pointer", color: "var(--hp-primary-text)", fontWeight: 700 }}>Показать участников</summary>
-                <div style={{ display: "grid", gap: 5, marginTop: 8 }}>
-                  {attendancePreview.items.filter(item => item.willChange).map(item => <span key={item.userId} style={{ overflowWrap: "anywhere" }}>
-                    {item.userDisplayName || "Участник"}: {attendanceStatusLabel(item.targetStatus)} → {attendanceStatusLabel(item.resultingStatus)}
-                  </span>)}
+              <div role="table" aria-label="Предпросмотр явки" style={{ display: "grid", gap: 6, minWidth: 0 }}>
+                <div role="row" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: 6, fontWeight: 800 }}>
+                  <span>Участник</span><span>Исходное</span><span>Целевое</span><span>Итог</span>
                 </div>
-              </details>}
+                {attendancePreview.items.map(item => {
+                  const automatic = item.automaticResultStatus ?? item.resultingStatus;
+                  const finalStatus = attendanceOverrides[item.userId] ?? item.finalResultStatus ?? automatic ?? 1;
+                  return <div role="row" key={item.userId} data-changed={finalStatus !== item.targetStatus} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: 6, padding: "7px 0", borderTop: "1px solid var(--hp-border)", background: finalStatus !== item.targetStatus ? "var(--hp-info-soft)" : "transparent" }}>
+                    <span>{item.userDisplayName || "Участник"}</span><span>{attendanceStatusLabel(item.sourceStatus)}</span><span>{attendanceStatusLabel(item.targetStatus)}</span>
+                    <span style={{ display: "grid", gap: 4 }}><select aria-label={`Итог для ${item.userDisplayName || "участника"}`} value={finalStatus} disabled={submitting} onChange={event => setAttendanceOverrides(current => ({ ...current, [item.userId]: Number(event.target.value) as 1 | 2 | 3 }))}>
+                      <option value={2}>Смогу</option><option value={3}>Не смогу</option><option value={1}>Не ответил</option>
+                    </select>{attendanceOverrides[item.userId] !== undefined && <button type="button" onClick={() => setAttendanceOverrides(current => { const next = { ...current }; delete next[item.userId]; return next; })} style={{ border: 0, background: "transparent", color: "var(--hp-primary-text)", padding: 0, textAlign: "left" }}>Сбросить к стратегии</button>}</span>
+                  </div>;
+                })}
+              </div>
             </div>}
           </div>}
           <CheckboxControl checked={options.roster} onChange={setOption("roster")} label="Состав и звенья" description={<span style={{ display: "grid", gap: 4 }}>{conflicts?.roster && <span>Текущий состав целевого мероприятия будет заменён.</span>}<span>При переносе явки в состав попадут только участники с итоговой отметкой «Смогу». Если часть игроков после объединения явки не сможет участвовать, в звеньях могут появиться свободные места.</span></span>} disabled={submitting} />
@@ -206,6 +217,9 @@ export function EventDataTransferPage() {
               <RadioControl name="delete-source-event" checked={options.deleteSourceEvent === true} onChange={() => setOptions(current => ({ ...current, deleteSourceEvent: true }))} label={<span style={{ display: "grid", gap: 3 }}><strong>Да</strong><span style={{ color: "var(--hp-muted)", fontSize: 13, fontWeight: 600 }}>Исходное мероприятие будет удалено после успешного переноса данных.</span></span>} disabled={submitting} />
               <RadioControl name="delete-source-event" checked={options.deleteSourceEvent === false} onChange={() => setOptions(current => ({ ...current, deleteSourceEvent: false }))} label={<span style={{ display: "grid", gap: 3 }}><strong>Нет</strong><span style={{ color: "var(--hp-muted)", fontSize: 13, fontWeight: 600 }}>Оба мероприятия останутся.</span></span>} disabled={submitting} />
             </div>
+            {options.deleteSourceEvent === true && source?.externalLeagueProvider != null && <div role="status" style={{ color: "var(--hp-warning)", background: "var(--hp-warning-soft)", padding: 10, borderRadius: 8 }}>
+              Это мероприятие связано с лигой. После удаления HockeyPlanner запомнит ваш выбор и не будет добавлять этот матч снова при синхронизации.
+            </div>}
           </div>
         </div>
         <button type="button" disabled={submitting || options.deleteSourceEvent === null || (options.attendance && (previewLoading || !attendancePreview))} onClick={() => void submit()} style={{ width: "100%", padding: 13, borderRadius: 8, border: 0, background: "var(--hp-primary)", color: "white", fontWeight: 800, cursor: submitting ? "wait" : "pointer", opacity: submitting || options.deleteSourceEvent === null || (options.attendance && (previewLoading || !attendancePreview)) ? .65 : 1 }}>{submitting ? "Переносим..." : "Перенести выбранное"}</button>

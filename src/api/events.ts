@@ -57,7 +57,10 @@ export interface TransferEventDataRequest {
   description: boolean;
   deleteSourceEvent: boolean;
   attendanceTransferMode: AttendanceTransferMode;
+  attendanceOverrides?: AttendanceTransferOverride[];
 }
+
+export interface AttendanceTransferOverride { userId: string; resultingStatus: 1 | 2 | 3; }
 
 export enum AttendanceTransferMode {
   ReplaceTarget = 1,
@@ -71,6 +74,9 @@ export interface AttendanceTransferPreviewItem {
   sourceStatus: number;
   targetStatus: number | null;
   resultingStatus: number | null;
+  automaticResultStatus?: number | null;
+  finalResultStatus?: number | null;
+  isOverridden?: boolean;
   willChange: boolean;
 }
 

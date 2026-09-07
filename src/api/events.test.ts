@@ -92,6 +92,7 @@ test("transferEventData posts selected categories without actor identity", async
     targetEventId: "target-event", attendance: true, roster: true, guests: false,
     uniformColor: false, description: true, deleteSourceEvent: false,
     attendanceTransferMode: AttendanceTransferMode.MergePreferTarget,
+    attendanceOverrides: [],
   };
   mockedAuthFetch.mockResolvedValue(createResponse({ targetEventId: request.targetEventId }));
 

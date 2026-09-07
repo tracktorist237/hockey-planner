@@ -6,6 +6,8 @@ import {
   ExternalLeagueProvider,
   getTeamExternalLeagueLinks,
   getExternalLeagueAddressCandidates,
+  getExternalEventSuppressions,
+  restoreExternalEventSuppression,
   searchExternalLeagueTeams,
   syncAllTeamExternalLeagueLinks,
   syncTeamExternalLeagueLink,
@@ -37,6 +39,8 @@ test("link management uses generic protected team routes", async () => {
   mockedFetch.mockResolvedValue(response([]));
   await getTeamExternalLeagueLinks("team id");
   await getExternalLeagueAddressCandidates("team id");
+  await getExternalEventSuppressions("team id", ExternalLeagueProvider.Spbhl);
+  await restoreExternalEventSuppression("team id", "suppression id");
   await createTeamExternalLeagueLink("team id", {
     provider: ExternalLeagueProvider.Spbhl,
     externalTeamId: "external",
@@ -49,21 +53,23 @@ test("link management uses generic protected team routes", async () => {
 
   expect(mockedFetch).toHaveBeenNthCalledWith(1, "/api/teams/team%20id/external-links", { credentials: "include" });
   expect(mockedFetch).toHaveBeenNthCalledWith(2, "/api/teams/team%20id/external-links/address-candidates", { credentials: "include" });
-  expect(mockedFetch).toHaveBeenNthCalledWith(3, "/api/teams/team%20id/external-links", {
+  expect(mockedFetch).toHaveBeenNthCalledWith(3, "/api/teams/team%20id/external-links/suppressions?provider=1", { credentials: "include" });
+  expect(mockedFetch).toHaveBeenNthCalledWith(4, "/api/teams/team%20id/external-links/suppressions/suppression%20id", { method: "DELETE", credentials: "include" });
+  expect(mockedFetch).toHaveBeenNthCalledWith(5, "/api/teams/team%20id/external-links", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ provider: 1, externalTeamId: "external", isPrimary: false }),
     credentials: "include",
   });
-  expect(mockedFetch).toHaveBeenNthCalledWith(4, "/api/teams/team%20id/external-links/link%20id", { method: "DELETE", credentials: "include" });
-  expect(mockedFetch).toHaveBeenNthCalledWith(5, "/api/teams/team%20id/external-links/link%20id/apply-profile", {
+  expect(mockedFetch).toHaveBeenNthCalledWith(6, "/api/teams/team%20id/external-links/link%20id", { method: "DELETE", credentials: "include" });
+  expect(mockedFetch).toHaveBeenNthCalledWith(7, "/api/teams/team%20id/external-links/link%20id/apply-profile", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ useName: true, useLogo: true, useCover: false, useDescriptionMetadata: true, selectedPhoneCandidateIds: ["p"], selectedWebsiteCandidateIds: ["w"], selectedAddressCandidateIds: ["a"] }),
     credentials: "include",
   });
-  expect(mockedFetch).toHaveBeenNthCalledWith(6, "/api/teams/team%20id/external-links/link%20id/sync", { method: "POST", credentials: "include" });
-  expect(mockedFetch).toHaveBeenNthCalledWith(7, "/api/teams/team%20id/external-links/sync", { method: "POST", credentials: "include" }, true, 60_000);
+  expect(mockedFetch).toHaveBeenNthCalledWith(8, "/api/teams/team%20id/external-links/link%20id/sync", { method: "POST", credentials: "include" });
+  expect(mockedFetch).toHaveBeenNthCalledWith(9, "/api/teams/team%20id/external-links/sync", { method: "POST", credentials: "include" }, true, 60_000);
   expect(JSON.stringify(mockedFetch.mock.calls)).not.toMatch(/currentUserId|userId/i);
 });
 
