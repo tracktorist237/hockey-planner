@@ -1,9 +1,11 @@
+import { Link } from "react-router-dom";
 import { EventDto, EventType } from "src/types/events";
 import { getEventTypeColor, getLeagueColor } from "src/utils/colors";
 import { formatRuDateLabel } from "src/utils/date";
 import { ExternalLeagueBadge } from "src/components/ExternalLeagueBadge";
 import { EventStatusBadge } from "src/components/EventStatusBadge";
 import { EventConflictBadge } from "src/components/EventConflictBadge";
+import "./EventInfoCard.css";
 
 interface EventInfoCardProps {
   event: EventDto;
@@ -95,36 +97,22 @@ export const EventInfoCard = ({ event, copySuccess, copyEventLink }: EventInfoCa
             ⏱ {formatDuration(event.durationMinutes)}
           </span>
 
-          {event.teamName && (
-            <span
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "6px",
-                maxWidth: "100%",
-                padding: "4px 10px",
-                borderRadius: "999px",
-                background: "var(--hp-surface-soft)",
-                color: "var(--hp-muted)",
-                border: "1px solid var(--hp-border)",
-                fontSize: "12px",
-                fontWeight: 800,
-              }}
+          {event.teamName && (event.teamId ? (
+            <Link
+              to={`/teams/${event.teamId}`}
+              className="event-info-team-badge event-info-team-badge--link"
               title={event.teamName}
+              aria-label={`Открыть команду ${event.teamName}`}
             >
               <span style={{ color: "var(--hp-primary)", fontSize: "11px" }}>●</span>
-              <span
-                style={{
-                  minWidth: 0,
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {event.teamName}
-              </span>
+              <span className="event-info-team-badge__name">{event.teamName}</span>
+            </Link>
+          ) : (
+            <span className="event-info-team-badge" title={event.teamName}>
+              <span style={{ color: "var(--hp-primary)", fontSize: "11px" }}>●</span>
+              <span className="event-info-team-badge__name">{event.teamName}</span>
             </span>
-          )}
+          ))}
 
           {event.type === EventType.Game && event.leagueName && (
             <div

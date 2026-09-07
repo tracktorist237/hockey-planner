@@ -1,4 +1,6 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
+import { ActionMenu } from "src/pages/EventPage/components/ActionMenu";
 import { EventInfoCard } from "src/pages/EventPage/components/EventInfoCard";
 import { EventAdditionalInfo } from "src/pages/EventPage/components/EventAdditionalInfo";
 import { EventCard } from "src/pages/EventsListPage/components/EventCard";
@@ -65,6 +67,32 @@ test("external badge omits an absent division and details omit an absent address
   render(<EventInfoCard event={{ ...externalEvent, externalDivisionName: null, locationAddress: undefined, createdAt: "2026-09-01T00:00:00Z" } as EventDto} copySuccess={false} copyEventLink={jest.fn()} />);
   expect(screen.getAllByText("СПбХЛ").length).toBeGreaterThan(0);
   expect(within(screen.getByTestId("external-match-details")).queryByText("Адрес:")).not.toBeInTheDocument();
+});
+
+test("individual event team badge links to the team and falls back to text without team id", () => {
+  const event = { ...externalEvent, teamId: "team-42", teamName: "Северная столица", createdAt: "2026-09-01T00:00:00Z" } as EventDto;
+  const view = render(<MemoryRouter><EventInfoCard event={event} copySuccess={false} copyEventLink={jest.fn()} /></MemoryRouter>);
+
+  const link = screen.getByRole("link", { name: "Открыть команду Северная столица" });
+  expect(link).toHaveAttribute("href", "/teams/team-42");
+  expect(link).toHaveAttribute("title", "Северная столица");
+
+  view.rerender(<MemoryRouter><EventInfoCard event={{ ...event, teamId: undefined } as EventDto} copySuccess={false} copyEventLink={jest.fn()} /></MemoryRouter>);
+  expect(screen.queryByRole("link", { name: "Открыть команду Северная столица" })).not.toBeInTheDocument();
+  expect(screen.getByTitle("Северная столица")).toHaveTextContent("Северная столица");
+});
+
+test("event actions disclosure uses right and down arrows for its actual state", () => {
+  const view = render(<ActionMenu eventId="event" isOpen={false} onToggle={jest.fn()} canManage />);
+  const button = screen.getByRole("button", { name: /Действия с мероприятием/ });
+  expect(button).toHaveAttribute("aria-expanded", "false");
+  expect(button).toHaveTextContent("▶");
+  expect(button).not.toHaveTextContent("▼");
+
+  view.rerender(<ActionMenu eventId="event" isOpen onToggle={jest.fn()} canManage />);
+  expect(button).toHaveAttribute("aria-expanded", "true");
+  expect(button).toHaveTextContent("▼");
+  expect(button).not.toHaveTextContent("▶");
 });
 
 test("event overlap badge opens every conflicting event with its actual time range", () => {

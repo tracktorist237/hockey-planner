@@ -18,6 +18,7 @@ export const ActionMenu = ({ eventId, isOpen, onToggle, canManage }: ActionMenuP
     >
       <button
         onClick={onToggle}
+        aria-expanded={isOpen}
         style={{
           width: "100%",
           padding: "14px 16px",
@@ -49,11 +50,9 @@ export const ActionMenu = ({ eventId, isOpen, onToggle, canManage }: ActionMenuP
         <span
           style={{
             fontSize: "20px",
-            transform: isOpen ? "rotate(180deg)" : "rotate(0deg)",
-            transition: "transform 0.3s ease",
           }}
         >
-          ▼
+          {isOpen ? "▼" : "▶"}
         </span>
       </button>
 
