@@ -14,6 +14,7 @@ import { LoadingIndicator } from "src/components/LoadingIndicator";
 import { RadioControl } from "src/components/RadioControl";
 import { useAuth } from "src/hooks/useAuth";
 import { EventDto, EventLookUpDto } from "src/types/events";
+import "./EventDataTransferPage.css";
 
 type TransferOptions = {
   attendance: boolean;
@@ -190,18 +191,20 @@ export function EventDataTransferPage() {
             {!previewLoading && attendancePreview && <div style={{ display: "grid", gap: 6, color: "var(--hp-text)", fontSize: 14 }}>
               <strong>Изменится явка {attendanceChanges.reduce((total, [, count]) => total + count, 0)} участников</strong>
               {attendanceChanges.map(([label, count]) => <span key={label}>{count}: {label}</span>)}
-              <div role="table" aria-label="Предпросмотр явки" style={{ display: "grid", gap: 6, minWidth: 0 }}>
-                <div role="row" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: 6, fontWeight: 800 }}>
-                  <span>Участник</span><span>Исходное</span><span>Целевое</span><span>Итог</span>
+              <div role="table" aria-label="Предпросмотр явки" className="attendance-transfer-table">
+                <div role="row" className="attendance-transfer-header">
+                  <span role="columnheader">Участник</span><span role="columnheader">Исходное</span><span role="columnheader">Целевое</span><span role="columnheader">Итог</span>
                 </div>
                 {attendancePreview.items.map(item => {
                   const automatic = item.automaticResultStatus ?? item.resultingStatus;
                   const finalStatus = attendanceOverrides[item.userId] ?? item.finalResultStatus ?? automatic ?? 1;
-                  return <div role="row" key={item.userId} data-changed={finalStatus !== item.targetStatus} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: 6, padding: "7px 0", borderTop: "1px solid var(--hp-border)", background: finalStatus !== item.targetStatus ? "var(--hp-info-soft)" : "transparent" }}>
-                    <span>{item.userDisplayName || "Участник"}</span><span>{attendanceStatusLabel(item.sourceStatus)}</span><span>{attendanceStatusLabel(item.targetStatus)}</span>
-                    <span style={{ display: "grid", gap: 4 }}><select aria-label={`Итог для ${item.userDisplayName || "участника"}`} value={finalStatus} disabled={submitting} onChange={event => setAttendanceOverrides(current => ({ ...current, [item.userId]: Number(event.target.value) as 1 | 2 | 3 }))}>
+                  return <div role="row" key={item.userId} data-changed={finalStatus !== item.targetStatus} className="attendance-transfer-row">
+                    <span role="cell" className="attendance-transfer-participant">{item.userDisplayName || "Участник"}</span>
+                    <span role="cell" className="attendance-transfer-cell"><span aria-hidden="true" className="attendance-transfer-mobile-label">Исходное</span>{attendanceStatusLabel(item.sourceStatus)}</span>
+                    <span role="cell" className="attendance-transfer-cell"><span aria-hidden="true" className="attendance-transfer-mobile-label">Целевое</span>{attendanceStatusLabel(item.targetStatus)}</span>
+                    <span role="cell" className="attendance-transfer-result"><span aria-hidden="true" className="attendance-transfer-mobile-label">Итог</span><select aria-label={`Итог для ${item.userDisplayName || "участника"}`} value={finalStatus} disabled={submitting} onChange={event => setAttendanceOverrides(current => ({ ...current, [item.userId]: Number(event.target.value) as 1 | 2 | 3 }))}>
                       <option value={2}>Смогу</option><option value={3}>Не смогу</option><option value={1}>Не ответил</option>
-                    </select>{attendanceOverrides[item.userId] !== undefined && <button type="button" onClick={() => setAttendanceOverrides(current => { const next = { ...current }; delete next[item.userId]; return next; })} style={{ border: 0, background: "transparent", color: "var(--hp-primary-text)", padding: 0, textAlign: "left" }}>Сбросить к стратегии</button>}</span>
+                    </select>{attendanceOverrides[item.userId] !== undefined && <button type="button" onClick={() => setAttendanceOverrides(current => { const next = { ...current }; delete next[item.userId]; return next; })} className="attendance-transfer-reset">Сбросить к стратегии</button>}</span>
                   </div>;
                 })}
               </div>

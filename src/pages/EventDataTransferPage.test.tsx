@@ -57,6 +57,7 @@ test("selects a nearby target, shows conflicts and navigates after transactional
   expect(await screen.findByText("Изменится явка 1 участников")).toBeInTheDocument();
   expect(screen.getByText("1: Не смогу → Смогу")).toBeInTheDocument();
   expect(screen.getByRole("table", { name: "Предпросмотр явки" })).toBeInTheDocument();
+  expect(screen.getAllByRole("columnheader").map(element => element.textContent)).toEqual(["Участник", "Исходное", "Целевое", "Итог"]);
   expect(screen.getByText("Иван Иванов")).toBeInTheDocument();
   expect(screen.getByRole("combobox", { name: "Итог для Иван Иванов" })).toHaveValue("2");
   fireEvent.click(screen.getByRole("radio", { name: /^Перенести только «Смогу»/ }));
