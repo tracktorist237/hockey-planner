@@ -27,7 +27,7 @@ const defaultMessages: Record<number, string> = {
 const safeMessage = (value: unknown): string | undefined => {
   if (typeof value !== "string") return undefined;
   const text = value.trim();
-  if (!text || text.length > 1000 || /[<>{}\[\]]|\bat\s+\S+\(|stack\s?trace|exception|bearer\s|password|authorization|refresh.?token|access.?token/i.test(text)) return undefined;
+  if (!text || text.length > 1000 || /[<>{}[\]]|\bat\s+\S+\(|stack\s?trace|exception|bearer\s|password|authorization|refresh.?token|access.?token/i.test(text)) return undefined;
   return text;
 };
 
