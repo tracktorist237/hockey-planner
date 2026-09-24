@@ -1,3 +1,4 @@
+import { parseApiError } from "src/api/errors";
 import { ExerciseDto } from "src/types/events";
 import { buildApiUrl } from "src/api/client";
 
@@ -15,7 +16,7 @@ export interface UpdateExerciseDto {
 export async function getExercises(teamId: string): Promise<ExerciseDto[]> {
   const query = new URLSearchParams({ teamId });
   const res = await fetch(buildApiUrl(`/api/exercises?${query.toString()}`), { credentials: "include" });
-  if (!res.ok) throw new Error(`GET /api/exercises failed: ${res.status}`);
+  if (!res.ok) throw await parseApiError(res);
   return res.json();
 }
 
@@ -28,8 +29,7 @@ export async function createExercise(data: CreateExerciseDto, currentUserId: str
   });
 
   if (!res.ok) {
-    const text = await res.text();
-    throw new Error(text || `POST /api/exercises failed: ${res.status}`);
+    throw await parseApiError(res);
   }
 
   return res.json();
@@ -44,8 +44,7 @@ export async function updateExercise(id: string, data: UpdateExerciseDto, curren
   });
 
   if (!res.ok) {
-    const text = await res.text();
-    throw new Error(text || `PUT /api/exercises/${id} failed: ${res.status}`);
+    throw await parseApiError(res);
   }
 
   return res.json();
@@ -58,8 +57,7 @@ export async function deleteExercise(id: string, currentUserId: string): Promise
   });
 
   if (!res.ok) {
-    const text = await res.text();
-    throw new Error(text || `DELETE /api/exercises/${id} failed: ${res.status}`);
+    throw await parseApiError(res);
   }
 }
 

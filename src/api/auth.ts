@@ -2,6 +2,7 @@ import { normalizeAppRole, normalizeRole } from "src/constants/roles";
 import { User } from "src/types/user";
 import { writeClientDebugEvent } from "src/utils/clientDebugLog";
 import { buildApiUrl } from "src/api/client";
+import { readApiErrorMessage as readErrorMessage } from "src/api/errors";
 
 const ACCESS_TOKEN_KEY = "authAccessToken";
 const REFRESH_TOKEN_KEY = "authRefreshToken";
@@ -249,20 +250,6 @@ export const setAuthTokens = (response: AuthResponse): User => {
 
 export const clearAuthTokens = (): void => {
   clearSession();
-};
-
-const readErrorMessage = async (response: Response): Promise<string> => {
-  const text = await response.text();
-  if (!text) {
-    return `${response.status} ${response.statusText}`;
-  }
-
-  try {
-    const data = JSON.parse(text) as { message?: string };
-    return data.message ?? text;
-  } catch {
-    return text;
-  }
 };
 
 const createNetworkError = (): Error =>

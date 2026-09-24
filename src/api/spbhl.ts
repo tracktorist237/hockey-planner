@@ -1,3 +1,4 @@
+import { parseApiError } from "src/api/errors";
 import { buildApiUrl } from "src/api/client";
 
 export interface SpbhlPlayerSearchItem {
@@ -38,8 +39,7 @@ export async function searchSpbhlPlayers(
   const res = await fetch(buildApiUrl(`/api/spbhl/players?${query.toString()}`));
 
   if (!res.ok) {
-    const errorData = await res.json().catch(() => null);
-    throw new Error(errorData?.error || "Не удалось выполнить поиск по СПБХЛ");
+    throw await parseApiError(res, "Не удалось выполнить поиск по СПБХЛ");
   }
 
   return res.json();

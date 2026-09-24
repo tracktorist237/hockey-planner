@@ -1,3 +1,4 @@
+import { parseApiError } from "src/api/errors";
 import { buildApiUrl } from "src/api/client";
 
 export enum GoalieRequestVisibility {
@@ -96,8 +97,7 @@ const ensureOk = async (response: Response, fallbackMessage: string): Promise<vo
     return;
   }
 
-  const errorData = await response.json().catch(() => null);
-  throw new Error(errorData?.message || errorData?.error || `${fallbackMessage}: ${response.status}`);
+  throw await parseApiError(response, fallbackMessage);
 };
 
 const goalieUrl = (eventId: string, currentUserId: string, path = "") =>

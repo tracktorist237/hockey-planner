@@ -1,3 +1,4 @@
+import { parseApiError } from "src/api/errors";
 import { authFetch } from "src/api/auth";
 import { buildApiUrl } from "src/api/client";
 
@@ -28,7 +29,7 @@ export interface PushBroadcastResult {
 export const getPushPublicKey = async (): Promise<string> => {
   const response = await fetch(buildApiUrl("/api/push/public-key"));
   if (!response.ok) {
-    throw new Error(`Не удалось получить VAPID ключ: ${response.status}`);
+    throw await parseApiError(response, "Не удалось настроить уведомления.");
   }
 
   const data = (await response.json()) as { publicKey?: string };
@@ -47,8 +48,7 @@ export const subscribePush = async (payload: PushSubscriptionPayload): Promise<v
   });
 
   if (!response.ok) {
-    const text = await response.text();
-    throw new Error(text || "Ошибка подписки на push-уведомления");
+    throw await parseApiError(response, "Ошибка подписки на push-уведомления");
   }
 };
 
@@ -60,8 +60,7 @@ export const unsubscribePush = async (endpoint: string): Promise<void> => {
   });
 
   if (!response.ok) {
-    const text = await response.text();
-    throw new Error(text || "Ошибка отписки от push-уведомлений");
+    throw await parseApiError(response, "Ошибка отписки от push-уведомлений");
   }
 };
 
@@ -75,8 +74,7 @@ export const broadcastPush = async (
   });
 
   if (!response.ok) {
-    const text = await response.text();
-    throw new Error(text || "Ошибка отправки push-уведомления");
+    throw await parseApiError(response, "Ошибка отправки push-уведомления");
   }
 
   return (await response.json()) as PushBroadcastResult;

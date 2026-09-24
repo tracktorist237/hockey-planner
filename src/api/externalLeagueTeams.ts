@@ -1,4 +1,5 @@
 import { authFetch } from "src/api/auth";
+import { parseApiError } from "src/api/errors";
 
 export enum ExternalLeagueProvider {
   Spbhl = 1,
@@ -110,18 +111,7 @@ async function request<T>(path: string, init: RequestInit = {}, timeoutMs?: numb
   }
 
   if (!response.ok) {
-    if (response.status === 502) throw new Error(upstreamFallback);
-
-    let payload: unknown;
-    try {
-      payload = await response.json();
-    } catch {
-      payload = null;
-    }
-    const data = payload && typeof payload === "object" ? payload as Record<string, unknown> : {};
-    const message = [data.message, data.error, data.detail, data.title]
-      .find((value): value is string => typeof value === "string" && value.trim().length > 0);
-    throw new Error(message?.trim() || "Не удалось выполнить запрос.");
+    throw await parseApiError(response, response.status === 502 ? upstreamFallback : undefined);
   }
 
   if (response.status === 204) return undefined as T;

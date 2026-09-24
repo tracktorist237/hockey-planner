@@ -181,6 +181,14 @@ test("authFetch refreshes once and retries the protected request exactly once", 
   expect(getRefreshToken()).toBeNull();
 });
 
+test("ProblemDetails refresh rejection preserves auth lifecycle semantics", async () => {
+  setAuthTokens(createAuthResponse("1"));
+  mockedFetch.mockResolvedValue(createResponse(401, { type: "about:blank", detail: "Войдите в аккаунт снова.", traceId: "auth-123" }));
+  await expect(refreshAuth()).rejects.toThrow("Войдите в аккаунт снова.");
+  expect(getAccessToken()).toBeNull();
+  expect(getRefreshToken()).toBeNull();
+});
+
 test("authFetch refreshes an expired session before an AllowAnonymous request", async () => {
   const expired = { ...createAuthResponse("expired"), accessTokenExpiresAt: "2000-01-01T00:00:00.000Z" };
   const refreshed = createAuthResponse("fresh");

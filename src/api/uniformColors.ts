@@ -1,3 +1,4 @@
+import { parseApiError } from "src/api/errors";
 import { UniformColorDto } from "src/types/events";
 import { buildApiUrl } from "src/api/client";
 
@@ -19,7 +20,7 @@ export async function getUniformColors(teamId: string): Promise<UniformColorDto[
   });
 
   if (!res.ok) {
-    throw new Error(`GET /api/uniform-colors failed: ${res.status}`);
+    throw await parseApiError(res);
   }
 
   return res.json();
@@ -40,8 +41,7 @@ export async function createUniformColor(
   );
 
   if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`POST /api/uniform-colors failed: ${res.status} ${text}`);
+    throw await parseApiError(res);
   }
 
   return res.json();
@@ -68,8 +68,7 @@ export async function createUniformColorWithUpload(
   );
 
   if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`POST /api/uniform-colors/upload failed: ${res.status} ${text}`);
+    throw await parseApiError(res);
   }
 
   return res.json();
@@ -91,8 +90,7 @@ export async function updateUniformColor(
   );
 
   if (!res.ok) {
-    const text = await res.text();
-    throw new Error(text || `PUT /api/uniform-colors/${id} failed: ${res.status}`);
+    throw await parseApiError(res);
   }
 
   return res.json();
@@ -108,7 +106,6 @@ export async function deleteUniformColor(id: string, currentUserId: string): Pro
   );
 
   if (!res.ok) {
-    const text = await res.text();
-    throw new Error(text || `DELETE /api/uniform-colors/${id} failed: ${res.status}`);
+    throw await parseApiError(res);
   }
 }

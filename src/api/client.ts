@@ -1,3 +1,5 @@
+import { parseApiError } from "src/api/errors";
+
 const API_BASE = process.env.REACT_APP_API_BASE || "";
 const API_REQUEST_TIMEOUT_MS = 10_000;
 
@@ -48,11 +50,10 @@ export async function apiGet<T>(url: string): Promise<T> {
     credentials: "include",
   });
 
-  const text = await res.text();
+  if (!res.ok) throw await parseApiError(res);
   try {
-    return JSON.parse(text) as T;
-  } catch (err) {
-    console.error("API returned not JSON:", text);
-    throw err;
+    return await res.json() as T;
+  } catch {
+    throw new Error("Сервер вернул некорректный ответ. Попробуйте позже.");
   }
 }

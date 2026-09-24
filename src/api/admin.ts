@@ -1,3 +1,4 @@
+import { readApiErrorMessage as readErrorMessage } from "src/api/errors";
 import { authFetch } from "src/api/auth";
 import { CreateUpdateInstructionArticleRequest, InstructionArticleDto } from "src/api/instructions";
 
@@ -230,19 +231,6 @@ export interface DatabaseBackupDownload {
   fileName: string;
 }
 
-const readErrorMessage = async (response: Response): Promise<string> => {
-  const text = await response.text();
-  if (!text) {
-    return `${response.status} ${response.statusText}`;
-  }
-
-  try {
-    const data = JSON.parse(text) as { message?: string; error?: string };
-    return data.message ?? data.error ?? text;
-  } catch {
-    return text;
-  }
-};
 
 const requireJson = async <T>(response: Response): Promise<T> => {
   if (!response.ok) {

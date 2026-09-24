@@ -1,5 +1,6 @@
 import { CreateUpdateRosterRequest } from "../types/lines";
 import { authFetch } from "src/api/auth";
+import { readApiErrorMessage } from "src/api/errors";
 
 const getRosterErrorDescription = (status: number): string => {
   if (status === 0) return "нет соединения с сервером или запрос был прерван";
@@ -13,13 +14,8 @@ const getRosterErrorDescription = (status: number): string => {
   return "не удалось выполнить запрос";
 };
 
-const readErrorMessage = async (response: Response): Promise<string | null> => {
-  const payload = await response.json().catch(() => null);
-  return payload?.message || payload?.error || null;
-};
-
 const throwRosterError = async (response: Response, fallback: string): Promise<never> => {
-  const serverMessage = await readErrorMessage(response);
+  const serverMessage = await readApiErrorMessage(response, fallback);
   throw new Error(`Код ${response.status}: ${getRosterErrorDescription(response.status)}. ${serverMessage || fallback}`);
 };
 

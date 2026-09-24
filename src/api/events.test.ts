@@ -190,6 +190,18 @@ test("updateAttendance exposes a controlled 409 conflict payload", async () => {
   );
 });
 
+test("ProblemDetails preserves attendance conflict confirmation UX", async () => {
+  const conflicts = [{ id: "other", title: "Other", startTime: "2026-09-10T18:00:00Z", durationMinutes: 60, status: 1 }];
+  mockedAuthFetch.mockResolvedValue(createResponse({ type: "about:blank", status: 409, detail: "В это время у вас уже есть мероприятие", conflicts }, 409));
+  await expect(updateAttendance(eventId, userId, 2)).rejects.toMatchObject({ name: "AttendanceConflictError", conflicts });
+});
+
+test("transfer preview shows controlled validation errors instead of a network error", async () => {
+  mockedAuthFetch.mockResolvedValue(createResponse({ detail: "Выберите другое мероприятие.", traceId: "transfer-123" }, 400));
+  await expect(previewEventAttendanceTransfer(eventId, eventId, AttendanceTransferMode.MergePreferTarget))
+    .rejects.toMatchObject({ status: 400, message: "Выберите другое мероприятие.", traceId: "transfer-123" });
+});
+
 test("createEventGuest preserves URL, method, headers and body", async () => {
   const request = {
     firstName: "Guest",

@@ -1,5 +1,6 @@
 import { AttendanceLookUpDto, CreateEventDto, EventConflictDto, EventDto, EventListDto } from "../types/events";
 import { authFetch } from "src/api/auth";
+import { apiErrorFromPayload, parseApiError } from "src/api/errors";
 
 const readStoredCurrentUserId = (): string | null => {
   try {
@@ -35,7 +36,7 @@ export async function getEvents(currentUserId?: string, teamId?: string | null):
   const query = queryParts.length > 0 ? `?${queryParts.join("&")}` : "";
   const res = await authFetch(`/api/events${query}`, { credentials: "include" });
   if (!res.ok) {
-    throw new Error(`GET /api/events failed: ${res.status}`);
+    throw await parseApiError(res);
   }
   return res.json();
 }
@@ -43,7 +44,7 @@ export async function getEvents(currentUserId?: string, teamId?: string | null):
 export async function getEvent(id: string): Promise<EventDto> {
   const res = await authFetch(`/api/events/${id}`, { credentials: "include" });
   if (!res.ok) {
-    throw new Error(`GET /api/events/${id} failed: ${res.status}`);
+    throw await parseApiError(res);
   }
   return res.json();
 }
@@ -97,8 +98,7 @@ export async function previewEventAttendanceTransfer(
     body: JSON.stringify({ targetEventId, attendanceTransferMode }),
   });
   if (!res.ok) {
-    const error = await res.json().catch(() => null) as { message?: string; error?: string; detail?: string; title?: string } | null;
-    throw new Error(error?.message || error?.error || error?.detail || error?.title || "Не удалось проверить перенос явки.");
+    throw await parseApiError(res, "Не удалось проверить перенос явки.");
   }
   return res.json();
 }
@@ -111,8 +111,7 @@ export async function transferEventData(sourceEventId: string, request: Transfer
     body: JSON.stringify(request),
   });
   if (!res.ok) {
-    const error = await res.json().catch(() => null) as { message?: string; error?: string; detail?: string; title?: string } | null;
-    throw new Error(error?.message || error?.error || error?.detail || error?.title || "Не удалось перенести данные мероприятия.");
+    throw await parseApiError(res, "Не удалось перенести данные мероприятия.");
   }
   return res.json();
 }
@@ -127,8 +126,7 @@ export async function createEvent(data: CreateEventDto, currentUserId?: string):
   });
 
   if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`Ошибка создания события: ${res.status} - ${text}`);
+    throw await parseApiError(res, "Не удалось создать мероприятие.");
   }
 
   return res.json();
@@ -151,8 +149,7 @@ export async function updateEvent(
   );
 
   if (!res.ok) {
-    const errorData = await res.json().catch(() => null);
-    throw new Error(errorData?.message || `Ошибка обновления события: ${res.status}`);
+    throw await parseApiError(res, "Не удалось обновить мероприятие.");
   }
 }
 
@@ -167,13 +164,11 @@ export async function deleteEvent(eventId: string, currentUserId?: string): Prom
     },
   );
 
-  const data = await res.json();
-
   if (!res.ok) {
-    throw new Error(data.message || "Ошибка удаления события");
+    throw await parseApiError(res, "Не удалось удалить мероприятие.");
   }
 
-  return data;
+  return res.json();
 }
 
 export async function updateAttendance(
@@ -198,9 +193,9 @@ export async function updateAttendance(
   if (!res.ok) {
     const data = await res.json().catch(() => null) as { message?: string; error?: string; conflicts?: EventConflictDto[] } | null;
     if (res.status === 409 && data?.conflicts?.length) {
-      throw new AttendanceConflictError(data.message || "В это время у вас уже есть мероприятие", data.conflicts);
+      throw new AttendanceConflictError(apiErrorFromPayload(res.status, data, "В это время у вас уже есть мероприятие").message, data.conflicts);
     }
-    throw new Error(data?.message || data?.error || "Ошибка обновления явки");
+    throw apiErrorFromPayload(res.status, data, "Не удалось обновить явку.");
   }
 }
 
@@ -233,8 +228,7 @@ export async function createEventGuest(
   });
 
   if (!res.ok) {
-    const errorData = await res.json().catch(() => null);
-    throw new Error(errorData?.error || errorData?.message || `Ошибка добавления гостя: ${res.status}`);
+    throw await parseApiError(res, "Не удалось добавить гостя.");
   }
 
   return res.json();
@@ -259,7 +253,6 @@ export async function updateEventGuestAttendance(
   });
 
   if (!res.ok) {
-    const errorData = await res.json().catch(() => null);
-    throw new Error(errorData?.error || errorData?.message || `Ошибка обновления явки гостя: ${res.status}`);
+    throw await parseApiError(res, "Не удалось обновить явку гостя.");
   }
 }

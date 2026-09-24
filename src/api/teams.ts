@@ -1,3 +1,4 @@
+import { readApiErrorMessage } from "src/api/errors";
 import {
   CreateTeamNewsRequest,
   CreateTeamRequest,
@@ -82,15 +83,15 @@ export class TeamsApiError extends Error {
   }
 }
 
-const throwTeamsApiError = async (response: Response, fallbackMessage: string): Promise<never> => {
-  const text = await response.text().catch(() => "");
-  throw new TeamsApiError(text || fallbackMessage, response.status);
+const throwTeamsApiError = async (response: Response): Promise<never> => {
+  const message = await readApiErrorMessage(response);
+  throw new TeamsApiError(message, response.status);
 };
 
 export async function getPublicTeams(): Promise<TeamDto[]> {
   const response = await fetchWithTimeout(buildApiUrl("/api/teams/public"), { credentials: "include" });
   if (!response.ok) {
-    await throwTeamsApiError(response, `GET /api/teams/public failed: ${response.status}`);
+    await throwTeamsApiError(response);
   }
   return response.json();
 }
@@ -102,7 +103,7 @@ export async function getMyTeams(currentUserId?: string): Promise<TeamDto[]> {
   });
 
   if (!response.ok) {
-    await throwTeamsApiError(response, `GET /api/teams failed: ${response.status}`);
+    await throwTeamsApiError(response);
   }
   return response.json();
 }
@@ -114,7 +115,7 @@ export async function getTeam(teamId: string, currentUserId?: string): Promise<T
   });
 
   if (!response.ok) {
-    await throwTeamsApiError(response, `GET /api/teams/${teamId} failed: ${response.status}`);
+    await throwTeamsApiError(response);
   }
   return response.json();
 }
@@ -125,7 +126,7 @@ export async function getTeamMembers(teamId: string): Promise<TeamMemberDto[]> {
   });
 
   if (!response.ok) {
-    await throwTeamsApiError(response, `GET /api/teams/${teamId}/members failed: ${response.status}`);
+    await throwTeamsApiError(response);
   }
   return response.json();
 }
@@ -137,7 +138,7 @@ export async function getTeamNews(teamId: string, currentUserId?: string): Promi
   });
 
   if (!response.ok) {
-    await throwTeamsApiError(response, `GET /api/teams/${teamId}/news failed: ${response.status}`);
+    await throwTeamsApiError(response);
   }
   return response.json();
 }
@@ -149,7 +150,7 @@ export async function getNewsFeed(currentUserId?: string): Promise<TeamNewsDto[]
   });
 
   if (!response.ok) {
-    await throwTeamsApiError(response, `GET /api/news failed: ${response.status}`);
+    await throwTeamsApiError(response);
   }
   return response.json();
 }
@@ -161,7 +162,7 @@ export async function getTablesFeed(currentUserId?: string): Promise<TeamTableSu
   });
 
   if (!response.ok) {
-    await throwTeamsApiError(response, `GET /api/news/tables failed: ${response.status}`);
+    await throwTeamsApiError(response);
   }
   return response.json();
 }
@@ -173,7 +174,7 @@ export async function getTeamTables(teamId: string, currentUserId?: string): Pro
   });
 
   if (!response.ok) {
-    await throwTeamsApiError(response, `GET /api/teams/${teamId}/tables failed: ${response.status}`);
+    await throwTeamsApiError(response);
   }
   return response.json();
 }
@@ -186,7 +187,7 @@ export async function getTeamTable(teamId: string, tableId: string, currentUserI
   );
 
   if (!response.ok) {
-    await throwTeamsApiError(response, `GET /api/teams/${teamId}/tables/${tableId} failed: ${response.status}`);
+    await throwTeamsApiError(response);
   }
   return response.json();
 }
@@ -205,7 +206,7 @@ export async function createTeamTable(
   });
 
   if (!response.ok) {
-    await throwTeamsApiError(response, `POST /api/teams/${teamId}/tables failed: ${response.status}`);
+    await throwTeamsApiError(response);
   }
   return response.json();
 }
@@ -217,7 +218,7 @@ export async function getEventTableProtocols(eventId: string, currentUserId?: st
   });
 
   if (!response.ok) {
-    await throwTeamsApiError(response, `GET /api/events/${eventId}/table-protocols failed: ${response.status}`);
+    await throwTeamsApiError(response);
   }
   return response.json();
 }
@@ -236,7 +237,7 @@ export async function createEventTableProtocol(
   });
 
   if (!response.ok) {
-    await throwTeamsApiError(response, `POST /api/events/${eventId}/table-protocols failed: ${response.status}`);
+    await throwTeamsApiError(response);
   }
   return response.json();
 }
@@ -260,7 +261,7 @@ export async function updateEventTableProtocolRow(
   );
 
   if (!response.ok) {
-    await throwTeamsApiError(response, `PUT /api/events/${eventId}/table-protocols/${protocolId}/rows/${rowId} failed: ${response.status}`);
+    await throwTeamsApiError(response);
   }
   return response.json();
 }
@@ -283,7 +284,7 @@ export async function updateEventTableProtocol(
   );
 
   if (!response.ok) {
-    await throwTeamsApiError(response, `PUT /api/events/${eventId}/table-protocols/${protocolId} failed: ${response.status}`);
+    await throwTeamsApiError(response);
   }
   return response.json();
 }
@@ -302,7 +303,7 @@ export async function createTeamNews(
   });
 
   if (!response.ok) {
-    await throwTeamsApiError(response, `POST /api/teams/${teamId}/news failed: ${response.status}`);
+    await throwTeamsApiError(response);
   }
   return response.json();
 }
@@ -325,7 +326,7 @@ export async function updateTeamNews(
   );
 
   if (!response.ok) {
-    await throwTeamsApiError(response, `PUT /api/teams/${teamId}/news/${newsId} failed: ${response.status}`);
+    await throwTeamsApiError(response);
   }
   return response.json();
 }
@@ -341,7 +342,7 @@ export async function deleteTeamNews(teamId: string, newsId: string, currentUser
   );
 
   if (!response.ok) {
-    await throwTeamsApiError(response, `DELETE /api/teams/${teamId}/news/${newsId} failed: ${response.status}`);
+    await throwTeamsApiError(response);
   }
 }
 
@@ -357,7 +358,7 @@ export async function uploadTeamAvatar(teamId: string, file: File, currentUserId
   });
 
   if (!response.ok) {
-    await throwTeamsApiError(response, `POST /api/teams/${teamId}/avatar/upload failed: ${response.status}`);
+    await throwTeamsApiError(response);
   }
   return response.json();
 }
@@ -374,7 +375,7 @@ export async function uploadTeamCover(teamId: string, file: File, currentUserId?
   });
 
   if (!response.ok) {
-    await throwTeamsApiError(response, `POST /api/teams/${teamId}/cover/upload failed: ${response.status}`);
+    await throwTeamsApiError(response);
   }
   return response.json();
 }
@@ -391,7 +392,7 @@ export async function uploadTeamNewsImage(teamId: string, file: File, currentUse
   });
 
   if (!response.ok) {
-    await throwTeamsApiError(response, `POST /api/teams/${teamId}/news/upload-image failed: ${response.status}`);
+    await throwTeamsApiError(response);
   }
 
   const data = (await response.json()) as { imageUrl?: string };
@@ -412,7 +413,7 @@ export async function createTeam(request: CreateTeamRequest, currentUserId?: str
   });
 
   if (!response.ok) {
-    await throwTeamsApiError(response, `POST /api/teams failed: ${response.status}`);
+    await throwTeamsApiError(response);
   }
   return response.json();
 }
@@ -427,7 +428,7 @@ export async function joinTeamByCode(request: JoinTeamByCodeRequest, currentUser
   });
 
   if (!response.ok) {
-    await throwTeamsApiError(response, `POST /api/teams/join-by-code failed: ${response.status}`);
+    await throwTeamsApiError(response);
   }
   return response.json();
 }
@@ -444,7 +445,7 @@ export async function joinPublicTeam(teamId: string, currentUserId?: string, tea
   );
 
   if (!response.ok) {
-    await throwTeamsApiError(response, `POST /api/teams/${teamId}/join-public failed: ${response.status}`);
+    await throwTeamsApiError(response);
   }
   return response.json();
 }
@@ -458,7 +459,7 @@ export async function updateMyTeamJerseyNumber(teamId: string, teamJerseyNumber:
     body: JSON.stringify({ teamJerseyNumber }),
   });
   if (!response.ok) {
-    await throwTeamsApiError(response, `PUT /api/teams/${teamId}/members/me/number failed: ${response.status}`);
+    await throwTeamsApiError(response);
   }
   return response.json();
 }
@@ -473,7 +474,7 @@ export async function updateTeam(teamId: string, request: UpdateTeamRequest, cur
   });
 
   if (!response.ok) {
-    await throwTeamsApiError(response, `PUT /api/teams/${teamId} failed: ${response.status}`);
+    await throwTeamsApiError(response);
   }
   return response.json();
 }
@@ -489,7 +490,7 @@ export async function leaveTeam(teamId: string, currentUserId?: string): Promise
   );
 
   if (!response.ok) {
-    await throwTeamsApiError(response, `DELETE /api/teams/${teamId}/members/me failed: ${response.status}`);
+    await throwTeamsApiError(response);
   }
 }
 
@@ -504,7 +505,7 @@ export async function removeTeamMember(teamId: string, userId: string, currentUs
   );
 
   if (!response.ok) {
-    await throwTeamsApiError(response, `DELETE /api/teams/${teamId}/members/${userId} failed: ${response.status}`);
+    await throwTeamsApiError(response);
   }
 }
 
@@ -526,7 +527,7 @@ export async function updateTeamMember(
   );
 
   if (!response.ok) {
-    await throwTeamsApiError(response, `PUT /api/teams/${teamId}/members/${userId} failed: ${response.status}`);
+    await throwTeamsApiError(response);
   }
   return response.json();
 }

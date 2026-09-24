@@ -1,3 +1,4 @@
+import { parseApiError } from "src/api/errors";
 import { NotificationPreferencesDto, NotificationsListDto } from "src/types/notifications";
 import { authFetch } from "src/api/auth";
 
@@ -7,7 +8,7 @@ export async function getNotifications(take = 20): Promise<NotificationsListDto>
   });
 
   if (!response.ok) {
-    throw new Error(`GET /api/notifications failed: ${response.status}`);
+    throw await parseApiError(response);
   }
 
   return response.json();
@@ -20,7 +21,7 @@ export async function markNotificationRead(id: string): Promise<void> {
   });
 
   if (!response.ok) {
-    throw new Error(`POST /api/notifications/${id}/read failed: ${response.status}`);
+    throw await parseApiError(response);
   }
 }
 
@@ -31,7 +32,7 @@ export async function markAllNotificationsRead(): Promise<void> {
   });
 
   if (!response.ok) {
-    throw new Error(`POST /api/notifications/read-all failed: ${response.status}`);
+    throw await parseApiError(response);
   }
 }
 
@@ -41,7 +42,7 @@ export async function getNotificationPreferences(): Promise<NotificationPreferen
   });
 
   if (!response.ok) {
-    throw new Error(`GET /api/notifications/preferences/me failed: ${response.status}`);
+    throw await parseApiError(response);
   }
 
   return response.json();
@@ -58,7 +59,7 @@ export async function updateNotificationPreferences(
   });
 
   if (!response.ok) {
-    throw new Error(`PUT /api/notifications/preferences/me failed: ${response.status}`);
+    throw await parseApiError(response);
   }
 
   return response.json();
@@ -71,6 +72,6 @@ export async function sendTestNotification(): Promise<void> {
   });
 
   if (!response.ok) {
-    throw new Error(`POST /api/notifications/test failed: ${response.status}`);
+    throw await parseApiError(response);
   }
 }

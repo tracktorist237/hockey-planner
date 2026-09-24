@@ -1,3 +1,4 @@
+import { parseApiError } from "src/api/errors";
 import { buildApiUrl } from "src/api/client";
 import { authFetch } from "src/api/auth";
 
@@ -65,8 +66,7 @@ const ensureOk = async (res: Response, fallbackMessage: string): Promise<void> =
     return;
   }
 
-  const errorData = await res.json().catch(() => null);
-  throw new Error(errorData?.message || `${fallbackMessage}: ${res.status}`);
+  throw await parseApiError(res, fallbackMessage);
 };
 
 const createFallbackUserId = (): string => {
