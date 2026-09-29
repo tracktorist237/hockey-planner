@@ -29,17 +29,21 @@ jobs:
             set -e
             cd /opt/hockeyplanner-staging/frontend-src
             EXPECTED_SHA="${{ github.sha }}"
-            test -z "$(git status --porcelain)"
             git fetch origin develop
-            git merge --ff-only "$EXPECTED_SHA"
-            test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+            test "$(git rev-parse "$EXPECTED_SHA^{commit}")" = "$EXPECTED_SHA"
+            # version:sync modifies tracked manifests. Build an immutable export,
+            # preserving the existing VPS checkout and its generated local changes.
+            BUILD_DIR="$(mktemp -d /opt/hockeyplanner-staging/frontend-build.XXXXXXXX)"
+            trap 'rm -rf -- "$BUILD_DIR"' EXIT
+            git archive "$EXPECTED_SHA" | tar -x -C "$BUILD_DIR"
+            cd "$BUILD_DIR"
             npm ci
             npm run version:sync
             APP_VERSION="$(cat VERSION | tr -d '[:space:]')"
             APP_BUILD_TIME="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
             REACT_APP_API_BASE=/api REACT_APP_VERSION="$APP_VERSION" REACT_APP_BUILD_TIME="$APP_BUILD_TIME" npm run build
             rm -rf /opt/hockeyplanner-staging/frontend/build
-            cp -r /opt/hockeyplanner-staging/frontend-src/build /opt/hockeyplanner-staging/frontend/build
+            cp -r "$BUILD_DIR/build" /opt/hockeyplanner-staging/frontend/build
             cd /opt/hockeyplanner
             docker compose restart nginx
             docker compose ps
