@@ -22,6 +22,24 @@ jobs:
       - run: pip install -r scripts/quality/requirements.txt
       - name: Verify workflow gates
         run: python -m unittest discover -s scripts/quality -p "test_*.py"
+      - name: Resolve backend contract revision
+        id: backend
+        env:
+          TASK_REF: ${{ github.head_ref || github.ref_name }}
+        run: |
+          ref=develop
+          if [ "$TASK_REF" != "master" ] && git ls-remote --exit-code https://github.com/tracktorist237/HockeyPlanner.Backend.git "refs/heads/$TASK_REF" >/dev/null; then
+            ref="$TASK_REF"
+          fi
+          echo "ref=$ref" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v4
+        with:
+          repository: tracktorist237/HockeyPlanner.Backend
+          ref: ${{ steps.backend.outputs.ref }}
+          path: .quality-backend
+          persist-credentials: false
+      - name: Reject backend/frontend HTTP contract drift
+        run: python scripts/quality/compare_contract.py .quality-backend/tests/HockeyPlanner.Backend.IntegrationTests/Contracts/api-contract.json src/api/__fixtures__/api-contract.generated.json
       - run: npm ci
       - name: Full frontend suite
         run: npm test -- --watchAll=false --runInBand
