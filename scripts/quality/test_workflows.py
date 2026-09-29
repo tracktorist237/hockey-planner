@@ -37,7 +37,8 @@ def verify(staging, validation):
         for required in ("dotnet restore", "dotnet build", "dotnet test", "check_test_results.py"):
             assert required in joined
     else:
-        for required in ("npm ci", "npm test -- --watchAll=false", "npm run build"):
+        for required in ("npm ci", "npm test -- --watchAll=false", "npm run build", "npm run e2e:ci",
+                         "playwright install --with-deps chromium webkit"):
             assert required in joined
     script = deploy["steps"][0]["with"]["script"]
     assert 'git archive "$EXPECTED_SHA" | tar -x -C "$BUILD_DIR"' in script
