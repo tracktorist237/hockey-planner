@@ -1,0 +1,12 @@
+name: Frontend PR Checks
+on:
+  pull_request:
+    branches: [develop, master]
+permissions:
+  contents: read
+concurrency:
+  group: frontend-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  validation:
+    uses: ./.github/workflows/validate.yml

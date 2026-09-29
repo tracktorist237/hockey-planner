@@ -1,0 +1,33 @@
+name: Frontend validation
+on:
+  workflow_call:
+permissions:
+  contents: read
+jobs:
+  validate:
+    name: Frontend quality gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r scripts/quality/requirements.txt
+      - name: Verify workflow gates
+        run: python -m unittest discover -s scripts/quality -p "test_*.py"
+      - run: npm ci
+      - name: Full frontend suite
+        run: npm test -- --watchAll=false --runInBand
+      - name: Production build
+        run: npm run build
+      - name: Check diff
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: git diff --check "$BASE_SHA" HEAD

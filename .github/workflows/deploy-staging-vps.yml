@@ -4,8 +4,18 @@ on:
   push:
     branches: [ "develop" ]
 
+permissions:
+  contents: read
+
+concurrency:
+  group: frontend-staging
+  cancel-in-progress: false
+
 jobs:
+  validation:
+    uses: ./.github/workflows/validate.yml
   deploy:
+    needs: validation
     runs-on: ubuntu-latest
 
     steps:
@@ -18,7 +28,11 @@ jobs:
           script: |
             set -e
             cd /opt/hockeyplanner-staging/frontend-src
-            git pull origin develop
+            EXPECTED_SHA="${{ github.sha }}"
+            test -z "$(git status --porcelain)"
+            git fetch origin develop
+            git merge --ff-only "$EXPECTED_SHA"
+            test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
             npm ci
             npm run version:sync
             APP_VERSION="$(cat VERSION | tr -d '[:space:]')"
