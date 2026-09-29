@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AttendanceConflictError, updateAttendance } from "src/api/events";
 import { AttendanceLookUpDto, EventConflictDto, EventDto } from "src/types/events";
 
@@ -37,7 +37,21 @@ export const useAttendance = ({
   const [isEditingNote, setIsEditingNote] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [attendanceConflicts, setAttendanceConflicts] = useState<EventConflictDto[]>([]);
-  const [pendingVote, setPendingVote] = useState<{ status: number; notes?: string | null } | null>(null);
+  const [pendingVote, setPendingVote] = useState<{ eventId: string; userId: string; status: number; notes?: string | null } | null>(null);
+  const generation = useRef(0);
+  const inFlight = useRef(false);
+
+  useEffect(() => {
+    const invalidate = () => { generation.current++; inFlight.current = false; };
+    invalidate();
+    setSubmitting(false);
+    setPendingVote(null);
+    setAttendanceConflicts([]);
+    setAttendanceNote("");
+    setShowNoteInput(false);
+    setIsEditingNote(false);
+    return invalidate;
+  }, [event?.id, selectedUserId]);
 
   const myAttendance = useMemo(() => {
     return event?.attendances?.find((attendance) => attendance.userId === selectedUserId);
@@ -55,7 +69,7 @@ export const useAttendance = ({
 
   const handleVote = useCallback(
     async (status: number, notes?: string | null) => {
-      if (!event) {
+      if (!event || inFlight.current) {
         return;
       }
 
@@ -64,41 +78,58 @@ export const useAttendance = ({
         return;
       }
 
+      const operation = generation.current;
+      inFlight.current = true;
       setSubmitting(true);
       onError?.("");
 
       try {
         await updateAttendance(event.id, selectedUserId, status, notes, selectedUserId);
+        if (operation !== generation.current) return;
         await reloadEvent();
+        if (operation !== generation.current) return;
         setShowNoteInput(false);
         setIsEditingNote(false);
       } catch (err) {
+        if (operation !== generation.current) return;
         if (err instanceof AttendanceConflictError) {
           setAttendanceConflicts(err.conflicts);
-          setPendingVote({ status, notes });
+          setPendingVote({ eventId: event.id, userId: selectedUserId, status, notes });
           return;
         }
         const message = err instanceof Error ? err.message : "Ошибка обновления явки";
         onError?.(message);
       } finally {
-        setSubmitting(false);
+        if (operation === generation.current) {
+          inFlight.current = false;
+          setSubmitting(false);
+        }
       }
     },
     [event, onError, reloadEvent, selectedUserId],
   );
 
   const confirmAttendanceDespiteConflicts = useCallback(async () => {
-    if (!event || !selectedUserId || !pendingVote) return;
+    if (!event || !selectedUserId || !pendingVote || inFlight.current
+      || pendingVote.eventId !== event.id || pendingVote.userId !== selectedUserId) return;
+    const operation = generation.current;
+    inFlight.current = true;
     setSubmitting(true);
+    onError?.("");
     try {
       await updateAttendance(event.id, selectedUserId, pendingVote.status, pendingVote.notes, selectedUserId, true);
+      if (operation !== generation.current) return;
       setAttendanceConflicts([]);
       setPendingVote(null);
       await reloadEvent();
     } catch (err) {
+      if (operation !== generation.current) return;
       onError?.(err instanceof Error ? err.message : "Ошибка обновления явки");
     } finally {
-      setSubmitting(false);
+      if (operation === generation.current) {
+        inFlight.current = false;
+        setSubmitting(false);
+      }
     }
   }, [event, onError, pendingVote, reloadEvent, selectedUserId]);
 

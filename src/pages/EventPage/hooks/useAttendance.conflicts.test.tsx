@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, render, renderHook, screen, waitFor, within } from "@testing-library/react";
 import { authFetch } from "src/api/auth";
 import attendanceConflict from "src/api/__fixtures__/attendanceConflict.json";
 import { AppErrorBoundary } from "src/components/AppErrorBoundary";
@@ -27,6 +27,48 @@ const renderAttendance = () => {
 };
 
 beforeEach(() => mockedAuthFetch.mockReset());
+
+test.each([false, true])("old conflict cannot be confirmed for another event (pending response: %s)", async pending => {
+  let resolve!: (value: Response) => void;
+  mockedAuthFetch.mockReturnValueOnce(new Promise(done => { resolve = done; }));
+  const reloadEvent = jest.fn().mockResolvedValue(event);
+  const { result, rerender } = renderHook(({ current }) => useAttendance({ event: current, selectedUserId: "user", reloadEvent }),
+    { initialProps: { current: event } });
+  let vote!: Promise<void>;
+  act(() => { vote = result.current.handleVote(2); });
+  if (!pending) await act(async () => { resolve(response(attendanceConflict, 409)); await vote; });
+  rerender({ current: { ...event, id: "other-event" } });
+  if (pending) await act(async () => { resolve(response(attendanceConflict, 409)); await vote; });
+  expect(result.current.attendanceConflicts).toEqual([]);
+  await act(async () => { await result.current.confirmAttendanceDespiteConflicts(); });
+  expect(mockedAuthFetch).toHaveBeenCalledTimes(1);
+  expect(reloadEvent).not.toHaveBeenCalled();
+});
+
+test("double confirmation is blocked and a failed confirmation can be retried", async () => {
+  mockedAuthFetch.mockResolvedValueOnce(response(attendanceConflict, 409));
+  const reloadEvent = jest.fn().mockResolvedValue(event);
+  const onError = jest.fn();
+  const { result } = renderHook(() => useAttendance({ event, selectedUserId: "user", reloadEvent, onError }));
+  await act(async () => { await result.current.handleVote(2); });
+  let reject!: (error: Error) => void;
+  mockedAuthFetch.mockReturnValueOnce(new Promise((_, fail) => { reject = fail; }));
+  let first!: Promise<void>;
+  await act(async () => {
+    first = result.current.confirmAttendanceDespiteConflicts();
+    await result.current.confirmAttendanceDespiteConflicts();
+  });
+  expect(mockedAuthFetch).toHaveBeenCalledTimes(2);
+  expect(result.current.submitting).toBe(true);
+  await act(async () => { reject(new Error("Нет соединения")); await first; });
+  expect(result.current.submitting).toBe(false);
+  expect(result.current.attendanceConflicts).toHaveLength(attendanceConflict.conflicts.length);
+  expect(onError).toHaveBeenLastCalledWith("Нет соединения");
+  mockedAuthFetch.mockResolvedValueOnce(response({}));
+  await act(async () => { await result.current.confirmAttendanceDespiteConflicts(); });
+  expect(reloadEvent).toHaveBeenCalledTimes(1);
+  expect(result.current.attendanceConflicts).toEqual([]);
+});
 
 test("M5 ProblemDetails reaches the real hook and dialog without crashing; confirmation saves with ignoreConflicts", async () => {
   mockedAuthFetch.mockResolvedValueOnce(response(attendanceConflict, 409)).mockResolvedValueOnce(response({}));

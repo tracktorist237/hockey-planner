@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { getEvent } from "src/api/events";
 import { EventDto } from "src/types/events";
 import { updateMetaTags } from "src/utils/share";
@@ -18,14 +18,20 @@ export const useEventData = (eventId: string): UseEventDataResult => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [copySuccess, setCopySuccess] = useState(false);
+  const requestGeneration = useRef(0);
+  const activeEventId = useRef<string | null>(eventId);
 
   const reloadEvent = useCallback(async (): Promise<EventDto | null> => {
+    if (activeEventId.current !== eventId) return null;
+    const request = ++requestGeneration.current;
     try {
       const data = await getEvent(eventId);
+      if (request !== requestGeneration.current) return null;
       setEvent(data);
       setError(null);
       return data;
     } catch (err) {
+      if (request !== requestGeneration.current) return null;
       const message = err instanceof Error ? err.message : "Ошибка загрузки события";
       setError(message);
       return null;
@@ -34,8 +40,11 @@ export const useEventData = (eventId: string): UseEventDataResult => {
 
   useEffect(() => {
     let mounted = true;
+    const invalidate = () => { requestGeneration.current++; };
 
+    activeEventId.current = eventId;
     setLoading(true);
+    setError(null);
     void reloadEvent().finally(() => {
       if (mounted) {
         setLoading(false);
@@ -44,8 +53,10 @@ export const useEventData = (eventId: string): UseEventDataResult => {
 
     return () => {
       mounted = false;
+      activeEventId.current = null;
+      invalidate();
     };
-  }, [reloadEvent]);
+  }, [eventId, reloadEvent]);
 
   useEffect(() => {
     if (!event) {
@@ -69,7 +80,7 @@ export const useEventData = (eventId: string): UseEventDataResult => {
   }, [eventId]);
 
   return {
-    event,
+    event: event?.id === eventId ? event : null,
     loading,
     error,
     copySuccess,
