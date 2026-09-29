@@ -52,6 +52,8 @@ jobs:
           REACT_APP_API_BASE: '/api'
       - name: Install E2E browsers
         run: npx playwright install --with-deps chromium webkit
+      - name: HP-75 read-only smoke failure injection (local fixtures only)
+        run: node scripts/staging/test-local.cjs --production-build
       - name: Mandatory full-stack critical journeys
         id: e2e
         run: npm run e2e:ci

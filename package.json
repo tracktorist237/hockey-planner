@@ -20,7 +20,7 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build",
+    "build": "react-scripts build && node scripts/write-build-metadata.cjs",
     "version:sync": "node scripts/version-sync.js",
     "version:patch": "node scripts/bump-version.js patch",
     "version:minor": "node scripts/bump-version.js minor",

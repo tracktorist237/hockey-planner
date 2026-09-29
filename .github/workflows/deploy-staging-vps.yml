@@ -41,9 +41,58 @@ jobs:
             npm run version:sync
             APP_VERSION="$(cat VERSION | tr -d '[:space:]')"
             APP_BUILD_TIME="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
-            REACT_APP_API_BASE=/api REACT_APP_VERSION="$APP_VERSION" REACT_APP_BUILD_TIME="$APP_BUILD_TIME" npm run build
-            rm -rf /opt/hockeyplanner-staging/frontend/build
-            cp -r "$BUILD_DIR/build" /opt/hockeyplanner-staging/frontend/build
-            cd /opt/hockeyplanner
-            docker compose restart nginx
-            docker compose ps
+            REACT_APP_API_BASE=/api REACT_APP_VERSION="$APP_VERSION" REACT_APP_BUILD_TIME="$APP_BUILD_TIME" REACT_APP_COMMIT="$EXPECTED_SHA" REACT_APP_DEPLOY_ENV=Staging npm run build
+            # Preserve the bind-mounted directory inode and old hashed assets.
+            # Static publication does not require restarting the shared nginx.
+            mkdir -p /opt/hockeyplanner-staging/frontend/build
+            cp -r "$BUILD_DIR/build/." /opt/hockeyplanner-staging/frontend/build/
+  smoke:
+    name: Frontend post-deploy staging verification
+    needs: deploy
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop' && github.repository == 'tracktorist237/hockey-planner'
+    environment: staging-smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: tracktorist237/HockeyPlanner.Backend
+          ref: develop
+          fetch-depth: 0
+          path: .quality-backend
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: TEST INFRA - install read-only browser smoke
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+      - name: Verify deployed frontend and staging environment
+        env:
+          EXPECTED_SHA: ${{ github.sha }}
+          STAGING_DIAGNOSTIC_HOST: ${{ secrets.STAGING_DIAGNOSTIC_HOST }}
+          STAGING_DIAGNOSTIC_KEY: ${{ secrets.STAGING_DIAGNOSTIC_KEY }}
+          STAGING_KNOWN_HOSTS: ${{ secrets.STAGING_KNOWN_HOSTS }}
+        run: python .quality-backend/scripts/staging/smoke.py --kind frontend --expected "$EXPECTED_SHA" --backend-repo .quality-backend --frontend-repo . --output staging-smoke
+      - name: Sanitized HTTP and wrapper diagnostics
+        if: always() && hashFiles('staging-smoke/summary.json') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-staging-summary
+          path: staging-smoke/summary.json
+          retention-days: 7
+      - name: Sanitized browser failure diagnostics
+        if: always() && hashFiles('staging-smoke/browser/sanitized.ok') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-staging-browser
+          path: staging-smoke/browser/
+          retention-days: 7
