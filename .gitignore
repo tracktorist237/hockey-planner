@@ -7,6 +7,11 @@
 
 # testing
 /coverage
+/test-results/
+/playwright-report/
+/staging-smoke/
+/.quality-backend/
+__pycache__/
 
 # production
 /build

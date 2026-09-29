@@ -1,0 +1,73 @@
+name: Frontend validation
+on:
+  workflow_call:
+permissions:
+  contents: read
+jobs:
+  validate:
+    name: Frontend quality gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - run: pip install -r scripts/quality/requirements.txt
+      - name: Verify workflow gates
+        run: python -m unittest discover -s scripts/quality -p "test_*.py"
+      - name: Resolve backend contract revision
+        id: backend
+        env:
+          TASK_REF: ${{ github.head_ref || github.ref_name }}
+        run: |
+          ref=develop
+          if [ "$TASK_REF" != "master" ] && git ls-remote --exit-code https://github.com/tracktorist237/HockeyPlanner.Backend.git "refs/heads/$TASK_REF" >/dev/null; then
+            ref="$TASK_REF"
+          fi
+          echo "ref=$ref" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v4
+        with:
+          repository: tracktorist237/HockeyPlanner.Backend
+          ref: ${{ steps.backend.outputs.ref }}
+          path: .quality-backend
+          persist-credentials: false
+      - name: Reject backend/frontend HTTP contract drift
+        run: python scripts/quality/compare_contract.py .quality-backend/tests/HockeyPlanner.Backend.IntegrationTests/Contracts/api-contract.json src/api/__fixtures__/api-contract.generated.json
+      - run: npm ci
+      - name: Full frontend suite
+        run: npm test -- --watchAll=false --runInBand
+      - name: Production build
+        run: npm run build
+        env:
+          REACT_APP_API_BASE: '/api'
+      - name: Install E2E browsers
+        run: npx playwright install --with-deps chromium webkit
+      - name: HP-75 read-only smoke failure injection (local fixtures only)
+        run: node scripts/staging/test-local.cjs --production-build
+      - name: Mandatory full-stack critical journeys
+        id: e2e
+        run: npm run e2e:ci
+        env:
+          HP_E2E_BACKEND: ${{ github.workspace }}/.quality-backend
+          HP_E2E_SKIP_BUILD: '1'
+      - name: Sanitized browser diagnostics
+        if: always() && hashFiles('playwright-report/sanitized.ok') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+      - name: Check diff
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: git diff --check "$BASE_SHA" HEAD
