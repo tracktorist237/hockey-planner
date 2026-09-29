@@ -1,4 +1,5 @@
 import { authFetch } from "src/api/auth";
+import attendanceConflict from "src/api/__fixtures__/attendanceConflict.json";
 import {
   createEvent,
   createEventGuest,
@@ -191,15 +192,57 @@ test("updateAttendance exposes a controlled 409 conflict payload", async () => {
 });
 
 test("ProblemDetails preserves attendance conflict confirmation UX", async () => {
-  const conflicts = [{ id: "other", title: "Other", startTime: "2026-09-10T18:00:00Z", durationMinutes: 60, status: 1 }];
-  mockedAuthFetch.mockResolvedValue(createResponse({ type: "about:blank", status: 409, detail: "В это время у вас уже есть мероприятие", conflicts }, 409));
-  await expect(updateAttendance(eventId, userId, 2)).rejects.toMatchObject({ name: "AttendanceConflictError", conflicts });
+  // M5's result filter serializes typed DTOs with PascalCase inside ProblemDetails extensions.
+  mockedAuthFetch.mockResolvedValue(createResponse(attendanceConflict, 409));
+  await expect(updateAttendance(eventId, userId, 2)).rejects.toMatchObject({
+    name: "AttendanceConflictError", message: attendanceConflict.detail,
+    conflicts: attendanceConflict.conflicts.map(value => ({
+      id: value.Id, title: value.Title, startTime: value.StartTime,
+      durationMinutes: value.DurationMinutes, status: value.Status, teamName: value.TeamName,
+    })),
+  });
 });
 
 test("transfer preview shows controlled validation errors instead of a network error", async () => {
   mockedAuthFetch.mockResolvedValue(createResponse({ detail: "Выберите другое мероприятие.", traceId: "transfer-123" }, 400));
   await expect(previewEventAttendanceTransfer(eventId, eventId, AttendanceTransferMode.MergePreferTarget))
     .rejects.toMatchObject({ status: 400, message: "Выберите другое мероприятие.", traceId: "transfer-123" });
+});
+
+test("camelCase ProblemDetails conflict remains supported with optional teamName absent", async () => {
+  const conflicts = [{ id: "other", title: "Other", startTime: "2026-09-10T18:00:00Z", durationMinutes: 60, status: 1 }];
+  mockedAuthFetch.mockResolvedValue(createResponse({ ...attendanceConflict, conflicts }, 409));
+  await expect(updateAttendance(eventId, userId, 2)).rejects.toMatchObject({ name: "AttendanceConflictError", conflicts });
+});
+
+test.each([
+  null, [], "invalid", { length: 1 }, [null],
+  [{ ...attendanceConflict.conflicts[0], StartTime: null }],
+  [{ ...attendanceConflict.conflicts[0], StartTime: undefined }],
+  [{ ...attendanceConflict.conflicts[0], StartTime: "not-a-date" }],
+  [{ ...attendanceConflict.conflicts[0], DurationMinutes: null }],
+  [{ ...attendanceConflict.conflicts[0], DurationMinutes: "60" }],
+  [{ ...attendanceConflict.conflicts[0], DurationMinutes: -1 }],
+  [{ ...attendanceConflict.conflicts[0], DurationMinutes: 1e20 }],
+  [{ ...attendanceConflict.conflicts[0], Id: "" }],
+  [{ ...attendanceConflict.conflicts[0], Title: {} }],
+  [{ ...attendanceConflict.conflicts[0], TeamName: {} }],
+  [{ ...attendanceConflict.conflicts[0], Status: null }],
+  [attendanceConflict.conflicts[0], { ...attendanceConflict.conflicts[1], StartTime: "invalid" }],
+])("malformed conflicts fail safely without passing invalid or partial data to the dialog: %j", async conflicts => {
+  mockedAuthFetch.mockResolvedValue(createResponse({ ...attendanceConflict, conflicts }, 409));
+  await expect(updateAttendance(eventId, userId, 2)).rejects.toMatchObject({
+    name: "ApiError", status: 409, traceId: attendanceConflict.traceId,
+    message: "Не удалось прочитать данные о пересечении мероприятий. Обновите страницу и попробуйте снова.",
+  });
+  expect(mockedAuthFetch).toHaveBeenCalledTimes(1);
+});
+
+test("a non-attendance ProblemDetails conflict still uses centralized error parsing", async () => {
+  mockedAuthFetch.mockResolvedValue(createResponse({ detail: "Данные изменились.", traceId: "request-123" }, 409));
+  await expect(updateAttendance(eventId, userId, 2)).rejects.toMatchObject({
+    name: "ApiError", status: 409, message: "Данные изменились.", traceId: "request-123",
+  });
 });
 
 test("createEventGuest preserves URL, method, headers and body", async () => {

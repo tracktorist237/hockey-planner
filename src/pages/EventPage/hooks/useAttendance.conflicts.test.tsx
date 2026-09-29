@@ -1,62 +1,89 @@
-import { act, fireEvent, render, renderHook, screen } from "@testing-library/react";
-import { AttendanceConflictError, updateAttendance } from "src/api/events";
+import { useState } from "react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { authFetch } from "src/api/auth";
+import attendanceConflict from "src/api/__fixtures__/attendanceConflict.json";
+import { AppErrorBoundary } from "src/components/AppErrorBoundary";
 import { AttendanceResponseCard } from "src/pages/EventPage/components/AttendanceResponseCard";
 import { useAttendance } from "src/pages/EventPage/hooks/useAttendance";
 import { EventDto, EventType } from "src/types/events";
 
-jest.mock("src/api/events", () => ({
-  ...jest.requireActual("src/api/events"),
-  updateAttendance: jest.fn(),
-}));
+jest.mock("src/api/auth", () => ({ authFetch: jest.fn() }));
+const mockedAuthFetch = authFetch as jest.MockedFunction<typeof authFetch>;
+const event = { id: "event", teamId: "team", title: "Матч", type: EventType.Game, status: 1, startTime: "2026-09-29T18:30:00Z", durationMinutes: 75, createdAt: "2026-09-01T00:00:00Z", attendances: [] } as EventDto;
+const response = (body: unknown, status = 200) => ({
+  ok: status < 400, status, json: jest.fn().mockResolvedValue(body),
+}) as unknown as Response;
 
-const mockedUpdateAttendance = updateAttendance as jest.MockedFunction<typeof updateAttendance>;
-const conflict = { id: "other", title: "Другая тренировка", teamName: "Другая команда", startTime: "2026-09-10T18:00:00Z", durationMinutes: 60, status: 1 };
-const event = { id: "event", teamId: "team", title: "Матч", type: EventType.Game, status: 1, startTime: "2026-09-10T18:30:00Z", durationMinutes: 75, createdAt: "2026-09-01T00:00:00Z", attendances: [] } as EventDto;
+function Attendance({ reloadEvent }: { reloadEvent: () => Promise<EventDto | null> }) {
+  const [error, setError] = useState("");
+  const attendance = useAttendance({ event, selectedUserId: "user", reloadEvent, onError: setError });
+  return <>{error && <div role="alert">{error}</div>}<AttendanceResponseCard {...attendance} /></>;
+}
 
-beforeEach(() => mockedUpdateAttendance.mockReset());
-
-test("confirmation warning does not save until the user explicitly overrides it", async () => {
-  mockedUpdateAttendance
-    .mockRejectedValueOnce(new AttendanceConflictError("В это время у вас уже есть мероприятие", [conflict]))
-    .mockResolvedValueOnce();
+const renderAttendance = () => {
   const reloadEvent = jest.fn().mockResolvedValue(event);
-  const { result } = renderHook(() => useAttendance({ event, selectedUserId: "user", reloadEvent }));
+  render(<AppErrorBoundary><Attendance reloadEvent={reloadEvent} /></AppErrorBoundary>);
+  return reloadEvent;
+};
 
-  await act(async () => result.current.handleVote(2));
-  expect(result.current.attendanceConflicts).toEqual([conflict]);
+beforeEach(() => mockedAuthFetch.mockReset());
+
+test("M5 ProblemDetails reaches the real hook and dialog without crashing; confirmation saves with ignoreConflicts", async () => {
+  mockedAuthFetch.mockResolvedValueOnce(response(attendanceConflict, 409)).mockResolvedValueOnce(response({}));
+  const reloadEvent = renderAttendance();
+
+  fireEvent.click(screen.getByRole("button", { name: /Смогу$/ }));
+  const dialog = await screen.findByRole("dialog", { name: attendanceConflict.detail });
+  expect(screen.queryByText("Не удалось открыть приложение")).not.toBeInTheDocument();
+  for (const conflict of attendanceConflict.conflicts) {
+    expect(within(dialog).getByRole("link", { name: conflict.Title })).toHaveAttribute("href", `/events/${conflict.Id}`);
+    const start = new Date(conflict.StartTime);
+    const end = new Date(start.getTime() + conflict.DurationMinutes * 60_000);
+    const time = new Intl.DateTimeFormat("ru-RU", { hour: "2-digit", minute: "2-digit" });
+    expect(within(dialog).getByText(new RegExp(`${time.format(start)}–${time.format(end)}`))).toBeInTheDocument();
+  }
+  expect(within(dialog).getByText("Другая команда")).toBeInTheDocument();
   expect(reloadEvent).not.toHaveBeenCalled();
+  expect(mockedAuthFetch).toHaveBeenCalledTimes(1);
+  expect(JSON.parse(mockedAuthFetch.mock.calls[0][1]!.body as string)).toMatchObject({ status: 2, ignoreConflicts: false });
 
-  await act(async () => result.current.confirmAttendanceDespiteConflicts());
-  expect(mockedUpdateAttendance).toHaveBeenLastCalledWith("event", "user", 2, undefined, "user", true);
-  expect(result.current.attendanceConflicts).toEqual([]);
-  expect(reloadEvent).toHaveBeenCalled();
+  fireEvent.click(within(dialog).getByRole("button", { name: "Всё равно смогу" }));
+  await waitFor(() => expect(reloadEvent).toHaveBeenCalledTimes(1));
+  expect(mockedAuthFetch).toHaveBeenCalledTimes(2);
+  expect(JSON.parse(mockedAuthFetch.mock.calls[1][1]!.body as string)).toMatchObject({ status: 2, ignoreConflicts: true });
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
 });
 
-test("changing attendance away from confirmed never opens a conflict warning", async () => {
-  mockedUpdateAttendance.mockResolvedValue();
-  const { result } = renderHook(() => useAttendance({ event, selectedUserId: "user", reloadEvent: jest.fn().mockResolvedValue(event) }));
-
-  await act(async () => result.current.handleVote(3));
-
-  expect(mockedUpdateAttendance).toHaveBeenCalledWith("event", "user", 3, undefined, "user");
-  expect(result.current.attendanceConflicts).toEqual([]);
+test("cancel closes the real conflict dialog without saving attendance", async () => {
+  mockedAuthFetch.mockResolvedValueOnce(response(attendanceConflict, 409));
+  const reloadEvent = renderAttendance();
+  fireEvent.click(screen.getByRole("button", { name: /Смогу$/ }));
+  const dialog = await screen.findByRole("dialog");
+  fireEvent.click(within(dialog).getByRole("button", { name: "Отмена" }));
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  expect(mockedAuthFetch).toHaveBeenCalledTimes(1);
+  expect(reloadEvent).not.toHaveBeenCalled();
 });
 
-test("attendance warning lists every conflict and offers confirm or cancel", () => {
-  const confirm = jest.fn();
-  const cancel = jest.fn();
-  render(<AttendanceResponseCard
-    attendanceNote="" setAttendanceNote={jest.fn()} showNoteInput={false} setShowNoteInput={jest.fn()}
-    isEditingNote={false} setIsEditingNote={jest.fn()} submitting={false} handleVote={jest.fn()}
-    handleAddNote={jest.fn()} attendanceConflicts={[conflict, { ...conflict, id: "third", title: "Матч другой команды" }]}
-    confirmAttendanceDespiteConflicts={confirm} cancelAttendanceConflict={cancel}
-  />);
+test("changing attendance away from confirmed does not open a conflict warning", async () => {
+  mockedAuthFetch.mockResolvedValueOnce(response({}));
+  const reloadEvent = renderAttendance();
+  fireEvent.click(screen.getByRole("button", { name: /Не смогу$/ }));
+  await waitFor(() => expect(reloadEvent).toHaveBeenCalledTimes(1));
+  expect(JSON.parse(mockedAuthFetch.mock.calls[0][1]!.body as string)).toMatchObject({ status: 3, ignoreConflicts: false });
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+});
 
-  expect(screen.getByText("В это время у вас уже есть мероприятие")).toBeInTheDocument();
-  expect(screen.getByRole("link", { name: "Другая тренировка" })).toHaveAttribute("href", "/events/other");
-  expect(screen.getByRole("link", { name: "Матч другой команды" })).toHaveAttribute("href", "/events/third");
-  fireEvent.click(screen.getByRole("button", { name: "Отмена" }));
-  fireEvent.click(screen.getByRole("button", { name: "Всё равно смогу" }));
-  expect(cancel).toHaveBeenCalled();
-  expect(confirm).toHaveBeenCalled();
+test("malformed conflict shows an actionable error without crashing or offering force-save", async () => {
+  mockedAuthFetch.mockResolvedValueOnce(response({
+    ...attendanceConflict,
+    conflicts: [{ ...attendanceConflict.conflicts[0], StartTime: null }],
+  }, 409));
+  const reloadEvent = renderAttendance();
+  fireEvent.click(screen.getByRole("button", { name: /Смогу$/ }));
+  expect(await screen.findByRole("alert")).toHaveTextContent("Не удалось прочитать данные о пересечении мероприятий");
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  expect(screen.queryByText("Не удалось открыть приложение")).not.toBeInTheDocument();
+  expect(mockedAuthFetch).toHaveBeenCalledTimes(1);
+  expect(reloadEvent).not.toHaveBeenCalled();
 });

@@ -1,6 +1,6 @@
 import { AttendanceLookUpDto, CreateEventDto, EventConflictDto, EventDto, EventListDto } from "../types/events";
 import { authFetch } from "src/api/auth";
-import { apiErrorFromPayload, parseApiError } from "src/api/errors";
+import { ApiError, apiErrorFromPayload, parseApiError } from "src/api/errors";
 
 const readStoredCurrentUserId = (): string | null => {
   try {
@@ -171,6 +171,32 @@ export async function deleteEvent(eventId: string, currentUserId?: string): Prom
   return res.json();
 }
 
+const parseAttendanceConflicts = (value: unknown): EventConflictDto[] | null => {
+  if (!Array.isArray(value) || value.length === 0) return null;
+  const conflicts: EventConflictDto[] = [];
+  for (const item of value) {
+    if (!item || typeof item !== "object" || Array.isArray(item)) return null;
+    // M5 ProblemDetails extensions contain PascalCase DTOs; legacy MVC responses use camelCase.
+    const field = (camel: string, pascal: string): unknown =>
+      Object.prototype.hasOwnProperty.call(item, camel) ? item[camel] : item[pascal];
+    const id = field("id", "Id");
+    const title = field("title", "Title");
+    const startTime = field("startTime", "StartTime");
+    const durationMinutes = field("durationMinutes", "DurationMinutes");
+    const status = field("status", "Status");
+    const teamName = field("teamName", "TeamName");
+    if (typeof id !== "string" || !id.trim() || typeof title !== "string"
+      || typeof startTime !== "string" || !Number.isFinite(Date.parse(startTime))
+      || typeof durationMinutes !== "number" || !Number.isInteger(durationMinutes) || durationMinutes < 0
+      || typeof status !== "number" || !Number.isInteger(status)
+      || (teamName != null && typeof teamName !== "string")) return null;
+    const end = new Date(Date.parse(startTime) + durationMinutes * 60_000);
+    if (!Number.isFinite(end.getTime())) return null;
+    conflicts.push({ id, title, startTime, durationMinutes, status, teamName });
+  }
+  return conflicts;
+};
+
 export async function updateAttendance(
   eventId: string,
   userId: string,
@@ -191,11 +217,16 @@ export async function updateAttendance(
   });
 
   if (!res.ok) {
-    const data = await res.json().catch(() => null) as { message?: string; error?: string; conflicts?: EventConflictDto[] } | null;
-    if (res.status === 409 && data?.conflicts?.length) {
-      throw new AttendanceConflictError(apiErrorFromPayload(res.status, data, "В это время у вас уже есть мероприятие").message, data.conflicts);
+    const data: unknown = await res.json().catch(() => null);
+    const error = apiErrorFromPayload(res.status, data, "Не удалось обновить явку.");
+    if (res.status === 409 && data && typeof data === "object" && "conflicts" in data) {
+      const conflicts = parseAttendanceConflicts(data.conflicts);
+      if (!conflicts) {
+        throw new ApiError("Не удалось прочитать данные о пересечении мероприятий. Обновите страницу и попробуйте снова.", res.status, error.traceId);
+      }
+      throw new AttendanceConflictError(apiErrorFromPayload(res.status, data, "В это время у вас уже есть мероприятие").message, conflicts);
     }
-    throw apiErrorFromPayload(res.status, data, "Не удалось обновить явку.");
+    throw error;
   }
 }
 
