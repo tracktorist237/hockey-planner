@@ -96,14 +96,21 @@ test("event actions disclosure uses right and down arrows for its actual state",
 });
 
 test("event overlap badge opens every conflicting event with its actual time range", () => {
-  render(<EventCard event={{ ...externalEvent, conflicts: [
+  const conflicts = [
     { id: "one", title: "Тренировка", startTime: "2026-09-04T17:00:00Z", durationMinutes: 60, status: 1 },
     { id: "two", title: "Собрание", startTime: "2026-09-04T18:30:00Z", durationMinutes: 30, status: 1 },
-  ] } as EventLookUpDto} onOpen={jest.fn()} />);
+  ];
+  render(<EventCard event={{ ...externalEvent, conflicts } as EventLookUpDto} onOpen={jest.fn()} />);
 
   fireEvent.click(screen.getByRole("button", { name: "Пересечение" }));
   const dialog = screen.getByRole("dialog", { name: "Пересекающиеся мероприятия" });
   expect(within(dialog).getByRole("link", { name: "Тренировка" })).toHaveAttribute("href", "/events/one");
   expect(within(dialog).getByRole("link", { name: "Собрание" })).toHaveAttribute("href", "/events/two");
-  expect(within(dialog).getByText(/20:00–21:00/)).toBeInTheDocument();
+  const timeFormatter = new Intl.DateTimeFormat("ru-RU", { hour: "2-digit", minute: "2-digit" });
+  for (const conflict of conflicts) {
+    const start = new Date(conflict.startTime);
+    const end = new Date(start.getTime() + conflict.durationMinutes * 60_000);
+    const expectedRange = `${timeFormatter.format(start)}–${timeFormatter.format(end)}`;
+    expect(within(dialog).getByText(expectedRange, { exact: false })).toBeInTheDocument();
+  }
 });
