@@ -22,9 +22,10 @@ test('anonymous production boot and public health/version', async ({ page, baseU
   await expect(page.getByLabel('Сервер доступен', { exact: true })).toBeVisible();
   const health = await page.evaluate(async () => {
     const health = await fetch('/api/health', { cache: 'no-store' });
+    const healthJson = await health.json().catch(() => null);
     const version = await fetch('/api/version', { cache: 'no-store' });
     const json = await version.json();
-    return { health: health.status === 200 && (await health.text()).trim() === 'Healthy',
+    return { health: health.status === 200 && healthJson?.status === 'Healthy' && healthJson?.environment === 'Staging',
       version: version.status === 200 && json.environment === 'Staging' && /^[0-9a-f]{7,40}$/.test(json.commit) };
   });
   expect(health).toEqual({ health: true, version: true });

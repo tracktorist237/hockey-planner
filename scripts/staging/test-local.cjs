@@ -11,7 +11,18 @@ const { spawn } = require('node:child_process');
   let mode = 'healthy';
   const server = http.createServer((req, res) => {
     assert.equal(req.method, 'GET');
-    if (req.url === '/api/health') { res.end(mode === 'unhealthy' ? 'Unhealthy' : 'Healthy'); return; }
+    if (req.url === '/api/health') {
+      if (mode === 'legacy-health') { res.setHeader('Content-Type', 'text/plain'); res.end('Healthy'); return; }
+      res.setHeader('Content-Type', 'application/json');
+      if (mode === 'malformed-health') { res.end('{"status":'); return; }
+      if (mode === 'http-health') res.statusCode = 503;
+      res.end(JSON.stringify({
+        status: mode === 'unhealthy' ? 'Unhealthy' : 'Healthy',
+        timestamp: '2026-09-29T19:54:03.6655337Z',
+        environment: mode === 'wrong-environment' ? 'Production' : 'Staging',
+      }));
+      return;
+    }
     if (req.url === '/api/version') { res.setHeader('Content-Type', 'application/json'); res.end(JSON.stringify({ environment: 'Staging', commit: 'a'.repeat(40) })); return; }
     if (mode === 'production-build') {
       const build = path.resolve('build');
@@ -37,7 +48,8 @@ const { spawn } = require('node:child_process');
   });
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   try {
-    const scenarios = ['healthy', 'boundary', 'runtime', 'unhealthy'];
+    const scenarios = ['healthy', 'boundary', 'runtime', 'unhealthy', 'legacy-health',
+      'wrong-environment', 'malformed-health', 'http-health'];
     if (process.argv.includes('--production-build')) scenarios.push('production-build');
     for (const scenario of scenarios) {
       mode = scenario;
