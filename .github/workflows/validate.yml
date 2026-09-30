@@ -23,6 +23,7 @@ jobs:
         with:
           dotnet-version: '10.0.x'
       - run: pip install -r scripts/quality/requirements.txt
+      - run: npm ci
       - name: Verify workflow gates
         run: python -m unittest discover -s scripts/quality -p "test_*.py"
       - name: Resolve backend contract revision
@@ -43,7 +44,6 @@ jobs:
           persist-credentials: false
       - name: Reject backend/frontend HTTP contract drift
         run: python scripts/quality/compare_contract.py .quality-backend/tests/HockeyPlanner.Backend.IntegrationTests/Contracts/api-contract.json src/api/__fixtures__/api-contract.generated.json
-      - run: npm ci
       - name: Full frontend suite
         run: npm test -- --watchAll=false --runInBand
       - name: Production build
