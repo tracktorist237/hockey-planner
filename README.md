@@ -2,6 +2,12 @@
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
+## Contributing
+
+Read [CONTRIBUTING.md](CONTRIBUTING.md) for task branches, Draft PRs to develop,
+mandatory CI, independent Codex review and human merge. AI-assisted work also
+follows [AGENTS.md](AGENTS.md). These rules do not authorize production releases.
+
 ## Available Scripts
 
 In the project directory, you can run:
