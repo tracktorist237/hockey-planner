@@ -40,7 +40,7 @@ export function TeamPwaSettingsPage() {
 
     setLoading(true);
     setError(null);
-    void getTeam(activeTeamId, currentUser.id)
+    void getTeam(activeTeamId)
       .then(setTeam)
       .catch((requestError) => {
         setError(requestError instanceof Error ? requestError.message : "Не удалось загрузить команду.");

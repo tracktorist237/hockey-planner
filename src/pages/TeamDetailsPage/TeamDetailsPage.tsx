@@ -232,13 +232,13 @@ export function TeamDetailsPage({ currentUser, currentTeamId, onTeamChange }: Te
     setLoading(true);
     setError(null);
     try {
-      setTeam(await getTeam(id, currentUser?.id));
+      setTeam(await getTeam(id));
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Не удалось загрузить команду.");
     } finally {
       setLoading(false);
     }
-  }, [currentUser?.id, id]);
+  }, [id]);
 
   const loadMembers = useCallback(async () => {
     if (!id) {
@@ -279,17 +279,17 @@ export function TeamDetailsPage({ currentUser, currentTeamId, onTeamChange }: Te
 
     setNewsLoading(true);
     try {
-      setNews(await getTeamNews(id, currentUser?.id));
+      setNews(await getTeamNews(id));
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Не удалось загрузить новости команды.");
     } finally {
       setNewsLoading(false);
     }
-  }, [currentUser?.id, id]);
+  }, [id]);
 
   useEffect(() => {
     void loadTeam();
-  }, [loadTeam]);
+  }, [currentUser?.id, loadTeam]);
 
   useEffect(() => {
     if (canSeeMembers) {
@@ -339,7 +339,7 @@ export function TeamDetailsPage({ currentUser, currentTeamId, onTeamChange }: Te
     setError(null);
     setMessage(null);
     try {
-      const joined = await joinPublicTeam(team.id, currentUser.id, joinTeamNumber === "" ? null : Number(joinTeamNumber));
+      const joined = await joinPublicTeam(team.id, joinTeamNumber === "" ? null : Number(joinTeamNumber));
       setTeam(joined);
       setMessage(`Вы вступили в команду "${joined.name}".`);
       setConfirmJoin(false);
@@ -358,7 +358,7 @@ export function TeamDetailsPage({ currentUser, currentTeamId, onTeamChange }: Te
     setTeamNumberSaving(true);
     setError(null);
     try {
-      const updated = await updateMyTeamJerseyNumber(team.id, teamNumberDraft === "" ? null : Number(teamNumberDraft), currentUser.id);
+      const updated = await updateMyTeamJerseyNumber(team.id, teamNumberDraft === "" ? null : Number(teamNumberDraft));
       setTeam(updated);
       setIsTeamNumberEditorOpen(false);
       setMessage("Внутрикомандный номер обновлён.");
@@ -385,7 +385,7 @@ export function TeamDetailsPage({ currentUser, currentTeamId, onTeamChange }: Te
     setError(null);
     setMessage(null);
     try {
-      await leaveTeam(team.id, currentUser.id);
+      await leaveTeam(team.id);
       if (currentTeamId === team.id) {
         onTeamChange(null, null);
       }
@@ -445,7 +445,7 @@ export function TeamDetailsPage({ currentUser, currentTeamId, onTeamChange }: Te
     setError(null);
     setMessage(null);
     try {
-      const created = await createTeamNews(team.id, { title: newsTitle.trim(), body: newsBody.trim(), imageUrl: newsImageUrl.trim() || null, sendNotification: newsSendNotification }, currentUser.id);
+      const created = await createTeamNews(team.id, { title: newsTitle.trim(), body: newsBody.trim(), imageUrl: newsImageUrl.trim() || null, sendNotification: newsSendNotification });
       setNews((previous) => [created, ...previous]);
       setNewsTitle("");
       setNewsBody("");
@@ -474,7 +474,7 @@ export function TeamDetailsPage({ currentUser, currentTeamId, onTeamChange }: Te
     setError(null);
     setMessage(null);
     try {
-      const uploadedImageUrl = await uploadTeamNewsImage(team.id, file, currentUser.id);
+      const uploadedImageUrl = await uploadTeamNewsImage(team.id, file);
       if (mode === "create") {
         setNewsImageUrl(uploadedImageUrl);
       } else {
@@ -518,7 +518,7 @@ export function TeamDetailsPage({ currentUser, currentTeamId, onTeamChange }: Te
     setError(null);
     setMessage(null);
     try {
-      const updated = await updateTeamNews(team.id, item.id, { title: editingNewsTitle.trim(), body: editingNewsBody.trim(), imageUrl: editingNewsImageUrl.trim() || null }, currentUser.id);
+      const updated = await updateTeamNews(team.id, item.id, { title: editingNewsTitle.trim(), body: editingNewsBody.trim(), imageUrl: editingNewsImageUrl.trim() || null });
       setNews((previous) => previous.map((value) => value.id === item.id ? updated : value));
       cancelEditNews();
       setMessage("Новость обновлена.");
@@ -542,7 +542,7 @@ export function TeamDetailsPage({ currentUser, currentTeamId, onTeamChange }: Te
     setError(null);
     setMessage(null);
     try {
-      await deleteTeamNews(team.id, item.id, currentUser.id);
+      await deleteTeamNews(team.id, item.id);
       setNews((previous) => previous.filter((value) => value.id !== item.id));
       setMessage("Новость удалена.");
     } catch (requestError) {
