@@ -268,7 +268,7 @@ export function TeamManagePage({ currentUser }: TeamManagePageProps) {
     setLoading(true);
     setError(null);
     try {
-      const loadedTeam = await getTeam(id, currentUser?.id);
+      const loadedTeam = await getTeam(id);
       setTeam(loadedTeam);
       setBlockedNumbersInput((loadedTeam.blockedJerseyNumbers ?? []).join(", "));
       setForm({
@@ -288,7 +288,7 @@ export function TeamManagePage({ currentUser }: TeamManagePageProps) {
     } finally {
       setLoading(false);
     }
-  }, [currentUser?.id, id]);
+  }, [id]);
 
   const loadMembers = useCallback(async () => {
     if (!id) {
@@ -308,7 +308,7 @@ export function TeamManagePage({ currentUser }: TeamManagePageProps) {
   useEffect(() => {
     void loadTeam();
     void loadMembers();
-  }, [loadMembers, loadTeam]);
+  }, [currentUser?.id, loadMembers, loadTeam]);
 
   const sortedMembers = useMemo(
     () => [...members].sort((a, b) => a.role - b.role || getMemberName(a).localeCompare(getMemberName(b), "ru")),
@@ -334,7 +334,6 @@ export function TeamManagePage({ currentUser }: TeamManagePageProps) {
         allowDuplicateJerseyNumbers: form.allowDuplicateJerseyNumbers,
         blockedJerseyNumbers: form.blockedJerseyNumbers,
       },
-      currentUser.id,
     );
     setTeam(updated);
     setMessage(successMessage);
@@ -378,8 +377,8 @@ export function TeamManagePage({ currentUser }: TeamManagePageProps) {
     setMessage(null);
     try {
       const updated = kind === "avatar"
-        ? await uploadTeamAvatar(team.id, file, currentUser.id)
-        : await uploadTeamCover(team.id, file, currentUser.id);
+        ? await uploadTeamAvatar(team.id, file)
+        : await uploadTeamCover(team.id, file);
 
       setTeam(updated);
       setForm((value) => ({
@@ -430,7 +429,7 @@ export function TeamManagePage({ currentUser }: TeamManagePageProps) {
     setError(null);
     setMessage(null);
     try {
-      const updated = await updateTeamMember(team.id, member.userId, { role, badgeTitle, teamJerseyNumber }, currentUser.id);
+      const updated = await updateTeamMember(team.id, member.userId, { role, badgeTitle, teamJerseyNumber });
       setMembers((previous) => previous.map((value) => (value.userId === updated.userId ? updated : value)));
       setMessage("Участник обновлён.");
       await loadTeam();
@@ -455,7 +454,7 @@ export function TeamManagePage({ currentUser }: TeamManagePageProps) {
     setError(null);
     setMessage(null);
     try {
-      await removeTeamMember(team.id, member.userId, currentUser.id);
+      await removeTeamMember(team.id, member.userId);
       setMembers((previous) => previous.filter((value) => value.userId !== member.userId));
       setMessage("Участник удалён из команды.");
       await loadTeam();

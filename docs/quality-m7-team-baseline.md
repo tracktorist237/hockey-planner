@@ -1,5 +1,9 @@
 # M7 team API consumer baseline (HP-79)
 
+Historical HP-79 evidence below. [HP-80](quality-hp80-jwt-team-identity.md)
+supersedes TeamsController actor arguments and assertions. Table/protocol actor
+queries and backend characterization remain current until HP-83.
+
 Frontend base: `91e7b77e65c139eb0933ea4d685bb7577c739041`.
 Backend base: `f80940adfb4e51a1dbd6119cfb046d5f837f2b64`.
 Both branches: `quality/hp-79-team-api-baseline`.

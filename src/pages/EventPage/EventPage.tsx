@@ -178,7 +178,7 @@ export function EventPage({ eventId, onBack, currentUser }: EventPageProps) {
       return;
     }
 
-    void getMyTeams(currentUser.id)
+    void getMyTeams()
       .then((teams) => {
         setManageableTeamIds(new Set(teams.filter((team) => team.myRole === 1 || team.myRole === 2).map((team) => team.id)));
         setEventTeamJerseyNumber(teams.find((team) => team.id === event?.teamId)?.myTeamJerseyNumber ?? null);

@@ -48,7 +48,7 @@ export class Scenario {
     return response;
   }
   async team(user: Account) {
-    return (await this.api(user, 'POST', `/api/teams?currentUserId=${user.id}`,
+    return (await this.api(user, 'POST', `/api/teams`,
       { name: `E2E Team ${randomUUID()}`, visibility: 1 }, 201)).json();
   }
   async event(user: Account, teamId: string, label: string, minute = 0) {

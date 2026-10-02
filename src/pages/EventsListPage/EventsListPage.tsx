@@ -479,7 +479,7 @@ export const EventsListPage = ({
     }
 
     try {
-      const loadedTeams = await getMyTeams(currentUser.id);
+      const loadedTeams = await getMyTeams();
       setTeams(loadedTeams);
       setCanManageTeamEvents(loadedTeams.some((team) => team.myRole === 1 || team.myRole === 2));
     } catch (error) {

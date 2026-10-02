@@ -22,18 +22,18 @@ beforeEach(() => {
 });
 afterEach(() => localStorage.clear());
 
-test("team page passes its current user separately from team/member resource IDs", async () => {
+test("team page sends resource IDs only despite different page and cached users", async () => {
   const { result } = renderHook(() => useTeamsPage({ id: "page-user" } as never));
   await act(async () => { await result.current.reloadTeams(); });
-  expect(getMyTeams).toHaveBeenCalledWith("page-user");
+  expect(getMyTeams).toHaveBeenCalledWith();
   await act(async () => { await result.current.openTeamManagement(team); });
   expect(getTeamMembers).toHaveBeenCalledWith("team-b");
   await act(async () => { await result.current.saveTeamMember(member, { badgeTitle: "Captain" }); });
-  expect(updateTeamMember).toHaveBeenCalledWith("team-b", "member-b", { badgeTitle: "Captain" }, "page-user");
+  expect(updateTeamMember).toHaveBeenCalledWith("team-b", "member-b", { badgeTitle: "Captain" });
   act(() => { result.current.setJoinCode(" CODE "); result.current.setJoinTeamNumber("0"); });
   await act(async () => { await result.current.joinByCode(); });
-  expect(joinTeamByCode).toHaveBeenCalledWith({ code: "CODE", teamJerseyNumber: 0 }, "page-user");
+  expect(joinTeamByCode).toHaveBeenCalledWith({ code: "CODE", teamJerseyNumber: 0 });
   act(() => result.current.setSelectedPublicTeam(team));
   await act(async () => { await result.current.joinSelectedPublicTeam(); });
-  expect(joinPublicTeam).toHaveBeenCalledWith("team-b", "page-user");
+  expect(joinPublicTeam).toHaveBeenCalledWith("team-b");
 });
