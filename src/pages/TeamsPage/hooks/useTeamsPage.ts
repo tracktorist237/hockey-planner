@@ -90,7 +90,7 @@ export function useTeamsPage(currentUser: User | null) {
     setLoading(true);
     setError(null);
     try {
-      const [loadedMyTeams, loadedPublicTeams] = await Promise.all([getMyTeams(currentUser.id), getPublicTeams()]);
+      const [loadedMyTeams, loadedPublicTeams] = await Promise.all([getMyTeams(), getPublicTeams()]);
       setMyTeams(loadedMyTeams);
       setPublicTeams(loadedPublicTeams);
       setApiUnavailable(false);
@@ -143,7 +143,7 @@ export function useTeamsPage(currentUser: User | null) {
       setError(null);
       setMessage(null);
       try {
-        const updated = await updateTeamMember(managedTeam.id, member.userId, request, currentUser.id);
+        const updated = await updateTeamMember(managedTeam.id, member.userId, request);
         setTeamMembers((previous) => previous.map((value) => (value.userId === updated.userId ? updated : value)));
         setMessage("Участник обновлён.");
         await reloadTeams();
@@ -179,7 +179,6 @@ export function useTeamsPage(currentUser: User | null) {
           name: createName.trim(),
           visibility: createPublic ? TeamVisibility.Public : TeamVisibility.Private,
         },
-        currentUser.id,
       );
       const linked: SelectedExternalTeam[] = [];
       const failed: SelectedExternalTeam[] = [];
@@ -227,7 +226,7 @@ export function useTeamsPage(currentUser: User | null) {
     setError(null);
     setMessage(null);
     try {
-      const joined = await joinTeamByCode({ code: joinCode.trim(), teamJerseyNumber: joinTeamNumber === "" ? null : Number(joinTeamNumber) }, currentUser.id);
+      const joined = await joinTeamByCode({ code: joinCode.trim(), teamJerseyNumber: joinTeamNumber === "" ? null : Number(joinTeamNumber) });
       setJoinCode("");
       setJoinTeamNumber("");
       setMessage(`Вы вступили в команду "${joined.name}".`);
@@ -249,7 +248,7 @@ export function useTeamsPage(currentUser: User | null) {
     setError(null);
     setMessage(null);
     try {
-      await joinPublicTeam(selectedPublicTeam.id, currentUser.id);
+      await joinPublicTeam(selectedPublicTeam.id);
       setMessage(`Вы вступили в команду "${selectedPublicTeam.name}".`);
       setSelectedPublicTeam(null);
       setActiveTab("my");

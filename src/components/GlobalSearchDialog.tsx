@@ -47,9 +47,9 @@ const loadSearchCorpus = async (currentUserId: string): Promise<SearchCorpus> =>
 
   const [eventsResult, myTeamsResult, publicTeamsResult, newsResult] = await Promise.allSettled([
     getEvents(currentUserId),
-    getMyTeams(currentUserId),
+    getMyTeams(),
     getPublicTeams(),
-    getNewsFeed(currentUserId),
+    getNewsFeed(),
   ]);
 
   const teamMap = new Map<string, TeamDto>();

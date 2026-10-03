@@ -48,7 +48,7 @@ export function NewsPage() {
     setLoading(true);
     setError(null);
     try {
-      setNews(await getNewsFeed(currentUser.id));
+      setNews(await getNewsFeed());
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Не удалось загрузить новости.");
       setNews([]);
@@ -89,7 +89,7 @@ export function NewsPage() {
     setError(null);
     setMessage(null);
     try {
-      setEditingImageUrl(await uploadTeamNewsImage(item.teamId, file, currentUser.id));
+      setEditingImageUrl(await uploadTeamNewsImage(item.teamId, file));
       setMessage("Изображение новости загружено.");
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Не удалось загрузить изображение новости.");
@@ -110,7 +110,7 @@ export function NewsPage() {
     setError(null);
     setMessage(null);
     try {
-      const updated = await updateTeamNews(item.teamId, item.id, { title: editingTitle.trim(), body: editingBody.trim(), imageUrl: editingImageUrl.trim() || null }, currentUser.id);
+      const updated = await updateTeamNews(item.teamId, item.id, { title: editingTitle.trim(), body: editingBody.trim(), imageUrl: editingImageUrl.trim() || null });
       setNews((previous) => previous.map((value) => value.id === item.id ? { ...updated, teamName: item.teamName, canManage: true } : value));
       cancelEdit();
       setMessage("Новость обновлена.");
@@ -132,7 +132,7 @@ export function NewsPage() {
     setError(null);
     setMessage(null);
     try {
-      await deleteTeamNews(item.teamId, item.id, currentUser.id);
+      await deleteTeamNews(item.teamId, item.id);
       setNews((previous) => previous.filter((value) => value.id !== item.id));
       setMessage("Новость удалена.");
     } catch (requestError) {

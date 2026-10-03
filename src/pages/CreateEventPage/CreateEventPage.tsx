@@ -52,7 +52,7 @@ export function CreateEventPage({ onBack, onCreated, currentTeamId }: CreateEven
       return;
     }
 
-    void getMyTeams(currentUser.id)
+    void getMyTeams()
       .then(setTeams)
       .catch(() => setTeams([]));
   }, [currentUser?.id]);

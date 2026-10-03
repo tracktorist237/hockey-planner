@@ -153,13 +153,13 @@ test('transfer preview, explicit choice and persisted final attendance', async (
 
 test('stale transfer override gets real 400 with safe human error', async ({ page, scenario }) => {
   const user = await scenario.user(); const member = await scenario.user(); const team = await scenario.team(user);
-  await scenario.api(member, 'POST', `/api/teams/join-by-code?currentUserId=${member.id}`, { code: team.inviteCode });
+  await scenario.api(member, 'POST', `/api/teams/join-by-code`, { code: team.inviteCode });
   const source = await scenario.event(user, team.id, 'source'); const target = await scenario.event(user, team.id, 'target', 240);
   await scenario.vote(member, source.id, 2); await login(page, user); await page.goto(`/events/${source.id}/transfer`);
   await page.getByRole('article').filter({ hasText: target.title }).getByRole('button', { name: 'Выбрать', exact: true }).click();
   await page.getByRole('combobox', { name: new RegExp(`Итог для .*${member.name}`) }).selectOption('3');
   await page.getByRole('radiogroup', { name: 'Удалить исходное мероприятие после переноса?' }).getByRole('radio', { name: /^Нет/ }).check();
-  await scenario.api(user, 'DELETE', `/api/teams/${team.id}/members/${member.id}?currentUserId=${user.id}`, undefined, 204);
+  await scenario.api(user, 'DELETE', `/api/teams/${team.id}/members/${member.id}`, undefined, 204);
   const response = page.waitForResponse(response => response.url().endsWith(`/events/${source.id}/transfer`));
   await page.getByRole('button', { name: 'Перенести выбранное' }).click();
   expect((await response).status()).toBe(400);
@@ -170,7 +170,7 @@ test('stale transfer override gets real 400 with safe human error', async ({ pag
 
 test('new event notification appears for another team member and opens event', async ({ page, scenario }) => {
   const owner = await scenario.user(); const member = await scenario.user(); const team = await scenario.team(owner);
-  await scenario.api(member, 'POST', `/api/teams/join-by-code?currentUserId=${member.id}`, { code: team.inviteCode });
+  await scenario.api(member, 'POST', `/api/teams/join-by-code`, { code: team.inviteCode });
   const event = await scenario.event(owner, team.id, 'notification'); await login(page, member);
   await page.getByRole('button', { name: 'Уведомления', exact: true }).click();
   const notification = page.getByRole('button').filter({ hasText: `${event.title}: отметьтесь` });

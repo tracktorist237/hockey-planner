@@ -101,7 +101,7 @@ function RequireEventManager({ children }: { children: ReactElement }) {
     }
 
     setLoading(true);
-    void getMyTeams(currentUser.id)
+    void getMyTeams()
       .then((teams) => {
         setCanManageTeamEvents(teams.some((team) => team.myRole === 1 || team.myRole === 2));
       })

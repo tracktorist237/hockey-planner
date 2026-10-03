@@ -41,6 +41,7 @@ test("keeps the old create flow when no league profile is selected", async () =>
   await act(async () => { outcome = await result.current.createNewTeam([]); });
 
   expect((outcome as CreateTeamOutcome | null)?.team.id).toBe("team-new");
+  expect(create).toHaveBeenCalledWith({ name: "Обычная команда", visibility: TeamVisibility.Public });
   expect(createLink).not.toHaveBeenCalled();
   expect(syncLink).not.toHaveBeenCalled();
   expect(result.current.activeTab).toBe("my");
