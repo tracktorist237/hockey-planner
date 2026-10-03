@@ -1,5 +1,5 @@
 import contract from "./__fixtures__/api-contract.generated.json";
-import { getTeam, getMyTeams, getTeamMembers, getTeamNews, createTeam, TeamsApiError } from "./teams";
+import { getTeam, getMyTeams, getTeamMembers, getTeamNews, createTeam, leaveTeam, TeamsApiError } from "./teams";
 
 const originalFetch = global.fetch;
 const fetchMock = jest.fn();
@@ -28,13 +28,14 @@ test("real TeamNewsDto preserves ownership, management flag and serialized dates
   expect(new Date(news[0].createdAt).toISOString()).toBe("2030-01-15T18:00:00.000Z");
 });
 
-test.each(["teamBadRequest", "teamUnauthorized", "teamForbidden", "teamNotFound", "teamConflict"] as const)(
+test.each(["teamBadRequest", "teamUnauthorized", "teamForbidden", "teamNotFound", "teamConflict", "teamLastOwnerLeave"] as const)(
   "real %s retains TeamsApiError status and human detail", async name => {
     const entry = contract[name];
     fetchMock.mockResolvedValue(reply(entry));
     const pending = name === "teamConflict" ? createTeam({ name: "Contract team", visibility: 2 })
       : name === "teamBadRequest" ? createTeam({ name: "", visibility: 2 })
-        : name === "teamUnauthorized" ? getMyTeams() : getTeam("team");
+        : name === "teamLastOwnerLeave" ? leaveTeam(contract.team.body.id)
+          : name === "teamUnauthorized" ? getMyTeams() : getTeam("team");
     const error = await pending.catch(value => value);
     expect(error).toBeInstanceOf(TeamsApiError);
     expect(error).toMatchObject({ status: entry.status, message: entry.body.detail });

@@ -15,3 +15,9 @@ A coordinated contract change needs two reviewed PRs. During initial rollout,
 or between the two merges, staging validation can fail closed until both sides
 are present. Rerun that validation after the companion merge. Never disable the
 check, normalize mismatched DTO keys, or refresh fixtures automatically in CI.
+
+HP-81 adds the real `teamLastOwnerLeave` response: HTTP 400 replaces the former
+last-Owner 204 bug. `teamBackendContract.test.ts` passes it through `leaveTeam`
+and verifies the status and error detail. The companion contains only the
+generated fixture, its consumer test and this note; frontend product code is
+unchanged. Existing fixture entries remain identical.
