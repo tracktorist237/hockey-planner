@@ -9,8 +9,20 @@ const encodedResource = "resource%20%2F%3F";
 const update = { name: "Baseline", visibility: 2, allowDuplicateJerseyNumbers: true, blockedJerseyNumbers: [] };
 const news = { title: "Baseline", body: "Synthetic" };
 const stats = { games: 1, goals: 2, assists: 3 };
-type RouteCase = { name: string; call: (actor?: string) => Promise<unknown>; path: string; method?: string; body?: unknown };
-// TeamsController uses JWT only; TeamTables/protocol actor queries remain until HP-83.
+test.each([
+  { name: "getTablesFeed", call: teams.getTablesFeed, length: 0 },
+  { name: "getTeamTables", call: teams.getTeamTables, length: 1 },
+  { name: "getTeamTable", call: teams.getTeamTable, length: 2 },
+  { name: "createTeamTable", call: teams.createTeamTable, length: 2 },
+  { name: "getEventTableProtocols", call: teams.getEventTableProtocols, length: 1 },
+  { name: "createEventTableProtocol", call: teams.createEventTableProtocol, length: 2 },
+  { name: "updateEventTableProtocol", call: teams.updateEventTableProtocol, length: 3 },
+  { name: "updateEventTableProtocolRow", call: teams.updateEventTableProtocolRow, length: 4 },
+])("$name exposes only resource/body arguments", ({ call, length }) => {
+  expect(call).toHaveLength(length);
+});
+type RouteCase = { name: string; call: () => Promise<unknown>; path: string; method?: string; body?: unknown };
+// All authenticated team features derive actor identity from the account session JWT.
 const routes: RouteCase[] = [
   { name: "getMyTeams", call: teams.getMyTeams, path: "/api/teams" },
   { name: "getNewsFeed", call: teams.getNewsFeed, path: "/api/news" },
@@ -26,13 +38,13 @@ const routes: RouteCase[] = [
   { name: "createTeamNews", call: () => teams.createTeamNews(team, news), path: `/api/teams/${encodedTeam}/news`, method: "POST", body: news },
   { name: "updateTeamNews", call: () => teams.updateTeamNews(team, resource, news), path: `/api/teams/${encodedTeam}/news/${encodedResource}`, method: "PUT", body: news },
   { name: "deleteTeamNews", call: () => teams.deleteTeamNews(team, resource), path: `/api/teams/${encodedTeam}/news/${encodedResource}`, method: "DELETE" },
-  { name: "getTeamTables", call: a => teams.getTeamTables(team, a), path: `/api/teams/${encodedTeam}/tables` },
-  { name: "getTeamTable", call: a => teams.getTeamTable(team, resource, a), path: `/api/teams/${encodedTeam}/tables/${encodedResource}` },
-  { name: "createTeamTable", call: a => teams.createTeamTable(team, { name: "Stats", templateType: 1 }, a), path: `/api/teams/${encodedTeam}/tables`, method: "POST", body: { name: "Stats", templateType: 1 } },
-  { name: "getEventTableProtocols", call: a => teams.getEventTableProtocols(team, a), path: `/api/events/${encodedTeam}/table-protocols` },
-  { name: "createEventTableProtocol", call: a => teams.createEventTableProtocol(team, { teamTableId: resource }, a), path: `/api/events/${encodedTeam}/table-protocols`, method: "POST", body: { teamTableId: resource } },
-  { name: "updateEventTableProtocol", call: a => teams.updateEventTableProtocol(team, resource, { rows: [{ rowId: "row", ...stats }] }, a), path: `/api/events/${encodedTeam}/table-protocols/${encodedResource}`, method: "PUT", body: { rows: [{ rowId: "row", ...stats }] } },
-  { name: "updateEventTableProtocolRow", call: a => teams.updateEventTableProtocolRow(team, resource, "row /?", stats, a), path: `/api/events/${encodedTeam}/table-protocols/${encodedResource}/rows/row%20%2F%3F`, method: "PUT", body: stats },
+  { name: "getTeamTables", call: () => teams.getTeamTables(team), path: `/api/teams/${encodedTeam}/tables` },
+  { name: "getTeamTable", call: () => teams.getTeamTable(team, resource), path: `/api/teams/${encodedTeam}/tables/${encodedResource}` },
+  { name: "createTeamTable", call: () => teams.createTeamTable(team, { name: "Stats", templateType: 1 }), path: `/api/teams/${encodedTeam}/tables`, method: "POST", body: { name: "Stats", templateType: 1 } },
+  { name: "getEventTableProtocols", call: () => teams.getEventTableProtocols(team), path: `/api/events/${encodedTeam}/table-protocols` },
+  { name: "createEventTableProtocol", call: () => teams.createEventTableProtocol(team, { teamTableId: resource }), path: `/api/events/${encodedTeam}/table-protocols`, method: "POST", body: { teamTableId: resource } },
+  { name: "updateEventTableProtocol", call: () => teams.updateEventTableProtocol(team, resource, { rows: [{ rowId: "row", ...stats }] }), path: `/api/events/${encodedTeam}/table-protocols/${encodedResource}`, method: "PUT", body: { rows: [{ rowId: "row", ...stats }] } },
+  { name: "updateEventTableProtocolRow", call: () => teams.updateEventTableProtocolRow(team, resource, "row /?", stats), path: `/api/events/${encodedTeam}/table-protocols/${encodedResource}/rows/row%20%2F%3F`, method: "PUT", body: stats },
 ];
 
 beforeEach(() => {
@@ -45,8 +57,6 @@ beforeEach(() => {
 });
 afterEach(() => { global.fetch = originalFetch; localStorage.clear(); });
 
-const legacyRoutes = routes.filter(({ name }) => /Table|Protocol/.test(name));
-const jwtRoutes = routes.filter(route => !legacyRoutes.includes(route));
 const verifyRequest = (path: string, method?: string, body?: unknown) => {
   expect(fetchMock).toHaveBeenCalledTimes(1);
   const [url, init] = fetchMock.mock.calls[0];
@@ -64,7 +74,7 @@ const verifyRequest = (path: string, method?: string, body?: unknown) => {
 };
 
 describe.each([null, "invalid", "{}", '{"id":null}', '{"id":"stale-owner"}'])("cached user %s", saved => {
-  test.each(jwtRoutes)("$name sends no actor query and ignores cached identity", async ({ call, path, method, body }) => {
+  test.each(routes)("$name sends no actor query and ignores cached identity", async ({ call, path, method, body }) => {
     localStorage.clear();
     if (saved !== null) localStorage.setItem("currentUser", saved);
     localStorage.setItem("authSession", JSON.stringify({ version: "test-session", userId: "jwt-account",
@@ -72,13 +82,6 @@ describe.each([null, "invalid", "{}", '{"id":null}', '{"id":"stale-owner"}'])("c
     await call();
     verifyRequest(path, method, body);
     expect(fetchMock.mock.calls[0][1].headers.get("Authorization")).toBe("Bearer synthetic-test-bearer");
-  });
-});
-
-describe.each([undefined, "explicit /?"])("HP-83 legacy actor %s", actor => {
-  test.each(legacyRoutes)("$name retains method, encoded URL, body and query actor", async ({ call, path, method, body }) => {
-    await call(actor);
-    verifyRequest(`${path}?currentUserId=${actor ? "explicit%20%2F%3F" : "stored%20%2F%3F"}`, method, body);
   });
 });
 
@@ -127,13 +130,6 @@ test.each([
   }
 });
 
-test.each([null, "invalid", "{}", '{"id":null}'])("HP-83 legacy table API still rejects invalid cached user %s", async saved => {
-  localStorage.clear();
-  if (saved !== null) localStorage.setItem("currentUser", saved);
-  await expect(teams.getTablesFeed()).rejects.toThrow("Необходимо выбрать пользователя");
-  expect(fetchMock).not.toHaveBeenCalled();
-});
-
 test("204 mutations do not attempt JSON parsing", async () => {
   const json = jest.fn().mockRejectedValue(new Error("empty body"));
   fetchMock.mockResolvedValue({ ok: true, status: 204, json });
@@ -155,23 +151,28 @@ test("JWT-backed requests refresh after 401 and retry without a cached actor que
     .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({ accessToken: "synthetic-new-bearer",
       refreshToken: "synthetic-rotated-refresh", accessTokenExpiresAt: "2099-01-01T00:00:00Z", user: { id: "jwt-account" } }) })
     .mockResolvedValueOnce({ ok: true, status: 200, json: async () => [] });
-  await expect(teams.getMyTeams()).resolves.toEqual([]);
-  expect(fetchMock.mock.calls.map(([url]) => url)).toEqual(["/api/teams", "/api/auth/refresh", "/api/teams"]);
+  await expect(teams.getTablesFeed()).resolves.toEqual([]);
+  expect(fetchMock.mock.calls.map(([url]) => url)).toEqual(["/api/news/tables", "/api/auth/refresh", "/api/news/tables"]);
   expect(fetchMock.mock.calls[0][1].headers.get("Authorization")).toBe("Bearer synthetic-old-bearer");
   expect(fetchMock.mock.calls[2][1].headers.get("Authorization")).toBe("Bearer synthetic-new-bearer");
 });
 
-test("JWT-backed team timeout still aborts after ten seconds", async () => {
+test.each(routes.filter(({ name }) => /Table|Protocol/.test(name)))("$name timeout still aborts after ten seconds", async ({ call }) => {
   jest.useFakeTimers();
   fetchMock.mockImplementation((_url, init) => new Promise((_resolve, reject) => {
     init.signal.addEventListener("abort", () => reject(new DOMException("Aborted", "AbortError")));
   }));
   try {
-    const pending = teams.getMyTeams();
+    const pending = call();
     const rejected = expect(pending).rejects.toThrow("Сервер временно недоступен. Проверьте интернет и попробуйте ещё раз.");
     jest.advanceTimersByTime(9999);
     expect(fetchMock.mock.calls[0][1].signal.aborted).toBe(false);
     jest.advanceTimersByTime(1);
     await rejected;
   } finally { jest.useRealTimers(); }
+});
+
+test.each(routes.filter(({ name }) => /Table|Protocol/.test(name)))("$name preserves ProblemDetails error parsing", async ({ call }) => {
+  fetchMock.mockResolvedValue({ ok: false, status: 409, json: async () => ({ status: 409, detail: "Сохранение невозможно." }) });
+  await expect(call()).rejects.toMatchObject({ name: "TeamsApiError", status: 409, message: "Сохранение невозможно." });
 });

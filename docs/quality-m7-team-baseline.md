@@ -1,16 +1,15 @@
 # M7 team API consumer baseline (HP-79)
 
 Historical HP-79 evidence below. [HP-80](quality-hp80-jwt-team-identity.md)
-supersedes TeamsController actor arguments and assertions. Table/protocol actor
-queries and backend characterization remain current until HP-83.
+supersedes TeamsController actor arguments and assertions. [HP-83](quality-hp83-team-tables-event-protocol-use-cases.md) supersedes table/protocol actor queries and both pre-error write characterizations. Current tests require JWT identity and unchanged database state on rejected 404/409 requests.
 
 Frontend base: `91e7b77e65c139eb0933ea4d685bb7577c739041`.
 Backend base: `f80940adfb4e51a1dbd6119cfb046d5f837f2b64`.
 Both branches: `quality/hp-79-team-api-baseline`.
 
-This change adds tests and the paired generated HTTP fixture. Runtime team
-requests still use `currentUserId`, including localStorage fallback; HP-80 is
-responsible for the intentional JWT migration.
+This change adds tests and the paired generated HTTP fixture. At the HP-79 base, runtime team
+requests used `currentUserId`, including localStorage fallback. HP-80 and HP-83
+have completed the intentional JWT migration of this API surface.
 
 - `src/api/teams.test.ts`: explicit/stored actors for all query-based core,
   news and table/protocol calls; optional actor omission for getTeam/getTeamNews;
@@ -30,8 +29,9 @@ private team/member/news reads and supplied-actor impersonation for team,
 member, news/media and table/protocol operations. A mismatched team/table read
 returns 404 **after inserting the requesting team's members into the foreign
 table** (SEC-001 / ARC-002). TECH-001 last-owner leave retains an ownerless team.
-These are explicit passing characterization assertions, not desired security
-policy. HP-80 and HP-83 must flip the affected assertions; HP-81/82 must preserve
+These were historical characterization assertions. HP-80 and HP-83 have replaced
+the affected actor assertions, and HP-83 requires no foreign-table 404 write and
+no duplicate-protocol 409 write; HP-81/82 must preserve
 compatible serialized shapes during extraction and explicitly change owner
 invariants. ARC-004 is documented, not refactored. TECH-002, TECH-003 and PERF-001
 are outside this baseline: no roster/attendance/schema or GetEvent optimization.

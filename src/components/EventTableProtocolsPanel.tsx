@@ -12,7 +12,6 @@ import { EventTableProtocolDto, TeamTableSummaryDto } from "src/types/teams";
 interface EventTableProtocolsPanelProps {
   eventId: string;
   teamId?: string | null;
-  currentUserId?: string | null;
   canManage: boolean;
   onError?: (message: string) => void;
 }
@@ -87,7 +86,7 @@ const formatPointsPerGame = (points: number, games: number) => {
   });
 };
 
-export function EventTableProtocolsPanel({ eventId, teamId, currentUserId, canManage, onError }: EventTableProtocolsPanelProps) {
+export function EventTableProtocolsPanel({ eventId, teamId, canManage, onError }: EventTableProtocolsPanelProps) {
   const [expanded, setExpanded] = useState(false);
   const [protocols, setProtocols] = useState<EventTableProtocolDto[]>([]);
   const [teamTables, setTeamTables] = useState<TeamTableSummaryDto[]>([]);
@@ -125,15 +124,9 @@ export function EventTableProtocolsPanel({ eventId, teamId, currentUserId, canMa
   };
 
   const loadProtocols = useCallback(async () => {
-    if (!currentUserId) {
-      setProtocols([]);
-      setDrafts({});
-      return;
-    }
-
     setLoading(true);
     try {
-      const loaded = await getEventTableProtocols(eventId, currentUserId);
+      const loaded = await getEventTableProtocols(eventId);
       setProtocols(loaded);
       hydrateDrafts(loaded);
     } catch (requestError) {
@@ -143,17 +136,17 @@ export function EventTableProtocolsPanel({ eventId, teamId, currentUserId, canMa
     } finally {
       setLoading(false);
     }
-  }, [currentUserId, eventId, onError]);
+  }, [eventId, onError]);
 
   const loadTeamTables = useCallback(async () => {
-    if (!currentUserId || !teamId || hasProtocol || !canManage) {
+    if (!teamId || hasProtocol || !canManage) {
       setTeamTables([]);
       return;
     }
 
     setTablesLoading(true);
     try {
-      const loaded = await getTeamTables(teamId, currentUserId);
+      const loaded = await getTeamTables(teamId);
       setTeamTables(loaded);
       setSelectedTableId((previous) => previous || loaded[0]?.id || "");
     } catch (requestError) {
@@ -162,7 +155,7 @@ export function EventTableProtocolsPanel({ eventId, teamId, currentUserId, canMa
     } finally {
       setTablesLoading(false);
     }
-  }, [canManage, currentUserId, hasProtocol, onError, teamId]);
+  }, [canManage, hasProtocol, onError, teamId]);
 
   useEffect(() => {
     void loadProtocols();
@@ -194,14 +187,14 @@ export function EventTableProtocolsPanel({ eventId, teamId, currentUserId, canMa
   };
 
   const handleCreateProtocol = async () => {
-    if (!currentUserId || !selectedTable) {
+    if (!selectedTable) {
       return;
     }
 
     setCreatingProtocol(true);
     setMessage(null);
     try {
-      const created = await createEventTableProtocol(eventId, { teamTableId: selectedTable.id }, currentUserId);
+      const created = await createEventTableProtocol(eventId, { teamTableId: selectedTable.id });
       setProtocols([created]);
       hydrateDrafts([created]);
       setTeamTables([]);
@@ -214,7 +207,7 @@ export function EventTableProtocolsPanel({ eventId, teamId, currentUserId, canMa
   };
 
   const saveProtocolChanges = async () => {
-    if (!currentUserId || !protocol || savingProtocol) {
+    if (!protocol || savingProtocol) {
       return;
     }
 
@@ -228,7 +221,7 @@ export function EventTableProtocolsPanel({ eventId, teamId, currentUserId, canMa
           goals: drafts[row.id]?.goals ?? row.goals,
           assists: drafts[row.id]?.assists ?? row.assists,
         })),
-      }, currentUserId);
+      });
       setProtocols([updated]);
       hydrateDrafts([updated]);
       setMessage("Протокол сохранен.");

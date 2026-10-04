@@ -14,7 +14,6 @@ import {
 } from "src/types/teams";
 
 interface TeamTablesPanelProps {
-  currentUserId?: string | null;
   teamId?: string | null;
   canManageTeam?: boolean;
   onOpenTeam?: (teamId: string) => void;
@@ -84,7 +83,7 @@ const formatPointsPerGame = (points: number, games: number) => {
   });
 };
 
-export function TeamTablesPanel({ currentUserId, teamId, canManageTeam, onOpenTeam }: TeamTablesPanelProps) {
+export function TeamTablesPanel({ teamId, canManageTeam, onOpenTeam }: TeamTablesPanelProps) {
   const [tables, setTables] = useState<TeamTableSummaryDto[]>([]);
   const [selectedTable, setSelectedTable] = useState<TeamTableDto | null>(null);
   const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
@@ -99,17 +98,12 @@ export function TeamTablesPanel({ currentUserId, teamId, canManageTeam, onOpenTe
   const canCreate = Boolean(teamId && canManageTeam);
 
   const loadTables = useCallback(async () => {
-    if (!currentUserId) {
-      setTables([]);
-      return;
-    }
-
     setLoading(true);
     setError(null);
     try {
       const loaded = teamId
-        ? await getTeamTables(teamId, currentUserId)
-        : await getTablesFeed(currentUserId);
+        ? await getTeamTables(teamId)
+        : await getTablesFeed();
       setTables(loaded);
       setSelectedTableId((previous) => previous ?? loaded[0]?.id ?? null);
     } catch (requestError) {
@@ -118,14 +112,14 @@ export function TeamTablesPanel({ currentUserId, teamId, canManageTeam, onOpenTe
     } finally {
       setLoading(false);
     }
-  }, [currentUserId, teamId]);
+  }, [teamId]);
 
   useEffect(() => {
     void loadTables();
   }, [loadTables]);
 
   useEffect(() => {
-    if (!currentUserId || !selectedTableId) {
+    if (!selectedTableId) {
       setSelectedTable(null);
       return;
     }
@@ -139,7 +133,7 @@ export function TeamTablesPanel({ currentUserId, teamId, canManageTeam, onOpenTe
     let isMounted = true;
     setTableLoading(true);
     setError(null);
-    void getTeamTable(summary.teamId, summary.id, currentUserId)
+    void getTeamTable(summary.teamId, summary.id)
       .then((table) => {
         if (isMounted) {
           setSelectedTable(table);
@@ -160,7 +154,7 @@ export function TeamTablesPanel({ currentUserId, teamId, canManageTeam, onOpenTe
     return () => {
       isMounted = false;
     };
-  }, [currentUserId, selectedTableId, tables]);
+  }, [selectedTableId, tables]);
 
   const selectedSummary = useMemo(
     () => tables.find((value) => value.id === selectedTableId) ?? null,
@@ -168,7 +162,7 @@ export function TeamTablesPanel({ currentUserId, teamId, canManageTeam, onOpenTe
   );
 
   const handleCreate = async () => {
-    if (!currentUserId || !teamId) {
+    if (!teamId) {
       return;
     }
 
@@ -179,7 +173,7 @@ export function TeamTablesPanel({ currentUserId, teamId, canManageTeam, onOpenTe
       const created = await createTeamTable(teamId, {
         name: tableName.trim() || "Статистика игроков",
         templateType: TeamTableTemplateType.PlayerStats,
-      }, currentUserId);
+      });
       await loadTables();
       setSelectedTableId(created.id);
       setSelectedTable(created);

@@ -186,7 +186,7 @@ export function NewsPage() {
 
         <div data-swipe-tabs-content style={{ display: "grid", gap: "12px", minWidth: 0 }}>
         {activeTab === "tables" && (
-          <TeamTablesPanel currentUserId={currentUser?.id} onOpenTeam={(teamId) => navigate(`/teams/${teamId}`)} />
+          <TeamTablesPanel onOpenTeam={(teamId) => navigate(`/teams/${teamId}`)} />
         )}
 
         {activeTab === "news" && (
