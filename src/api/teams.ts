@@ -61,24 +61,6 @@ export const getTeamPwaIconUrl = (teamId: string, size: 180 | 192 | 512): string
     window.location.origin,
   ).href;
 
-// TeamTables/protocol compatibility only: HP-83 owns their actor migration.
-const requireCurrentUserId = (): string => {
-  const saved = localStorage.getItem("currentUser");
-  if (!saved) {
-    throw new Error("Необходимо выбрать пользователя");
-  }
-
-  try {
-    const parsed = JSON.parse(saved) as { id?: string | null };
-    if (!parsed.id) {
-      throw new Error("Необходимо выбрать пользователя");
-    }
-    return parsed.id;
-  } catch {
-    throw new Error("Необходимо выбрать пользователя");
-  }
-};
-
 export class TeamsApiError extends Error {
   public readonly status: number;
 
@@ -157,9 +139,8 @@ export async function getNewsFeed(): Promise<TeamNewsDto[]> {
   return response.json();
 }
 
-export async function getTablesFeed(currentUserId?: string): Promise<TeamTableSummaryDto[]> {
-  const userId = currentUserId ?? requireCurrentUserId();
-  const response = await fetchWithTimeout(buildApiUrl(`/api/news/tables?currentUserId=${encodeURIComponent(userId)}`), {
+export async function getTablesFeed(): Promise<TeamTableSummaryDto[]> {
+  const response = await fetchWithTeamAuth(`/api/news/tables`, {
     credentials: "include",
   });
 
@@ -169,9 +150,8 @@ export async function getTablesFeed(currentUserId?: string): Promise<TeamTableSu
   return response.json();
 }
 
-export async function getTeamTables(teamId: string, currentUserId?: string): Promise<TeamTableSummaryDto[]> {
-  const userId = currentUserId ?? requireCurrentUserId();
-  const response = await fetchWithTimeout(buildApiUrl(`/api/teams/${encodeURIComponent(teamId)}/tables?currentUserId=${encodeURIComponent(userId)}`), {
+export async function getTeamTables(teamId: string): Promise<TeamTableSummaryDto[]> {
+  const response = await fetchWithTeamAuth(`/api/teams/${encodeURIComponent(teamId)}/tables`, {
     credentials: "include",
   });
 
@@ -181,10 +161,9 @@ export async function getTeamTables(teamId: string, currentUserId?: string): Pro
   return response.json();
 }
 
-export async function getTeamTable(teamId: string, tableId: string, currentUserId?: string): Promise<TeamTableDto> {
-  const userId = currentUserId ?? requireCurrentUserId();
-  const response = await fetchWithTimeout(
-    buildApiUrl(`/api/teams/${encodeURIComponent(teamId)}/tables/${encodeURIComponent(tableId)}?currentUserId=${encodeURIComponent(userId)}`),
+export async function getTeamTable(teamId: string, tableId: string): Promise<TeamTableDto> {
+  const response = await fetchWithTeamAuth(
+    `/api/teams/${encodeURIComponent(teamId)}/tables/${encodeURIComponent(tableId)}`,
     { credentials: "include" },
   );
 
@@ -197,10 +176,8 @@ export async function getTeamTable(teamId: string, tableId: string, currentUserI
 export async function createTeamTable(
   teamId: string,
   request: CreateTeamTableRequest,
-  currentUserId?: string,
 ): Promise<TeamTableDto> {
-  const userId = currentUserId ?? requireCurrentUserId();
-  const response = await fetchWithTimeout(buildApiUrl(`/api/teams/${encodeURIComponent(teamId)}/tables?currentUserId=${encodeURIComponent(userId)}`), {
+  const response = await fetchWithTeamAuth(`/api/teams/${encodeURIComponent(teamId)}/tables`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     credentials: "include",
@@ -213,9 +190,8 @@ export async function createTeamTable(
   return response.json();
 }
 
-export async function getEventTableProtocols(eventId: string, currentUserId?: string): Promise<EventTableProtocolDto[]> {
-  const userId = currentUserId ?? requireCurrentUserId();
-  const response = await fetchWithTimeout(buildApiUrl(`/api/events/${encodeURIComponent(eventId)}/table-protocols?currentUserId=${encodeURIComponent(userId)}`), {
+export async function getEventTableProtocols(eventId: string): Promise<EventTableProtocolDto[]> {
+  const response = await fetchWithTeamAuth(`/api/events/${encodeURIComponent(eventId)}/table-protocols`, {
     credentials: "include",
   });
 
@@ -228,10 +204,8 @@ export async function getEventTableProtocols(eventId: string, currentUserId?: st
 export async function createEventTableProtocol(
   eventId: string,
   request: { teamTableId: string },
-  currentUserId?: string,
 ): Promise<EventTableProtocolDto> {
-  const userId = currentUserId ?? requireCurrentUserId();
-  const response = await fetchWithTimeout(buildApiUrl(`/api/events/${encodeURIComponent(eventId)}/table-protocols?currentUserId=${encodeURIComponent(userId)}`), {
+  const response = await fetchWithTeamAuth(`/api/events/${encodeURIComponent(eventId)}/table-protocols`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     credentials: "include",
@@ -249,11 +223,9 @@ export async function updateEventTableProtocolRow(
   protocolId: string,
   rowId: string,
   request: UpdateEventTableProtocolRowRequest,
-  currentUserId?: string,
 ): Promise<EventTableProtocolDto> {
-  const userId = currentUserId ?? requireCurrentUserId();
-  const response = await fetchWithTimeout(
-    buildApiUrl(`/api/events/${encodeURIComponent(eventId)}/table-protocols/${encodeURIComponent(protocolId)}/rows/${encodeURIComponent(rowId)}?currentUserId=${encodeURIComponent(userId)}`),
+  const response = await fetchWithTeamAuth(
+    `/api/events/${encodeURIComponent(eventId)}/table-protocols/${encodeURIComponent(protocolId)}/rows/${encodeURIComponent(rowId)}`,
     {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -272,11 +244,9 @@ export async function updateEventTableProtocol(
   eventId: string,
   protocolId: string,
   request: UpdateEventTableProtocolRequest,
-  currentUserId?: string,
 ): Promise<EventTableProtocolDto> {
-  const userId = currentUserId ?? requireCurrentUserId();
-  const response = await fetchWithTimeout(
-    buildApiUrl(`/api/events/${encodeURIComponent(eventId)}/table-protocols/${encodeURIComponent(protocolId)}?currentUserId=${encodeURIComponent(userId)}`),
+  const response = await fetchWithTeamAuth(
+    `/api/events/${encodeURIComponent(eventId)}/table-protocols/${encodeURIComponent(protocolId)}`,
     {
       method: "PUT",
       headers: { "Content-Type": "application/json" },

@@ -1087,7 +1087,6 @@ export function TeamDetailsPage({ currentUser, currentTeamId, onTeamChange }: Te
 
               {activeTab === "tables" && (
                 <TeamTablesPanel
-                  currentUserId={currentUser?.id}
                   teamId={team.id}
                   canManageTeam={canManage}
                 />

@@ -475,7 +475,6 @@ export function EventPage({ eventId, onBack, currentUser }: EventPageProps) {
         <EventTableProtocolsPanel
           eventId={event.id}
           teamId={event.teamId}
-          currentUserId={selectedUserId}
           canManage={canManageEvent}
           onError={reportError}
         />
