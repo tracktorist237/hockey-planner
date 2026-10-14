@@ -332,7 +332,9 @@ def deploy(transaction, root=ROOT):
         require(shutil.which(tool) is not None)
     transaction.begin()
     repo = root / 'frontend-src'
-    transaction.run(['git', 'fetch', 'origin', 'develop'], cwd=repo)
+    # Git may detach automatic maintenance after a successful fetch. Do not
+    # launch an asynchronous writer; preserve strict descendant completion.
+    transaction.run(['git', 'fetch', '--no-auto-maintenance', 'origin', 'develop'], cwd=repo)
     resolved = transaction.run(['git', 'rev-parse', transaction.expected + '^{commit}'], cwd=repo)
     require(resolved.decode().strip() == transaction.expected)
     archive = transaction.private / 'source.tar'

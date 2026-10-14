@@ -433,7 +433,9 @@ main = build / 'static/js/main.abc.js'; main.write_text('bundle')
         npm.chmod(0o755)
         # Runtime node presence is a read-only preflight; fixture never uses it.
         node = tools / 'node'; node.symlink_to(sys.executable)
-        environment = {**os.environ, 'PATH': str(tools) + ':' + os.environ['PATH'], 'FIXTURE_LOG': str(self.root / 'npm-log')}
+        environment = {**os.environ, 'PATH': str(tools) + ':' + os.environ['PATH'],
+                       'FIXTURE_LOG': str(self.root / 'npm-log'),
+                       'GIT_TRACE2_EVENT': str(self.root / 'git-trace.jsonl')}
         return staging, repo, destination, expected, environment
 
     def test_real_git_archive_success_preserves_checkout_and_frontend_behavior(self):
@@ -453,6 +455,12 @@ main = build / 'static/js/main.abc.js'; main.write_text('bundle')
         self.assertEqual([row['args'] for row in commands], [['ci'], ['run', 'version:sync'], ['run', 'build']])
         self.assertTrue(all(row['cwd'] != str(repo) for row in commands))
         self.assertEqual((commands[-1]['commit'], commands[-1]['api'], commands[-1]['version']), (expected, '/api', '0.5.0'))
+        # Real Git trace, not a command snapshot: fetch must not launch an
+        # automatic maintenance/gc writer that can survive its successful CLI.
+        events = [json.loads(line) for line in (self.root / 'git-trace.jsonl').read_text().splitlines()]
+        self.assertTrue(any(row.get('event') == 'cmd_name' and row.get('name') == 'fetch' for row in events))
+        self.assertFalse(any(row.get('event') == 'child_start' and
+                             any(arg in ('maintenance', 'gc') for arg in row.get('argv', [])) for row in events))
 
     def test_real_build_failure_never_publishes_or_leaks_output(self):
         staging, repo, destination, expected, environment = self.prepare_source()

@@ -84,6 +84,9 @@ that disables the protocol are outside its protection.
 The lock covers git fetch, exact-SHA commit verification, immutable git archive,
 tar export, npm ci, version:sync in that export only, frontend build, publication,
 postconditions and cleanup. The existing dirty/generated checkout is preserved.
+Fetch explicitly disables automatic maintenance because Git can detach that writer
+after fetch returns; descendant completion checks remain strict. Unsupported Git
+flags fail closed, with no older-tooling fallback.
 Tracked VERSION is unchanged. Build variables retain `/api`, VERSION, UTC build
 time, REACT_APP_COMMIT and Staging environment metadata. No public URL changes.
 
@@ -164,3 +167,4 @@ compatibility first. Actual recovery/rollback is separately authorized operator 
 Lifetime references: [Linux flock](https://man7.org/linux/man-pages/man2/flock.2.html),
 [Linux subreaper](https://man7.org/linux/man-pages/man2/PR_SET_CHILD_SUBREAPER.2const.html),
 [Python subprocess](https://docs.python.org/3/library/subprocess.html).
+[Git fetch maintenance control](https://git-scm.com/docs/git-fetch).
