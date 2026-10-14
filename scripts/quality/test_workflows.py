@@ -56,10 +56,25 @@ def verify(staging, validation):
                          "playwright install --with-deps chromium webkit"):
             assert required in joined
         assert 'node scripts/staging/test-local.cjs' in joined
-    script = deploy["steps"][0]["with"]["script"]
-    assert 'git archive "$EXPECTED_SHA" | tar -x -C "$BUILD_DIR"' in script
-    assert 'test "$(git rev-parse "$EXPECTED_SHA^{commit}")" = "$EXPECTED_SHA"' in script
-    assert "git pull" not in script
+    # Deployment bootstrap comes from runner checkout, never an unlocked VPS fetch.
+    steps = deploy['steps']
+    assert 'HP93_APPROVED_HEAD' in steps[0]['run']
+    assert steps[0]['env']['EXPECTED_SHA'] == '${{ github.sha }}'
+    command = next(step for step in steps if 'deploy_frontend_ssh.py' in step.get('run', ''))
+    assert command['env']['HP93_APPROVED_HEAD'] == '${{ vars.HP93_APPROVED_HEAD }}'
+    assert command['env']['STAGING_KNOWN_HOSTS'] == '${{ secrets.STAGING_KNOWN_HOSTS }}'
+    assert all('ssh-action' not in step.get('uses', '') for step in steps)
+    assert next(step for step in steps if step.get('uses', '').startswith('actions/checkout'))['with']['ref'] == '${{ github.sha }}'
+
+    # PRs and task pushes have no route to deployment or staging credentials.
+    events = staging.get('on', staging.get(True))
+    assert events == {'push': {'branches': ['develop']}}
+    pr = load('frontend-pr-checks.yml')
+    assert pr['jobs']['validation']['uses'] == './.github/workflows/validate.yml'
+    assert 'secrets' not in pr['jobs']['validation']
+    for workflow in (pr, validation):
+        assert 'pull_request_target' not in workflow.get('on', workflow.get(True, {}))
+        assert 'VPS_' not in str(workflow) and 'STAGING_KNOWN_HOSTS' not in str(workflow)
 
 
 class WorkflowGateTests(unittest.TestCase):

@@ -19,33 +19,27 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Deploy frontend staging on VPS
-        uses: appleboy/ssh-action@v1.2.0
+      - name: Require separate operator activation for exact source
+        env:
+          EXPECTED_SHA: ${{ github.sha }}
+          HP93_APPROVED_HEAD: ${{ vars.HP93_APPROVED_HEAD }}
+        run: test -n "$HP93_APPROVED_HEAD" && test "$HP93_APPROVED_HEAD" = "$EXPECTED_SHA"
+      - uses: actions/checkout@v4
         with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          script: |
-            set -e
-            cd /opt/hockeyplanner-staging/frontend-src
-            EXPECTED_SHA="${{ github.sha }}"
-            git fetch origin develop
-            test "$(git rev-parse "$EXPECTED_SHA^{commit}")" = "$EXPECTED_SHA"
-            # version:sync modifies tracked manifests. Build an immutable export,
-            # preserving the existing VPS checkout and its generated local changes.
-            BUILD_DIR="$(mktemp -d /opt/hockeyplanner-staging/frontend-build.XXXXXXXX)"
-            trap 'rm -rf -- "$BUILD_DIR"' EXIT
-            git archive "$EXPECTED_SHA" | tar -x -C "$BUILD_DIR"
-            cd "$BUILD_DIR"
-            npm ci
-            npm run version:sync
-            APP_VERSION="$(cat VERSION | tr -d '[:space:]')"
-            APP_BUILD_TIME="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
-            REACT_APP_API_BASE=/api REACT_APP_VERSION="$APP_VERSION" REACT_APP_BUILD_TIME="$APP_BUILD_TIME" REACT_APP_COMMIT="$EXPECTED_SHA" REACT_APP_DEPLOY_ENV=Staging npm run build
-            # Preserve the bind-mounted directory inode and old hashed assets.
-            # Static publication does not require restarting the shared nginx.
-            mkdir -p /opt/hockeyplanner-staging/frontend/build
-            cp -r "$BUILD_DIR/build/." /opt/hockeyplanner-staging/frontend/build/
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Deploy frontend staging under shared admission protocol
+        env:
+          EXPECTED_SHA: ${{ github.sha }}
+          HP93_APPROVED_HEAD: ${{ vars.HP93_APPROVED_HEAD }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          STAGING_KNOWN_HOSTS: ${{ secrets.STAGING_KNOWN_HOSTS }}
+        run: python scripts/quality/deploy_frontend_ssh.py --expected-sha "$EXPECTED_SHA"
   smoke:
     name: Frontend post-deploy staging verification
     needs: deploy
