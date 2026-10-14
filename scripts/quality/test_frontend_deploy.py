@@ -94,7 +94,7 @@ class LinuxDeploymentTests(unittest.TestCase):
 
     def start(self, body, *, begin=True, expected=SHA, environment=None, watch=False):
         script = f'''
-import importlib.util, os, sys, time, signal, json, shutil
+import importlib.util, os, sys, time, signal, json, shutil, traceback
 from pathlib import Path
 spec = importlib.util.spec_from_file_location('frontend', {str(HELPER)!r})
 m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
@@ -105,7 +105,20 @@ try:
     if {begin!r}: t.begin()
     {body}
     if {begin!r}: t.finish()
-except (Exception, m.Cancelled):
+except (Exception, m.Cancelled) as failure:
+    # Fixture-only diagnostics: code locations/exit status, never environments,
+    # command payloads, captured child output or exception messages.
+    frames = []
+    for frame, lineno in traceback.walk_tb(failure.__traceback__):
+        item = {{'file': Path(frame.f_code.co_filename).name, 'line': lineno,
+                 'function': frame.f_code.co_name}}
+        if frame.f_code.co_name == 'run':
+            command = frame.f_locals.get('args', [])
+            item['tool'] = Path(command[0]).name if command else None
+            process = frame.f_locals.get('process')
+            item['exit'] = process.returncode if process else None
+        frames.append(item)
+    Path({str(self.root / 'fixture-diagnostic.json')!r}).write_text(json.dumps(frames))
     try: t.stop_descendants()
     except (Exception, m.Cancelled): pass
     print('BLOCKED', flush=True); sys.exit(1)
@@ -427,7 +440,8 @@ main = build / 'static/js/main.abc.js'; main.write_text('bundle')
         staging, repo, destination, expected, environment = self.prepare_source()
         inode = destination.stat().st_ino
         code, output = self.completed(f'm.deploy(t, Path({str(staging)!r})); t.finish()', begin=False, expected=expected, environment=environment)
-        self.assertEqual((code, output), (0, b'PASS\n'))
+        diagnostic = self.root / 'fixture-diagnostic.json'
+        self.assertEqual((code, output), (0, b'PASS\n'), diagnostic.read_text() if diagnostic.exists() else '')
         self.assertFalse(self.barrier.exists())
         self.assertEqual(self.backend_probe(), 'ADMITTED')
         self.assertEqual((repo / 'VERSION').read_text(), '9.9.9\n')
