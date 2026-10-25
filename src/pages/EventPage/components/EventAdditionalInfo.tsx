@@ -1,10 +1,17 @@
 import { EventDto } from "src/types/events";
+import "./EventAdditionalInfo.css";
+
+const mapSearchHref = (query: string): string =>
+  `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
 
 interface EventAdditionalInfoProps {
   event: EventDto;
 }
 
 export const EventAdditionalInfo = ({ event }: EventAdditionalInfoProps) => {
+  const locationName = event.locationName?.trim();
+  const locationAddress = event.locationAddress?.trim();
+
   return (
     <>
       {event.description && (
@@ -35,7 +42,7 @@ export const EventAdditionalInfo = ({ event }: EventAdditionalInfoProps) => {
         </div>
       )}
 
-      {(event.locationName || event.locationAddress || event.iceRinkNumber) && (
+      {(locationName || locationAddress || event.iceRinkNumber) && (
         <div
           style={{
             backgroundColor: "var(--hp-surface)",
@@ -59,16 +66,34 @@ export const EventAdditionalInfo = ({ event }: EventAdditionalInfoProps) => {
             <span>📍</span>
             <span>Место проведения</span>
           </h3>
-          {event.locationName && (
+          {locationName && (
             <div style={{ display: "flex", alignItems: "flex-start", gap: "8px", marginBottom: "12px" }}>
               <span style={{ fontSize: "14px", color: "var(--hp-muted)", flexShrink: 0 }}>🏢</span>
-              <span style={{ fontSize: "15px", color: "var(--hp-text)", lineHeight: "1.4" }}>{event.locationName}</span>
+              <a
+                className="event-additional-info__map-link"
+                href={mapSearchHref([locationName, locationAddress].filter(Boolean).join(", "))}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`Показать на карте место ${locationName}`}
+              >
+                {locationName}
+                <span aria-hidden="true"> ↗</span>
+              </a>
             </div>
           )}
-          {event.locationAddress && (
+          {locationAddress && (
             <div style={{ display: "flex", alignItems: "flex-start", gap: "8px", marginBottom: "12px" }}>
               <span style={{ fontSize: "14px", color: "var(--hp-muted)", flexShrink: 0 }}>🗺️</span>
-              <span style={{ fontSize: "15px", color: "var(--hp-text)", lineHeight: "1.4" }}>{event.locationAddress}</span>
+              <a
+                className="event-additional-info__map-link"
+                href={mapSearchHref(locationAddress)}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`Показать на карте адрес ${locationAddress}`}
+              >
+                {locationAddress}
+                <span aria-hidden="true"> ↗</span>
+              </a>
             </div>
           )}
           {event.iceRinkNumber && (
