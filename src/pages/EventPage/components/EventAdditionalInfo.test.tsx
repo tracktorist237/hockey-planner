@@ -25,6 +25,8 @@ test("venue and address are separate accessible map links", () => {
   const addressLink = screen.getByRole("link", { name: `Показать на карте адрес ${address}` });
   expect(venueLink).toHaveAttribute("href", mapsUrl(`${venue}, ${address}`));
   expect(addressLink).toHaveAttribute("href", mapsUrl(address));
+  expect(screen.getByText(venue, { exact: true })).toBeVisible();
+  expect(screen.getByText(address, { exact: true })).toBeVisible();
   for (const link of [venueLink, addressLink]) {
     expect(link).toHaveAttribute("target", "_blank");
     expect(link).toHaveAttribute("rel", "noopener noreferrer");

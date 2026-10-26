@@ -76,7 +76,7 @@ export const EventAdditionalInfo = ({ event }: EventAdditionalInfoProps) => {
                 rel="noopener noreferrer"
                 aria-label={`Показать на карте место ${locationName}`}
               >
-                {locationName}
+                <span>{locationName}</span>
                 <span aria-hidden="true"> ↗</span>
               </a>
             </div>
@@ -91,7 +91,7 @@ export const EventAdditionalInfo = ({ event }: EventAdditionalInfoProps) => {
                 rel="noopener noreferrer"
                 aria-label={`Показать на карте адрес ${locationAddress}`}
               >
-                {locationAddress}
+                <span>{locationAddress}</span>
                 <span aria-hidden="true"> ↗</span>
               </a>
             </div>
