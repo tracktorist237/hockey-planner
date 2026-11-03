@@ -340,11 +340,11 @@ while not Path({str(ready)!r}).exists(): time.sleep(0.01)
         build, destination = self.fixture_build()
         body = f'''original = m.os.replace
     count = 0
-    def partial(source, target):
+    def partial(source, target, **kwargs):
         global count
         count += 1
         if count == 2: raise OSError('injected copy failure')
-        return original(source, target)
+        return original(source, target, **kwargs)
     m.os.replace = partial
     m.publish(t, Path({str(build)!r}), Path({str(destination)!r}))'''
         self.assertEqual(self.completed(body)[0], 1)
@@ -355,13 +355,158 @@ while not Path({str(ready)!r}).exists(): time.sleep(0.01)
     def test_completion_hash_mismatch_never_reports_success(self):
         build, destination = self.fixture_build()
         body = f'''original = m.os.replace
-    def corrupt(source, target):
-        original(source, target)
-        Path(target).write_text('corrupted-publication')
+    def corrupt(source, target, **kwargs):
+        original(source, target, **kwargs)
+        fd = os.open(target, os.O_WRONLY | os.O_TRUNC, dir_fd=kwargs['dst_dir_fd'])
+        with os.fdopen(fd, 'w') as stream: stream.write('corrupted-publication')
     m.os.replace = corrupt
     m.publish(t, Path({str(build)!r}), Path({str(destination)!r}))'''
         self.assertEqual(self.completed(body)[0], 1)
         self.assertEqual(self.backend_probe(), 'RECOVERY')
+
+    def assert_publication_blocked(self, build, destination, prefix=''):
+        inode = destination.stat().st_ino
+        descriptors = self.root / 'descriptor-leak'
+        body = prefix + f'''before = set(os.listdir('/proc/self/fd'))
+    try: m.publish(t, Path({str(build)!r}), Path({str(destination)!r}))
+    finally:
+        if set(os.listdir('/proc/self/fd')) != before: Path({str(descriptors)!r}).touch()'''
+        code, output = self.completed(body)
+        self.assertEqual((code, output), (1, b'BLOCKED\n'))
+        self.assertEqual((destination / 'index.html').read_text(), 'old-index')
+        self.assertEqual(destination.stat().st_ino, inode)
+        self.assertEqual(self.backend_probe(), 'RECOVERY')
+        self.assertTrue(self.barrier.is_file())
+        self.assertFalse(descriptors.exists(), 'publication leaked directory/file descriptors')
+
+    def test_publication_symlink_blocks_before_external_child_creation(self):
+        build, destination = self.fixture_build()
+        external = self.root / 'external'; external.mkdir()
+        (destination / 'static').symlink_to(external, target_is_directory=True)
+        self.assert_publication_blocked(build, destination)
+        self.assertEqual(list(external.iterdir()), [])
+        self.assertEqual(set(path.name for path in destination.iterdir()),
+                         {'index.html', 'old-hashed.js', 'static'})
+
+    def test_publication_unsafe_mode_blocks_before_child_creation(self):
+        build, destination = self.fixture_build()
+        intermediate = destination / 'static'; intermediate.mkdir(); intermediate.chmod(0o777)
+        self.assert_publication_blocked(build, destination)
+        self.assertEqual(list(intermediate.iterdir()), [])
+        self.assertEqual(set(path.name for path in destination.iterdir()),
+                         {'index.html', 'old-hashed.js', 'static'})
+
+    def test_publication_dangling_symlink_blocks_without_partial_creation(self):
+        build, destination = self.fixture_build()
+        external = self.root / 'absent'
+        (destination / 'static').symlink_to(external, target_is_directory=True)
+        self.assert_publication_blocked(build, destination)
+        self.assertFalse(external.exists())
+        self.assertTrue((destination / 'static').is_symlink())
+
+    def test_publication_non_directory_blocks_without_partial_creation(self):
+        build, destination = self.fixture_build()
+        (destination / 'static').write_text('protected-file')
+        self.assert_publication_blocked(build, destination)
+        self.assertEqual((destination / 'static').read_text(), 'protected-file')
+
+    def test_publication_replaced_parent_cannot_redirect_temporary_creation(self):
+        build, destination = self.fixture_build()
+        (destination / 'static/js').mkdir(parents=True)
+        external = self.root / 'external'; external.mkdir()
+        moved = destination / 'original-static'
+        prefix = f'''original = m.os.open
+    def redirect(name, flags, *args, **kwargs):
+        if str(name).startswith('.hp93-'):
+            Path({str(destination / 'static')!r}).rename(Path({str(moved)!r}))
+            Path({str(destination / 'static')!r}).symlink_to(Path({str(external)!r}), target_is_directory=True)
+        return original(name, flags, *args, **kwargs)
+    m.os.open = redirect
+    '''
+        self.assert_publication_blocked(build, destination, prefix)
+        self.assertEqual(list(external.iterdir()), [])
+        self.assertFalse((moved / 'js/main.abc.js').exists())
+
+    def test_publication_replaced_parent_cannot_redirect_replace(self):
+        build, destination = self.fixture_build()
+        (destination / 'static/js').mkdir(parents=True)
+        external = self.root / 'external'; external.mkdir()
+        prefix = f'''original = m.os.replace
+    def redirect(source, target, **kwargs):
+        Path({str(destination / 'static')!r}).rename(Path({str(destination / 'original-static')!r}))
+        Path({str(destination / 'static')!r}).symlink_to(Path({str(external)!r}), target_is_directory=True)
+        return original(source, target, **kwargs)
+    m.os.replace = redirect
+    '''
+        self.assert_publication_blocked(build, destination, prefix)
+        self.assertEqual(list(external.iterdir()), [])
+
+    def test_publication_replaced_root_blocks_without_following_symlink(self):
+        build, destination = self.fixture_build()
+        external = self.root / 'external'; external.mkdir()
+        moved = self.root / 'original-live'
+        body = f'''original = m.os.replace
+    def redirect(source, target, **kwargs):
+        Path({str(destination)!r}).rename(Path({str(moved)!r}))
+        Path({str(destination)!r}).symlink_to(Path({str(external)!r}), target_is_directory=True)
+        return original(source, target, **kwargs)
+    m.os.replace = redirect
+    m.publish(t, Path({str(build)!r}), Path({str(destination)!r}))'''
+        inode = destination.stat().st_ino
+        self.assertEqual(self.completed(body), (1, b'BLOCKED\n'))
+        self.assertEqual(moved.stat().st_ino, inode)
+        self.assertEqual((moved / 'index.html').read_text(), 'old-index')
+        self.assertEqual(list(external.iterdir()), [])
+        self.assertEqual(self.backend_probe(), 'RECOVERY')
+
+    def test_publication_rejects_traversal_and_closes_descriptors(self):
+        build, destination = self.fixture_build()
+        body = f'''from contextlib import ExitStack
+    before = set(os.listdir('/proc/self/fd'))
+    for relative in (Path('../outside/file'), Path('/outside/file')):
+        try:
+            with ExitStack() as stack:
+                publication = m.Publication(stack, Path({str(destination)!r}))
+                publication.parent(relative, create=True)
+        except ValueError: pass
+        else: raise AssertionError('traversal accepted')
+    assert set(os.listdir('/proc/self/fd')) == before
+    m.publish(t, Path({str(build)!r}), Path({str(destination)!r}))
+    assert set(os.listdir('/proc/self/fd')) == before'''
+        self.assertEqual(self.completed(body), (0, b'PASS\n'))
+        self.assertFalse((self.root / 'outside').exists())
+
+    def test_publication_success_preserves_order_hashes_inode_and_old_assets(self):
+        build, destination = self.fixture_build()
+        inode = destination.stat().st_ino
+        body = f'''original = m.os.replace
+    published = []
+    synced = set()
+    original_sync = m.os.fsync
+    def sync(fd):
+        if m.stat.S_ISDIR(os.fstat(fd).st_mode): synced.add(m.identity(os.fstat(fd)))
+        return original_sync(fd)
+    m.os.fsync = sync
+    def record(source, target, **kwargs):
+        assert kwargs['src_dir_fd'] == kwargs['dst_dir_fd']
+        for relative in ('.', 'static', 'static/js'):
+            assert m.identity((Path({str(destination)!r}) / relative).stat()) in synced
+        published.append(target)
+        return original(source, target, **kwargs)
+    m.os.replace = record
+    before = set(os.listdir('/proc/self/fd'))
+    m.publish(t, Path({str(build)!r}), Path({str(destination)!r}))
+    assert set(os.listdir('/proc/self/fd')) == before
+    assert published == ['main.abc.js', 'build-meta.json', 'index.html']
+    m.verify_metadata(Path({str(destination)!r}), t.expected)'''
+        self.assertEqual(self.completed(body), (0, b'PASS\n'))
+        self.assertFalse(self.barrier.exists())
+        self.assertEqual(self.backend_probe(), 'ADMITTED')
+        self.assertEqual(destination.stat().st_ino, inode)
+        self.assertEqual((destination / 'old-hashed.js').read_text(), 'old-assets')
+        for relative in ('static/js/main.abc.js', 'build-meta.json', 'index.html'):
+            self.assertEqual((destination / relative).read_bytes(), (build / relative).read_bytes())
+        self.assertFalse(list(destination.rglob('.hp93-*')))
 
     def test_uncertain_cleanup_retains_barrier_after_publication(self):
         build, destination = self.fixture_build()

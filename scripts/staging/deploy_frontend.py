@@ -4,6 +4,7 @@ Only verified completion clears recovery-required. Exceptions retain it, even
 when child teardown succeeds. No credentials or child output reach diagnostics.
 """
 import argparse
+from contextlib import ExitStack
 import ctypes
 from datetime import datetime, timezone
 import hashlib
@@ -12,6 +13,7 @@ import os
 from pathlib import Path
 import re
 import select
+import secrets
 import shutil
 import signal
 import stat
@@ -37,24 +39,20 @@ def identity(metadata):
 
 def directory(path):
     metadata = path.lstat()
+    safe_directory(metadata)
+    return metadata
+
+
+def safe_directory(metadata):
     require(stat.S_ISDIR(metadata.st_mode))
     require(metadata.st_uid in (0, os.geteuid()))
     require(not metadata.st_mode & 0o022)
-    return metadata
 
 
 def ancestors(path):
     require(path.is_absolute())
     for parent in reversed((path, *path.parents)):
         directory(parent)
-
-
-def sync_directory(path):
-    fd = os.open(path, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
-    try:
-        os.fsync(fd)
-    finally:
-        os.close(fd)
 
 
 class Cancelled(BaseException):
@@ -280,15 +278,103 @@ def inventory(build):
 def verify_metadata(build, expected):
     regular(build / 'build-meta.json')
     data = json.loads((build / 'build-meta.json').read_text())
+    validate_metadata(data, expected, lambda path: digest(build / path))
+
+
+def validate_metadata(data, expected, hash_file):
     require(data['schemaVersion'] == 1 and data['commit'] == expected and data['environment'] == 'Staging')
     main = data['mainJs']['path']
     require(re.fullmatch(r'/static/js/main\.[a-zA-Z0-9_-]+\.js', main) is not None)
-    require(digest(build / main.lstrip('/')) == data['mainJs']['sha256'])
+    require(hash_file(Path(main.lstrip('/'))) == data['mainJs']['sha256'])
+
+
+class Publication:
+    """Pin the protected root and every ancestor; never resolve a write path.
+
+    Same-account/root writers must still cooperate with the transaction lock.
+    Identity rechecks detect renamed entries; no-follow dir_fd operations keep
+    substituted symlinks out of mkdir, temporary writes, replace and readback.
+    """
+    def __init__(self, stack, destination):
+        require(destination.is_absolute() and '..' not in destination.parts)
+        self.stack, self.chain, self.directories = stack, [], {}
+        fd = self.open_directory('/')
+        self.chain.append((None, '/', fd))
+        for name in destination.parts[1:]:
+            self.check()
+            child = self.open_directory(name, fd)
+            self.chain.append((fd, name, child))
+            fd = child
+        self.root = fd
+        self.directories[Path('.')] = fd
+        self.check()
+
+    def open_directory(self, name, parent=None):
+        fd = os.open(name, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=parent)
+        self.stack.callback(os.close, fd)
+        safe_directory(os.fstat(fd))
+        return fd
+
+    def check(self):
+        for parent, name, fd in self.chain:
+            current = os.stat(name, dir_fd=parent, follow_symlinks=False)
+            safe_directory(current)
+            safe_directory(os.fstat(fd))
+            require(identity(current) == identity(os.fstat(fd)))
+
+    def parent(self, relative, *, create=False):
+        require(not relative.is_absolute() and relative.parts and
+                all(part not in ('.', '..') for part in relative.parts))
+        self.check()
+        path, fd = Path('.'), self.root
+        for name in relative.parts[:-1]:
+            path /= name
+            if path not in self.directories:
+                # Validate the parent BEFORE mkdir, including when the child is
+                # missing. O_NOFOLLOW also rejects dangling symlinks atomically.
+                self.check()
+                created = False
+                try:
+                    child = self.open_directory(name, fd)
+                except FileNotFoundError:
+                    require(create)
+                    self.check()
+                    os.mkdir(name, mode=0o755, dir_fd=fd)
+                    child = self.open_directory(name, fd)
+                    created = True
+                self.chain.append((fd, name, child))
+                self.directories[path] = child
+                self.check()
+                if created:
+                    os.fsync(child)
+                    os.fsync(fd)
+            fd = self.directories[path]
+        self.check()
+        return fd
+
+    def regular(self, name, parent):
+        metadata = os.stat(name, dir_fd=parent, follow_symlinks=False)
+        require(stat.S_ISREG(metadata.st_mode))
+        return metadata
+
+    def read(self, relative, *, metadata=False):
+        parent = self.parent(relative)
+        fd = os.open(relative.name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=parent)
+        with os.fdopen(fd, 'rb') as stream:
+            require(stat.S_ISREG(os.fstat(fd).st_mode))
+            result = json.load(stream) if metadata else hashlib.file_digest(stream, 'sha256').hexdigest()
+            require(identity(self.regular(relative.name, parent)) == identity(os.fstat(fd)))
+        self.check()
+        return result
 
 
 def publish(transaction, build, destination):
-    ancestors(destination)
-    original = identity(destination.lstat())
+    with ExitStack() as stack:
+        publication = Publication(stack, destination)
+        publish_files(transaction, build, publication)
+
+
+def publish_files(transaction, build, publication):
     files = inventory(build)
     verify_metadata(build, transaction.expected)
     # New hashed assets first, HTML entry last. Individual replacements avoid
@@ -297,29 +383,38 @@ def publish(transaction, build, destination):
     for relative in order:
         transaction.check_lock()
         transaction.quiescent()
-        target = destination / relative
-        for parent in reversed((target.parent, *target.parent.parents)):
-            if not parent.exists():
-                parent.mkdir(mode=0o755)
-                sync_directory(parent.parent)
-        ancestors(target.parent)
-        if os.path.lexists(target):
-            regular(target)
-        fd, temporary = tempfile.mkstemp(prefix='.hp93-', dir=target.parent)
+        parent = publication.parent(relative, create=True)
+        try:
+            publication.regular(relative.name, parent)
+        except FileNotFoundError:
+            pass
+        temporary = '.hp93-' + secrets.token_hex(16)
+        publication.check()
+        fd = os.open(temporary, os.O_RDWR | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW,
+                     0o600, dir_fd=parent)
         # Any copy/replace/fsync error retains both barrier and recovery evidence.
-        with os.fdopen(fd, 'wb') as output, (build / relative).open('rb') as source:
+        with os.fdopen(fd, 'w+b') as output, (build / relative).open('rb') as source:
             shutil.copyfileobj(source, output)
             output.flush()
             os.fchmod(output.fileno(), 0o644)
             os.fsync(output.fileno())
-        require(digest(Path(temporary)) == files[relative])
-        os.replace(temporary, target)
-        sync_directory(target.parent)
+            output.seek(0)
+            require(hashlib.file_digest(output, 'sha256').hexdigest() == files[relative])
+            publication.check()
+            require(identity(publication.regular(temporary, parent)) == identity(os.fstat(fd)))
+            try:
+                publication.regular(relative.name, parent)
+            except FileNotFoundError:
+                pass
+            os.replace(temporary, relative.name, src_dir_fd=parent, dst_dir_fd=parent)
+            os.fsync(parent)
+            publication.check()
     for relative, expected_hash in files.items():
-        require(digest(destination / relative) == expected_hash)
-    verify_metadata(destination, transaction.expected)
-    require(identity(destination.lstat()) == original)
-    sync_directory(destination)
+        require(publication.read(relative) == expected_hash)
+    validate_metadata(publication.read(Path('build-meta.json'), metadata=True),
+                      transaction.expected, publication.read)
+    publication.check()
+    os.fsync(publication.root)
     transaction.check_lock()
     transaction.quiescent()
 
