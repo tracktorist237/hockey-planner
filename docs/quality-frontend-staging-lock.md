@@ -41,11 +41,21 @@ Backend helpers are not imported, invoked or assumed installed on the VPS.
 ## Bootstrap, supervision and completion
 
 The develop workflow retains validation → deploy → HP-75 smoke ordering. PR
-quality CI and task pushes have no deployment route or staging secrets. Before
-granting connection secrets to the deploy step, an operator-controlled repository
-variable `HP93_APPROVED_HEAD` must equal the exact develop source SHA. The same
-check is enforced by the runner helper. This implementation does not set that
-variable, configure environments or change existing secrets.
+quality CI and task pushes have no deployment route or staging secrets. Both
+deploy and smoke reference the existing protected `staging-smoke` environment;
+the trusted host pin `STAGING_KNOWN_HOSTS` is an environment secret there. GitHub
+must pass that environment's protection rules before starting each job or making
+its environment secrets available. Environment approval happens **before** the
+deploy job's first step, not after the SHA check. See
+[GitHub environment semantics](https://docs.github.com/en/actions/reference/workflows-and-actions/deployments-and-environments).
+
+The first deploy step has no secret bindings and requires the operator-controlled
+repository variable `HP93_APPROVED_HEAD` to equal the exact develop source SHA.
+Only after that succeeds can checkout/setup and the SSH step run; only the SSH
+step binds connection secrets to its process environment. Environment approval
+alone cannot authorize a different SHA. The runner helper repeats the SHA check
+before reading connection credentials. This implementation does not set that
+variable, configure environment protections or read/change existing secrets.
 
 The runner checks out that exact SHA and streams the standalone Python supervisor
 over pinned SSH. Bootstrap uses `/usr/bin/python3 -I -B`, reads a bounded code
@@ -108,6 +118,65 @@ of that final durability check attempts exclusive barrier re-creation while the
 lock is held. If filesystem durability itself is unavailable, admission and
 recovery must remain an operator decision; no program can promise persistence
 after storage failure.
+
+## First staging release — separate owner activation
+
+The owner reports that both legacy staging deployment workflows are disabled,
+`HP93_APPROVED_HEAD` is absent and the host pin exists only in `staging-smoke`.
+These are supplied settings facts, not proof of VPS readiness. This PR update
+does not enable either workflow or perform any deployment.
+
+1. Obtain green mandatory quality/security CI and a new independent review for
+   the final PR head before human merge. The approval of the previous head does
+   not cover this update. Keep the PR Draft until that separate process completes.
+2. Independently complete the operator prerequisites below, including the stable
+   shared lock, no recovery marker and proven writer quiescence. Keep the old
+   backend writer disabled and prevent every other noncooperating writer.
+3. Verify existing `staging-smoke` reviewers, deployment branch rules and bypass
+   policy permit only the intended trusted develop release without weakening
+   protection. Confirm credential availability through the owner; never print
+   secret values or copy the host pin into repository source/variables. Deploy
+   and diagnostics retain their separate existing credentials.
+4. Separately authorize human merge, frontend workflow activation and its trigger
+   sequence. The workflow accepts only develop pushes; enabling it must not be
+   assumed to replay a push received while disabled. No dispatch route is added.
+   A missing variable fails closed, so an initial eligible run can fail without
+   SSH; after the actual merged SHA is known, the owner can approve that SHA and
+   rerun the eligible run. Do not invent an alternate deployment route.
+5. Set repository variable `HP93_APPROVED_HEAD` to the full 40-character **actual
+   develop source SHA used by the run**, then start/rerun that exact eligible run.
+   The PR head or synthetic PR merge SHA may differ from the final merge/squash
+   commit. Do not depend on changing a variable while a job is already waiting.
+6. Observe: successful validation → deploy environment approval/protection →
+   first-step exact-SHA check → pinned checkout/setup → SSH helper SHA recheck →
+   shared-lock/barrier deployment → successful deploy → smoke environment
+   protection/approval as requested by GitHub → HP-75 verification of that same
+   frontend SHA. A failed/cancelled/skipped prerequisite cannot admit the next
+   job. Inspect pending jobs; do not assume approval of deploy clears a later
+   smoke request, and do not bypass protections.
+7. Record source SHA, run/jobs, sanitized smoke evidence and operator evidence.
+   Missing pin, missing/mismatched approval, rejected environment approval or
+   uncertain remote state blocks release. Recovery remains separately authorized.
+   After completion the owner should clear the one-release SHA authorization to
+   prevent reusing it in a later rerun; this task changes no settings.
+
+## Future continuous staging — design only
+
+A successful first smoke does not enable unattended staging. Every new develop
+SHA still requires `HP93_APPROVED_HEAD`, and `staging-smoke` still has its existing
+manual environment protection. Do not remove either gate as part of first release.
+
+After that smoke, separately agree and review an equivalent persistent admission
+policy: owner-controlled one-time activation with a revocable kill switch, trusted
+protected-develop events and exact source pinning, green mandatory CI/security and
+independent change review, and shared lock/barrier participation by every writer.
+Explicitly decide how deploy and smoke environment approvals work without a
+per-release manual action; this requires separate owner agreement and settings/code
+review, rather than bypassing reviewers. Retain protected credential scope, strict
+host pinning, validation → deploy → smoke, sanitized evidence and fail-closed
+recovery. Backend HP-92 activation is a separate dependency, never implicit in a
+frontend smoke. Implement/test that agreed policy in a separate scoped change;
+this PR neither chooses an automatic approval mechanism nor activates a conveyor.
 
 ## Operator activation prerequisites — all unverified
 

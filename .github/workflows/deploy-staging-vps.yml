@@ -17,6 +17,7 @@ jobs:
   deploy:
     needs: validation
     runs-on: ubuntu-latest
+    environment: staging-smoke
 
     steps:
       - name: Require separate operator activation for exact source
