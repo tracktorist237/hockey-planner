@@ -9,6 +9,7 @@ import { User } from "src/types/user";
 import { TeamMembersSection } from "src/pages/TeamsPage/components/TeamMembersSection";
 import { ExerciseBankManager, UniformColorsManager } from "src/pages/TeamDetailsPage/TeamLibrarySections";
 import { TeamExternalLeagueSettings } from "src/pages/TeamDetailsPage/TeamExternalLeagueSettings";
+import { TeamProfileCompletion } from "src/pages/TeamDetailsPage/TeamProfileCompletion";
 import { cardStyle, inputStyle } from "src/pages/TeamsPage/components/styles";
 
 const TeamRole = {
@@ -542,6 +543,7 @@ export function TeamManagePage({ currentUser }: TeamManagePageProps) {
 
             {activeTab === "profile" && (
               <>
+                <TeamProfileCompletion team={team} />
                 <TeamExternalLeagueSettings
                   teamId={team.id}
                   teamName={form.name}

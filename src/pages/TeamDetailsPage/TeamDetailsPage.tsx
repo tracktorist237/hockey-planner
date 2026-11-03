@@ -6,6 +6,7 @@ import { BottomNav } from "src/components/BottomNav";
 import { NotificationBell } from "src/components/NotificationBell";
 import { PlayerAvatar } from "src/components/PlayerAvatar";
 import { TeamTablesPanel } from "src/components/TeamTablesPanel";
+import { TeamProfileCompletion } from "src/pages/TeamDetailsPage/TeamProfileCompletion";
 import { getEvents } from "src/api/events";
 import { createTeamNews, deleteTeamNews, getTeam, getTeamMembers, getTeamNews, joinPublicTeam, leaveTeam, updateMyTeamJerseyNumber, updateTeamNews, uploadTeamNewsImage } from "src/api/teams";
 import { EventLookUpDto, EventType } from "src/types/events";
@@ -787,6 +788,7 @@ export function TeamDetailsPage({ currentUser, currentTeamId, onTeamChange }: Te
 
                 {canManage && (
                   <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 8, marginTop: 14 }}>
+                    <TeamProfileCompletion team={team} compact />
                     <button
                       type="button"
                       onClick={() => navigate(`/teams/${team.id}/manage`)}
