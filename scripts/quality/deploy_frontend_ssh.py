@@ -7,6 +7,7 @@ import subprocess
 import sys
 import tempfile
 import time
+from staging_admission import admit
 
 HELPER = Path(__file__).resolve().parents[1] / 'staging' / 'deploy_frontend.py'
 SECRETS = ('VPS_HOST', 'VPS_USER', 'VPS_SSH_KEY', 'STAGING_KNOWN_HOSTS')
@@ -31,14 +32,16 @@ def arguments(host, user, key, known_hosts, expected):
 
 
 def deliver(expected):
-    # Runner only. The workflow must approve exact SHA BEFORE granting secrets.
-    if sys.platform != 'linux' or os.environ.get('HP93_APPROVED_HEAD') != expected:
-        raise ValueError('Operator activation not approved')
+    # Repeat live admission immediately before reading connection credentials.
+    # A forged receipt/environment SHA is never treated as approval.
+    if sys.platform != 'linux':
+        raise ValueError('Linux runner required')
+    admit(expected)
     values = {name: os.environ[name] for name in SECRETS}
     if not all(values.values()):
         raise ValueError('Missing connection prerequisite')
     environment = {name: value for name, value in os.environ.items()
-                   if name not in (*SECRETS, 'SSH_AUTH_SOCK', 'SSH_AGENT_PID')}
+                   if name not in (*SECRETS, 'GH_TOKEN', 'GITHUB_TOKEN', 'SSH_AUTH_SOCK', 'SSH_AGENT_PID')}
     with tempfile.TemporaryDirectory(prefix='hp93-ssh-') as private:
         directory = Path(private)
         os.chmod(directory, 0o700)

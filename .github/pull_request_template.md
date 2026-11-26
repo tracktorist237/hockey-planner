@@ -33,6 +33,11 @@
 - Review state: pending / completed
 - Verdict when completed: `APPROVE`, `CHANGES REQUIRED`, or `BLOCKED / NEEDS HUMAN DECISION`
 - Findings and author resolutions:
+- Automatic staging admission record: pending. After genuine separate-session
+  approval, add exactly one standalone line outside this list/code blocks:
+  `Independent-Review: APPROVE <full-PR-head-SHA> <https-report-or-session-URL>`.
+  The human merger must verify its report/provenance; this is procedural evidence,
+  not a GitHub approval count. New commits require re-review. Use Create a merge commit.
 - [ ] Approval and green mandatory CI cover the current head; conversations resolved.
 - [ ] Develop protection verified; human merge only. No master/release changes.
 

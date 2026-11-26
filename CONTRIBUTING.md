@@ -21,6 +21,8 @@
 11. A human decides whether to mark ready and merge after checking review,
     resolved conversations and actual develop protection. Codex does not merge
     as part of implementation/review.
+    Automatic staging requires **Create a merge commit** and the exact-head
+    `Independent-Review` record described below; squash/rebase fail closed.
 12. Require develop validation after merge.
 13. Wait for staging deployment, dependent on validation.
 14. Require HP-75 post-deploy smoke and record any remaining manual checks.
@@ -65,6 +67,13 @@ The PR must link the separate reviewer session/report and identify reviewed head
 SHA and verdict. A draft can say review is pending, but self-review is never
 independent approval. This evidence is procedural, not a fabricated required
 status check or a second human GitHub approval.
+
+After actual separate-session approval, record exactly one PR-body line:
+`Independent-Review: APPROVE <full-PR-head-SHA> <https-report-or-session-URL>`.
+Replace it only after re-review when head changes. The human merger verifies the
+report and independent provenance; parsing the line cannot authenticate them.
+See [automatic staging](docs/quality-automatic-staging.md) for admission and the
+separately authorized one-time owner activation. Drafts leave this record pending.
 
 ## Local verification and contracts
 
@@ -127,9 +136,10 @@ rules. These docs and the template do not enable GitHub protection themselves.
 PR validation uses `pull_request`, read-only contents permissions, no staging
 environment and no staging secrets. Never introduce `pull_request_target` to
 execute untrusted code with privileged credentials. Task branch pushes do not
-deploy. Develop pushes run validation -> deploy (`needs: validation`) -> HP-75
-smoke (`needs: deploy`), with protected `staging-smoke` diagnostics secrets.
-Both prerequisites must succeed; do not bypass them with `always()`.
+deploy. Develop pushes run validation -> admission (including exact-SHA security)
+-> deploy (`needs: [validation, admission]`) -> HP-75 smoke (`needs: deploy`), with
+`staging-smoke` credentials. Automatic staging is disabled until the owner completes
+the linked cutover. All prerequisites must succeed; never bypass with `always()`.
 
 Each repository's smoke checks its own SHA, not the other repository's SHA.
 See [staging smoke](docs/quality-staging-smoke.md). Master/production workflow

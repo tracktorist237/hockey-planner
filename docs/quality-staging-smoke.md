@@ -2,6 +2,11 @@
 
 Status until remote verification: **READY FOR REMOTE VALIDATION**, not Done.
 
+HP-95 supersedes the original activation instructions below. See
+[automatic staging](quality-automatic-staging.md) for the disabled-by-default
+switch, protected human-merge admission and one-time removal of recurring
+environment approvals. Shared supervisor/recovery and this real smoke remain.
+
 `validation -> deploy -> smoke` is mandatory on trusted develop pushes. A failed
 install is TEST INFRA FAILURE; a failed SSH deploy is DEPLOY FAILURE; smoke
 distinguishes POST-DEPLOY HEALTH FAILURE and ENVIRONMENT STATE FAILURE. No smoke
