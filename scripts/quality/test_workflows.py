@@ -1,5 +1,6 @@
 """Trigger/dependency/secret contracts; production and PR isolation stay intact."""
 import copy
+import json
 from pathlib import Path
 import unittest
 from unittest.mock import patch
@@ -86,6 +87,15 @@ def verify(staging, validation):
 
 
 class WorkflowGateTests(unittest.TestCase):
+    def test_isolated_backend_host_uses_required_sdk_family(self):
+        # dotnet resolves global.json from e2e/run.cjs's frontend cwd. Merely
+        # installing SDK 10 does not stop a runner selecting preinstalled SDK 11.
+        sdk = json.loads((ROOT / 'global.json').read_text())['sdk']
+        assert sdk == {'version': '10.0.100', 'rollForward': 'latestFeature', 'allowPrerelease': False}
+        setup = next(step for step in load('validate.yml')['jobs']['validate']['steps']
+                     if step.get('uses', '').startswith('actions/setup-dotnet'))
+        assert setup['with']['dotnet-version'] == '10.0.x'
+
     def test_workflows_parse_and_deploy_is_gated(self):
         for path in (ROOT / '.github/workflows').glob('*.yml'):
             self.assertIsInstance(yaml.safe_load(path.read_text(encoding='utf-8')), dict)
