@@ -62,6 +62,8 @@ def verify(staging, validation):
     job = validation['jobs']['validate']
     assert not job.get('continue-on-error', False)
     assert job['steps'][0]['with'] == {'ref': '${{ github.sha }}', 'fetch-depth': 0, 'persist-credentials': False}
+    backend_checkout = next(step for step in job['steps'] if step.get('with', {}).get('repository'))
+    assert backend_checkout['with']['fetch-depth'] == 0, 'HP-75 historical migration fixture needs complete history'
     commands = []
     for step in job['steps']:
         if 'run' in step:

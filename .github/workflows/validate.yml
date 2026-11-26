@@ -42,6 +42,7 @@ jobs:
         with:
           repository: tracktorist237/HockeyPlanner.Backend
           ref: ${{ steps.backend.outputs.ref }}
+          fetch-depth: 0 # HP-75 fixtures verify a real historical migration commit.
           path: .quality-backend
           persist-credentials: false
       - name: Reject backend/frontend HTTP contract drift
