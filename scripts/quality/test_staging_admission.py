@@ -251,6 +251,21 @@ class AdmissionTests(unittest.TestCase):
                     admission.admit(SOURCE)
                 sleep.assert_not_called()
 
+    def test_repeated_admission_never_forwards_connection_credentials_or_tokens_to_git(self):
+        api = FakeGitHub()
+        credentials = {name: 'SYNTHETIC_SECRET' for name in (
+            'GH_TOKEN', 'GITHUB_TOKEN', 'VPS_HOST', 'VPS_USER', 'VPS_SSH_KEY',
+            'STAGING_KNOWN_HOSTS', 'STAGING_DIAGNOSTIC_HOST', 'STAGING_DIAGNOSTIC_KEY',
+            'SSH_AUTH_SOCK', 'SSH_AGENT_PID')}
+        with tempfile.TemporaryDirectory() as folder:
+            event = Path(folder) / 'event.json'
+            event.write_text(json.dumps(api.event))
+            with patch.dict(os.environ, {**api.env, **credentials, 'GITHUB_EVENT_PATH': str(event)}, clear=True), \
+                    patch.object(admission, 'GitHub', return_value=api), \
+                    patch.object(admission.subprocess, 'check_output', return_value=(SOURCE + '\n').encode()) as git:
+                self.assertEqual(admission.admit(SOURCE)['sourceSha'], SOURCE)
+                self.assertFalse(set(credentials) & set(git.call_args.kwargs['env']))
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -226,8 +226,14 @@ def admit(expected, *, wait_seconds=0):
     event = json.loads(Path(env['GITHUB_EVENT_PATH']).read_text(encoding='utf-8'))
     # Context/activation checks must happen before token use or network access.
     context(expected, env, event)
+    # The transport repeats this check with step-scoped credentials present.
+    # Git needs none of them; do not inherit those values into a child process.
+    git_environment = {name: env[name] for name in env if name not in (
+        'GH_TOKEN', 'GITHUB_TOKEN', 'VPS_HOST', 'VPS_USER', 'VPS_SSH_KEY',
+        'STAGING_KNOWN_HOSTS', 'STAGING_DIAGNOSTIC_HOST', 'STAGING_DIAGNOSTIC_KEY',
+        'SSH_AUTH_SOCK', 'SSH_AGENT_PID')}
     require(subprocess.check_output(['git', 'rev-parse', 'HEAD'], timeout=10,
-                                    stderr=subprocess.DEVNULL).decode().strip() == expected)
+                                    stderr=subprocess.DEVNULL, env=git_environment).decode().strip() == expected)
     api = GitHub(env.get('GH_TOKEN'))
     deadline = time.monotonic() + wait_seconds
     while True:
