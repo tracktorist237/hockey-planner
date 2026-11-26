@@ -234,7 +234,7 @@ def verify_workflow(workflow):
             inputs = step.get("with", {})
             if action == "actions/checkout":
                 assert inputs == {"persist-credentials": False,
-                    "ref": "${{ github.event_name == 'pull_request' && github.sha || 'develop' }}"}
+                    "ref": "${{ github.sha }}"}
             elif action == "actions/upload-artifact":
                 assert role == "dependencies"
                 assert set(inputs) == {"name", "path", "retention-days"}

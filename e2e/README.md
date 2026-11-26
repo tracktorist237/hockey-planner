@@ -2,6 +2,9 @@
 
 Requires Node 20+, .NET 10 SDK, Python 3, Docker and the paired backend branch
 with `tests/HockeyPlanner.Backend.E2EHost`. No staging/production URL is accepted.
+The frontend-root `global.json` keeps the npm wrapper's .NET CLI on SDK 10 even
+when a runner also has SDK 11. CI installs current 10.0.x; latestFeature permits
+servicing/feature updates within 10.0 without silently moving to another major.
 
 ```powershell
 npm ci

@@ -15,6 +15,7 @@ import sys
 import tempfile
 import time
 import unittest
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[2]
 HELPER = ROOT / 'scripts/staging/deploy_frontend.py'
@@ -55,6 +56,17 @@ class TransportTests(unittest.TestCase):
         self.assertEqual(result.returncode, 1)
         self.assertIn(b'BLOCKED', result.stderr)
         self.assertNotIn(b'Traceback', result.stderr)
+
+    def test_transport_rechecks_admission_before_reading_any_connection_secret(self):
+        module = load(TRANSPORT, 'transport')
+        with patch.object(module.sys, 'platform', 'linux'), \
+                patch.object(module, 'admit', side_effect=ValueError('blocked admission')) as admit, \
+                patch.dict(os.environ, {'HP93_APPROVED_HEAD': SHA}, clear=True), \
+                patch.object(module.subprocess, 'Popen') as connect:
+            with self.assertRaisesRegex(ValueError, 'blocked admission'):
+                module.deliver(SHA)
+            admit.assert_called_once_with(SHA)
+            connect.assert_not_called()
 
 
 @unittest.skipUnless(sys.platform == 'linux', 'Linux lifetime regressions require Linux; mandatory PR CI runs them')

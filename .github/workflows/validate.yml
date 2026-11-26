@@ -11,7 +11,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.sha }}
           fetch-depth: 0
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
@@ -40,10 +42,13 @@ jobs:
         with:
           repository: tracktorist237/HockeyPlanner.Backend
           ref: ${{ steps.backend.outputs.ref }}
+          fetch-depth: 0 # HP-75 fixtures verify a real historical migration commit.
           path: .quality-backend
           persist-credentials: false
       - name: Reject backend/frontend HTTP contract drift
         run: python scripts/quality/compare_contract.py .quality-backend/tests/HockeyPlanner.Backend.IntegrationTests/Contracts/api-contract.json src/api/__fixtures__/api-contract.generated.json
+      - name: HP-75 orchestrator failure fixtures (no staging access)
+        run: python -m unittest discover -s .quality-backend/scripts/quality -p "test_staging_smoke.py"
       - name: Full frontend suite
         run: npm test -- --watchAll=false --runInBand
       - name: Production build

@@ -14,17 +14,17 @@ concurrency:
 jobs:
   validation:
     uses: ./.github/workflows/validate.yml
-  deploy:
+  admission:
     needs: validation
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop' && github.repository == 'tracktorist237/hockey-planner' && vars.HP95_STAGING_AUTODEPLOY == 'protected-develop-merged-pr-v1'
     runs-on: ubuntu-latest
-    environment: staging-smoke
-
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      actions: read
+      checks: read
+      pull-requests: read
     steps:
-      - name: Require separate operator activation for exact source
-        env:
-          EXPECTED_SHA: ${{ github.sha }}
-          HP93_APPROVED_HEAD: ${{ vars.HP93_APPROVED_HEAD }}
-        run: test -n "$HP93_APPROVED_HEAD" && test "$HP93_APPROVED_HEAD" = "$EXPECTED_SHA"
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.sha }}
@@ -32,10 +32,41 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Verify protected merge and exact-SHA validation and security
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HP95_STAGING_AUTODEPLOY: ${{ vars.HP95_STAGING_AUTODEPLOY }}
+        run: python scripts/quality/staging_admission.py --wait
+  deploy:
+    needs: [validation, admission]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop' && github.repository == 'tracktorist237/hockey-planner' && vars.HP95_STAGING_AUTODEPLOY == 'protected-develop-merged-pr-v1'
+    runs-on: ubuntu-latest
+    environment: staging-smoke
+    timeout-minutes: 130
+    permissions:
+      contents: read
+      actions: read
+      checks: read
+      pull-requests: read
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Recheck admission before binding SSH secrets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HP95_STAGING_AUTODEPLOY: ${{ vars.HP95_STAGING_AUTODEPLOY }}
+        run: python scripts/quality/staging_admission.py --check
       - name: Deploy frontend staging under shared admission protocol
         env:
           EXPECTED_SHA: ${{ github.sha }}
-          HP93_APPROVED_HEAD: ${{ vars.HP93_APPROVED_HEAD }}
+          GH_TOKEN: ${{ github.token }}
+          HP95_STAGING_AUTODEPLOY: ${{ vars.HP95_STAGING_AUTODEPLOY }}
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_USER: ${{ secrets.VPS_USER }}
           VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
@@ -51,11 +82,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.sha }}
           persist-credentials: false
       - uses: actions/checkout@v4
         with:
           repository: tracktorist237/HockeyPlanner.Backend
-          ref: develop
+          ref: 662df5e4c03902df821385c50c424072a985c0a5 # Reviewed HP-75 helper; never floating backend code.
           fetch-depth: 0
           path: .quality-backend
           persist-credentials: false
