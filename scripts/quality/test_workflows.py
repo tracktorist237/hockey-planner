@@ -8,7 +8,7 @@ import yaml
 ROOT = Path(__file__).resolve().parents[2]
 GUARD = "github.event_name == 'push' && github.ref == 'refs/heads/develop' && github.repository == 'tracktorist237/hockey-planner'"
 ACTIVE = GUARD + " && vars.HP95_STAGING_AUTODEPLOY == 'protected-develop-merged-pr-v1'"
-READS = {'contents': 'read', 'actions': 'read', 'pull-requests': 'read'}
+READS = {'contents': 'read', 'actions': 'read', 'checks': 'read', 'pull-requests': 'read'}
 
 
 def load(name):

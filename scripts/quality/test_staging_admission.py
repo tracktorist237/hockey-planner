@@ -49,6 +49,10 @@ class FakeGitHub:
         self.pr_validation = self.add_run(20, HEAD, admission.VALIDATION, 'pull_request', 'quality/hp-95', admission.QUALITY_JOBS)
         self.pr_security = self.add_run(30, HEAD, admission.SECURITY, 'pull_request', 'quality/hp-95', admission.SECURITY_JOBS)
         self.security = self.add_run(40, SOURCE, admission.SECURITY, 'push', 'develop', admission.SECURITY_JOBS)
+        self.native = {'id': 100, 'name': 'CodeQL', 'app': {'id': 57789, 'slug': 'github-advanced-security'},
+                       'head_sha': HEAD, 'status': 'completed', 'conclusion': 'success',
+                       'started_at': EARLIER, 'completed_at': EARLIER}
+        self.rows[f'commits/{HEAD}/check-runs?check_name=CodeQL&filter=latest'] = [self.native]
 
     def run(self, number, expected, path, event, branch):
         return {'id': number, 'head_sha': expected, 'path': path, 'event': event, 'head_branch': branch,
@@ -59,7 +63,7 @@ class FakeGitHub:
     def add_jobs(self, run, names):
         self.rows[f"actions/runs/{run['id']}/attempts/1/jobs"] = [
             {'name': name, 'run_id': run['id'], 'head_sha': run['head_sha'], 'status': 'completed',
-             'conclusion': 'success', 'completed_at': EARLIER} for name in names]
+             'conclusion': 'success', 'started_at': EARLIER, 'completed_at': EARLIER} for name in names]
 
     def add_run(self, number, expected, path, event, branch, names):
         run = self.run(number, expected, path, event, branch)
@@ -196,6 +200,28 @@ class AdmissionTests(unittest.TestCase):
                     api.rows[path]['commit']['sha'] = HEAD
             return original(path)
         api.get = get
+        with self.assertRaises(admission.Blocked):
+            api.verify()
+
+    def test_native_codeql_alert_result_cannot_be_replaced_by_upload_success(self):
+        for key, value in (('head_sha', SOURCE), ('status', 'in_progress'), ('conclusion', 'failure'),
+                           ('conclusion', 'skipped'), ('conclusion', 'cancelled'), ('conclusion', None),
+                           ('completed_at', LATER), ('started_at', '2026-10-01T12:00:00Z')):
+            api = FakeGitHub()
+            api.native[key] = value
+            with self.subTest(key=key, value=value), self.assertRaises(admission.Blocked):
+                api.verify()
+        for app in ({'id': 15368, 'slug': 'github-actions'}, {'id': 57789, 'slug': 'impostor'}):
+            api = FakeGitHub()
+            api.native['app'] = app
+            with self.assertRaises(admission.Blocked):
+                api.verify()
+        api = FakeGitHub()
+        path = f'commits/{HEAD}/check-runs?check_name=CodeQL&filter=latest'
+        api.rows[path].append(dict(api.native, id=101, conclusion='failure'))
+        with self.assertRaises(admission.Blocked):
+            api.verify()
+        api.rows[path].clear()
         with self.assertRaises(admission.Blocked):
             api.verify()
 

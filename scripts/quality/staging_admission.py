@@ -167,6 +167,7 @@ def run_identity(run, expected, path, event, branch):
 
 def jobs_succeeded(api, run, expected, names, before=None):
     jobs = api.collection(f"actions/runs/{run['id']}/attempts/{run['run_attempt']}/jobs", 'jobs')
+    accepted = {}
     for name in names:
         matches = [job for job in jobs if job['name'] == name]
         require(len(matches) == 1)
@@ -175,6 +176,21 @@ def jobs_succeeded(api, run, expected, names, before=None):
         require(job['status'] == 'completed' and job['conclusion'] == 'success')
         if before is not None:
             require(timestamp(job['completed_at']) <= before)
+        accepted[name] = job
+    return accepted
+
+
+def codeql_alerts_succeeded(api, expected, job, before):
+    # The native PR alert-result check is separate from the successful SARIF
+    # upload job. Develop push analyses do not emit this PR comparison check.
+    checks = api.collection(f'commits/{expected}/check-runs?check_name=CodeQL&filter=latest', 'check_runs')
+    native = [check for check in checks if check['name'] == 'CodeQL' and
+              check['app']['id'] == 57789 and check['app']['slug'] == 'github-advanced-security']
+    require(bool(native))
+    check = max(native, key=lambda row: row['id'])
+    require(check['head_sha'] == expected and check['status'] == 'completed' and check['conclusion'] == 'success')
+    require(timestamp(job['started_at']) <= timestamp(check['started_at']) <=
+            timestamp(check['completed_at']) <= before)
 
 
 def successful_run(api, expected, path, event, branch, names, before=None, wait=False):
@@ -194,7 +210,9 @@ def successful_run(api, expected, path, event, branch, names, before=None, wait=
     require(run['conclusion'] == 'success')
     if before is not None:
         require(timestamp(run['updated_at']) <= before)
-    jobs_succeeded(api, run, expected, names, before)
+    jobs = jobs_succeeded(api, run, expected, names, before)
+    if path == SECURITY and event == 'pull_request':
+        codeql_alerts_succeeded(api, expected, jobs['CodeQL'], before)
     return run['id']
 
 

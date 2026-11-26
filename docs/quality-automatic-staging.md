@@ -46,7 +46,7 @@ merger must read the report, verify independent provenance and exact head, and
 resolve findings. A forged assertion by the trusted owner/author cannot be detected
 by parsing text. This is the existing human merge trust boundary, explicitly retained.
 
-Admission uses only the job's read-only `GITHUB_TOKEN`: contents, Actions and PR
+Admission uses only the job's read-only `GITHUB_TOKEN`: contents, Actions, checks and PR
 reads. It verifies both the Actions protected-ref context and live branch API:
 current exact SHA, protection enabled, quality gate required from GitHub Actions
 (app 15368), enforced for everyone. Actual admin-only PR/bypass/strict/conversation
@@ -60,6 +60,9 @@ It also requires:
 * The newest PR validation and security workflow runs for the reviewed PR head
   succeeded before merge. Workflow paths, events, branches, canonical repository,
   run IDs, attempt-specific jobs, SHA and completion times must match.
+  The separate native CodeQL PR alert-result check (GitHub Advanced Security app
+  57789) must also succeed for the reviewed head, after the current CodeQL job
+  started and before merge. A green SARIF upload job alone is insufficient.
 * The newest develop **push** security run for the source SHA succeeded, including
   `Deterministic dependency audit` and `CodeQL`. Scheduled/dispatched scans and an
   older green run/attempt cannot substitute. Absent/pending push security is polled
